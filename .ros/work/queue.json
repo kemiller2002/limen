@@ -1,6 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 1,
-  "items": []
+  "nextSeq": 2,
+  "items": [
+    {
+      "id": "WI-0001",
+      "title": "Release npm version 0.4.1 with ROS attribution",
+      "description": null,
+      "tags": [
+        "npm",
+        "release"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-02T19:59:10.250Z",
+      "updatedAt": "2026-09-02T19:59:40.757Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    }
+  ]
 }
