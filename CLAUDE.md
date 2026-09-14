@@ -5,6 +5,31 @@ than duplicating them. If something here and a linked doc disagree, the doc
 is more likely current — but treat that as a bug to fix (in whichever file
 is stale), not something to silently pick a side on.
 
+## There is no WebAssembly in this repository
+
+No `.wasm` file, no loader, no `WebAssembly.instantiate`. The name describes
+the *boundary shape* — narrow and serializable, therefore WASM-ready. The
+component that owns application meaning is called **the engine**, and it is
+TypeScript today (`src/engine/`). If you went looking for the WASM and could
+not find it, nothing is missing: read
+[docs/17-wasm-migration.md](docs/17-wasm-migration.md).
+
+Note the terminology collision: **kernel** here means the *browser-side
+bridge* (`BrowserKernel`), the opposite side of the boundary from the engine.
+See [docs/glossary.md](docs/glossary.md).
+
+## Documentation map
+
+- [AGENTS.md](AGENTS.md) — agent entry point: rules, landmarks, reading order
+- [docs/README.md](docs/README.md) — the full documentation index
+- [docs/01-architecture.md](docs/01-architecture.md) — what runs where, and why
+- [docs/12-design-rules.md](docs/12-design-rules.md) — MUST/SHOULD/MAY, with
+  how each is enforced
+- [docs/13-anti-patterns.md](docs/13-anti-patterns.md) — wrong/right pairs
+- [docs/DOCUMENTATION-AUDIT.md](docs/DOCUMENTATION-AUDIT.md) — known findings,
+  ambiguities, and open questions
+- [examples/README.md](examples/README.md) — six verified example applications
+
 ## What this is
 
 A dependency-minimal reference implementation of a browser architecture
@@ -88,11 +113,15 @@ code, not after.
   interactive reference for every bridge primitive and every
   `EffectOutcome`, driven by a throwaway demo engine (not part of the
   published package).
+- `examples/01-counter/` … `examples/06-time-entries/` — six progressive
+  example applications, each driven by `test/examples.test.ts` against its own
+  real `index.html`, so none can silently rot. Start at `01-counter`.
 - `docs/ROADMAP.md` — status of every bridge responsibility against what's
   actually implemented and tested. Read this before assuming something is
   missing or done.
-- `docs/USAGE.md` — step-by-step for *consuming* the published package in
-  another project.
+- `docs/USAGE.md` — the original consumer walkthrough. Still accurate, but
+  `docs/02-getting-started.md` is the better starting point, and
+  `docs/11-api-reference.md` is the reference.
 - `test/domain.test.ts` — pure engine-logic tests, run directly against
   `src/*.ts` (their only import from `protocol.ts` is type-only, so no build
   is required first).
@@ -107,14 +136,18 @@ code, not after.
 
 ```bash
 npm run build              # tsc → dist/
+npm run build:examples     # tsc → examples/**/*.js, emitted in place
 npm run check:architecture # scripts/check-architecture.ts
-npm test                   # pretest (build) → check:architecture → node --test
+npm run check:docs         # scripts/check-docs.ts — links, paths, orphans
+npm test                   # pretest (build + build:examples) → architecture
+                           #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)
 ```
 
 Always run `npm run check` (or `npm test`) before considering a change
-done — not just `tsc`. The architecture check and the kernel tests both
-require a fresh `dist/`; `pretest` handles that automatically.
+done — not just `tsc`. The architecture check, the docs check, and the kernel
+and example tests all require a fresh `dist/`; `pretest` handles that
+automatically.
 
 ## Testing conventions
 
@@ -147,6 +180,10 @@ require a fresh `dist/`; `pretest` handles that automatically.
 - `architecture.yaml` documents its own enforcement gap in its header
   comment as of this writing — check it hasn't drifted from
   `scripts/check-architecture.ts` again before trusting it at face value.
+- The package is named for WebAssembly but contains none; "kernel" names the
+  browser bridge here while the package name implies the engine. Both are
+  recorded as findings A-2 and N-1 in `docs/DOCUMENTATION-AUDIT.md`, along with
+  a confirmed defect (P-1) and the open questions this audit could not answer.
 
 ## Definition of done
 

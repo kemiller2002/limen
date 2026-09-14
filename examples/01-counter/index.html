@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Counter — kernel example 01</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Counter</h1>
+
+      <!-- data-event forwards the click as SemanticEvent { name: "increment" }.
+           The kernel does not know what "increment" means. -->
+      <button data-event="increment">Add one</button>
+
+      <!-- data-bind-disabled sets the .disabled property from view.resetDisabled.
+           The engine decides availability; the DOM does not re-derive it. -->
+      <button data-event="reset" data-bind-disabled="resetDisabled">Reset</button>
+
+      <!-- data-text sets textContent from view.count. -->
+      <p>Count: <span data-text="count">0</span></p>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

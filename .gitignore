@@ -1,3 +1,10 @@
 node_modules/
 dist/
 .DS_Store
+
+# The numbered examples are authored in TypeScript and compiled in place by
+# `npm run build:examples` so each index.html can load ./main.js directly.
+# The .ts files are the source of truth; the emitted .js is build output.
+# (examples/kitchen-sink.js is hand-written source and stays tracked.)
+examples/[0-9][0-9]-*/*.js
+

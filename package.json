@@ -56,9 +56,11 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json",
+    "build:examples": "tsc -p tsconfig.examples.json",
     "check:architecture": "node --experimental-strip-types scripts/check-architecture.ts",
-    "pretest": "npm run build",
-    "test": "npm run check:architecture && node --experimental-strip-types --test test/*.test.ts",
+    "check:docs": "node --experimental-strip-types scripts/check-docs.ts",
+    "pretest": "npm run build && npm run build:examples",
+    "test": "npm run check:architecture && npm run check:docs && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
     "prepack": "npm run clean && npm run check"
   },

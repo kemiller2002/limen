@@ -1,0 +1,31 @@
+{
+  // Type-checks and emits the browser-runnable JS for everything under
+  // examples/. Separate from tsconfig.json on purpose: examples are not part
+  // of the published package (package.json "files" ships only dist/), and they
+  // import the kernel from dist/ rather than src/, exactly the way a consumer
+  // installing from npm would.
+  //
+  // Emit is in place (rootDir === outDir), so examples/01-counter/main.ts
+  // becomes examples/01-counter/main.js next to it and index.html can load it
+  // with a plain relative path. The emitted .js is gitignored.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmitOnError": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "rootDir": "examples",
+    "outDir": "examples"
+  },
+  // `exclude` must be set explicitly: when outDir === rootDir, TypeScript's
+  // default exclude is the outDir itself, which would exclude every input.
+  // Emitted .js never matches the include glob, so there is no feedback loop.
+  "include": ["examples/**/*.ts"],
+  "exclude": []
+}

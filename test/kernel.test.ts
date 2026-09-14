@@ -161,6 +161,34 @@ test("submitting a form flushes a pending change-bound field before its own even
   });
 });
 
+// KNOWN DEFECT — marked `todo` so it is recorded in the suite without either
+// failing CI or asserting the current wrong behavior as correct. Recorded as
+// finding P-1 in docs/DOCUMENTATION-AUDIT.md.
+//
+// A field mounted by data-if/data-each inside a <form> does NOT participate in
+// the pending-field flush above. Cause: #applyIf and #applyEach call
+// #bindElement on the cloned root while it is still detached (before
+// anchor.after(root) / insertBefore), so `el.form` is null at bind time and no
+// flushable callback is ever registered. Once mounted, `el.form` does resolve
+// to the form — the binding simply happened too early to see it.
+//
+// Effect: a conditionally-shown field edited without blurring is silently
+// missing from the draft the engine sees on submit.
+test("a data-if field inside a form flushes before submit", { todo: "see finding P-1" }, async () => {
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? respond({ view: { show: true } }) : respond({ view: { show: true } }));
+  await withDom(`<form data-event="go"><template data-if="show"><input data-event="fieldChanged"></template></form>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    const initial = transport.calls.length;
+    document.querySelector("input")!.value = "unblurred edit";
+    document.querySelector("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+    await flush();
+    const fired = transport.calls.slice(initial);
+    assert.equal(fired.length, 2, "the conditionally-mounted field should flush before the form's own event");
+  });
+});
+
 test("clicking inside a data-each item includes that item's key", async () => {
   const transport = new ScriptedTransport((message) => {
     if (message.kind === "Initialize") return respond({ view: { items: [{ id: "a", label: "Alpha" }, { id: "b", label: "Beta" }] } });

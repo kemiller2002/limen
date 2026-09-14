@@ -30,6 +30,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Runs, in order: build → build:examples → check:architecture →
+      # check:docs → all tests (kernel, domain, and example verification).
       - name: Build and test
         run: npm run check
 

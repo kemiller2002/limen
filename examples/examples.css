@@ -1,0 +1,115 @@
+/* Presentation only. Nothing here is known to the kernel or the engine —
+   that is the point: CSS stays ordinary CSS. Engines project *data*
+   (`processed: true`), and CSS reacts to the attributes that data produces. */
+
+:root {
+  color-scheme: light dark;
+  --fg: #16181d;
+  --bg: #fbfbfa;
+  --muted: #5c6370;
+  --line: #d8dae0;
+  --accent: #2f5fd0;
+  --error: #b3261e;
+  --panel: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e8eaed;
+    --bg: #16181d;
+    --muted: #9aa1ad;
+    --line: #333843;
+    --accent: #8ab0ff;
+    --error: #f2b8b5;
+    --panel: #1e2128;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem 1rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main { max-width: 44rem; margin: 0 auto; }
+
+h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+h2 { font-size: 1.125rem; margin: 1.5rem 0 0.5rem; }
+
+p { margin: 0.5rem 0; }
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+label { display: block; margin-top: 0.75rem; font-weight: 600; font-size: 0.9rem; }
+
+input, textarea, select {
+  display: block;
+  width: 100%;
+  max-width: 24rem;
+  padding: 0.5rem 0.6rem;
+  margin-top: 0.25rem;
+  font: inherit;
+  color: inherit;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+input:disabled, textarea:disabled { opacity: 0.6; }
+
+button {
+  margin-top: 0.75rem;
+  margin-right: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  color: var(--panel);
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.panel {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.error { color: var(--error); font-size: 0.9rem; }
+
+.list { list-style: none; margin: 0.5rem 0; padding: 0; }
+
+.list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.list li button { margin-top: 0; margin-left: auto; }
+
+.status { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.nav { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; }
+.nav button { margin-top: 0; background: transparent; color: var(--fg); border-color: var(--line); }
+
+/* The engine projects `active` as an aria-current attribute value. CSS styles
+   the current tab from the accessibility state rather than from a class the
+   bridge would have to maintain. */
+.nav button[aria-current="true"] { background: var(--accent); color: var(--panel); border-color: transparent; }

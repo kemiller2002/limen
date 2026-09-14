@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Save data — kernel example 04</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Note</h1>
+
+      <p>
+        Typing persists a draft to <code>localStorage</code> via a Storage
+        effect. Saving posts to <code>POST /api/notes</code> via an Http effect.
+        Both are requested by the engine and performed by the kernel.
+      </p>
+
+      <label for="note">Your note</label>
+      <textarea id="note" rows="5"
+                data-event="textChanged" data-on="input"
+                data-bind-value="text" data-bind-disabled="editorDisabled"></textarea>
+
+      <button data-event="save" data-bind-disabled="saveDisabled">Save</button>
+
+      <p role="status" aria-live="polite" data-text="statusText"></p>
+
+      <template data-if="canRetry">
+        <button data-event="retrySave">Try again</button>
+      </template>
+
+      <!-- No retry button for an unknown outcome. Retrying a POST that may
+           already have succeeded would create a duplicate note. -->
+      <template data-if="needsReconciliation">
+        <p class="error" role="alert">Reload the page to check whether the note was created.</p>
+      </template>
+
+      <template data-if="saved">
+        <button data-event="resumeEditing">Edit again</button>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
