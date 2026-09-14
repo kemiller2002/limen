@@ -15,12 +15,16 @@ import { dirname, join, normalize, relative, resolve } from "node:path";
 const ROOT = resolve(import.meta.dirname, "..");
 
 // Directories that are not part of the kernel's own documentation set. The
-// ROS governance framework and the upstream prompt specs have their own
-// lifecycle and their own link conventions.
+// ROS governance framework, the SDE methodology install, and the upstream
+// prompt specs have their own lifecycle and their own link conventions.
+//
+// `.sde/` in particular is vendored and explicitly read-only — its own README
+// says "Do not modify them directly" — and it names illustrative paths that a
+// given project need not have.
 const SKIPPED_DIRS = new Set([
   "node_modules", ".git", "dist", "framework", "templates", "schemas",
-  "registries", "research", "missions", ".ros", "input-document", "prompts",
-  "docs/00-governance",
+  "registries", "research", "missions", ".ros", ".sde", "input-document",
+  "prompts", "docs/00-governance",
 ]);
 
 async function markdownFiles(directory: string): Promise<string[]> {
