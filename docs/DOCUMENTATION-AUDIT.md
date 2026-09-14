@@ -33,9 +33,10 @@ non-release work, and the starting commit is recorded above.
 | ID | Class | Finding | Status |
 | --- | --- | --- | --- |
 | **A-2** | A | "WASM kernel" contains no WebAssembly | **documented** |
-| **A-1** | A | `DirectTypeScriptTransport` is a demo, promoted as an entry point | **documented** |
-| **P-1** | P | `data-if`/`data-each` fields skip the form pending-field flush | **confirmed, not fixed** |
-| **D-9** | D | `dist/main.js` ships and auto-starts the demo on import | **documented** |
+| **A-1** | A | `DirectTypeScriptTransport` is a demo, promoted as an entry point | **documented + JSDoc warning on the class** |
+| **P-1** | P | `data-if`/`data-each` fields skip the form pending-field flush | ✅ **FIXED** — insert before binding; regression tests |
+| **P-2** | P | `data-if`/`data-each` on a non-`<template>` silently ignored | ✅ **FIXED** — now a reported binding error; found externally (L-2) |
+| **D-9** | D | `dist/main.js` ships and auto-starts the demo on import | ✅ **FIXED** — excluded from the published package |
 | N-1 | N | "kernel" and "capability" each carry two meanings | documented |
 | N-2 | N | `any`/`dynamic` check is raw-text, matches comments | documented |
 | A-3 | A | `architecture.yaml` implies module-scoped `dynamic_types` | pre-existing, noted |
@@ -132,12 +133,21 @@ model. No action.
 
 ---
 
-## P — Potential defects
+## P — Defects
 
 ### P-1 · Conditionally-mounted form fields skip the pending-field flush
 
-**Confirmed by reproduction.** Not fixed — it is a behavior change, outside a
-documentation mission's scope.
+✅ **FIXED.** `#applyIf` and `#applyEach` now insert the cloned root into the
+document *before* binding it, so `el.form` resolves and the pending-field flush
+registers. A companion fix prunes flush callbacks whose element has since been
+unmounted, so repeatedly toggling a conditional section no longer accumulates
+stale callbacks. Covered by three regression tests in `test/kernel.test.ts`
+(`data-if` flush, `data-each` flush, and the unmount-pruning case); the former
+`todo` marker is gone.
+
+Original report follows.
+
+**Confirmed by reproduction.**
 
 **Behavior.** `BrowserKernel` flushes pending `change`-bound fields inside a
 `<form>` before dispatching the form's own submit event, so a field edited
@@ -174,9 +184,23 @@ examples do not hit it.
 field inside a form flushes before submit") so it is visible without failing CI
 and without asserting the wrong behavior as correct.
 
-**Suggested fix (not applied):** insert before binding in both `#applyIf` and
-`#applyEach`, or resolve the form from the anchor's context rather than the
-element. Either changes runtime behavior and needs its own test and review.
+**Fix applied:** insert before binding in both `#applyIf` and `#applyEach`.
+
+### P-2 · `data-if`/`data-each` on a non-`<template>` was silently ignored
+
+✅ **FIXED.** Found externally, in a real consumer project — see finding **L-2**
+in [19-evidence.md](19-evidence.md), where a `data-if` on a `<p>` meant an
+empty-state message never disappeared, and it was caught only by loading the
+page. No test caught it, in either project.
+
+`#bindElement` guarded on `el instanceof HTMLTemplateElement`; an ordinary
+element carrying the attribute fell through both guards with no error and no
+warning. It now throws, which `start()` catches and reports as
+`BridgeError { phase: "binding" }` before dispatching `Initialize`.
+
+Same silent-failure family as **D-5** — the `data-if` missing-*key* asymmetry —
+which remains by design (a falsy key is a legitimate way to keep content
+unmounted; a misplaced attribute never is).
 
 ---
 
@@ -321,7 +345,6 @@ An accurate restatement:
 
 | Not done | Why |
 | --- | --- |
-| Fixing P-1 | A runtime behavior change. Out of scope for a documentation mission; recorded with a reproduction and a `todo` test instead. |
 | Renaming the package | Breaking for consumers; a maintainer decision, not a documentation one. |
 | Renaming `DirectTypeScriptTransport` / its subpath | Public API change. Documented as reference-only instead. |
 | Excluding `main.ts` from the published build (D-9) | Packaging change with release implications. Documented. |

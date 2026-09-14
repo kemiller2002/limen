@@ -111,7 +111,23 @@ worth memorizing:
 | `data-text`, `data-bind-*` | **throws** — loud |
 | `data-if` | `Boolean(undefined)` = `false` — **silently unmounted** |
 
-So a typo'd `data-if` key never errors. It just never shows.
+So a typo'd `data-if` *key* never errors. It just never shows.
+
+**A misplaced `data-if` does error now.** If you wrote it on an ordinary
+element rather than a `<template>`, you will see
+`BridgeError { phase: "binding" }` with
+`data-if="…" is only supported on a <template> element, but was found on <p>`,
+and the page will stay at its placeholder content. Wrap it:
+
+```html
+<!-- wrong: silently did nothing before; a binding error now -->
+<p data-if="hasError">Something went wrong.</p>
+
+<!-- right -->
+<template data-if="hasError"><p>Something went wrong.</p></template>
+```
+
+If the key is merely misspelled, work down this list:
 
 1. Spell-check the key against the projection.
 2. Confirm the value is actually truthy — `0` and `""` are falsy, so
@@ -225,13 +241,16 @@ double-registers every listener. Call it exactly once; there is no
 
 ## The page stays on placeholder text forever
 
-`transport.start()` rejected. The kernel reports
-`BridgeError { phase: "dispatch" }` and **returns before binding anything** — no
-bindings, no `Initialize`, no first projection.
+One of two things happened, and the diagnostics sink tells you which:
 
-Install a diagnostics sink to see the reason. In a future WASM transport this is
-where a failed module fetch or instantiation would land: check the file is
-served, the path is right, and the MIME type is `application/wasm`.
+| Reported | Cause |
+| --- | --- |
+| `BridgeError { phase: "dispatch" }` | `transport.start()` rejected. The kernel **returns before binding anything** — no bindings, no `Initialize`, no first projection. |
+| `BridgeError { phase: "binding" }` | The markup is malformed — a `data-each` without `data-key`, a `data-if`/`data-each` on a non-`<template>` element, or a template with zero or several root elements. Binding stops and `Initialize` is never dispatched. |
+
+Install a diagnostics sink to see which, and the message. In a WASM transport
+the first row is where a failed module fetch or instantiation lands: check the
+file is served, the path is right, and the MIME type is `application/wasm`.
 
 ---
 

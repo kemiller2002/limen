@@ -218,6 +218,7 @@ almost certainly why.
 | Event | Means |
 | --- | --- |
 | `BridgeError { phase: "dispatch" }` | the transport threw, or `start()` rejected |
+| `BridgeError { phase: "binding" }` | the markup is malformed — nothing was bound, `Initialize` never sent |
 | `BridgeError { phase: "projection" }` | applying the view threw — usually a missing key |
 | `EffectTiming` | an effect completed; how long it took |
 

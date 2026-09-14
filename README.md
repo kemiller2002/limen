@@ -223,11 +223,13 @@ Limen's benefits are stated above as *architectural consequences* — things tha
 follow from the boundary — not as measured outcomes.
 
 **No controlled measurement of Limen's effect on development time, token
-consumption, cost, or defect rate has been performed.** Where this repository
-carries evidence, it is evidence about SDE and about this codebase's own
-construction, which is **not** the same as evidence about Limen. Those are not
-conflated, and no quantitative claim about Limen appears anywhere in this
+consumption, cost, or defect rate has been performed.** Where evidence exists,
+it is about SDE, or about language and style — **not** about Limen. Those are
+not conflated, and no quantitative claim about Limen appears anywhere in this
 documentation.
+
+Full accounting, including what a Limen trial would have to measure and why one
+has not been run: **[docs/19-evidence.md](docs/19-evidence.md)**.
 
 Known gaps, deferred work, and the reasoning behind both are tracked in
 [docs/ROADMAP.md](docs/ROADMAP.md) and

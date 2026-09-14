@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 4,
+  "nextSeq": 5,
   "items": [
     {
       "id": "WI-0001",
@@ -52,6 +52,24 @@
       "attachments": [],
       "createdAt": "2026-09-14T16:28:35.797Z",
       "updatedAt": "2026-09-14T16:28:44.052Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0004",
+      "title": "Fix kernel silent-failure defects P-1/P-2, packaging D-9, transport clarity A-1; publish evidence findings",
+      "description": null,
+      "tags": [
+        "limen",
+        "defect",
+        "evidence"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-14T17:01:02.944Z",
+      "updatedAt": "2026-09-14T17:01:03.052Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

@@ -132,6 +132,13 @@ Requires a scalar; an array throws.
 Mounted when `view[key]` is truthy, removed when it is not. The template must
 wrap **exactly one root element**, or mounting throws.
 
+> **`data-if` only works on a `<template>`.** Written on an ordinary element —
+> `<p data-if="ready">` — it is a binding error, reported as
+> `BridgeError { phase: "binding" }`, and `start()` stops before dispatching
+> `Initialize`. It used to be ignored in silence, which is how a real consumer
+> project lost an afternoon to an empty-state message that never disappeared
+> (finding L-2 in [19-evidence.md](19-evidence.md)).
+
 Mechanics worth knowing:
 
 - The `<template>` is replaced by a comment anchor at startup and is never in

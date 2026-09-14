@@ -53,6 +53,7 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 
 | Document | Contents |
 | --- | --- |
+| [Evidence](19-evidence.md) | What has actually been measured, what has not, and where every number comes from |
 | [Roadmap](ROADMAP.md) | Every bridge responsibility vs. what is implemented and tested |
 | [Documentation audit](DOCUMENTATION-AUDIT.md) | Findings from the documentation audit, including unresolved ambiguities |
 | [Usage (legacy)](USAGE.md) | The original consumer walkthrough, kept for continuity |

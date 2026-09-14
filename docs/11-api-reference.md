@@ -87,10 +87,15 @@ Performs, in order:
 
 1. `await transport.start()` — **if this rejects, reports
    `BridgeError { phase: "dispatch" }` and returns. Nothing is bound.**
-2. Recursively binds `document.body`, collecting all `data-*` bindings.
+2. Recursively binds `document.body`, collecting all `data-*` bindings. **If a
+   binding is malformed** — `data-each` without `data-key`, a `data-if` on a
+   non-`<template>` element, a template with more than one root — it reports
+   `BridgeError { phase: "binding" }` and returns without dispatching
+   `Initialize`.
 3. Dispatches `Initialize { protocolVersion: 1, capabilities: ["Http", "Storage"] }`.
 
-**Never rejects.** All failures go to diagnostics.
+**Never rejects.** All failures go to diagnostics. The page stays at its
+placeholder content, which is the visible symptom of a failure in step 1 or 2.
 
 **Call exactly once.** A second call re-binds the document and double-registers
 every listener, so each event dispatches twice.
@@ -312,7 +317,7 @@ type EffectResult =
 interface DiagnosticsSink { report(event: DiagnosticEvent): void; }
 
 type DiagnosticEvent =
-  | { kind: "BridgeError";  phase: "dispatch" | "projection" | "effect"; detail: string }
+  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect"; detail: string }
   | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number };
 
 const noopDiagnostics: DiagnosticsSink;   // the default
@@ -352,8 +357,8 @@ The kernel's complete DOM surface.
 | `data-on="type"` | override the DOM event type | any type; no allow-list |
 | `data-text="key"` | `textContent = view[key]` | throws if missing/non-scalar |
 | `data-bind-<attr>="key"` | set attribute or property | see below |
-| `data-if="key"` | mount/unmount a `<template>` | one root element; missing ⇒ falsy |
-| `data-each="key"` | repeat a `<template>` | **requires `data-key`** |
+| `data-if="key"` | mount/unmount a `<template>` | **`<template>` only**; one root element; missing key ⇒ falsy |
+| `data-each="key"` | repeat a `<template>` | **`<template>` only**; **requires `data-key`** |
 | `data-key="field"` | item identity for `data-each` | must be stable and unique |
 
 Default triggers: `<form>` → `submit` (with `preventDefault`);

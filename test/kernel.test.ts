@@ -161,22 +161,13 @@ test("submitting a form flushes a pending change-bound field before its own even
   });
 });
 
-// KNOWN DEFECT — marked `todo` so it is recorded in the suite without either
-// failing CI or asserting the current wrong behavior as correct. Recorded as
-// finding P-1 in docs/DOCUMENTATION-AUDIT.md.
-//
-// A field mounted by data-if/data-each inside a <form> does NOT participate in
-// the pending-field flush above. Cause: #applyIf and #applyEach call
-// #bindElement on the cloned root while it is still detached (before
-// anchor.after(root) / insertBefore), so `el.form` is null at bind time and no
-// flushable callback is ever registered. Once mounted, `el.form` does resolve
-// to the form — the binding simply happened too early to see it.
-//
-// Effect: a conditionally-shown field edited without blurring is silently
-// missing from the draft the engine sees on submit.
-test("a data-if field inside a form flushes before submit", { todo: "see finding P-1" }, async () => {
-  const transport = new ScriptedTransport((message) =>
-    message.kind === "Initialize" ? respond({ view: { show: true } }) : respond({ view: { show: true } }));
+// Regression for finding P-1. #applyIf/#applyEach used to bind the cloned root
+// while it was still detached, so `el.form` was null and the pending-field
+// flush never registered — a conditionally-shown field edited without blurring
+// was silently missing from the draft the engine saw on submit. Both now insert
+// before binding.
+test("a data-if field inside a form flushes before submit (P-1 regression)", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { show: true } }));
   await withDom(`<form data-event="go"><template data-if="show"><input data-event="fieldChanged"></template></form>`, async (document) => {
     await new BrowserKernel(transport, document).start();
     await flush();
@@ -186,6 +177,90 @@ test("a data-if field inside a form flushes before submit", { todo: "see finding
     await flush();
     const fired = transport.calls.slice(initial);
     assert.equal(fired.length, 2, "the conditionally-mounted field should flush before the form's own event");
+    assert.deepEqual(fired[0]?.kind === "Event" && fired[0].event, { kind: "Event", name: "fieldChanged", value: "unblurred edit" });
+    assert.equal(fired[1]?.kind === "Event" && fired[1].event.name, "go");
+  });
+});
+
+test("a data-each field inside a form flushes before submit (P-1 regression)", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { rows: [{ id: "r1" }] } }));
+  await withDom(`<form data-event="go"><template data-each="rows" data-key="id"><input data-event="rowChanged"></template></form>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    const initial = transport.calls.length;
+    document.querySelector("input")!.value = "row edit";
+    document.querySelector("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+    await flush();
+    const fired = transport.calls.slice(initial);
+    assert.equal(fired.length, 2);
+    assert.equal(fired[0]?.kind === "Event" && fired[0].event.key, "r1", "the row's key still travels with the flushed event");
+  });
+});
+
+// A binding whose element has been unmounted must not keep firing. Before the
+// fix, every remount pushed another callback onto the form's flush list and
+// none were ever removed.
+test("unmounting a data-if drops its pending-field binding instead of accumulating", async () => {
+  let show = true;
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Event" && message.event.name === "toggle") show = !show;
+    return respond({ view: { show } });
+  });
+  await withDom(
+    `<form data-event="go"><template data-if="show"><input data-event="fieldChanged"></template></form><button data-event="toggle"></button>`,
+    async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await flush();
+      // Toggle off, on, off, on — four remounts of the same conditional field.
+      for (let i = 0; i < 4; i += 1) {
+        document.querySelector("button")!.click();
+        await flush();
+      }
+      assert.ok(document.querySelector("input"), "the field is mounted again");
+      const initial = transport.calls.length;
+      document.querySelector("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+      await flush();
+      const fired = transport.calls.slice(initial);
+      assert.equal(fired.length, 2, "exactly one field flush plus the form's own event — not one per past mount");
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Misplaced binding attributes — finding P-2
+// ---------------------------------------------------------------------------
+
+test("data-if on a non-template element is reported, not silently ignored (P-2)", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  const { sink, events } = collectDiagnostics();
+  await withDom(`<p data-if="ready">never appears</p>`, async (document) => {
+    await new BrowserKernel(transport, document, sink).start();
+    const error = events.find((event) => event.kind === "BridgeError");
+    assert.ok(error, "a BridgeError was reported");
+    assert.equal(error.kind === "BridgeError" && error.phase, "binding");
+    assert.match(error.kind === "BridgeError" ? error.detail : "", /only supported on a <template> element/);
+    assert.match(error.kind === "BridgeError" ? error.detail : "", /<p>/);
+    assert.equal(transport.calls.length, 0, "Initialize is not dispatched when binding failed");
+  });
+});
+
+test("data-each on a non-template element is reported too (P-2)", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  const { sink, events } = collectDiagnostics();
+  await withDom(`<ul data-each="items" data-key="id"></ul>`, async (document) => {
+    await new BrowserKernel(transport, document, sink).start();
+    const error = events.find((event) => event.kind === "BridgeError");
+    assert.ok(error);
+    assert.equal(error.kind === "BridgeError" && error.phase, "binding");
+    assert.match(error.kind === "BridgeError" ? error.detail : "", /<ul>/);
+  });
+});
+
+test("start() still resolves when a binding is malformed, rather than rejecting", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<template data-each="items"><li></li></template>`, async (document) => {
+    // data-each without data-key throws inside binding; start() must absorb it.
+    await assert.doesNotReject(() => new BrowserKernel(transport, document).start());
   });
 });
 

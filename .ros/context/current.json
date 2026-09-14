@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-14T16:32:25.770Z",
+  "updatedAt": "2026-09-14T17:08:21.982Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -74,6 +74,24 @@
       ],
       "updatedAt": "2026-09-14T16:32:25.770Z",
       "completedAt": "2026-09-14T16:32:25.770Z"
+    },
+    {
+      "id": "WI-0004",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-14T17:08:21.982Z",
+      "completedAt": "2026-09-14T17:08:21.982Z"
     }
   ]
 }

@@ -26,6 +26,7 @@
   },
   "files": [
     "dist",
+    "!dist/main.*",
     "README.md",
     "LICENSE",
     "architecture.yaml"
