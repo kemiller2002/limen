@@ -1,8 +1,13 @@
-# Documentation index
+# Limen documentation
 
-Everything here describes the kernel as it is actually implemented. Where
-something is unbuilt, deferred, or ambiguous, it says so rather than implying
-otherwise.
+Everything here describes Limen as it is actually implemented. Where something
+is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
+
+> **Limen** is the product name for this architecture. The npm package is still
+> `@echelon-foundry/typescript-wasm-kernel` and nothing was renamed —
+> see [naming and compatibility](18-naming-and-compatibility.md).
+> Throughout these documents, **"the kernel"** means the browser-side bridge
+> and **"the engine"** means the application side.
 
 ## Start here
 
@@ -41,6 +46,7 @@ otherwise.
 | 13 | [Anti-patterns](13-anti-patterns.md) | What must I not do, and why? |
 | 14 | [Agent guide](14-agent-guide.md) | Where does a change belong? (written for AI coding agents) |
 | 17 | [WASM migration](17-wasm-migration.md) | Where is the WebAssembly, and what would adding it take? |
+| 18 | [Naming and compatibility](18-naming-and-compatibility.md) | What is Limen, what was renamed, and did anything break? |
 | — | [Glossary](glossary.md) | What does this word mean here? |
 
 ## Project status

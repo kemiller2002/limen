@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-14T15:45:01.256Z",
+  "updatedAt": "2026-09-14T16:32:25.770Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -56,6 +56,24 @@
       ],
       "updatedAt": "2026-09-14T15:45:01.256Z",
       "completedAt": "2026-09-14T15:45:01.256Z"
+    },
+    {
+      "id": "WI-0003",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/18-naming-and-compatibility.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-09-14T16:32:25.770Z",
+      "completedAt": "2026-09-14T16:32:25.770Z"
     }
   ]
 }

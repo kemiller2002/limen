@@ -5,6 +5,26 @@ than duplicating them. If something here and a linked doc disagree, the doc
 is more likely current — but treat that as a bug to fix (in whichever file
 is stale), not something to silently pick a side on.
 
+## This repository is Limen
+
+**Limen** is the product name for the architecture implemented here: an
+explicit boundary keeping browser capabilities separate from application
+authority. The published package is still
+`@echelon-foundry/typescript-wasm-kernel`, and **no exported symbol, file path,
+or protocol type was renamed** — see
+[docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md).
+
+"Kernel" is still correct for the **browser-side bridge** (`BrowserKernel`,
+`src/kernel/`) — not for the product, and not for the application side.
+
+## Before meaningful changes: open a ROS work item
+
+CI's `validate` job rejects branches whose changes lack work-item attribution.
+Run `./ros add "…"` → `./ros work ready WI-####` → `./ros work start WI-####`
+**before** editing, and complete it with `ROS_BASE_REF=origin/main ./ros work
+complete WI-#### --evidence …` afterwards. See
+[AGENTS.md](AGENTS.md) Part 1 for the exact sequence.
+
 ## There is no WebAssembly in this repository
 
 No `.wasm` file, no loader, no `WebAssembly.instantiate`. The name describes
@@ -28,6 +48,8 @@ See [docs/glossary.md](docs/glossary.md).
 - [docs/13-anti-patterns.md](docs/13-anti-patterns.md) — wrong/right pairs
 - [docs/DOCUMENTATION-AUDIT.md](docs/DOCUMENTATION-AUDIT.md) — known findings,
   ambiguities, and open questions
+- [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) —
+  what Limen renamed and what it deliberately did not
 - [examples/README.md](examples/README.md) — six verified example applications
 
 ## What this is

@@ -115,9 +115,30 @@ never directly. See
 only code permitted to touch `document`, `window`, `fetch`, or `localStorage`.
 Understands six `data-*` attributes and interprets none of them.
 
+Say **"the Limen kernel"** where the bridge could be confused with the product.
+
 > ⚠️ Note the collision: "kernel" here means the **browser-side bridge**, but
 > the package is named `typescript-wasm-kernel` and `ROADMAP.md`'s mental-model
-> diagram labels the *engine* as "WASM Kernel". Recorded as finding **N-1**.
+> diagram once labelled the *engine* as "WASM Kernel". Recorded as finding
+> **N-1**; the product is now named [Limen](18-naming-and-compatibility.md),
+> which resolves the product-level half of the collision.
+
+### Limen
+
+**The product name** for this architecture: an explicit boundary keeping
+browser capabilities separate from application authority. Latin for
+*threshold* — the stone at the base of a doorway.
+
+Limen is the whole: the contract in `src/protocol.ts`, the kernel that
+implements the browser side, and the rules governing what may live where. It is
+**not** a synonym for the kernel alone, and not a synonym for the engine.
+
+The npm package is still `@echelon-foundry/typescript-wasm-kernel`; nothing was
+renamed. See [18-naming-and-compatibility.md](18-naming-and-compatibility.md).
+
+> Discouraged aliases: "the WASM kernel", "the TypeScript WASM kernel". The
+> first is actively misleading — there is no WebAssembly
+> ([17-wasm-migration.md](17-wasm-migration.md)).
 
 ### `OutcomeUnknown`
 
@@ -201,8 +222,9 @@ design has drifted.
 
 | Prefer | Over | Because |
 | --- | --- | --- |
+| **Limen** | "the WASM kernel", "the TypeScript WASM kernel" | names the architecture, not a wrong technology |
 | **engine** | "WASM", "WASM kernel", "application layer" | it is TypeScript today |
-| **kernel** | "bridge", "host", "JS layer" | matches the class name |
+| **kernel** / **the Limen kernel** | "bridge", "host", "JS layer" | matches the class name |
 | **projection** | "render", "view model" | nothing is rendered by the engine |
 | **effect request** | "side effect", "API call" | names the boundary crossing |
 | **transition** | "handler", "reducer" | names the function's contract |

@@ -16,7 +16,7 @@ related_documents:
 tags: [governance, agents, startup, architecture]
 ---
 
-# Agent Startup Guide
+# Agent Startup Guide — Limen
 
 This file has two parts. **Part 1** is what you need to modify code in this
 repository correctly. **Part 2** is the Repository Operating System (ROS)
@@ -28,24 +28,64 @@ mainstream front-end conventions is often wrong here.
 
 ---
 
-# Part 1 — The kernel
+# Part 1 — Limen
 
-## Answer this before anything else
+## Two things to know before anything else
 
-**There is no WebAssembly in this repository.** No `.wasm` file, no loader, no
-`WebAssembly.instantiate`. The name describes the *boundary shape*, which is
-serializable and therefore WASM-ready. The component that owns application
-meaning is called **the engine**, and it is TypeScript today
-(`src/engine/`). See [docs/17-wasm-migration.md](docs/17-wasm-migration.md).
+**1. This repository is Limen.** Limen is the product name for the
+architecture here: an explicit boundary keeping browser capabilities separate
+from application authority. The npm package is still
+`@echelon-foundry/typescript-wasm-kernel` and **no exported symbol, file path,
+or protocol type was renamed** — the rename is documentation-only. See
+[docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md).
 
-If you were about to report that you cannot find the WASM, this paragraph is
+Note the term "kernel" is still load-bearing and still correct: it means the
+**browser-side bridge** (`BrowserKernel`, `src/kernel/`), not the whole
+product, and not the application side.
+
+**2. There is no WebAssembly in this repository.** No `.wasm` file, no loader,
+no `WebAssembly.instantiate`. The old name described a *boundary shape*, which
+is serializable and therefore WASM-ready. The component that owns application
+meaning is called **the engine**, and it is TypeScript today (`src/engine/`).
+See [docs/17-wasm-migration.md](docs/17-wasm-migration.md).
+
+If you were about to report that you cannot find the WASM, that paragraph is
 the answer. Nothing is missing.
+
+## Before you change anything: open a work item
+
+This repository enforces the ROS work protocol **in CI**. The `validate` job
+rejects any branch whose meaningful changes lack work-item attribution, with
+`meaningful change has no active or completed work-item attribution`.
+
+Do this **first**, before editing:
+
+```sh
+./ros add "short description of the work"   # prints a WI-#### id
+./ros work ready WI-####
+./ros work start WI-####
+```
+
+and when the work is done and committed:
+
+```sh
+# ROS_BASE_REF is load-bearing: it folds the committed base...HEAD diff into
+# the attributed paths, which is how CI sees an already-committed branch.
+ROS_BASE_REF=origin/main ./ros work complete WI-#### \
+  --evidence implementation=<path> --evidence tests=<path>
+./ros registry build
+ROS_BASE_REF=origin/main ./ros validate    # must print "validation passed"
+```
+
+Skipping this does not fail locally. It fails the pull request. Part 2 has the
+full protocol.
 
 ## Architecture in one screen
 
 ```text
-src/kernel/     browser mechanism ONLY — DOM, fetch, localStorage, timers
-src/protocol.ts the wire contract — plain, JSON-serializable data only
+src/kernel/     the Limen kernel: browser mechanism ONLY
+                — DOM, fetch, localStorage, timers
+src/protocol.ts the threshold itself: plain, JSON-serializable data only
 src/engine/     application meaning ONLY — state, transitions, validation
 ```
 
@@ -141,10 +181,12 @@ JavaScript outside the engine?                 → STOP. That is rule 1.
 | Example verification | [`test/examples.test.ts`](test/examples.test.ts) |
 | What is built vs. deferred, and why | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
 | Enforced vs. merely stated invariants | [`architecture.yaml`](architecture.yaml) header comment |
+| What "Limen" renamed, and what it did not | [`docs/18-naming-and-compatibility.md`](docs/18-naming-and-compatibility.md) |
+| The SDE method this repo follows | [`.sde/README.md`](.sde/README.md) |
 
 ## Required reading order
 
-1. This file, Part 1
+1. This file, Part 1 — **including the work-item step above**
 2. [README.md](README.md)
 3. [docs/01-architecture.md](docs/01-architecture.md)
 4. [`src/protocol.ts`](src/protocol.ts) — the actual contract
@@ -178,6 +220,8 @@ require a fresh `dist/`; `pretest` handles that.
 
 Answer all of these before you write code, and confirm them before you finish:
 
+0. Have I opened a ROS work item? (`./ros work start WI-####`) CI rejects the
+   branch without one.
 1. What state changes? Which union member in which `State` type?
 2. What event causes it? Where does that event originate in the DOM?
 3. Is the transition legal from every state it can be requested in? What

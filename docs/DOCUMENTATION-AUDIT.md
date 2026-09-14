@@ -334,6 +334,15 @@ An accurate restatement:
 
 ---
 
+## Resources located (for follow-on work)
+
+| Resource | Where | Notes |
+| --- | --- | --- |
+| Echelon Foundry design system | `github.com/kemiller2002/consulting-company`, `assets/css/style.css` | 190 lines. Canonical palette (`--ef-*` tokens), type scale (Newsreader / Manrope / IBM Plex Mono), layout, cards, stat blocks, research rows, responsive + `prefers-reduced-motion` + `forced-colors` handling. Public repo; clone anonymously. **This is the authoritative source** to reuse for a Limen site rather than approximating. |
+| EF page templates | same repo, `src/templates/{layout,header,footer}.html` | Static-build model, `{{title}}`/`{{content}}` substitution via `build.js`. |
+| EF Pages workflow | same repo, `.github/workflows/deploy-pages.yml` | Already uses least-privilege `contents: read` / `pages: write` / `id-token: write`, `main`-only, `concurrency: pages`. A sound model to follow. |
+| .NET / F# toolchain | **unavailable in the current environment** | `builds.dotnet.microsoft.com` is policy-denied (HTTP 403) by the agent proxy. NuGet itself is reachable. Any F# tooling must be written and verified elsewhere. |
+
 ## Open questions
 
 Genuinely unresolved. Not guessed at.
