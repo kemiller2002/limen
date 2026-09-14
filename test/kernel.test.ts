@@ -264,6 +264,54 @@ test("start() still resolves when a binding is malformed, rather than rejecting"
   });
 });
 
+// Regression for finding P-3. A response that arrives but will not decode used
+// to report `Failure { invalid-response }` with no status, so a 500 returning an
+// HTML error page was indistinguishable from a 200 returning malformed JSON —
+// the first is often worth retrying, the second never is.
+test("an undecodable response carries the status so the engine can classify it (P-3)", async () => {
+  const outcomes: EffectOutcome[] = [];
+  const correlationId = withCorrelation("c1");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/err", timeoutMs: 1000 }] });
+    }
+    if (message.kind === "EffectResult" && message.result.kind === "HttpResult") outcomes.push(message.result.outcome);
+    return respond();
+  });
+  const notJson = (status: number): Response => ({
+    status,
+    json: async () => { throw new Error("Unexpected token < in JSON"); },
+  } as unknown as Response);
+
+  await withFetch(async () => notJson(503), async () => {
+    await withDom(`<p></p>`, async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await new Promise((resolve) => { setTimeout(resolve, 20); });
+      assert.deepEqual(outcomes[0], { kind: "Failure", reason: "invalid-response", status: 503 });
+    });
+  });
+});
+
+test("a network failure carries no status, because nothing came back (P-3)", async () => {
+  const outcomes: EffectOutcome[] = [];
+  const correlationId = withCorrelation("c2");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/gone", timeoutMs: 1000 }] });
+    }
+    if (message.kind === "EffectResult" && message.result.kind === "HttpResult") outcomes.push(message.result.outcome);
+    return respond();
+  });
+  await withFetch(async () => { throw new Error("DNS failure"); }, async () => {
+    await withDom(`<p></p>`, async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await new Promise((resolve) => { setTimeout(resolve, 20); });
+      assert.deepEqual(outcomes[0], { kind: "Failure", reason: "network" });
+      assert.ok(!("status" in (outcomes[0] ?? {})), "absence of status is what distinguishes it");
+    });
+  });
+});
+
 test("clicking inside a data-each item includes that item's key", async () => {
   const transport = new ScriptedTransport((message) => {
     if (message.kind === "Initialize") return respond({ view: { items: [{ id: "a", label: "Alpha" }, { id: "b", label: "Beta" }] } });
@@ -439,7 +487,10 @@ test("a response that fails to decode reports Failure with reason invalid-respon
   await withFetch(fetchImpl, () => withDom(`<div></div>`, async (document) => {
     await new BrowserKernel(transport, document).start();
     const result = transport.calls.at(-1);
-    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "invalid-response" });
+    // The status rides along now (finding P-3): a response did arrive, it just
+    // would not decode, and 200-with-broken-JSON must stay distinguishable from
+    // a server that refused with an HTML error page.
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "invalid-response", status: 200 });
   }));
 });
 

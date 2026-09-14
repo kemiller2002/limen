@@ -1,0 +1,165 @@
+    <section class="page-intro">
+      <p class="eyebrow">Evidence</p>
+      <h1>What we have actually measured.</h1>
+      <p class="lead">
+        No quantitative claim about Limen is supported by evidence today. That
+        sentence is the honest headline, and this page exists to keep it visible
+        rather than let the benefits elsewhere on this site quietly harden into
+        numbers nobody measured.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Limen</p><h2>Not yet measured.</h2></div>
+        <p class="section-note">Six claims a reader might reasonably expect. None are supported.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Claims about Limen and their evidential status</caption>
+          <thead><tr><th scope="col">Claim</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Reduces development time</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
+            <tr><th scope="row">Reduces agent token consumption</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
+            <tr><th scope="row">Reduces cost</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
+            <tr><th scope="row">Reduces defects</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
+            <tr><th scope="row">Makes AI agents more accurate</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
+            <tr><th scope="row">Reduces context or discovery surface</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose">
+        The benefits listed on the overview page are stated as <em>architectural
+        consequences</em> — things that follow from where the boundary is drawn — not as
+        outcomes anyone observed. &ldquo;Application state exists in one place&rdquo; is true
+        because the engine is the only writer, not because a study found it.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Limen</p><h2>What has been observed.</h2></div>
+        <p class="section-note">Two things. Both qualitative. Both from a real consumer project.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <p class="card-kicker">Observed · existence proof</p>
+          <h3>An F# engine runs behind the boundary, unchanged</h3>
+          <p>
+            A separate Echelon Foundry project implements <code>EngineTransport</code> over the
+            .NET WebAssembly runtime and drives a full F# engine through it, consuming
+            this package directly. Its own source records that it required <strong>no kernel
+            change</strong>.
+          </p>
+          <p class="note">
+            Establishes: the claim that this interface is a sufficient seam for a
+            WebAssembly engine is demonstrated, not merely argued. Does not establish:
+            anything about performance, size, startup cost, or effort.
+          </p>
+        </div>
+        <div class="card">
+          <p class="card-kicker">Observed · single incident</p>
+          <h3>A silent failure found only by loading the page</h3>
+          <p>
+            In that same project, <code>data-if</code> was written on a <code>&lt;p&gt;</code> instead of a
+            <code>&lt;template&gt;</code>. The kernel ignored it in silence, so an empty-state message
+            never disappeared. No test in either project caught it.
+          </p>
+          <p class="note">
+            Acted on: misplaced bindings now raise a reported binding error. Establishes
+            one real usability defect — not a defect <em>rate</em>. It is one incident.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Adjacent, and not the same thing</p><h2>SDE evidence is not Limen evidence.</h2></div>
+        <p class="section-note">Verified rather than assumed.</p>
+      </div>
+      <p class="prose">
+        Echelon Foundry runs preregistered engineering trials of <strong>State-Directed
+        Engineering</strong>, a construction method. Those trials produce genuinely useful
+        numbers. They also <strong>do not use Limen</strong> — checked directly: both trial
+        branches contain no reference to this package or any of its types, and
+        declare zero runtime dependencies. They are Node command-line applications.
+      </p>
+      <p class="prose">
+        Attributing their results to Limen would be the single easiest mistake to
+        make on a page like this, so it is called out rather than left to good
+        intentions. The strongest result from those trials, stated as what it is:
+      </p>
+      <blockquote>
+        <p>
+          An independent fresh-agent review produced <strong>5 findings, 0 of which
+          overlapped</strong> the builder's own 90-test suite and written self-review. Four
+          were real defects.
+        </p>
+      </blockquote>
+      <p class="prose">
+        That is evidence that heterogeneous verification finds what homogeneous
+        verification misses. It is evidence about a <em>method</em>, on one run, with one
+        reviewer, on one codebase — and it says nothing whatever about this
+        architecture.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Discipline</p><h2>What we refused to publish.</h2></div>
+        <p class="section-note">Usually the more informative list.</p>
+      </div>
+      <div class="columns">
+        <div class="card">
+          <h3>&ldquo;Explicit state modelling reduces mistakes&rdquo;</h3>
+          <p>Tempting, adjacent, and contradicted by its own source. The originating project rates that hypothesis <strong>low confidence</strong> and records the contradiction itself: raw mistake counts came out roughly even. The defensible version is narrower — the effect appears to be in <em>which mechanism catches a mistake</em>, not in how many occur.</p>
+        </div>
+        <div class="card">
+          <h3>A speed comparison between two trials</h3>
+          <p>One run took ~30 minutes, another ~3 hours 12 minutes. Reading &ldquo;6× faster&rdquo; out of that would be wrong: the second run also performed mutation testing, an independent verification phase, and a cross-experiment analysis. Different work, not different speed.</p>
+        </div>
+        <div class="card">
+          <h3>Token and cost figures</h3>
+          <p>Almost all are marked <em>unavailable — not exposed to agent</em> in the source telemetry, explicitly rather than by omission. Exactly one sub-unit was ever instrumented. One measurement is not a rate, so it is not presented as one.</p>
+        </div>
+        <div class="card">
+          <h3>Two figures that do not reconcile</h3>
+          <p>Identical test-line counts reported across two runs with different file counts, and a mistake tally whose breakdown sums to one more than its total. Both are recorded as open data-quality questions rather than published as measurements.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="method-band">
+      <div>
+        <p class="eyebrow">What would settle it</p>
+        <h2>The trial that has not been run.</h2>
+        <p>
+          Nothing above isolates Limen, because no controlled comparison exists
+          where Limen is the only variable. The blocker is instrumentation, not
+          willingness: token, cost, and context figures are not exposed to a running
+          agent in machine-readable form, and both existing trials record that and
+          refuse to estimate.
+        </p>
+        <p>
+          Such a trial can measure time, files, defects and rework today. It cannot
+          yet measure tokens or cost — which are the numbers most often asked for.
+        </p>
+      </div>
+      <ol>
+        <li><span>01</span><div>One requirement set, implemented twice</div></li>
+        <li><span>02</span><div>Same agent, model, effort, and verification standard</div></li>
+        <li><span>03</span><div>One arm on Limen, one on a conventional architecture</div></li>
+        <li><span>04</span><div>Both instrumented: time, files inspected and changed, build cycles, defects by discovery stage, rework, escapes</div></li>
+        <li><span>05</span><div>Predictions preregistered and frozen before either arm starts</div></li>
+        <li><span>06</span><div>An independent verification pass on both — self-review demonstrably misses what matters</div></li>
+      </ol>
+    </section>
+
+    <section>
+      <p class="prose">
+        The full accounting, including provenance for every figure quoted here and
+        the four open data-quality questions, lives in the repository as
+        <a href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/19-evidence.md">docs/19-evidence.md</a>.
+      </p>
+    </section>

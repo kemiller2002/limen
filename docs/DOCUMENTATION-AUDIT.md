@@ -36,6 +36,7 @@ non-release work, and the starting commit is recorded above.
 | **A-1** | A | `DirectTypeScriptTransport` is a demo, promoted as an entry point | **documented + JSDoc warning on the class** |
 | **P-1** | P | `data-if`/`data-each` fields skip the form pending-field flush | ✅ **FIXED** — insert before binding; regression tests |
 | **P-2** | P | `data-if`/`data-each` on a non-`<template>` silently ignored | ✅ **FIXED** — now a reported binding error; found externally (L-2) |
+| **P-3** | P | An undecodable response discarded its status code | ✅ **FIXED** — `Failure` now carries `status`; found by building the site |
 | **D-9** | D | `dist/main.js` ships and auto-starts the demo on import | ✅ **FIXED** — excluded from the published package |
 | N-1 | N | "kernel" and "capability" each carry two meanings | documented |
 | N-2 | N | `any`/`dynamic` check is raw-text, matches comments | documented |
@@ -203,6 +204,30 @@ which remains by design (a falsy key is a legitimate way to keep content
 unmounted; a misplaced attribute never is).
 
 ---
+
+### P-3 · An undecodable response discarded its status code
+
+✅ **FIXED.** Found by dogfooding — building the demos page for the website
+exposed it within minutes, which is the clearest argument for the site existing
+at all.
+
+**Behavior.** `#runHttp` reported `Failure { reason: "invalid-response" }` with
+no status whenever `response.json()` threw. Since **most servers return HTML
+error pages**, that is the ordinary case for a 404 or a 500 — so the status was
+being thrown away exactly when it mattered most, and a 500 error page became
+indistinguishable from a 200 carrying malformed JSON. The first is often worth
+retrying; the second never is.
+
+It also made the documentation wrong: "a 404 is a `Success`" is true only if the
+404's body happens to parse as JSON, which is unusual.
+
+**Fix.** `EffectOutcome`'s `Failure` variant gained an optional
+`status?: number`, set exactly when a response was received — so on
+`invalid-response`, never on `network`/`aborted`. The absence of `status` now
+carries the meaning "nothing came back". Additive, so no consumer breaks.
+
+Covered by three tests (a 503 error page, a malformed 200, and a network failure
+that must carry no status), plus two at the site level.
 
 ## N — Naming
 

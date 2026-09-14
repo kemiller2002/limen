@@ -211,7 +211,7 @@ Classification is transport-level only — never business meaning:
 | --- | --- |
 | Response received and `.json()` parsed | `Success { status, body }` — *any* status, including 500 |
 | `fetch` threw, not aborted | `Failure { reason: "network" }` |
-| Body was not valid JSON | `Failure { reason: "invalid-response" }` |
+| Body was not valid JSON | `Failure { reason: "invalid-response", status }` — the status rides along, since a response *did* arrive |
 | Aborted with reason `"cancelled"` | `Cancelled` |
 | Aborted with reason `"timeout"` | `OutcomeUnknown { reason: "timeout-after-dispatch" }` |
 

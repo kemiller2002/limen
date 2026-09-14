@@ -308,7 +308,11 @@ export class BrowserKernel {
       try {
         return { kind: "Success", status: response.status, body: await response.json() as unknown };
       } catch {
-        return controller.signal.aborted ? this.#classifyAbort(controller) : { kind: "Failure", reason: "invalid-response" };
+        // A response did arrive — it simply would not decode. Carry the status
+        // so the engine can tell a 500 error page apart from a malformed 200.
+        return controller.signal.aborted
+          ? this.#classifyAbort(controller)
+          : { kind: "Failure", reason: "invalid-response", status: response.status };
       }
     } catch {
       return this.#classifyAbort(controller);

@@ -168,11 +168,26 @@ consists of.
 This example is real, and the test suite executes it on every run:
 [`examples/01-counter/`](examples/01-counter/).
 
+## The site
+
+Limen's own website is built **with** Limen — its interactive sections are a
+real Limen application driven by the same package you would install, and its
+prose is ordinary static HTML. Source in [`site/`](site/), assembled by
+[`scripts/build-site.ts`](scripts/build-site.ts), deployed by
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+
+```sh
+npm run serve:site   # build and serve on http://localhost:4174
+```
+
+The demos page performs genuinely real requests to show all four effect
+outcomes — nothing is stubbed or animated.
+
 ## Run it
 
 ```sh
 npm install
-npm run check        # build + architecture check + docs check + 68 tests
+npm run check        # build + architecture, docs and site checks + 88 tests
 npm run build
 npm run build:examples
 python3 -m http.server 4173

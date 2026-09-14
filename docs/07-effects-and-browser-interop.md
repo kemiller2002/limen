@@ -134,25 +134,47 @@ const effect: EffectRequest = {
 ```ts
 type EffectOutcome =
   | { kind: "Success";        status: number; body: unknown }
-  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response" }
+  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response"; status?: number }
   | { kind: "Cancelled" }
   | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" };
 ```
+
+`status` is present exactly when a response was received — so on
+`invalid-response`, never on `network`/`aborted`. Its absence means nothing came
+back.
 
 | Outcome | Means | Typically |
 | --- | --- | --- |
 | `Success` | a response arrived and its body parsed as JSON | check `status`, then decode `body` |
 | `Failure { network }` | `fetch` threw — DNS, offline, CORS | retryable |
-| `Failure { invalid-response }` | responded, but the body was not JSON | **not** retryable — it will fail identically |
+| `Failure { invalid-response, status }` | responded, but the body was not JSON | depends on `status`: a 5xx error page is often retryable, a malformed 200 never is |
 | `Failure { aborted }` | aborted for a reason that was neither cancel nor timeout | rare |
 | `Cancelled` | the engine asked for this | usually return to the prior state |
 | `OutcomeUnknown` | timed out **after dispatch** | see below — this is the important one |
 
 #### `Success` does not mean the server agreed
 
-A 404, a 422, and a 500 are all `Success`. The kernel received a response; it
-does not decide what a status code means, because that is domain-specific — a
-404 from a lookup may be a normal "not found", and from a save it is a bug.
+A 404, a 422, and a 500 are `Success` **provided their bodies parse as JSON**.
+The kernel received a response; it does not decide what a status code means,
+because that is domain-specific — a 404 from a lookup may be a normal "not
+found", and from a save it is a bug.
+
+> **In practice most error responses are not JSON.** Servers return HTML error
+> pages, so a 404 usually arrives as
+> `Failure { reason: "invalid-response", status: 404 }`, not as a `Success`.
+> Check `status` on the failure branch too, or you will treat "the server
+> refused" as "the payload was malformed":
+>
+> ```ts
+> case "Failure": {
+>   if (command.outcome.reason === "network") return retryable("Could not reach the server.");
+>   // A response arrived but would not decode. The status says which case this is.
+>   if (command.outcome.status !== undefined && command.outcome.status !== 200) {
+>     return { kind: "Rejected", reason: `Server answered ${command.outcome.status}.`, retryable: command.outcome.status >= 500 };
+>   }
+>   return { kind: "Rejected", reason: "The response was not valid JSON.", retryable: false };
+> }
+> ```
 
 ```ts
 case "Success":

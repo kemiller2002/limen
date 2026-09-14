@@ -273,16 +273,23 @@ type StorageEffectRequest =
 ```ts
 type EffectOutcome =
   | { kind: "Success";        status: number; body: unknown }
-  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response" }
+  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response"; status?: number }
   | { kind: "Cancelled" }
   | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" };
 ```
 
 | Outcome | Produced when |
 | --- | --- |
-| `Success` | a response arrived and `.json()` parsed — **any status, including 500** |
-| `Failure { network }` | `fetch` threw and was not aborted |
-| `Failure { invalid-response }` | responded, body was not JSON |
+| `Success` | a response arrived **and `.json()` parsed** — any status, including 500 |
+| `Failure { network }` | `fetch` threw and was not aborted. **No `status`** — nothing came back |
+| `Failure { invalid-response, status }` | a response arrived but would not decode. **Carries the status** |
+
+> **`status` is present exactly when a response was received.** Its absence
+> means nothing came back. This matters more than it looks: most servers return
+> **HTML** error pages, so a 404 or 500 usually arrives as
+> `Failure { invalid-response, status: 404 }` rather than as a `Success`. Without
+> the status, that would be indistinguishable from a `200` carrying malformed
+> JSON — and the first is often worth retrying while the second never is.
 | `Failure { aborted }` | aborted for neither `"cancelled"` nor `"timeout"` |
 | `Cancelled` | aborted with reason `"cancelled"` |
 | `OutcomeUnknown` | aborted with reason `"timeout"` — **never a `Failure`** |

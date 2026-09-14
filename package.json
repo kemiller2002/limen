@@ -58,12 +58,15 @@
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json",
     "build:examples": "tsc -p tsconfig.examples.json",
+    "build:site": "tsc -p tsconfig.site.json && node --experimental-strip-types scripts/build-site.ts",
+    "serve:site": "npm run build:site && python3 -m http.server 4174 -d dist-site",
     "check:architecture": "node --experimental-strip-types scripts/check-architecture.ts",
     "check:docs": "node --experimental-strip-types scripts/check-docs.ts",
-    "pretest": "npm run build && npm run build:examples",
-    "test": "npm run check:architecture && npm run check:docs && node --experimental-strip-types --test test/*.test.ts",
+    "pretest": "npm run build && npm run build:examples && npm run build:site",
+    "test": "npm run check:architecture && npm run check:docs && npm run check:site && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
-    "prepack": "npm run clean && npm run check"
+    "prepack": "npm run clean && npm run check",
+    "check:site": "node --experimental-strip-types scripts/check-site.ts"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

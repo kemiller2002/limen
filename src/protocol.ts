@@ -17,7 +17,13 @@ export type SemanticEvent = {
 // modes than a network request (no meaningful "dispatched but uncertain").
 export type EffectOutcome =
   | { readonly kind: "Success"; readonly status: number; readonly body: unknown }
-  | { readonly kind: "Failure"; readonly reason: "network" | "aborted" | "invalid-response" }
+  // `status` is present exactly when a response was actually received — i.e.
+  // for "invalid-response", never for "network"/"aborted". Without it, a 500
+  // returning an HTML error page (retryable) is indistinguishable from a 200
+  // returning malformed JSON (not retryable), which is a distinction only the
+  // engine can act on. Optional rather than required so the absence carries
+  // the meaning "nothing came back".
+  | { readonly kind: "Failure"; readonly reason: "network" | "aborted" | "invalid-response"; readonly status?: number }
   | { readonly kind: "Cancelled" }
   | { readonly kind: "OutcomeUnknown"; readonly reason: "timeout-after-dispatch" };
 

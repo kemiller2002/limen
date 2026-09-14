@@ -148,14 +148,16 @@ hands you `unknown`.
 
 Things worth deciding up front, because they change your state model:
 
-- **Status codes.** The kernel reports every response as `Success`. Decide what
-  each status means in your domain and check `outcome.status` yourself.
+- **Status codes.** A response whose body parses as JSON is reported as
+  `Success` whatever its status; one that does not parse is
+  `Failure { invalid-response, status }`. Either way the kernel never decides
+  what a status *means* — check `outcome.status` yourself, **on both branches**.
 - **Idempotency.** Which endpoints are safe to repeat after an
   `OutcomeUnknown`? For non-idempotent writes, consider server-side idempotency
   keys — it turns an unrecoverable "we don't know" into a safe retry.
 - **Timeouts.** `timeoutMs` is required per request. Pick values matched to the
   endpoint, not one global constant.
-- **Errors.** A non-JSON error page yields `Failure { invalid-response }`, which
+- **Errors.** A non-JSON error page yields `Failure { invalid-response, status }`, which
   is not retryable. Returning JSON error bodies consistently gives your engine
   something to act on.
 

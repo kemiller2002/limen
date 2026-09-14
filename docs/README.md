@@ -58,6 +58,15 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 | [Documentation audit](DOCUMENTATION-AUDIT.md) | Findings from the documentation audit, including unresolved ambiguities |
 | [Usage (legacy)](USAGE.md) | The original consumer walkthrough, kept for continuity |
 
+## The website
+
+Limen's own site lives in [`site/`](../site/) and is itself a Limen
+application — the interactive sections run on the real kernel, the prose is
+static HTML. It is verified by [`test/site.test.ts`](../test/site.test.ts)
+(behavior, against the built pages) and
+[`scripts/check-site.ts`](../scripts/check-site.ts) (the publishable artifact).
+Build and serve it with `npm run serve:site`.
+
 ## Examples
 
 All examples are executed by the test suite ([`test/examples.test.ts`](../test/examples.test.ts)),

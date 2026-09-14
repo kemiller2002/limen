@@ -1,0 +1,175 @@
+    <section class="page-intro">
+      <p class="eyebrow">Architecture</p>
+      <h1>What runs where, and why.</h1>
+      <p class="lead">
+        Limen is roughly eighty lines of contract and one bridge file. The
+        interesting part is not the code — it is where the line is drawn, and what
+        becomes impossible once it is.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">The contract</p><h2>Two message shapes cross. Nothing else.</h2></div>
+        <p class="section-note">Defined in <code>src/protocol.ts</code>.</p>
+      </div>
+      <div class="split">
+        <figure class="code-figure">
+          <figcaption>Browser → Engine</figcaption>
+          <pre><code><span class="k">type</span> BrowserToEngineMessage =
+  | { kind: <span class="s">"Initialize"</span>; protocolVersion; capabilities }
+  | { kind: <span class="s">"Event"</span>;        event:  SemanticEvent }
+  | { kind: <span class="s">"EffectResult"</span>; result: EffectResult };
+
+<span class="k">type</span> SemanticEvent = {
+  name:   <span class="k">string</span>;   <span class="c">// the data-event value, verbatim</span>
+  key?:   <span class="k">string</span>;   <span class="c">// the enclosing list item's key</span>
+  value?: <span class="k">string</span>;   <span class="c">// a form control's .value</span>
+};</code></pre>
+        </figure>
+        <figure class="code-figure">
+          <figcaption>Engine → Browser</figcaption>
+          <pre><code><span class="k">type</span> EngineToBrowserMessage = {
+  view:          ViewState;
+  effects:       EffectRequest[];
+  cancellations: CorrelationId[];
+};
+
+<span class="c">// ViewState admits only these:</span>
+<span class="k">type</span> ViewValue =
+  | <span class="k">string</span> | <span class="k">number</span> | <span class="k">boolean</span>
+  | ViewItem[];   <span class="c">// flat records of the above</span></code></pre>
+        </figure>
+      </div>
+      <p class="prose">
+        Three properties carry all the weight. It is <strong>data, not calls</strong> — no
+        callbacks, no DOM nodes, no object identity, so every value survives a
+        round trip through JSON. It is <strong>generic</strong> — the kernel's types mention no
+        domain concept, so there is nowhere for a feature to add a special case.
+        And it is <strong>total</strong> — every response carries a complete view, so the kernel
+        never diffs or patches; the engine says what things are now.
+      </p>
+      <p class="prose">
+        Note what <code>SemanticEvent</code> does <em>not</em> carry: no element id, no DOM node, no
+        event object. An engine that knew about element ids would be coupled to
+        markup, and changing the HTML would become a change to application logic.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">State ownership</p><h2>Four kinds of state. One owner each.</h2></div>
+        <p class="section-note">&ldquo;Owns&rdquo; means: if two disagree, this one is right.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Who owns what, and what that rules out</caption>
+          <thead><tr><th scope="col">Kind</th><th scope="col">Examples</th><th scope="col">Owner</th><th scope="col">Consequence</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Application</th><td>Which screen is showing; what is in the draft; is a save in flight</td><td>Engine</td><td>Anything the application would behave differently because of lives here — including things that feel like &ldquo;UI state&rdquo;</td></tr>
+            <tr><th scope="row">DOM</th><td><code>textContent</code>, <code>disabled</code>, which templates are mounted</td><td>The DOM, written by the kernel</td><td>Output only. Never read back as truth</td></tr>
+            <tr><th scope="row">Browser-local</th><td>Focus, scroll, caret, hover, animation progress</td><td>The browser</td><td>Deliberately untracked. CSS and native behavior handle it</td></tr>
+            <tr><th scope="row">External</th><td>Server records, <code>localStorage</code> contents</td><td>The external system</td><td>The engine never holds this — only <em>evidence about it</em>, with a classified outcome</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose">
+        That last row is subtle and load-bearing. When the server says a customer
+        exists, the engine does not learn that a customer exists. It learns that it
+        received a response, at a moment, with a classified outcome, that said so.
+        That distinction is what makes <code>OutcomeUnknown</code> representable at all.
+      </p>
+      <p class="prose">
+        There is exactly one place the kernel reads from an element:
+        <code>readValue()</code>, which lifts <code>.value</code> off a form control into a
+        <code>SemanticEvent</code>. That is transporting a keystroke, not reading state — from
+        that moment the engine's copy is authoritative. There is no
+        <code>querySelector</code> anywhere in the engine, and there cannot be.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Enforcement</p><h2>Which rules are actually checked.</h2></div>
+        <p class="section-note">A rule nobody checks is a preference.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Enforcement mechanism per rule</caption>
+          <thead><tr><th scope="col">Rule</th><th scope="col">Enforced by</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">No <code>document</code>, <code>window</code>, <code>fetch(</code>, <code>localStorage</code>, <code>sessionStorage</code> in the engine</th><td><strong>Build script</strong> — fails CI</td></tr>
+            <tr><th scope="row">No dynamic-typing escape hatches in the engine</th><td><strong>Build script</strong> — fails CI</td></tr>
+            <tr><th scope="row">No <code>eval</code> or innerHTML-style escape anywhere in <code>src/</code></th><td><strong>Build script</strong> — fails CI</td></tr>
+            <tr><th scope="row">Every state handled in every switch</th><td><strong>Compiler</strong> — exhaustive unions</td></tr>
+            <tr><th scope="row">Protocol values stay JSON-serializable</th><td><strong>Compiler</strong> — <code>ViewValue</code> admits nothing else</td></tr>
+            <tr><th scope="row">Documentation links and examples stay valid</th><td><strong>Build script + test suite</strong></td></tr>
+            <tr><th scope="row">No second application-state store appears</th><td>Review only</td></tr>
+            <tr><th scope="row">The kernel does not branch on domain meaning</th><td>Review only</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose">
+        The last two rows are honest admissions. They are the rules most worth
+        having and the hardest to mechanize, so they depend on review — which is
+        exactly why they are written down in the design rules rather than assumed.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Reasoning</p><h2>Why the line sits here.</h2></div>
+        <p class="section-note">The part to reason from when the docs do not cover your case.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3>Why must the engine own all application state?</h3>
+          <p>State in two places will disagree, and when it does, nothing tells you which is right. Bugs of that kind are not fixed by being careful — they are fixed by making the second copy impossible. One owner also means one place to look, which matters far more for an agent than for a human: a human asks; an agent guesses and continues.</p>
+        </div>
+        <div class="card">
+          <h3>Why must the kernel stay ignorant?</h3>
+          <p>The moment it knows what one event name means, it becomes a place application logic can accumulate. Bridges that &ldquo;just handle this one case&rdquo; grow into second application frameworks. Six generic attributes leave no hook to grab.</p>
+        </div>
+        <div class="card">
+          <h3>Why represent effects as data?</h3>
+          <p>It keeps transitions pure and testable with no browser or network; it makes every external interaction visible at the boundary instead of buried in a function; and it forces the failure cases into the type system. You cannot request an HTTP effect without handling what happens when it fails.</p>
+        </div>
+        <div class="card">
+          <h3>Why is <code>OutcomeUnknown</code> separate from failure?</h3>
+          <p>A request that timed out after dispatch may have been processed. The kernel cannot know, and claiming otherwise causes duplicate records. The honest answer is &ldquo;we don't know&rdquo; — and the right recovery is domain-specific, which is precisely why the kernel reports instead of deciding.</p>
+        </div>
+        <div class="card">
+          <h3>Why project capabilities instead of deriving them?</h3>
+          <p>&ldquo;Disable Save when the text is empty&rdquo; is a business rule. If CSS or the DOM re-derives it, the rule now lives in two places and will drift. Projecting <code>saveDisabled</code> keeps one rule in one file.</p>
+        </div>
+        <div class="card">
+          <h3>Why serializable, when nothing is serialized?</h3>
+          <p>Because the alternative is a redesign later. Today the transport passes objects in process. Because the types admit nothing unserializable, adding a codec — or a WebAssembly engine — is additive rather than structural. One consumer has already done exactly that.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="method-band">
+      <div>
+        <p class="eyebrow">A note on the name</p>
+        <h2>There is no WebAssembly in this package.</h2>
+        <p>
+          The published package is still called <code>@echelon-foundry/typescript-wasm-kernel</code>,
+          and it contains no <code>.wasm</code> file, no loader, and no
+          <code>WebAssembly.instantiate</code> call. The name described the <em>shape</em> of the
+          boundary — narrow, serializable, and therefore drivable from a WebAssembly
+          module — rather than the current implementation.
+        </p>
+        <p>
+          That shape has since been demonstrated: a separate Echelon Foundry project
+          runs an F# engine behind this exact interface, over the .NET WebAssembly
+          runtime, and needed no change to the kernel to do it.
+        </p>
+        <p><a href="./evidence.html">What that does and does not prove →</a></p>
+      </div>
+      <ol>
+        <li><span>01</span><div><strong>The engine</strong> owns meaning. TypeScript in this package; F# in at least one consumer.</div></li>
+        <li><span>02</span><div><strong>The kernel</strong> is the browser-side bridge. That is what &ldquo;kernel&rdquo; names here — not the product.</div></li>
+        <li><span>03</span><div><strong>Limen</strong> is the whole: the contract, the kernel, and the rules about what may live where.</div></li>
+      </ol>
+    </section>

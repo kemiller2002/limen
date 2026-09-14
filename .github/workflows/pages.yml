@@ -1,0 +1,78 @@
+name: Pages
+
+# Pull requests BUILD and VALIDATE the site but never publish it. Only a push
+# to main (or a manual dispatch) reaches the deploy job, and only that job holds
+# the Pages and OIDC permissions.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege by default: the build job needs nothing but the source. The
+# deploy job widens this for itself, and nowhere else.
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Builds the kernel, the examples and the site, then runs the
+      # architecture check, the documentation check, and every test — including
+      # test/site.test.ts, which drives the built pages through the real kernel.
+      - name: Build and test everything
+        run: npm run check
+
+      - name: Verify the built site
+        run: node --experimental-strip-types scripts/check-site.ts
+
+      # Only main produces a deployable artifact. A pull request has proven the
+      # site builds and passes its checks, which is all it is entitled to do.
+      - name: Configure Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    # Belt and braces: the event check and the ref check are both required, so
+    # neither a mis-triggered workflow nor a branch push can publish.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
