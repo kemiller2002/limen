@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 2,
+  "nextSeq": 3,
   "items": [
     {
       "id": "WI-0001",
@@ -16,6 +16,24 @@
       "attachments": [],
       "createdAt": "2026-09-02T19:59:10.250Z",
       "updatedAt": "2026-09-02T19:59:40.757Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0002",
+      "title": "Documentation audit and reconstruction: rewrite README/AGENTS, add docs/ set, six verified examples, docs+example CI verification",
+      "description": null,
+      "tags": [
+        "docs",
+        "examples",
+        "ci"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-14T15:44:49.380Z",
+      "updatedAt": "2026-09-14T15:44:56.052Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
