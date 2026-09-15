@@ -74,7 +74,10 @@ let private runVerify (options: Args.VerifyOptions) =
     let snapshot = Operations.inspectRepository root
     let verification = Operations.verify options.Strict (cliVersion ()) snapshot
 
-    emit options.Global.Json (Render.verifyToJson verification) (Render.verifyToText verification)
+    emit
+        options.Global.Json
+        (Render.verifyToJson verification)
+        (Render.verifyToText verification options.Global.Verbose)
 
     if verification.Ok then
         ExitCodes.success
@@ -114,7 +117,7 @@ let private runInit (options: Args.InitOptions) =
     emit
         options.Global.Json
         (Render.lifecycleToJson "init" options.DryRun result)
-        (Render.lifecycleToText "init" options.DryRun result)
+        (Render.lifecycleToText "init" options.DryRun options.Global.Verbose result)
 
     lifecycleExitCode options.Check result
 
@@ -154,7 +157,7 @@ let private runUpgrade (options: Args.UpgradeOptions) =
         emit
             options.Global.Json
             (Render.lifecycleToJson "upgrade" options.DryRun result)
-            (Render.lifecycleToText "upgrade" options.DryRun result)
+            (Render.lifecycleToText "upgrade" options.DryRun options.Global.Verbose result)
 
         lifecycleExitCode options.Check result
 

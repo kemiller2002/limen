@@ -174,7 +174,7 @@ let verifyToJson (verification: VerificationResult) =
           "strict", JBool verification.Strict
           "problems", verification.Problems |> List.map problemToJson |> JArray ]
 
-let verifyToText (verification: VerificationResult) =
+let verifyToText (verification: VerificationResult) (verbose: bool) =
     if verification.Ok then
         let mode = if verification.Strict then " (strict)" else ""
         sprintf "Limen verification passed%s." mode
@@ -184,9 +184,16 @@ let verifyToText (verification: VerificationResult) =
 
         let details =
             verification.Problems
-            |> List.map (fun problem ->
+            |> List.collect (fun problem ->
                 let finding = Diagnose.explain problem
-                sprintf "  %s  %s" finding.Code finding.Detail)
+
+                [ sprintf "  %s  %s" finding.Code finding.Detail
+                  // Under --verbose the remedy comes too, so a failing CI log
+                  // says what to do rather than only what is wrong.
+                  if verbose then
+                      match finding.Remedy with
+                      | Some remedy -> sprintf "            fix: %s" remedy
+                      | None -> () ])
 
         String.concat "\n" (header :: "" :: details)
 
@@ -285,7 +292,7 @@ let lifecycleToJson (command: string) (dryRun: bool) (result: Operations.Lifecyc
            | Some verification -> verificationToJson verification
            | None -> JNull) ]
 
-let lifecycleToText (command: string) (dryRun: bool) (result: Operations.LifecycleResult) =
+let lifecycleToText (command: string) (dryRun: bool) (verbose: bool) (result: Operations.LifecycleResult) =
     let conflicts =
         result.Plan.Conflicts
         |> List.map (fun conflict ->
@@ -328,7 +335,13 @@ let lifecycleToText (command: string) (dryRun: bool) (result: Operations.Lifecyc
             | Some verification when verification.Ok -> [ ""; "Verification passed." ]
             | Some verification ->
                 [ ""
-                  sprintf "Verification failed: %d problem(s). Run `limen doctor`." (List.length verification.Problems) ]
+                  sprintf "Verification failed: %d problem(s). Run `limen doctor`." (List.length verification.Problems)
+                  if verbose then
+                      yield!
+                          verification.Problems
+                          |> List.map (fun problem ->
+                              let finding = Diagnose.explain problem
+                              sprintf "  %s  %s" finding.Code finding.Detail) ]
             | None -> []
 
         String.concat

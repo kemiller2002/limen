@@ -157,7 +157,7 @@ information alone do not fail it.
 | Option | Applies to | Meaning |
 | --- | --- | --- |
 | `--json` | all | emit JSON on stdout and nothing else |
-| `--verbose` | all | include per-problem detail |
+| `--verbose` | all | include the remedy for each problem — `doctor` always shows them, so it changes nothing there |
 | `--root PATH` | all | operate on the repository at `PATH` |
 | `--dry-run` | `init`, `upgrade` | calculate and report the plan; change nothing |
 | `--check` | `init`, `upgrade` | as `--dry-run`, but exit `3` if anything would change |

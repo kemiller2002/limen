@@ -26,7 +26,7 @@ COMMANDS
 
 OPTIONS
   --json     Emit machine-readable JSON on stdout and nothing else.
-  --verbose  Include per-file detail.
+  --verbose  Include the remedy for each problem (doctor always shows them).
   --root P   Operate on the repository at P instead of the current directory.
   --help     Show help. Works per command: `limen init --help`.
   --version  Print the version of this tool.

@@ -199,6 +199,21 @@ let ``JSON escaping survives control characters and quotes`` () =
     Assert.Equal(awkward, root.GetProperty("value").GetString())
 
 [<Fact>]
+let ``verbose actually changes what verify prints`` () =
+    // A documented flag that does nothing is a lie in the public interface.
+    let verification =
+        { Ok = false
+          Strict = false
+          Problems = [ BoundaryViolation("src/engine/a.ts", "reaches the DOM") ] }
+
+    let plain = Render.verifyToText verification false
+    let verbose = Render.verifyToText verification true
+
+    Assert.NotEqual<string>(plain, verbose)
+    Assert.Contains("fix:", verbose)
+    Assert.DoesNotContain("fix:", plain)
+
+[<Fact>]
 let ``the help text documents every exit code the CLI can return`` () =
     for code in [ 0; 1; 2; 3; 4; 5; 6; 7 ] do
         Assert.Contains(string code, Help.general)

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 8,
+  "nextSeq": 9,
   "items": [
     {
       "id": "WI-0001",
@@ -120,6 +120,22 @@
       "attachments": [],
       "createdAt": "2026-09-15T16:11:45.217Z",
       "updatedAt": "2026-09-15T16:11:48.624Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0008",
+      "title": "Make --verbose meaningful on verify, init and upgrade",
+      "description": "The flag was documented on every command but only changed status output. Wire it through verify and the lifecycle commands, and test that it changes what is printed.",
+      "tags": [
+        "tooling"
+      ],
+      "priority": "low",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-15T16:14:33.902Z",
+      "updatedAt": "2026-09-15T16:14:33.982Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

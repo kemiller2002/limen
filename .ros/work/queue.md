@@ -9,4 +9,5 @@
 | WI-0004 | Fix kernel silent-failure defects P-1/P-2, packaging D-9, transport clarity A-1; publish evidence findings | complete | limen, defect, evidence | high |
 | WI-0005 | Limen showcase site: Echelon Foundry identity, interactive demos driven by real Limen, Pages deployment | complete | limen, site, pages | high |
 | WI-0006 | Standardized Echelon lifecycle CLI: F# core + npm bootstrap for init/status/verify/upgrade/doctor | complete | tooling | high |
-| WI-0007 | Document the lifecycle conversion: CLI reference, installation and ownership, conversion report | ready | documentation | medium |
+| WI-0007 | Document the lifecycle conversion: CLI reference, installation and ownership, conversion report | complete | documentation | medium |
+| WI-0008 | Make --verbose meaningful on verify, init and upgrade | ready | tooling | low |
