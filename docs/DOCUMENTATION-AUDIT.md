@@ -389,7 +389,7 @@ An accurate restatement:
 | Echelon Foundry design system | `github.com/kemiller2002/consulting-company`, `assets/css/style.css` | 190 lines. Canonical palette (`--ef-*` tokens), type scale (Newsreader / Manrope / IBM Plex Mono), layout, cards, stat blocks, research rows, responsive + `prefers-reduced-motion` + `forced-colors` handling. Public repo; clone anonymously. **This is the authoritative source** to reuse for a Limen site rather than approximating. |
 | EF page templates | same repo, `src/templates/{layout,header,footer}.html` | Static-build model, `{{title}}`/`{{content}}` substitution via `build.js`. |
 | EF Pages workflow | same repo, `.github/workflows/deploy-pages.yml` | Already uses least-privilege `contents: read` / `pages: write` / `id-token: write`, `main`-only, `concurrency: pages`. A sound model to follow. |
-| .NET / F# toolchain | **unavailable in the current environment** | `builds.dotnet.microsoft.com` is policy-denied (HTTP 403) by the agent proxy. NuGet itself is reachable. Any F# tooling must be written and verified elsewhere. |
+| .NET / F# toolchain | **available** — corrected | An earlier entry here recorded the toolchain as unavailable because `builds.dotnet.microsoft.com` is policy-denied (HTTP 403) by the agent proxy. That conclusion was wrong: only Microsoft's own CDN is blocked. The Ubuntu archive carries `dotnet-sdk-8.0`, and `apt-get install dotnet-sdk-8.0` installs a working SDK (8.0.131 as tested). NuGet is reachable, xunit restores, and self-contained cross-publish to all five target platforms succeeds. The lifecycle CLI in `cli/` was built and tested with it. |
 
 ## Open questions
 

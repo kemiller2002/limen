@@ -7,4 +7,5 @@
 | WI-0002 | Documentation audit and reconstruction: rewrite README/AGENTS, add docs/ set, six verified examples, docs+example CI verification | complete | docs, examples, ci | high |
 | WI-0003 | Limen productization: name the kernel Limen in human-facing surfaces, rewrite README/AGENTS front door, preserve compatibility-sensitive identifiers | complete | limen, naming, docs | high |
 | WI-0004 | Fix kernel silent-failure defects P-1/P-2, packaging D-9, transport clarity A-1; publish evidence findings | complete | limen, defect, evidence | high |
-| WI-0005 | Limen showcase site: Echelon Foundry identity, interactive demos driven by real Limen, Pages deployment | ready | limen, site, pages | high |
+| WI-0005 | Limen showcase site: Echelon Foundry identity, interactive demos driven by real Limen, Pages deployment | complete | limen, site, pages | high |
+| WI-0006 | Standardized Echelon lifecycle CLI: F# core + npm bootstrap for init/status/verify/upgrade/doctor | ready | tooling | high |

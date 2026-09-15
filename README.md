@@ -168,6 +168,49 @@ consists of.
 This example is real, and the test suite executes it on every run:
 [`examples/01-counter/`](examples/01-counter/).
 
+## The lifecycle CLI
+
+The same package is also a command-line tool that installs the Limen boundary
+into a repository and keeps it honest. No .NET runtime is required — a
+self-contained binary ships for each supported platform.
+
+```sh
+npx @echelon-foundry/typescript-wasm-kernel init      # install the boundary. Idempotent.
+npx @echelon-foundry/typescript-wasm-kernel status    # what is installed, and is it valid?
+npx @echelon-foundry/typescript-wasm-kernel verify    # check it. Read-only.
+npx @echelon-foundry/typescript-wasm-kernel upgrade   # move to this version, safely.
+npx @echelon-foundry/typescript-wasm-kernel doctor    # explain what is wrong, and how to fix it.
+```
+
+Once installed, the executable is simply `limen`.
+
+`init` creates three things: `limen.config.json` (yours — it names which
+directories are engine and which are kernel), a CI workflow that runs
+`verify --strict`, and an installation manifest at `.echelon/limen.json`. It
+never overwrites a file you have edited, and never overwrites a file that was
+there before it arrived. Running it twice makes no second round of changes.
+
+`verify` then enforces the boundary this README opens with: engine code must not
+name `document`, `window`, `fetch(`, `localStorage` or `sessionStorage`, and
+neither side may use `eval`. It is a lexical check — a guard rail, not a proof.
+
+For CI and agents, every command takes `--json` (a single document on stdout,
+messages on stderr) and branches on stable exit codes; `init` and `upgrade` take
+`--dry-run` and `--check`. Nothing prompts, so nothing hangs.
+
+```sh
+npx @echelon-foundry/typescript-wasm-kernel verify --strict     # 0 valid, 3 invalid
+npx @echelon-foundry/typescript-wasm-kernel init --dry-run --json
+```
+
+Full reference: **[docs/20-lifecycle-cli.md](docs/20-lifecycle-cli.md)**. What it
+writes, who owns which file, and what an upgrade may change:
+**[docs/21-installation-and-upgrade.md](docs/21-installation-and-upgrade.md)**.
+
+The CLI is implemented in F# (`cli/Limen.Core/`, `cli/Limen.Cli/`); the Node
+side is a launcher that selects a binary and forwards arguments, and contains no
+lifecycle logic.
+
 ## The site
 
 Limen's own website is built **with** Limen — its interactive sections are a
@@ -227,6 +270,8 @@ own real `index.html`, so none can silently rot.
 | Doing one specific task | [docs/15-recipes.md](docs/15-recipes.md) |
 | Debugging | [docs/16-troubleshooting.md](docs/16-troubleshooting.md) |
 | Adopting Limen elsewhere | [docs/10-integration-guide.md](docs/10-integration-guide.md) |
+| Using the CLI | [docs/20-lifecycle-cli.md](docs/20-lifecycle-cli.md) |
+| Asking what `init` will change | [docs/21-installation-and-upgrade.md](docs/21-installation-and-upgrade.md) |
 | Asking about WASM | [docs/17-wasm-migration.md](docs/17-wasm-migration.md) |
 | Asking about the name | [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) |
 
@@ -256,6 +301,9 @@ Known gaps, deferred work, and the reasoning behind both are tracked in
 - **TypeScript** ≥ 5.9 if you consume the types
 - **Browsers**: any with ES2022 modules, `fetch`, and `AbortController`
 - **Runtime dependencies**: none — the kernel imports nothing at runtime
+- **The CLI**: needs no .NET runtime; a self-contained binary ships for Linux
+  x64/arm64, Windows x64, and macOS x64/arm64. Any other platform exits `7`
+  saying so. Building it from source needs the .NET SDK 8.
 - **Versioning**: semver, currently `0.x` — the protocol may still change in a
   minor release. See [docs/11-api-reference.md](docs/11-api-reference.md#stability-and-compatibility).
 
@@ -268,6 +316,17 @@ npm run build:examples     # tsc → examples/**/*.js
 npm run check:architecture # boundary enforcement
 npm run check:docs         # links, paths, orphans
 ```
+
+Working on the lifecycle CLI additionally needs the **.NET SDK 8**:
+
+```sh
+npm run test:cli           # dotnet test — the F# lifecycle core
+npm run build:cli          # publish the binary for this platform
+npm run build:cli:all      # publish all five platform binaries (what npm pack ships)
+```
+
+`npm run check` runs without the .NET SDK; the CLI tests in `test/cli.test.ts`
+report as **skipped** rather than passing when no binary has been built.
 
 Contributing — including AI agents — starts with [AGENTS.md](AGENTS.md) and
 [docs/12-design-rules.md](docs/12-design-rules.md).

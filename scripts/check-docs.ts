@@ -67,7 +67,7 @@ const files = await markdownFiles(ROOT);
 
 const LINK = /\[[^\]]*\]\(([^)]+)\)/g;
 // A repo-relative path mentioned in prose or inline code, e.g. `src/protocol.ts`.
-const MENTION = /`((?:src|test|docs|examples|scripts)\/[A-Za-z0-9._/-]+\.[A-Za-z]+)`/g;
+const MENTION = /`((?:src|test|docs|examples|scripts|cli|bin)\/[A-Za-z0-9._/-]+\.[A-Za-z]+)`/g;
 
 for (const file of files) {
   if (ROS_MANAGED.has(relative(ROOT, file))) continue;

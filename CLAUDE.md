@@ -38,6 +38,28 @@ Note the terminology collision: **kernel** here means the *browser-side
 bridge* (`BrowserKernel`), the opposite side of the boundary from the engine.
 See [docs/glossary.md](docs/glossary.md).
 
+## The lifecycle CLI lives in `cli/` and is F#
+
+The same npm package ships a lifecycle tool — `init`, `status`, `verify`,
+`upgrade`, `doctor` — implemented in F# under `cli/Limen.Core/` (the domain) and
+`cli/Limen.Cli/` (argument parsing and rendering only). `bin/limen.js` is a
+launcher that picks a platform binary and forwards arguments; **no lifecycle
+logic belongs in it**.
+
+The layering mirrors this repository's own rule: inspect → plan → validate →
+execute → verify, with planning pure and `Execute.fs` the only module that
+writes. If you find yourself reading the filesystem inside the planner, that is
+the boundary breaking.
+
+It is under `cli/` rather than `src/` deliberately: `src/` is the published
+TypeScript library, governed by the engine/kernel rule below, and mixing a
+second language into it would muddy that rule. See
+[docs/20-lifecycle-cli.md](docs/20-lifecycle-cli.md) and
+[docs/21-installation-and-upgrade.md](docs/21-installation-and-upgrade.md).
+
+Note: `.NET SDK 8` is installable here via `apt-get install dotnet-sdk-8.0`
+(the Ubuntu archive works even though Microsoft's own CDN is proxy-blocked).
+
 ## Documentation map
 
 - [AGENTS.md](AGENTS.md) — agent entry point: rules, landmarks, reading order
@@ -164,6 +186,10 @@ npm run check:docs         # scripts/check-docs.ts — links, paths, orphans
 npm test                   # pretest (build + build:examples) → architecture
                            #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)
+
+npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)
+npm run build:cli          # publish the CLI binary for this platform
+npm run build:cli:all      # publish all five platform binaries
 ```
 
 Always run `npm run check` (or `npm test`) before considering a change

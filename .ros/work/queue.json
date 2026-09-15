@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 6,
+  "nextSeq": 7,
   "items": [
     {
       "id": "WI-0001",
@@ -88,6 +88,22 @@
       "attachments": [],
       "createdAt": "2026-09-14T17:27:29.600Z",
       "updatedAt": "2026-09-14T17:27:29.694Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0006",
+      "title": "Standardized Echelon lifecycle CLI: F# core + npm bootstrap for init/status/verify/upgrade/doctor",
+      "description": "Add an F#-implemented, npm-distributed lifecycle CLI (init, status, verify, upgrade, doctor) with a minimal Node bootstrap, installation manifest, file-ownership model, JSON output and stable exit codes, without changing existing library behavior.",
+      "tags": [
+        "tooling"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-15T15:38:36.583Z",
+      "updatedAt": "2026-09-15T15:38:40.388Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

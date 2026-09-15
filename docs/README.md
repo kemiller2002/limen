@@ -37,6 +37,8 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 | 11 | [API reference](11-api-reference.md) | What exactly does this function do? |
 | 15 | [Recipes](15-recipes.md) | How do I do one specific task? |
 | 16 | [Troubleshooting](16-troubleshooting.md) | Why isn't it working? |
+| 20 | [Lifecycle CLI](20-lifecycle-cli.md) | `init`, `status`, `verify`, `upgrade`, `doctor` — commands, flags, exit codes, JSON |
+| 21 | [Installation and upgrade](21-installation-and-upgrade.md) | What `init` does, who owns which file, what an upgrade may change |
 
 ## Rules and reasoning
 

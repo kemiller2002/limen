@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- The CLI ships trimmed; the core must be trim-clean for that to be
+         safe, which is why it uses no reflection-based serialization. -->
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- FS0025: incomplete pattern match. Left as an error deliberately: an
+         unhandled case in a lifecycle union is exactly the class of bug this
+         design exists to prevent. -->
+    <WarningLevel>5</WarningLevel>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Order is significant in F#: a file may only use what precedes it.
+         The sequence below is the dependency order of the design itself —
+         constants, then types, then reading, then deciding, then writing. -->
+    <Compile Include="Paths.fs" />
+    <Compile Include="ExitCodes.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Json.fs" />
+    <Compile Include="Hashing.fs" />
+    <Compile Include="Manifest.fs" />
+    <Compile Include="Configuration.fs" />
+    <Compile Include="Assets.fs" />
+    <Compile Include="Boundary.fs" />
+    <Compile Include="Inspect.fs" />
+    <Compile Include="State.fs" />
+    <Compile Include="Migrations.fs" />
+    <Compile Include="Planning.fs" />
+    <Compile Include="Execute.fs" />
+    <Compile Include="Diagnose.fs" />
+    <Compile Include="Operations.fs" />
+  </ItemGroup>
+
+</Project>

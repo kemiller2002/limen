@@ -13,3 +13,10 @@ examples/[0-9][0-9]-*/*.js
 site/app/*.js
 dist-site/
 
+# The F# lifecycle CLI compiles to platform binaries staged for npm packaging.
+# They are build output: `npm run build:cli:all` regenerates them, and the
+# publish workflow builds them fresh from source.
+runtimes/
+cli/**/bin/
+cli/**/obj/
+
