@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-15T15:38:40.465Z",
+  "updatedAt": "2026-09-15T16:08:08.097Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -114,10 +114,20 @@
     {
       "id": "WI-0006",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-15T15:38:40.465Z"
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "cli/Limen.Core/Operations.fs"
+        },
+        {
+          "type": "tests",
+          "path": "cli/tests/Limen.Core.Tests/LifecycleTests.fs"
+        }
+      ],
+      "updatedAt": "2026-09-15T16:08:08.097Z",
+      "completedAt": "2026-09-15T16:08:08.097Z"
     }
   ]
 }
