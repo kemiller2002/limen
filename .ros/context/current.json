@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-15T16:08:08.097Z",
+  "updatedAt": "2026-09-15T16:11:48.782Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -128,6 +128,24 @@
       ],
       "updatedAt": "2026-09-15T16:08:08.097Z",
       "completedAt": "2026-09-15T16:08:08.097Z"
+    },
+    {
+      "id": "WI-0007",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/22-lifecycle-conversion-report.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/cli.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-15T16:11:48.782Z",
+      "completedAt": "2026-09-15T16:11:48.782Z"
     }
   ]
 }
