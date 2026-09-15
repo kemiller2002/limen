@@ -326,13 +326,17 @@ so a monorepo can name several.
 
 ## Supported platforms
 
-| Platform | Binary |
-| --- | --- |
-| Linux x64 | `runtimes/linux-x64/limen` |
-| Linux arm64 | `runtimes/linux-arm64/limen` |
-| Windows x64 | `runtimes/win-x64/limen.exe` |
-| macOS x64 | `runtimes/osx-x64/limen` |
-| macOS arm64 | `runtimes/osx-arm64/limen` |
+| Platform | Binary | Exercised in CI |
+| --- | --- | --- |
+| Linux x64 | `runtimes/linux-x64/limen` | yes |
+| Linux arm64 | `runtimes/linux-arm64/limen` | no — built and packaged, never run |
+| Windows x64 | `runtimes/win-x64/limen.exe` | yes |
+| macOS x64 | `runtimes/osx-x64/limen` | no — built and packaged, never run |
+| macOS arm64 | `runtimes/osx-arm64/limen` | yes |
+
+The two unexercised rows are honest rather than cautious: GitHub's hosted
+runners cover neither Linux arm64 nor Intel macOS, so those binaries compile and
+ship but have not been executed.
 
 The launcher selects by `process.platform` and `process.arch`. Anything else
 exits `7` naming the platform and listing what is supported. No .NET runtime is

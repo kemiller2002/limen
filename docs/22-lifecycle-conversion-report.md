@@ -283,9 +283,22 @@ All executed, all passing:
 | skip visibility | with no binary: 1 test, 0 pass, **1 skipped** — not silently absent |
 | `./ros validate` | validation passed |
 
-Not yet executed: the Windows and macOS legs of the `packaged-cli` CI matrix.
-They are configured and will run on this branch's next CI run; until they have,
-those platforms are **untested**, not proven.
+The `packaged-cli` matrix has since run on branch head `4351cfe`, green on all
+three runners, with the real binary exercised through the npm bootstrap:
+
+| Runner | Binary exercised | Result |
+| --- | --- | --- |
+| `ubuntu-latest` | `linux-x64/limen` | 20 tests, 20 pass, 0 skipped |
+| `windows-latest` | `win-x64/limen.exe` | 20 tests, 20 pass, 0 skipped |
+| `macos-latest` (arm64) | `osx-arm64/limen` | 20 tests, 20 pass, 0 skipped |
+
+`0 skipped` is the number that matters: the suite is written to skip itself when
+no binary is present, so a green job with tests skipped would have proven
+nothing. The counts were read from the job logs, not inferred from the tick.
+
+Two shipped binaries are **cross-published but never executed**: `linux-arm64`
+and `osx-x64`. GitHub's hosted runners cover neither (`macos-latest` is arm64).
+They compile and are packaged; they have not been run.
 
 ## 26 · Publishing process
 
@@ -329,7 +342,10 @@ against the packed archive in a clean repository, not a developer checkout.
    matches whole words. It cannot see indirection, computed property access, or
    browser access reached through another package. A guard rail, not a proof.
 3. **No `uninstall` command.** Removal is three `rm`s, documented.
-4. **Windows and macOS are untested so far**, as recorded in §25.
+4. **Two of the five shipped binaries have never been run.** `linux-arm64` and
+   `osx-x64` are cross-published and packaged but unexercised, because GitHub's
+   hosted runners cover neither. Linux x64, Windows x64 and macOS arm64 are
+   proven (§25).
 5. **The F# check and the legacy TypeScript check differ by design** on comments
    and string literals. Both are documented; the legacy one still gates this
    repository.

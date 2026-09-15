@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 9,
+  "nextSeq": 10,
   "items": [
     {
       "id": "WI-0001",
@@ -136,6 +136,22 @@
       "attachments": [],
       "createdAt": "2026-09-15T16:14:33.902Z",
       "updatedAt": "2026-09-15T16:14:33.982Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0009",
+      "title": "Record cross-platform CI results in the CLI documentation",
+      "description": "The packaged-CLI matrix has run on Linux, Windows and macOS. Replace the 'untested' statements with the measured results, and state precisely which two shipped binaries have never been executed.",
+      "tags": [
+        "documentation"
+      ],
+      "priority": "low",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-15T16:19:00.953Z",
+      "updatedAt": "2026-09-15T16:19:01.031Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
