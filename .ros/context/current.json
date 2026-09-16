@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-16T17:46:48.681Z",
+  "updatedAt": "2026-09-16T17:54:05.306Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -402,6 +402,32 @@
       ],
       "updatedAt": "2026-09-16T17:46:48.681Z",
       "completedAt": "2026-09-16T17:46:48.681Z"
+    },
+    {
+      "id": "WI-0018",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "global.json"
+        },
+        {
+          "type": "implementation",
+          "path": "scripts/build-wasm.ts"
+        },
+        {
+          "type": "implementation",
+          "path": ".github/workflows/pages.yml"
+        },
+        {
+          "type": "tests",
+          "path": "test/toolchain.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-16T17:54:05.306Z",
+      "completedAt": "2026-09-16T17:54:05.306Z"
     }
   ]
 }

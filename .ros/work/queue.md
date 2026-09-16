@@ -19,4 +19,5 @@
 | WI-0014 | Browser navigation and history integration (ROADMAP item 8) | complete | kernel, protocol | high |
 | WI-0015 | Navigation and clipboard browser capability architecture (SDE mission) | complete | kernel, protocol, clipboard, navigation | high |
 | WI-0016 | Document capability: title, focus and scroll on route change | complete | kernel, protocol, accessibility | high |
-| WI-0017 | Drive the Limen site from an F# engine compiled to WebAssembly | ready | wasm, fsharp, site | high |
+| WI-0017 | Drive the Limen site from an F# engine compiled to WebAssembly | complete | wasm, fsharp, site | high |
+| WI-0018 | Pin the .NET SDK feature band so the wasm-tools workload installs where the build runs, and stop build-wasm.ts discarding dotnet's diagnostics | ready |  | medium |
