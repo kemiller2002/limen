@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <OutputType>Exe</OutputType>
+    <WasmMainJSPath>main.js</WasmMainJSPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Trim the runtime down: the engine uses no reflection, so the linker
+         can be aggressive. Size is reported in docs/26-fsharp-wasm-engine.md. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <!-- FSharp.Core ships an ILLink.Substitutions.xml naming embedded
+         resources the SDK has already stripped, so the trimmer reports IL2040
+         for each and IL2104 for the assembly. Both are benign and neither is
+         ours to fix; they are exempted by number rather than by turning off
+         TreatWarningsAsErrors, so a real trim warning still fails the build. -->
+    <NoWarn>$(NoWarn);IL2040;IL2104</NoWarn>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Limen.Engine/Limen.Engine.fsproj" />
+  </ItemGroup>
+
+</Project>

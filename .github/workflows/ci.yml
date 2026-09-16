@@ -42,6 +42,13 @@ jobs:
       - name: Test the lifecycle core
         run: npm run test:cli
 
+      # The site's F# engine, tested as ordinary F# — no WebAssembly, no
+      # browser. Building the wasm bundle needs an extra workload and about a
+      # minute, and the Pages workflow already does that on every pull request;
+      # this keeps the engine's own logic covered here for a few seconds.
+      - name: Test the F# site engine
+        run: npm run test:wasm
+
       # Build the CLI for this platform so the packaged-surface tests in
       # test/cli.test.ts run for real rather than reporting as skipped.
       - name: Build the lifecycle CLI

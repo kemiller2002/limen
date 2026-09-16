@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-16T16:59:51.373Z",
+  "updatedAt": "2026-09-16T17:46:48.681Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -364,6 +364,44 @@
       ],
       "updatedAt": "2026-09-16T16:59:51.373Z",
       "completedAt": "2026-09-16T16:59:51.373Z"
+    },
+    {
+      "id": "WI-0017",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "wasm/Limen.Engine/Engine.fs"
+        },
+        {
+          "type": "implementation",
+          "path": "wasm/Limen.Host/Interop.cs"
+        },
+        {
+          "type": "implementation",
+          "path": "site/app/wasm-transport.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "scripts/build-wasm.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/wasm.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "wasm/tests/Limen.Engine.Tests/EngineTests.fs"
+        },
+        {
+          "type": "docs",
+          "path": "docs/26-fsharp-wasm-engine.md"
+        }
+      ],
+      "updatedAt": "2026-09-16T17:46:48.681Z",
+      "completedAt": "2026-09-16T17:46:48.681Z"
     }
   ]
 }

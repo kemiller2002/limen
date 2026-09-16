@@ -17,6 +17,7 @@
 // intended to be ported. The logic is deliberately small to keep that cheap.
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -112,11 +113,20 @@ async function main(): Promise<void> {
   const scripts = await copyAppJs();
   await copyTree(join(ROOT, "dist"), join(OUT, "dist"));
 
+  // The F# engine, compiled to WebAssembly. Staged by `npm run build:wasm`.
+  // Absent is not fatal — the site falls back to the TypeScript engine — but
+  // it is worth saying out loud, because a silently JavaScript-only build of a
+  // site whose whole point is the wasm engine would be a poor thing to deploy.
+  const wasm = join(ROOT, "site", "wasm");
+  const hasWasm = existsSync(wasm);
+  if (hasWasm) await copyTree(wasm, join(OUT, "wasm"));
+  else console.warn("  ! site/wasm is missing — run `npm run build:wasm`; the site will fall back to TypeScript.");
+
   // Pages serves what it is given; nothing here needs Jekyll processing, and
   // .nojekyll stops it from ignoring paths that begin with an underscore.
   await writeFile(join(OUT, ".nojekyll"), "", "utf8");
 
-  console.log(`Site built: ${PAGES.length} pages, ${scripts} app script(s), version ${version} (${commit}) → dist-site/`);
+  console.log(`Site built: ${PAGES.length} pages, ${scripts} app script(s), wasm engine ${hasWasm ? "included" : "MISSING"}, version ${version} (${commit}) → dist-site/`);
 }
 
 await main();

@@ -50,7 +50,8 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 | 12 | [Design rules](12-design-rules.md) | What MUST/SHOULD/MAY I do? |
 | 13 | [Anti-patterns](13-anti-patterns.md) | What must I not do, and why? |
 | 14 | [Agent guide](14-agent-guide.md) | Where does a change belong? (written for AI coding agents) |
-| 17 | [WASM migration](17-wasm-migration.md) | Where is the WebAssembly, and what would adding it take? |
+| 17 | [WASM migration](17-wasm-migration.md) | Where is the WebAssembly, and what would moving an engine into it take? |
+| 26 | [The F# WebAssembly engine](26-fsharp-wasm-engine.md) | The engine that runs this project's own site: how it was built, what it cost, what it proved |
 | 18 | [Naming and compatibility](18-naming-and-compatibility.md) | What is Limen, what was renamed, and did anything break? |
 | — | [Glossary](glossary.md) | What does this word mean here? |
 

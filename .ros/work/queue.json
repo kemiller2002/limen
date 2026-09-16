@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 17,
+  "nextSeq": 18,
   "items": [
     {
       "id": "WI-0001",
@@ -270,6 +270,24 @@
       "attachments": [],
       "createdAt": "2026-09-16T16:49:56.819Z",
       "updatedAt": "2026-09-16T16:49:56.884Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0017",
+      "title": "Drive the Limen site from an F# engine compiled to WebAssembly",
+      "description": "Port the site's application engine to F#, compile it to WebAssembly via the .NET browser-wasm runtime, and drive the real Limen site through it using the UNMODIFIED BrowserKernel and a WasmTransport implementing EngineTransport. Makes docs/17-wasm-migration.md real: hand-written JSON codec across the boundary per SDE BOUNDARY-PRESERVATION, exhaustive matching preserved, and no host callbacks from the engine.",
+      "tags": [
+        "wasm",
+        "fsharp",
+        "site"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T17:19:27.482Z",
+      "updatedAt": "2026-09-16T17:19:27.554Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

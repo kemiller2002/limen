@@ -22,6 +22,12 @@
             <li>a handful of HTML attributes</li>
             <li>~80-line contract</li>
           </ul>
+          <!-- Filled in by site/app/main.ts once an engine has been chosen.
+               An architecture claim nobody can see is one nobody can check. -->
+          <p class="engine-badge">
+            Engine running this page:
+            <strong data-engine-name>checking…</strong>
+          </p>
         </div>
       </div>
     </section>
@@ -81,6 +87,17 @@
           </tbody>
         </table>
       </div>
+      <p class="prose">
+        <strong>The demos below are not running JavaScript.</strong> This site's engine —
+        every state machine, every transition, every projection on this page — is written in
+        <strong>F#</strong> and compiled to <strong>WebAssembly</strong>. The kernel carrying
+        events to it is the same <code>BrowserKernel</code> the npm package publishes,
+        unmodified: it was handed a different <code>EngineTransport</code> and cannot tell the
+        difference, because the contract between them was always plain, serializable data.
+        If the wasm module fails to load, the page falls back to an equivalent TypeScript
+        engine and says so above. See
+        <a href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/26-fsharp-wasm-engine.md">the write-up</a>.
+      </p>
       <p class="prose">
         The kernel understands a handful of HTML attributes and no application vocabulary
         at all. It does not know what <code>checkAvailability</code> means or what a
