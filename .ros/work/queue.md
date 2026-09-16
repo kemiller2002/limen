@@ -11,4 +11,5 @@
 | WI-0006 | Standardized Echelon lifecycle CLI: F# core + npm bootstrap for init/status/verify/upgrade/doctor | complete | tooling | high |
 | WI-0007 | Document the lifecycle conversion: CLI reference, installation and ownership, conversion report | complete | documentation | medium |
 | WI-0008 | Make --verbose meaningful on verify, init and upgrade | complete | tooling | low |
-| WI-0009 | Record cross-platform CI results in the CLI documentation | ready | documentation | low |
+| WI-0009 | Record cross-platform CI results in the CLI documentation | complete | documentation | low |
+| WI-0010 | Release 0.5.0: first release carrying the Limen lifecycle CLI | ready | release | high |

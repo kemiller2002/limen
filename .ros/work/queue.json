@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 10,
+  "nextSeq": 11,
   "items": [
     {
       "id": "WI-0001",
@@ -152,6 +152,22 @@
       "attachments": [],
       "createdAt": "2026-09-15T16:19:00.953Z",
       "updatedAt": "2026-09-15T16:19:01.031Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0010",
+      "title": "Release 0.5.0: first release carrying the Limen lifecycle CLI",
+      "description": "Bump the package to 0.5.0 (minor: the npm package gains bin entries and five platform binaries; the library surface is unchanged and additive) and tag it so the publish workflow builds, validates and publishes the archive.",
+      "tags": [
+        "release"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T12:18:01.903Z",
+      "updatedAt": "2026-09-16T12:18:02.044Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
