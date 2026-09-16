@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 13,
+  "nextSeq": 14,
   "items": [
     {
       "id": "WI-0001",
@@ -200,6 +200,22 @@
       "attachments": [],
       "createdAt": "2026-09-16T13:19:21.889Z",
       "updatedAt": "2026-09-16T13:19:21.952Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0013",
+      "title": "Release 0.5.1: republish after the v0.5.0 pack failure",
+      "description": "v0.5.0 never published because the pack step failed with ENOENT, and its tag cannot be deleted or moved. Bump to 0.5.1 so the fixed publish workflow can release from a fresh tag.",
+      "tags": [
+        "release"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T13:31:33.636Z",
+      "updatedAt": "2026-09-16T13:31:33.721Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
