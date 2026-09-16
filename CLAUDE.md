@@ -210,10 +210,12 @@ code, not after.
 - `wasm/Limen.Engine/` — the site's engine in F#: pure, no browser, no JS
   interop. `Json.fs` is a hand-written codec (deliberately, not for lack of
   `System.Text.Json`). Tested as ordinary .NET by `npm run test:wasm`.
-- `wasm/Limen.Host/Interop.cs` — 41 lines of C#, and the only C# here. It exists
-  because `[JSExport]` is a Roslyn source generator and F# does not run those;
-  an F# method carrying the attribute registers nothing, silently. Verified in
-  Chromium, not assumed.
+- `wasm/Limen.Host/Interop.cs` — 41 lines of C#, and the only C# here. `[JSExport]`
+  is a Roslyn source generator and F# does not run those, so an F# method
+  carrying the attribute registers nothing, silently — verified in Chromium, not
+  assumed. That is the whole of what was established: no alternative route was
+  exhausted, so treat "C# is required here" as unproven rather than settled. If
+  you find a pure-F# path, this file, `docs/26` and the shim all go together.
 - `site/app/` — the site's own wiring: `wasm-transport.ts` (an `EngineTransport`
   over the module), `engine.ts` (the TypeScript twin), `main.ts` (chooses one).
 - `test/wasm.test.ts` — drives the real module through the real kernel, and

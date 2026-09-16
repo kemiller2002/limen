@@ -69,8 +69,8 @@ This was not deduced from documentation. A pure-F# build was published and
 loaded in Chromium, and the exports object came back empty. The failure mode is
 silent on both sides, which is what makes it worth writing down.
 
-The fix is [`wasm/Limen.Host/Interop.cs`](../wasm/Limen.Host/Interop.cs): a
-`static partial class` whose entire content is
+The route taken is [`wasm/Limen.Host/Interop.cs`](../wasm/Limen.Host/Interop.cs):
+a `static partial class` whose entire content is
 
 ```csharp
 [JSExport]
@@ -79,11 +79,21 @@ internal static string Dispatch(string message) => Limen.Engine.Engine.handle(me
 
 `partial` matters — the generator emits the other half.
 
-This constraint turned out to fit the architecture rather than fight it. The
-shim marshals a string in and a string out, holds no state, makes no decision,
-and knows nothing about what a message means. That is the same contract the
-kernel has on the other side of the wire, which is a reasonable sign the
-boundary was drawn in the right place.
+The shim marshals a string in and a string out, holds no state, makes no
+decision, and knows nothing about what a message means. That is the same
+contract the kernel has on the other side of the wire, which is a reasonable
+sign the boundary was drawn in the right place.
+
+> **How far the evidence goes.** What was tested is the heading of this section:
+> `[<JSExport>]` on an F# method registers nothing. That does **not** establish
+> that a C# file is *required* to export from a .NET WebAssembly module — no
+> alternative was exhausted before this one was reached for, and "the attribute
+> does not work" and "C# is necessary" are different claims. Hand-writing what
+> the generator emits, or inverting the direction so the module calls out rather
+> than being called in, are both unexplored here. If a pure-F# route exists,
+> this section is overstated and the shim should go; the engine, the codec and
+> the agreement test are F# already, so removing it would change the story
+> rather than the architecture.
 
 ### `[SupportedOSPlatform("browser")]`
 
@@ -284,6 +294,9 @@ quietly disprove its own front page.
 
 **Not proved.**
 
+- **That the C# shim is necessary.** Only that `[<JSExport>]` does not work from
+  F#. See the note in
+  [`[JSExport]` does not work from F#](#jsexport-does-not-work-from-f).
 - **That this is a good idea for a typical application.** 1.6 MB is a real cost
   and there is no budget it was measured against.
 - **Anything about performance.** No benchmark was run. The engine does trivial

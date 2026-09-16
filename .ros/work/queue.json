@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 19,
+  "nextSeq": 20,
   "items": [
     {
       "id": "WI-0001",
@@ -302,6 +302,20 @@
       "attachments": [],
       "createdAt": "2026-09-16T17:53:13.049Z",
       "updatedAt": "2026-09-16T17:53:18.705Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0019",
+      "title": "Correct the overstated claim that a C# shim is required to export from a .NET WebAssembly module",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T18:09:28.801Z",
+      "updatedAt": "2026-09-16T18:09:31.827Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
