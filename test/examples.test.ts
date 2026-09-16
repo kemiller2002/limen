@@ -337,9 +337,31 @@ test("04-save-data: a timed-out POST offers reconciliation, never a blind retry"
 // 05-multi-screen
 // ---------------------------------------------------------------------------
 
+// Exactly what examples/05-multi-screen/main.ts ships, routing included, so
+// these tests drive the real configuration rather than a simpler one.
+const mountMultiScreen = (document: Document): Promise<void> =>
+  new BrowserKernel(createMultiScreenTransport(), document, undefined, { historyEvent: "urlChanged" }).start();
+
+const windowOf = (document: Document): Window => {
+  assert.ok(document.defaultView, "the test document has no window");
+  return document.defaultView;
+};
+
+// history.back()/forward() are queued traversals, not synchronous calls, so
+// waiting on the observable result beats guessing at a delay.
+async function until(condition: () => boolean, what: string): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (condition()) return;
+    await new Promise((resolve) => { setTimeout(resolve, 5); });
+  }
+  throw new Error(`timed out waiting for ${what}`);
+}
+
+const screenIsMounted = (document: Document, selector: string) => (): boolean => present(document, selector);
+
 test("05-multi-screen: exactly one screen is mounted at a time", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await mountMultiScreen(document);
     assert.equal(text(document, "[data-text='greeting']"), "Hello, Guest.");
     assert.equal(present(document, "#filter"), false, "the Customers screen is not mounted");
     assert.equal(present(document, "#display-name"), false, "the Settings screen is not mounted");
@@ -349,7 +371,7 @@ test("05-multi-screen: exactly one screen is mounted at a time", async () => {
 
 test("05-multi-screen: a nav click carries the screen name as the item key", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await mountMultiScreen(document);
     const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"));
     assert.deepEqual(buttons.map((b) => b.textContent), ["Home", "Customers", "Settings"]);
 
@@ -363,7 +385,7 @@ test("05-multi-screen: a nav click carries the screen name as the item key", asy
 
 test("05-multi-screen: filtering is done by the engine, not the DOM", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await mountMultiScreen(document);
     Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!.click();
     await flush();
 
@@ -378,7 +400,7 @@ test("05-multi-screen: filtering is done by the engine, not the DOM", async () =
 
 test("05-multi-screen: shared state survives navigation; screen-local state does not", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await mountMultiScreen(document);
     const nav = (index: number): HTMLButtonElement =>
       Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[index]!;
 
@@ -404,6 +426,158 @@ test("05-multi-screen: shared state survives navigation; screen-local state does
     await flush();
     assert.equal(find<HTMLInputElement>(document, "#filter").value, "");
     assert.equal(document.querySelectorAll(".list li").length, 3);
+  });
+});
+
+// --- routing and history -----------------------------------------------------
+//
+// The user-visible claim these defend: the address bar and the screen never
+// disagree, and Back/Forward move between screens instead of leaving the app.
+
+test("05-multi-screen: navigating updates the address bar", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    await mountMultiScreen(document);
+    // Opening with no route at all canonicalizes to Home rather than leaving
+    // a URL that does not round-trip.
+    assert.equal(view.location.hash, "#/");
+
+    Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!.click();
+    await flush();
+    assert.equal(view.location.hash, "#/customers");
+    assert.equal(present(document, "#filter"), true);
+  });
+});
+
+test("05-multi-screen: a deep link opens directly on that screen", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    view.history.replaceState(null, "", "#/settings");
+    await mountMultiScreen(document);
+
+    // Settings is the *first* thing projected — not Home corrected a moment
+    // later. That is why the location rides on Initialize rather than
+    // arriving as an event after it.
+    assert.equal(present(document, "#display-name"), true, "the Settings screen mounted");
+    assert.equal(present(document, "[data-text='greeting']"), false, "Home was never shown");
+  });
+});
+
+test("05-multi-screen: a URL naming no screen lands on Home and is corrected without a history entry", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    view.history.replaceState(null, "", "#/not-a-screen");
+    const entries = view.history.length;
+    await mountMultiScreen(document);
+
+    assert.equal(present(document, "[data-text='greeting']"), true, "an unknown route is Home");
+    assert.equal(view.location.hash, "#/");
+    assert.equal(view.history.length, entries, "correcting the URL is a replace, not a step to go Back from");
+  });
+});
+
+test("05-multi-screen: a hash edited to a nonexistent route is corrected, not just ignored", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    await mountMultiScreen(document);
+
+    // Editing the hash in the address bar is a same-document move: the page
+    // does not reload, so this arrives as a history event rather than through
+    // Initialize. Found by driving the example in a real browser — the first
+    // version of this engine left the address bar saying "#/nonsense" while
+    // Home was on screen, which is precisely the disagreement the architecture
+    // exists to prevent.
+    view.location.hash = "#/nonsense";
+    await until(() => view.location.hash === "#/", "the bad route to be corrected");
+
+    assert.equal(present(document, "[data-text='greeting']"), true, "an unknown route is Home");
+  });
+});
+
+test("05-multi-screen: Back and Forward move between screens", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    await mountMultiScreen(document);
+    const nav = (index: number): HTMLButtonElement =>
+      Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[index]!;
+
+    nav(1).click();
+    await flush();
+    nav(2).click();
+    await flush();
+    assert.equal(present(document, "#display-name"), true, "on Settings");
+
+    view.history.back();
+    await until(screenIsMounted(document, "#filter"), "Back to return to Customers");
+    assert.equal(view.location.hash, "#/customers");
+    assert.equal(present(document, "#display-name"), false, "Settings unmounted");
+
+    view.history.forward();
+    await until(screenIsMounted(document, "#display-name"), "Forward to return to Settings");
+    assert.equal(view.location.hash, "#/settings");
+  });
+});
+
+test("05-multi-screen: Back does not push, so Forward still works after it", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    await mountMultiScreen(document);
+    const nav = (index: number): HTMLButtonElement =>
+      Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[index]!;
+
+    nav(1).click();
+    await flush();
+    const entries = view.history.length;
+
+    view.history.back();
+    await until(screenIsMounted(document, "[data-text='greeting']"), "Back to return to Home");
+
+    // If catching up with the browser pushed an entry of its own, the forward
+    // history would have been destroyed and the count would have grown. This
+    // is the whole reason RestoreRoute is a separate command from Navigate.
+    assert.equal(view.history.length, entries, "responding to history must not rewrite it");
+
+    view.history.forward();
+    await until(screenIsMounted(document, "#filter"), "Forward to still be available");
+  });
+});
+
+test("05-multi-screen: re-clicking the current tab adds no history entry", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    await mountMultiScreen(document);
+    const customers = Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!;
+
+    customers.click();
+    await flush();
+    const entries = view.history.length;
+
+    customers.click();
+    await flush();
+    customers.click();
+    await flush();
+
+    // Otherwise leaving the page would take one press of Back per idle click.
+    assert.equal(view.history.length, entries);
+    assert.equal(view.location.hash, "#/customers");
+  });
+});
+
+test("05-multi-screen: without the navigation binding the example still works and never touches the URL", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    const before = { hash: view.location.hash, entries: view.history.length };
+    // No fourth argument: the kernel announces no Navigation capability and
+    // sends no location, so the engine stays within one page load. An
+    // existing consumer that never opts in is unaffected by any of this.
+    await new BrowserKernel(createMultiScreenTransport(), document).start();
+
+    Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!.click();
+    await flush();
+
+    assert.equal(present(document, "#filter"), true, "screens still work");
+    assert.equal(view.location.hash, before.hash, "the URL was never touched");
+    assert.equal(view.history.length, before.entries);
   });
 });
 

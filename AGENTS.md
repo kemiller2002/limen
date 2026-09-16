@@ -119,7 +119,8 @@ These are MUST-level. Violating one is a defect regardless of whether tests pass
 1. **Authoritative application state lives in the engine.** Exactly one place.
    Never add a second store in `src/kernel/**` or in page JavaScript.
 2. **`src/engine/**` MUST NOT reference** `document`, `window`, `fetch`,
-   `localStorage`, or `sessionStorage`, and MUST NOT use the words `any` or
+   `localStorage`, `sessionStorage`, or a history/URL API such as
+   `history.pushState` or `location.pathname`, and MUST NOT use the words `any` or
    `dynamic`. This is mechanically enforced by
    [`scripts/check-architecture.ts`](scripts/check-architecture.ts).
 3. **`src/kernel/**` MUST NOT branch on application meaning.** If you are

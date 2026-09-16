@@ -3,8 +3,11 @@ export { DirectTypeScriptTransport } from "./engine/transport.js";
 export { ReferenceEngine, project } from "./engine/engine.js";
 export { PROTOCOL_VERSION } from "./protocol.js";
 
+export type { NavigationBinding } from "./kernel/browser-kernel.js";
+
 export type {
   BrowserToEngineMessage,
+  Capability,
   CorrelationId,
   EffectOutcome,
   EffectRequest,
@@ -13,6 +16,8 @@ export type {
   EngineTransport,
   HttpEffectRequest,
   HttpMethod,
+  NavigationEffectRequest,
+  NavigationOutcome,
   SemanticEvent,
   StorageEffectRequest,
   StorageOutcome,

@@ -28,7 +28,7 @@ Browser APIs + DOM
 > [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md) findings A-2 and N-1.
 
 The bridge (`src/kernel/browser-kernel.ts`) is the only layer permitted to
-touch `document`, `window`, `fetch`, or `localStorage`. The engine (`src/engine/`) never sees
+touch `document`, `window`, `fetch`, `localStorage`, or `history`/`location`. The engine (`src/engine/`) never sees
 a DOM node, an element id, or a browser API — only `SemanticEvent`,
 `ViewState`, `EffectRequest`, and `EffectResult` (`src/protocol.ts`), each a
 plain, JSON-serializable value.
@@ -54,11 +54,11 @@ plain, JSON-serializable value.
 | 1 | WASM lifecycle — load, initialize, version-check | ⚠️ Partial | `BrowserKernel.start()` dispatches `Initialize` with `PROTOCOL_VERSION`; `ReferenceEngine.handle()` rejects a mismatched version. "Expose the kernel instance" deliberately not done — no global handle, matching `architecture.yaml`'s `ambient_authority: forbidden`. | `kernel.test.ts`: "start() dispatches Initialize…", "a transport whose start() rejects…" |
 | 2 | Command dispatch | ✅ | `#bindEvent` / `#fire` | `kernel.test.ts` event-dispatch tests |
 | 3 | Projection rendering | ✅ | `#applyScope`, `#applyIf`, `#applyEach` | `kernel.test.ts` projection tests |
-| 4 | Effect execution | ⚠️ Partial | Http (`#runHttp`, any of `GET`/`PUT`/`POST`/`PATCH`/`DELETE`, caller headers merged over the default, opaque pre-serialized body) and Storage (`#executeStorage`/`runStorage`, `localStorage`-backed). File/clipboard/navigation/auth adapters: 🧊 deferred, see below. | `kernel.test.ts` effect-execution tests |
+| 4 | Effect execution | ⚠️ Partial | Http (`#runHttp`, any of `GET`/`PUT`/`POST`/`PATCH`/`DELETE`, caller headers merged over the default, opaque pre-serialized body) and Storage (`#executeStorage`/`runStorage`, `localStorage`-backed). Navigation (`#executeNavigation`, opt-in — see item 8). File/clipboard/auth adapters: 🧊 deferred, see below. | `kernel.test.ts` effect-execution tests |
 | 5 | Effect result return — Succeeded/Failed/Cancelled/OutcomeUnknown | ✅ | `EffectOutcome` in `protocol.ts` now carries all four (`Success`, `Failure`, `Cancelled`, `OutcomeUnknown`); `#classifyAbort` in the kernel classifies transport-level outcomes only, never business meaning | `kernel.test.ts`: Success/Failure(network)/Failure(invalid-response)/OutcomeUnknown/Cancelled — one test each |
 | 6 | DOM event wiring — click/input/change/submit/keyboard/focus | ✅ | `TRIGGER_BY_TAG` maps the exceptions (`form`→submit, `input`/`select`/`textarea`→change); everything else defaults to `click`; `data-on` overrides to any DOM event type, including keyboard/focus events — no special-casing needed since the trigger is data-driven | `kernel.test.ts`: default triggers + `data-on` override |
 | 7 | Form value extraction | ✅ | `readValue()` | covered by event-dispatch tests |
-| 8 | Browser navigation/history | 🧊 Deferred | No feature has URL-driven state yet (single-page demo). Build when a real route needs it — see NAVIGATION system, responsibility-spec §11. | — |
+| 8 | Browser navigation/history | ✅ (opt-in) | `NavigationEffectRequest` (`push`/`replace`) + `NavigationOutcome` in `protocol.ts`; `#executeNavigation`/`runNavigation` and one `popstate` listener in the kernel. Inbound, the opening URL rides on `Initialize.location` and later history moves dispatch a `SemanticEvent` whose name the host supplies — the kernel never invents route vocabulary, and never parses a URL for meaning. Enabled by `BrowserKernel`'s fourth argument; omitted, the kernel behaves exactly as before and announces only `["Http", "Storage"]`. Cross-origin navigation is refused, not attempted. Link interception and engine-driven `back`/`forward`: 🧊 deferred, see below. | `kernel.test.ts` navigation tests (push/replace, history event, cross-origin, invalid-url, unavailable); `examples.test.ts` drives Back/Forward through real DOM in `05-multi-screen` |
 | 9 | Rendering helpers — text/attributes/visibility/lists/replace-update fragments | ✅ | `data-text`, `data-bind-<attr>` (visibility via `data-bind-hidden`), `data-each`, `data-if`. Arbitrary fragment replace/insert beyond keyed templates is deliberately unsupported — reconciliation is intentionally restricted to keyed repeated templates (zero-authoritative spec §25) | `kernel.test.ts` projection + list tests |
 | 10 | List rendering | ✅ (virtualization 🧊 deferred) | Keyed reconciliation preserves DOM node identity across reorder (`#applyEach`). Windowing/virtualization: no evidence yet that any list is large enough to need it — spec §30/§31 calls for measuring at 1k/10k/100k/1M records before optimizing. | `kernel.test.ts`: add/remove/reorder-preserves-identity |
 | 11 | Browser-local presentation state — focus, popovers, animation, pointer | ✅ by design | Left entirely to CSS/native browser behavior; the kernel does not track or synchronize any of it (`architecture.yaml`, zero-authoritative spec §4.3) | N/A — no kernel code exists to test |
@@ -93,11 +93,31 @@ document is this repo's own required evidence trail for building ahead of
 the reference feature's needs (see the 🧊 status legend above); it's kept in
 place after the fact as the record of *why*, not deleted once implemented.
 
+Item 8's navigation capability was built on a direct request from this
+repository's owner, naming the limitation as documented in
+`docs/01-architecture.md § Honest limits` and on the project site: "Back and
+forward do not move between screens. Screens work within one page load; URL
+integration is not implemented." That request is the demonstrated need the 🧊
+legend requires — the capability was designed against
+`examples/05-multi-screen/`, which had the screens and lacked the URLs, rather
+than against a hypothetical. Work item WI-0014.
+
+Two parts of the NAVIGATION system stay 🧊 deferred, for the same reason
+everything else on this list is:
+
+- **Link interception.** No blanket `<a href>` handler. Responsibility-spec §28
+  says prefer native links and do not replace browser behavior unless
+  application semantics require it; a blanket interceptor would also swallow
+  fragment links, downloads and `mailto:`. An in-app same-document link already
+  works — it fires the history event like any other traversal.
+- **Engine-driven `back`/`forward`.** The browser's own buttons already reach
+  the engine inbound. Nothing has needed the engine to *drive* a traversal.
+
 ## SHOULD NOT CONTAIN (invariants)
 
 | Rule | Enforcement |
 |---|---|
-| Business rules, workflow rules, authorization decisions, domain validation | Mechanical: `scripts/check-architecture.ts` bans `document`/`window`/`fetch(`/`localStorage`/`sessionStorage` and the words `any`/`dynamic` inside `src/engine/**`, and forbids browser deps there per `architecture.yaml`'s `browser_interop.forbidden_modules: [engine]`. The kernel's own vocabulary (`SemanticEvent.name`, `ViewState` keys) is opaque strings it never branches on by meaning — only `src/engine/domain.ts` interprets them. |
+| Business rules, workflow rules, authorization decisions, domain validation | Mechanical: `scripts/check-architecture.ts` bans `document`/`window`/`fetch(`/`localStorage`/`sessionStorage`, the history/URL APIs (`history.pushState`, `location.pathname`, …), and the words `any`/`dynamic` inside `src/engine/**`, and forbids browser deps there per `architecture.yaml`'s `browser_interop.forbidden_modules: [engine]`. The kernel's own vocabulary (`SemanticEvent.name`, `ViewState` keys) is opaque strings it never branches on by meaning — only `src/engine/domain.ts` interprets them. |
 | Application state stores, Redux-style reducers | Not mechanically enforced — there is exactly one piece of mutable application state in the whole system (`ReferenceEngine.#state`), and it lives in the engine. Code review should reject a second one appearing in the kernel. |
 | Domain sorting/filtering/search semantics | Not applicable yet — no feature has needed sort/filter/search. `data-each` repeats whatever array the engine already decided to project; the kernel never reorders or excludes items on its own. |
 | Effect orchestration | The kernel executes exactly one effect per `EffectRequest` and reports exactly one `EffectResult`; it never sequences, retries, batches, or interprets multiple effects together. That policy (if ever needed — e.g. retry-on-network-failure) belongs in the engine, which re-requests the effect. |

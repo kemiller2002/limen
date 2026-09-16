@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 14,
+  "nextSeq": 15,
   "items": [
     {
       "id": "WI-0001",
@@ -216,6 +216,23 @@
       "attachments": [],
       "createdAt": "2026-09-16T13:31:33.636Z",
       "updatedAt": "2026-09-16T13:31:33.721Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0014",
+      "title": "Browser navigation and history integration (ROADMAP item 8)",
+      "description": "Implement the NAVIGATION system: the engine owns which route the application is on; the kernel owns URL, history and popstate. Adds a Navigation capability, a Navigate effect request with a two-case outcome, an optional location on Initialize, and a popstate-driven SemanticEvent whose name the host application supplies. Back/forward move between screens; screens become linkable and bookmarkable.",
+      "tags": [
+        "kernel",
+        "protocol"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T14:35:31.944Z",
+      "updatedAt": "2026-09-16T14:35:34.005Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

@@ -24,9 +24,12 @@ it pays off in some situations and not others.
 
 - Highly dynamic or generative UI — dashboards that build layout from data,
   canvas/WebGL, rich-text editors.
-- Deep URL routing and history are core requirements. **Not supported today.**
-- You need browser capabilities beyond Http and `localStorage` and cannot afford
-  to extend the protocol.
+- You need a router with nested routes, route params, or lazy route loading.
+  URLs and history *are* supported (see
+  [08-multi-screen-applications.md](08-multi-screen-applications.md#putting-the-url-in-step)),
+  but you write the URL-to-state mapping yourself as two pure functions.
+- You need browser capabilities beyond Http, `localStorage` and navigation and
+  cannot afford to extend the protocol.
 - Large virtualized lists — every projected item becomes a DOM node.
 - The team wants a mainstream ecosystem of components and hiring familiarity.
 

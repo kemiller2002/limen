@@ -64,20 +64,35 @@ The bridge. One per page.
 
 ```ts
 class BrowserKernel {
-  constructor(transport: EngineTransport, document: Document, diagnostics?: DiagnosticsSink);
+  constructor(
+    transport: EngineTransport,
+    document: Document,
+    diagnostics?: DiagnosticsSink,
+    navigation?: NavigationBinding | null,
+  );
   readonly transport: EngineTransport;
   readonly document: Document;
   start(): Promise<void>;
 }
+
+type NavigationBinding = { readonly historyEvent: string };
 ```
 
-### `constructor(transport, document, diagnostics?)`
+### `constructor(transport, document, diagnostics?, navigation?)`
 
 | Parameter | Type | Notes |
 | --- | --- | --- |
 | `transport` | `EngineTransport` | your engine. Required. |
 | `document` | `Document` | normally the global `document`; injectable for tests. |
 | `diagnostics` | `DiagnosticsSink` | optional. **Defaults to a no-op** — without it, bridge errors are silent. |
+| `navigation` | `NavigationBinding \| null` | optional, defaults to `null`. Opts this kernel into browser navigation. |
+
+`navigation.historyEvent` is the `SemanticEvent` **name** dispatched when the
+browser moves the user through session history. The kernel does not invent it —
+you supply your application's own word, exactly as `data-event` does in markup.
+Omit `navigation` entirely and the kernel never touches the URL, never listens
+for `popstate`, and announces only `["Http", "Storage"]`. See
+[08-multi-screen-applications.md](08-multi-screen-applications.md#putting-the-url-in-step).
 
 Construction is inert: nothing is bound, dispatched, or touched until `start()`.
 
@@ -92,7 +107,12 @@ Performs, in order:
    non-`<template>` element, a template with more than one root — it reports
    `BridgeError { phase: "binding" }` and returns without dispatching
    `Initialize`.
-3. Dispatches `Initialize { protocolVersion: 1, capabilities: ["Http", "Storage"] }`.
+3. If `navigation` was supplied and the document has a window, registers one
+   `popstate` listener.
+4. Dispatches `Initialize { protocolVersion: 1, capabilities, location? }`.
+   `capabilities` is `["Http", "Storage"]`, plus `"Navigation"` when step 3
+   wired it; `location` is present on exactly that same condition and carries
+   the URL the page was opened at.
 
 **Never rejects.** All failures go to diagnostics. The page stays at its
 placeholder content, which is the visible symptom of a failure in step 1 or 2.
@@ -170,7 +190,7 @@ performing effects yourself instead of requesting them; forgetting that
 
 ```ts
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly ["Http", "Storage"] }
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location?: string }
   | { kind: "Event";        event:  SemanticEvent }
   | { kind: "EffectResult"; result: EffectResult };
 ```
@@ -308,13 +328,55 @@ type StorageOutcome =
 `null`/unused for `set`/`remove`. No `OutcomeUnknown` — a single `localStorage`
 call is atomic.
 
+### `NavigationEffectRequest`
+
+```ts
+type NavigationEffectRequest = {
+  kind: "Navigate";
+  correlationId: CorrelationId;
+  mode: "push" | "replace";   // push adds a history entry; replace rewrites the current one
+  url: string;                // resolved against the current location
+};
+```
+
+Only executed when the kernel was constructed with a `navigation` binding;
+otherwise it reports `Failure { reason: "unavailable" }`. There is deliberately
+no `back`/`forward` — see [ROADMAP.md](ROADMAP.md).
+
+### `NavigationOutcome`
+
+```ts
+type NavigationOutcome =
+  | { kind: "Success"; url: string }
+  | { kind: "Failure"; reason: "unavailable" | "cross-origin" | "invalid-url" };
+```
+
+`url` is the resulting location in the same normalized `pathname + search + hash`
+form the kernel reports inbound. `cross-origin` is a refusal, not a browser
+error: the kernel will not move the page off its own origin. No
+`OutcomeUnknown` — `pushState` is synchronous and same-document.
+
+### `Capability`
+
+```ts
+type Capability = "Http" | "Storage" | "Navigation";
+```
+
+Announced in `Initialize.capabilities`. `"Navigation"` is present only when the
+host wired it, so an engine can tell rather than assume.
+
 ### `EffectResult`
 
 ```ts
 type EffectResult =
-  | { kind: "HttpResult";    correlationId: CorrelationId; outcome: EffectOutcome }
-  | { kind: "StorageResult"; correlationId: CorrelationId; outcome: StorageOutcome };
+  | { kind: "HttpResult";       correlationId: CorrelationId; outcome: EffectOutcome }
+  | { kind: "StorageResult";    correlationId: CorrelationId; outcome: StorageOutcome }
+  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome };
 ```
+
+**Narrow this by name, never by elimination.** "Anything that is not an
+`HttpResult` is a `StorageResult`" was true when there were two variants and
+stopped being true the moment there were three.
 
 ---
 

@@ -242,6 +242,13 @@ export function createSaveTransport(): EngineTransport {
               outcome: message.result.outcome,
             }));
           }
+          // Narrowed by name, not by elimination. "Everything that is not an
+          // HttpResult is a StorageResult" was true when Http and Storage were
+          // the only two capabilities; it stopped being true the moment a
+          // third one existed.
+          if (message.result.kind !== "StorageResult") {
+            throw new Error("This engine only ever requests Http and Storage effects.");
+          }
           if (message.result.correlationId === DRAFT_GET) {
             return respond(transition(state, { kind: "RestoreDraft", outcome: message.result.outcome }));
           }

@@ -229,13 +229,18 @@ because they *are* the same intent.
 | DOM change (blur) | `<input data-event="x">` | `Event { name, value }` | committed field |
 | Form submit | `<form data-event="submit">` | pending flushes, then `Event { name }` | validate and act |
 | List item | `data-event` inside `data-each` | `Event { name, key }` | act on that item |
-| Kernel startup | — | `Initialize { protocolVersion, capabilities }` | project initial view, maybe load |
+| Kernel startup | — | `Initialize { protocolVersion, capabilities, location? }` | project initial view, maybe load |
 | Http completion | engine requested it earlier | `EffectResult { HttpResult }` | record evidence |
 | Storage completion | engine requested it earlier | `EffectResult { StorageResult }` | record evidence |
-| Browser history | **not supported** | — | see [08-multi-screen-applications.md](08-multi-screen-applications.md) |
+| Navigation completion | engine requested it earlier | `EffectResult { NavigationResult }` | record evidence |
+| Back / Forward / hash edit | opt-in `navigation` binding | `Event { name: <yours>, value: <url> }` | move to that screen — **without** pushing |
 | Timers | **not supported** | — | ROADMAP item 16 |
 
-The bottom two rows are honest gaps, not omissions from this table.
+The history row is the only event the browser originates on its own; every
+other row starts with the user or with something the engine asked for. It is
+opt-in, and its *name* is yours — see
+[08-multi-screen-applications.md](08-multi-screen-applications.md#putting-the-url-in-step).
+The timers row is an honest gap, not an omission from this table.
 
 ---
 

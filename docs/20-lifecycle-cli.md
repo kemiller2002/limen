@@ -90,7 +90,8 @@ Always checked:
 - the manifest and configuration exist, parse, and are versions this CLI understands;
 - every file the manifest records still exists;
 - engine code does not name a browser capability (`document`, `window`, `fetch(`,
-  `localStorage`, `sessionStorage`) or use a dynamic type escape (`any`, `dynamic`);
+  `localStorage`, `sessionStorage`, `history.pushState`, `location.pathname`, …)
+  or use a dynamic type escape (`any`, `dynamic`);
 - no code on either side uses an escape hatch (`eval`, `SetInnerHtml`, `ExecuteScript`).
 
 `--strict` additionally requires:

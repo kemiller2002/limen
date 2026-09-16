@@ -736,3 +736,208 @@ test("a cancellation naming an already-completed Storage effect is a harmless no
     })());
   });
 });
+
+// ---------------------------------------------------------------------------
+// Browser navigation / history (ROADMAP item 8, responsibility-spec §11)
+//
+// Two directions, and they are not symmetric. Inbound, the browser moves the
+// user and the kernel reports where they landed as ordinary evidence. Outbound,
+// the engine decides the application has moved and asks the kernel to record
+// it. Neither direction lets the kernel decide what a URL means.
+//
+// jsdom implements the History API with real browser semantics, verified here
+// rather than assumed: pushState/replaceState never fire popstate, history.back()
+// fires it on a later task, and a cross-origin pushState throws SecurityError.
+// ---------------------------------------------------------------------------
+
+// history.back() is a queued traversal, not a synchronous call, so a fixed
+// flush() is not enough — wait for the observable effect instead of a delay
+// long enough to "probably" cover it.
+async function until(condition: () => boolean, what: string): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (condition()) return;
+    await new Promise((resolve) => { setTimeout(resolve, 5); });
+  }
+  throw new Error(`timed out waiting for ${what}`);
+}
+
+const routing = { historyEvent: "urlChanged" } as const;
+
+test("without a navigation binding the kernel announces no Navigation capability and reports no location", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<div></div>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    // The pre-navigation wire shape, unchanged, byte for byte. Every consumer
+    // that never opts in must see exactly what it saw before.
+    assert.deepEqual(transport.calls[0], { kind: "Initialize", protocolVersion: 1, capabilities: ["Http", "Storage"] });
+  });
+});
+
+test("with a navigation binding Initialize announces Navigation and carries the opening location", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<div></div>`, async (document) => {
+    document.defaultView!.history.replaceState(null, "", "/customers?q=ada#top");
+    await new BrowserKernel(transport, document, undefined, routing).start();
+    assert.deepEqual(transport.calls[0], {
+      kind: "Initialize",
+      protocolVersion: 1,
+      capabilities: ["Http", "Storage", "Navigation"],
+      // Path, query and hash — everything that can vary within the origin,
+      // and nothing that cannot.
+      location: "/customers?q=ada#top",
+    });
+  });
+});
+
+test("a push Navigate effect moves the URL, adds a history entry, and reports the resulting location", async () => {
+  const correlationId = withCorrelation("n1");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    const before = view.history.length;
+    await new BrowserKernel(transport, document, undefined, routing).start();
+
+    assert.equal(view.location.pathname, "/settings");
+    assert.equal(view.history.length, before + 1, "push adds an entry the user can come back from");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result, {
+      kind: "NavigationResult",
+      correlationId,
+      outcome: { kind: "Success", url: "/settings" },
+    });
+  });
+});
+
+test("a replace Navigate effect moves the URL without adding a history entry", async () => {
+  const correlationId = withCorrelation("n2");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "replace", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    const before = view.history.length;
+    await new BrowserKernel(transport, document, undefined, routing).start();
+
+    assert.equal(view.location.pathname, "/settings");
+    assert.equal(view.history.length, before, "replace rewrites the current entry rather than adding one");
+  });
+});
+
+test("the kernel's own push does not report back as a history event", async () => {
+  const correlationId = withCorrelation("n3");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    await new BrowserKernel(transport, document, undefined, routing).start();
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
+
+    // The engine asked for this move and already knows about it. Echoing it
+    // back as evidence is how a navigation loop starts.
+    const echoes = transport.calls.filter((call) => call.kind === "Event" && call.event.name === routing.historyEvent);
+    assert.deepEqual(echoes, []);
+  });
+});
+
+test("back dispatches the application's own history event carrying the new location", async () => {
+  const correlationId = withCorrelation("n4");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    view.history.replaceState(null, "", "/home");
+    await new BrowserKernel(transport, document, undefined, routing).start();
+    assert.equal(view.location.pathname, "/settings");
+
+    view.history.back();
+    await until(
+      () => transport.calls.some((call) => call.kind === "Event" && call.event.name === routing.historyEvent),
+      "the history event to reach the engine",
+    );
+
+    const event = transport.calls.filter((call) => call.kind === "Event").at(-1);
+    // The name is the application's, supplied by the host — the kernel never
+    // invents vocabulary. The location rides in `value`, like any other
+    // evidence read off the browser.
+    assert.deepEqual(event?.kind === "Event" && event.event, { kind: "Event", name: "urlChanged", value: "/home" });
+  });
+});
+
+test("a hash-only move is reported the same way, so hash routing needs no extra wiring", async () => {
+  const correlationId = withCorrelation("n5");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "push", url: "#/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    await new BrowserKernel(transport, document, undefined, routing).start();
+    assert.equal(view.location.hash, "#/settings");
+
+    view.history.back();
+    await until(
+      () => transport.calls.some((call) => call.kind === "Event" && call.event.name === routing.historyEvent),
+      "the history event to reach the engine",
+    );
+    const event = transport.calls.filter((call) => call.kind === "Event").at(-1);
+    assert.equal(event?.kind === "Event" && event.event.value, "/");
+  });
+});
+
+test("a cross-origin Navigate is refused and the page does not move", async () => {
+  const correlationId = withCorrelation("n6");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "push", url: "https://evil.example.com/steal" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    await new BrowserKernel(transport, document, undefined, routing).start();
+
+    // An engine — or a value that reached one — must not be able to use this
+    // effect to send the user to another site.
+    assert.equal(view.location.origin, "http://localhost");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "cross-origin" });
+  });
+});
+
+test("an unresolvable URL reports invalid-url rather than throwing", async () => {
+  const correlationId = withCorrelation("n7");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "push", url: "http://[" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    await assert.doesNotReject(new BrowserKernel(transport, document, undefined, routing).start());
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "invalid-url" });
+  });
+});
+
+test("a Navigate effect on a kernel with no navigation binding reports unavailable and touches nothing", async () => {
+  const correlationId = withCorrelation("n8");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, mode: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    const before = { path: view.location.pathname, entries: view.history.length };
+    await new BrowserKernel(transport, document).start();
+
+    // The capability was never announced, so the kernel does not quietly
+    // honour the request anyway — it says so, and the engine can react.
+    assert.equal(view.location.pathname, before.path);
+    assert.equal(view.history.length, before.entries);
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "unavailable" });
+  });
+});

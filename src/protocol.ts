@@ -35,12 +35,42 @@ export type StorageOutcome =
   | { readonly kind: "Success"; readonly value: string | null }
   | { readonly kind: "Failure"; readonly reason: "unavailable" | "quota-exceeded" };
 
+// `history.pushState`/`replaceState` are synchronous, same-document and
+// cannot partially apply, so — like Storage and unlike Http — there is no
+// meaningful "dispatched but uncertain". `url` on Success is the resulting
+// location in the *same* normalized form the kernel reports inbound, so an
+// engine that records "where am I" never has to reconcile two spellings of
+// the same place.
+export type NavigationOutcome =
+  | { readonly kind: "Success"; readonly url: string }
+  // "unavailable": this kernel was not wired for navigation, so it did not
+  // announce the capability and will not touch history.
+  // "cross-origin": the kernel refuses to move the page off its own origin
+  // however the engine spells the request. Same-document history entries are
+  // same-origin by definition, and an engine must not be able to reach
+  // through this effect to a different site.
+  // "invalid-url": the string would not resolve against the current location.
+  | { readonly kind: "Failure"; readonly reason: "unavailable" | "cross-origin" | "invalid-url" };
+
 export type EffectResult =
   | { readonly kind: "HttpResult"; readonly correlationId: CorrelationId; readonly outcome: EffectOutcome }
-  | { readonly kind: "StorageResult"; readonly correlationId: CorrelationId; readonly outcome: StorageOutcome };
+  | { readonly kind: "StorageResult"; readonly correlationId: CorrelationId; readonly outcome: StorageOutcome }
+  | { readonly kind: "NavigationResult"; readonly correlationId: CorrelationId; readonly outcome: NavigationOutcome };
+
+// What the bridge can actually do, announced once at startup. "Navigation" is
+// present only when the host wired it (see BrowserKernel's `navigation`
+// argument), so an engine can tell whether URLs are available instead of
+// assuming. Http and Storage are always present.
+export type Capability = "Http" | "Storage" | "Navigation";
 
 export type BrowserToEngineMessage =
-  | { readonly kind: "Initialize"; readonly protocolVersion: typeof PROTOCOL_VERSION; readonly capabilities: readonly ["Http", "Storage"] }
+  // `location` is the browser's location at page load, in the same normalized
+  // form as every other URL that crosses this boundary. It is present exactly
+  // when the Navigation capability is announced. It rides on Initialize
+  // rather than arriving as a separate event so the engine can choose its
+  // *initial* state from the URL — a route delivered one message later would
+  // mean projecting the wrong screen first and then correcting it.
+  | { readonly kind: "Initialize"; readonly protocolVersion: typeof PROTOCOL_VERSION; readonly capabilities: readonly Capability[]; readonly location?: string }
   | { readonly kind: "Event"; readonly event: SemanticEvent }
   | { readonly kind: "EffectResult"; readonly result: EffectResult };
 
@@ -73,7 +103,28 @@ export type StorageEffectRequest =
   | { readonly kind: "Storage"; readonly correlationId: CorrelationId; readonly operation: "set"; readonly key: string; readonly value: string }
   | { readonly kind: "Storage"; readonly correlationId: CorrelationId; readonly operation: "remove"; readonly key: string };
 
-export type EffectRequest = HttpEffectRequest | StorageEffectRequest;
+// The engine decides what a route means and when the application has moved;
+// the kernel owns the mechanism. `url` is resolved against the current
+// location, so a relative "/customers" or "#/customers" is the normal form —
+// the kernel neither parses it for meaning nor invents one.
+//
+// "push" adds a history entry (the user can come back to where they were);
+// "replace" rewrites the current one (correcting a URL that should never have
+// been a stop on the back button). Which of the two a change deserves is a
+// domain decision, so the engine makes it.
+//
+// There is deliberately no "back"/"forward" here. The browser's own buttons
+// already reach the engine through the history event, and no feature has
+// needed the engine to drive them; adding it before one does would be
+// untested surface with nothing to validate the design against.
+export type NavigationEffectRequest = {
+  readonly kind: "Navigate";
+  readonly correlationId: CorrelationId;
+  readonly mode: "push" | "replace";
+  readonly url: string;
+};
+
+export type EffectRequest = HttpEffectRequest | StorageEffectRequest | NavigationEffectRequest;
 
 export type EngineToBrowserMessage = {
   readonly view: ViewState;

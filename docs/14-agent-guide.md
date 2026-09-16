@@ -188,11 +188,15 @@ UX courtesy; the engine's check is the guarantee. Pattern:
 | Engine | add to the `Screen` union; add a `Navigate` transition; decide explicitly what screen-local state is discarded |
 | Projection | `onNewScreen: state.screen === "newScreen"`, plus that screen's keys |
 | HTML | one more `<template data-if="onNewScreen">` |
+| Routes | add it to the route table, if the application has URLs |
 
-⚠️ **URL and history are not supported.** Back/forward will not work. Do not
-call `history.pushState` from page JavaScript — that puts navigation state
-outside the engine. Pattern:
-[`examples/05-multi-screen/`](../examples/05-multi-screen/).
+URL and history **are** supported, opt-in. Two rules, both easy to get wrong:
+the engine owns the URL-to-state mapping as pure functions, and a screen change
+caused by Back must never push a new history entry (keep it a separate command
+from the one a click produces). Still never call `history.pushState` from page
+JavaScript — that puts navigation state outside the engine. Pattern:
+[`examples/05-multi-screen/`](../examples/05-multi-screen/); full walkthrough:
+[08-multi-screen-applications.md](08-multi-screen-applications.md#putting-the-url-in-step).
 
 ### "Add a timer" (e.g. auto-refresh every 30s)
 

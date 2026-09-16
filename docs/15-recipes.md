@@ -367,14 +367,18 @@ export type ClipboardOutcome =
   | { readonly kind: "Success" }
   | { readonly kind: "Failure"; readonly reason: "denied" | "unavailable" };
 
-export type EffectRequest = HttpEffectRequest | StorageEffectRequest | ClipboardEffectRequest;
+export type EffectRequest =
+  | HttpEffectRequest | StorageEffectRequest | NavigationEffectRequest | ClipboardEffectRequest;
 
 export type EffectResult =
   | /* … existing … */
   | { readonly kind: "ClipboardResult"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome };
 ```
 
-**2. Announce it** — add `"Clipboard"` to the `Initialize` capabilities tuple.
+**2. Announce it** — add `"Clipboard"` to the `Capability` union, and to the
+list the kernel builds in `start()`. If the capability is optional (as
+navigation is), announce it only when it was actually wired: an engine reading
+`capabilities` has to be able to trust it.
 
 **3. Execute it** ([`browser-kernel.ts`](../src/kernel/browser-kernel.ts)):
 
@@ -390,7 +394,8 @@ async #executeClipboard(effect: ClipboardEffectRequest): Promise<EffectResult> {
 }
 ```
 
-**4. Route it** in `#executeEffect`.
+**4. Route it** in `#runEffect`'s switch — which is exhaustive, so TypeScript
+will point at it for you.
 
 **5. Test it** in `test/kernel.test.ts`, including the failure classification.
 

@@ -124,7 +124,8 @@ src/engine/   →  application meaning only (state, transitions, validation)
 ```
 
 `src/engine/**` must never reference `document`, `window`, `fetch`,
-`localStorage`, `sessionStorage`, or use `any`/`dynamic` typing —
+`localStorage`, `sessionStorage`, or a history/URL API (`history.pushState`,
+`location.pathname`, …), or use `any`/`dynamic` typing —
 `scripts/check-architecture.ts` mechanically enforces this substring/word
 ban and runs as part of `npm test`. `src/kernel/**` is the only place
 allowed to touch the browser. If you find yourself writing a `switch` on

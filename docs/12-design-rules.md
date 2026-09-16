@@ -39,7 +39,9 @@ member, not at the top level.
 ## 2. The engine
 
 **2.1 — MUST NOT.** `src/engine/**` MUST NOT reference `document`, `window`,
-`fetch(`, `localStorage`, or `sessionStorage`. *(**Script** —
+`fetch(`, `localStorage`, `sessionStorage`, or a history/URL API such as
+`history.pushState` or `location.pathname` — the engine asks for a `Navigate`
+effect instead. *(**Script** —
 [`check-architecture.ts`](../scripts/check-architecture.ts))*
 
 **2.2 — MUST NOT.** `src/engine/**` MUST NOT use the words `any` or `dynamic`.

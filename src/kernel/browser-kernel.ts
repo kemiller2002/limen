@@ -1,5 +1,25 @@
-import { PROTOCOL_VERSION, type BrowserToEngineMessage, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { PROTOCOL_VERSION, type BrowserToEngineMessage, type Capability, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
+
+/**
+ * Opts this kernel into browser navigation. Omit it and the kernel touches
+ * neither the URL nor history, does not announce the Navigation capability,
+ * and behaves exactly as it did before navigation existed.
+ */
+export type NavigationBinding = {
+  /**
+   * The `SemanticEvent` name to dispatch when the browser moves the user
+   * within session history — back, forward, or a hash edited in the address
+   * bar. The kernel does not invent this name: it is the application's own
+   * vocabulary, supplied here the same way `data-event` supplies one from
+   * markup. The event carries the new location in `value`.
+   *
+   * The kernel's own pushes and replaces do not fire it. `pushState` and
+   * `replaceState` never emit `popstate`, and the engine asked for those
+   * moves, so telling it about them would only invite a loop.
+   */
+  readonly historyEvent: string;
+};
 
 // Exceptions to the "click" default: element types whose most natural
 // interaction isn't a click. Any other element (a row, a card, a div acting
@@ -83,13 +103,30 @@ export class BrowserKernel {
   readonly #flushable = new Map<HTMLFormElement, Array<{ readonly element: HTMLElement; readonly fire: () => Promise<void> }>>();
   readonly #root: Scope = emptyScope();
   readonly #diagnostics: DiagnosticsSink;
+  readonly #navigation: NavigationBinding | null;
   readonly transport: EngineTransport;
   readonly document: Document;
 
-  constructor(transport: EngineTransport, document: Document, diagnostics: DiagnosticsSink = noopDiagnostics) {
+  // `navigation` is a fourth positional argument rather than an options
+  // object because reshaping the existing three would break every current
+  // caller for no gain. Pass null (the default) and nothing about this
+  // kernel's behavior changes.
+  constructor(
+    transport: EngineTransport,
+    document: Document,
+    diagnostics: DiagnosticsSink = noopDiagnostics,
+    navigation: NavigationBinding | null = null,
+  ) {
     this.transport = transport;
     this.document = document;
     this.#diagnostics = diagnostics;
+    this.#navigation = navigation;
+  }
+
+  // The window that owns the injected document — not the ambient global, so
+  // a kernel driven against one document never reads another's history.
+  get #window(): Window | null {
+    return this.document.defaultView;
   }
 
   async start(): Promise<void> {
@@ -109,7 +146,32 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "binding", detail: String(error) });
       return;
     }
-    await this.#send({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: ["Http", "Storage"] });
+    const view = this.#window;
+    // Navigation needs a window: with no window there is no history to bind
+    // to and no location to report, so the capability is not announced and
+    // the engine is never told URLs are available when they are not.
+    const navigation = view === null ? null : this.#navigation;
+    if (view !== null && navigation !== null) this.#bindHistory(view, navigation);
+    const capabilities: readonly Capability[] =
+      navigation === null ? ["Http", "Storage"] : ["Http", "Storage", "Navigation"];
+    await this.#send({
+      kind: "Initialize",
+      protocolVersion: PROTOCOL_VERSION,
+      capabilities,
+      // The URL the page was opened at. Present exactly when the capability
+      // is, so "no location field" and "no navigation" are the same fact.
+      ...(view !== null && navigation !== null ? { location: currentLocation(view) } : {}),
+    });
+  }
+
+  // One listener, for the one thing the browser does on its own: move the
+  // user through session history. What the resulting URL *means* is not
+  // decided here — the location is handed over as evidence, exactly like a
+  // form field's value, and the engine interprets it.
+  #bindHistory(view: Window, navigation: NavigationBinding): void {
+    view.addEventListener("popstate", () => {
+      void this.#send({ kind: "Event", event: makeEvent(navigation.historyEvent, undefined, currentLocation(view)) });
+    });
   }
 
   // Binds only root's descendants, not root itself — the recursive step
@@ -277,9 +339,17 @@ export class BrowserKernel {
 
   async #executeEffect(effect: EffectRequest): Promise<void> {
     const started = performance.now();
-    const result = effect.kind === "Http" ? await this.#executeHttp(effect) : this.#executeStorage(effect);
+    const result = await this.#runEffect(effect);
     this.#diagnostics.report({ kind: "EffectTiming", correlationId: effect.correlationId, durationMs: performance.now() - started });
     await this.#send({ kind: "EffectResult", result });
+  }
+
+  async #runEffect(effect: EffectRequest): Promise<EffectResult> {
+    switch (effect.kind) {
+      case "Http": return this.#executeHttp(effect);
+      case "Storage": return this.#executeStorage(effect);
+      case "Navigate": return this.#executeNavigation(effect);
+    }
   }
 
   async #executeHttp(effect: HttpEffectRequest): Promise<EffectResult> {
@@ -332,6 +402,57 @@ export class BrowserKernel {
   // its result already sent.
   #executeStorage(effect: StorageEffectRequest): EffectResult {
     return { kind: "StorageResult", correlationId: effect.correlationId, outcome: runStorage(effect) };
+  }
+
+  // Synchronous like Storage, and for the same reason: a same-document
+  // history entry either exists after the call or the call threw. Nothing is
+  // dispatched anywhere, so there is no in-flight state to cancel and no
+  // "dispatched but uncertain" to report.
+  #executeNavigation(effect: NavigationEffectRequest): EffectResult {
+    const view = this.#window;
+    const outcome: NavigationOutcome =
+      this.#navigation === null || view === null
+        ? { kind: "Failure", reason: "unavailable" }
+        : runNavigation(view, effect);
+    return { kind: "NavigationResult", correlationId: effect.correlationId, outcome };
+  }
+}
+
+// Everything the boundary carries as a URL uses this one spelling, inbound
+// and outbound alike, so an engine comparing "where am I" against "where did
+// I ask to be" is comparing like with like. The origin is deliberately left
+// off: it cannot vary within an application, and the engine has no business
+// with it.
+function currentLocation(view: Window): string {
+  const { pathname, search, hash } = view.location;
+  return `${pathname}${search}${hash}`;
+}
+
+function runNavigation(view: Window, effect: NavigationEffectRequest): NavigationOutcome {
+  const target = resolve(effect.url, view.location.href);
+  if (target === null) return { kind: "Failure", reason: "invalid-url" };
+  // A same-document history entry is same-origin by definition, and the
+  // engine must not be able to reach through this effect to move the page to
+  // another site. Refusing here rather than letting pushState throw makes it
+  // an explicit outcome the engine can handle instead of an opaque failure.
+  if (target.origin !== view.location.origin) return { kind: "Failure", reason: "cross-origin" };
+  try {
+    const entry = `${target.pathname}${target.search}${target.hash}`;
+    if (effect.mode === "push") view.history.pushState(null, "", entry);
+    else view.history.replaceState(null, "", entry);
+    return { kind: "Success", url: currentLocation(view) };
+  } catch {
+    // pushState is unavailable in a few real places — a sandboxed frame, an
+    // opaque origin, a page opened from file:// in some browsers.
+    return { kind: "Failure", reason: "unavailable" };
+  }
+}
+
+function resolve(url: string, base: string): URL | null {
+  try {
+    return new URL(url, base);
+  } catch {
+    return null;
   }
 }
 
