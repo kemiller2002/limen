@@ -57,8 +57,38 @@ second language into it would muddy that rule. See
 [docs/20-lifecycle-cli.md](docs/20-lifecycle-cli.md) and
 [docs/21-installation-and-upgrade.md](docs/21-installation-and-upgrade.md).
 
-Note: `.NET SDK 8` is installable here via `apt-get install dotnet-sdk-8.0`
-(the Ubuntu archive works even though Microsoft's own CDN is proxy-blocked).
+## Limits of the hosted agent sandbox
+
+Measured, not assumed — each of these cost real time to rediscover.
+
+| Capability | Reality |
+| --- | --- |
+| .NET SDK 8 | **Available.** `apt-get install dotnet-sdk-8.0` works. Microsoft's own CDN (`builds.dotnet.microsoft.com`) is proxy-blocked, but the Ubuntu archive is not — do not conclude from the CDN failure that F# is unavailable. |
+| Pushing a branch | **Allowed** — create and update both work. |
+| Pushing a tag | **Blocked.** Every form fails identically: annotated, lightweight, explicit refspec. The error is `send-pack: unexpected disconnect`, which looks transient and is not. |
+| Deleting any ref | **Blocked**, branches included. |
+
+Two consequences worth internalising before you act:
+
+**Releases cannot be cut from here.** `publish.yml` triggers on a `v*.*.*` tag,
+and no agent in this sandbox can create one. Prepare the version bump, get it
+onto `main`, and hand the human this:
+
+```sh
+git fetch origin main && git tag -a vX.Y.Z <sha> -m "Limen X.Y.Z" && git push origin vX.Y.Z
+```
+
+Do not "solve" this by adding `workflow_dispatch` to `publish.yml`: its guard
+compares the tag to `package.json`, so making a dispatch work means loosening a
+release check to compensate for a sandbox limit. A tag pushed by `GITHUB_TOKEN`
+would not trigger the workflow anyway.
+
+**Never push a throwaway branch.** Deletion is blocked, so every scratch branch
+is permanent litter only the human can clear. Two such branches
+(`claude/release-probe`, `claude/probe-writecheck`) exist because this was
+learned the hard way. A scratch push also shares `main`'s SHA, so it collides
+with `ci.yml`'s `ci-${sha}` concurrency group and **cancels main's CI run**.
+Read the proxy's own state instead — `curl -sS "$HTTPS_PROXY/__agentproxy/status"`.
 
 ## Documentation map
 
