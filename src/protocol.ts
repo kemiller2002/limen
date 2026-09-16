@@ -35,14 +35,26 @@ export type StorageOutcome =
   | { readonly kind: "Success"; readonly value: string | null }
   | { readonly kind: "Failure"; readonly reason: "unavailable" | "quota-exceeded" };
 
-// `history.pushState`/`replaceState` are synchronous, same-document and
-// cannot partially apply, so — like Storage and unlike Http — there is no
-// meaningful "dispatched but uncertain". `url` on Success is the resulting
-// location in the *same* normalized form the kernel reports inbound, so an
-// engine that records "where am I" never has to reconcile two spellings of
-// the same place.
+// Two different things can be true after a navigation request, and collapsing
+// them into one "Success" would have the kernel claim knowledge it does not
+// have.
+//
+// `Success` carries the resulting location, in the same normalized form the
+// kernel reports inbound, so an engine comparing "where am I" against "where
+// did I ask to be" compares like with like. Only "push"/"replace" can report
+// it: they are synchronous, same-document and cannot partially apply.
+//
+// `Accepted` means the request was handed to the browser and nothing more is
+// known yet. "back"/"forward" are queued history traversals — they may move
+// anywhere, or nowhere at all at the end of the stack — so the resulting
+// location arrives later, as a history event. That event is authoritative;
+// this outcome is only an acknowledgement.
+//
+// There is no `OutcomeUnknown`: unlike Http, nothing was dispatched to a
+// remote party that might have acted on it.
 export type NavigationOutcome =
   | { readonly kind: "Success"; readonly url: string }
+  | { readonly kind: "Accepted" }
   // "unavailable": this kernel was not wired for navigation, so it did not
   // announce the capability and will not touch history.
   // "cross-origin": the kernel refuses to move the page off its own origin
@@ -52,16 +64,32 @@ export type NavigationOutcome =
   // "invalid-url": the string would not resolve against the current location.
   | { readonly kind: "Failure"; readonly reason: "unavailable" | "cross-origin" | "invalid-url" };
 
+// A clipboard write can fail for reasons that are not the engine's fault and
+// not bugs: the browser may require a secure context, a permission, or a
+// recent user gesture. None of that is knowable in advance, so failure is an
+// ordinary modelled outcome rather than an exception.
+//
+// The reasons are normalized browser conditions, never a browser exception
+// string — an engine must be able to branch on them exhaustively.
+export type ClipboardOutcome =
+  | { readonly kind: "Success" }
+  // "permission-denied": the user or the browser refused.
+  // "not-secure-context": the Clipboard API requires HTTPS or localhost.
+  // "unsupported": this browser exposes no Clipboard API at all.
+  // "failed": the API existed, was allowed, and still did not complete.
+  | { readonly kind: "Failure"; readonly reason: "permission-denied" | "not-secure-context" | "unsupported" | "failed" };
+
 export type EffectResult =
   | { readonly kind: "HttpResult"; readonly correlationId: CorrelationId; readonly outcome: EffectOutcome }
   | { readonly kind: "StorageResult"; readonly correlationId: CorrelationId; readonly outcome: StorageOutcome }
-  | { readonly kind: "NavigationResult"; readonly correlationId: CorrelationId; readonly outcome: NavigationOutcome };
+  | { readonly kind: "NavigationResult"; readonly correlationId: CorrelationId; readonly outcome: NavigationOutcome }
+  | { readonly kind: "ClipboardResult"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome };
 
-// What the bridge can actually do, announced once at startup. "Navigation" is
-// present only when the host wired it (see BrowserKernel's `navigation`
-// argument), so an engine can tell whether URLs are available instead of
-// assuming. Http and Storage are always present.
-export type Capability = "Http" | "Storage" | "Navigation";
+// What the bridge can actually do, announced once at startup. Http and Storage
+// are always present. "Navigation" and "Clipboard" appear only when the host
+// wired them, so the announcement is a fact about *this* kernel rather than a
+// constant, and an engine can tell instead of assuming.
+export type Capability = "Http" | "Storage" | "Navigation" | "Clipboard";
 
 export type BrowserToEngineMessage =
   // `location` is the browser's location at page load, in the same normalized
@@ -113,18 +141,34 @@ export type StorageEffectRequest =
 // been a stop on the back button). Which of the two a change deserves is a
 // domain decision, so the engine makes it.
 //
-// There is deliberately no "back"/"forward" here. The browser's own buttons
-// already reach the engine through the history event, and no feature has
-// needed the engine to drive them; adding it before one does would be
-// untested surface with nothing to validate the design against.
-export type NavigationEffectRequest = {
-  readonly kind: "Navigate";
-  readonly correlationId: CorrelationId;
-  readonly mode: "push" | "replace";
-  readonly url: string;
-};
+// "back"/"forward" carry no url, and the type says so: they ask the browser to
+// move within the history it already has. They exist so an application with an
+// in-page Back button does not have to keep a second history stack of its own
+// — there is one history, the browser's, and this is how you ask it to move.
+//
+// One member per legal operation, exactly as StorageEffectRequest above. A
+// single record with an operation field and an optional url would let
+// `{ operation: "back", url: "/somewhere" }` be written down, and the whole
+// point of the shape is that it cannot be.
+export type NavigationEffectRequest =
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "push"; readonly url: string }
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "replace"; readonly url: string }
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "back" }
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "forward" };
 
-export type EffectRequest = HttpEffectRequest | StorageEffectRequest | NavigationEffectRequest;
+// Only "writeText" today. Reading the clipboard is a far more sensitive
+// capability — it exposes whatever the user last copied, from any application
+// — and nothing here needs it. It is left out on the least-capability rule,
+// not overlooked; the shape it would take is recorded in
+// docs/23-clipboard.md so that adding it later is a deliberate decision
+// rather than a discovery.
+//
+// `text` is opaque to the kernel and must never reach a DiagnosticEvent: a
+// copied value is commonly a token, a password, or a customer's data.
+export type ClipboardEffectRequest =
+  | { readonly kind: "Clipboard"; readonly correlationId: CorrelationId; readonly operation: "writeText"; readonly text: string };
+
+export type EffectRequest = HttpEffectRequest | StorageEffectRequest | NavigationEffectRequest | ClipboardEffectRequest;
 
 export type EngineToBrowserMessage = {
   readonly view: ViewState;

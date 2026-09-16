@@ -17,4 +17,12 @@ const diagnostics = {
   },
 };
 
-await new BrowserKernel(createSiteTransport(), document, diagnostics).start();
+// `clipboard` opts this kernel into the Clipboard API, for the install
+// command's copy button. There is no router here and no navigation binding:
+// every page of this site is a real static HTML file with its own URL, so the
+// browser's own navigation is already correct and there is nothing to enhance.
+// See docs/24-navigation-and-github-pages.md.
+await new BrowserKernel(createSiteTransport(), document, {
+  diagnostics,
+  clipboard: { enabled: true },
+}).start();

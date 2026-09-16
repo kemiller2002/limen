@@ -8,6 +8,9 @@ import { JSDOM } from "jsdom";
 // otherwise `instanceof` silently fails against jsdom-created elements.
 const DOM_GLOBALS = [
   "window",
+  "Element",
+  "MouseEvent",
+  "HTMLAnchorElement",
   "HTMLElement",
   "HTMLInputElement",
   "HTMLSelectElement",

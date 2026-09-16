@@ -16,4 +16,5 @@
 | WI-0011 | Record the hosted-sandbox git and toolchain limits in CLAUDE.md | complete | documentation | medium |
 | WI-0012 | Fix the release workflow: npm pack --pack-destination needs the directory to exist | complete | tooling | high |
 | WI-0013 | Release 0.5.1: republish after the v0.5.0 pack failure | complete | release | high |
-| WI-0014 | Browser navigation and history integration (ROADMAP item 8) | ready | kernel, protocol | high |
+| WI-0014 | Browser navigation and history integration (ROADMAP item 8) | complete | kernel, protocol | high |
+| WI-0015 | Navigation and clipboard browser capability architecture (SDE mission) | ready | kernel, protocol, clipboard, navigation | high |

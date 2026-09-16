@@ -20,12 +20,33 @@
         </template>
       </nav>
 
+      <!-- Back and Forward ask the BROWSER to move within its own history.
+           The engine keeps no history stack of its own: there is one history,
+           and where a traversal lands comes back as an ordinary event. -->
+      <p class="row">
+        <button data-event="goBack">← Back</button>
+        <button data-event="goForward">Forward →</button>
+      </p>
+
       <!-- One data-if template per screen. Exactly one is mounted at a time
            because the engine projects exactly one of these as true. -->
       <template data-if="onHome">
         <section class="panel">
           <h2>Home</h2>
           <p data-text="greeting"></p>
+
+          <!-- An ordinary link with a real href. It still works with
+               JavaScript switched off, and it is still a link the browser
+               understands: Ctrl/Cmd-click opens a tab, middle-click opens a
+               tab, right-click offers "copy link address". Only a plain
+               left-click is taken by the kernel and offered to the engine.
+
+               The external link below is NEVER intercepted — a different
+               origin belongs to the browser. -->
+          <p>
+            <a href="#/settings">Settings</a> ·
+            <a href="https://example.com/" rel="external">An external link</a>
+          </p>
         </section>
       </template>
 

@@ -68,23 +68,26 @@ action commonly repaints twice: once for "in progress", once for the outcome.
 
 ## What the kernel can actually do
 
-Three capabilities, announced at startup in `Initialize.capabilities`. Http and
-Storage are always there; Navigation appears only when the host wired it, so
-the announcement is a fact about *this* kernel rather than a constant.
+Four capabilities, announced at startup in `Initialize.capabilities`. Http and
+Storage are always there; Navigation and Clipboard appear only when the host
+wired them, so the announcement is a fact about *this* kernel rather than a
+constant. The complete list, with every type, is
+[25-browser-capabilities.md](25-browser-capabilities.md).
 
 | Capability | Status | Covered below |
 | --- | --- | --- |
 | Http (`fetch`) | ✅ implemented | yes |
 | Storage (`localStorage`) | ✅ implemented | yes |
 | Navigation (URL, history) | ✅ implemented, opt-in | yes |
+| Clipboard (`writeText`) | ✅ implemented, opt-in | [23-clipboard.md](23-clipboard.md) |
+| Clipboard read | ❌ deliberately not implemented | [23-clipboard.md](23-clipboard.md#reading-the-clipboard) |
 | `sessionStorage`, `IndexedDB`, Cache API | ❌ not implemented | — |
-| Clipboard | ❌ not implemented | — |
 | Files (read, download, upload) | ❌ not implemented | — |
 | Timers, `requestAnimationFrame`, idle callbacks | ❌ not implemented | — |
 | Focus control | ❌ not implemented | — |
 | Geolocation, notifications, media, observers | ❌ not implemented | — |
 
-**If it is not in the first two rows, the engine cannot do it.** These are not
+**If it is not marked implemented above, the engine cannot do it.** These are not
 oversights: this repository treats building a capability before a feature needs
 it as an architecture violation in its own right (ROADMAP's 🧊 legend), because
 it produces untested surface with no design pressure behind it. Adding one is a
@@ -304,7 +307,7 @@ Full treatment, with a worked router:
 Wire it by passing a fourth argument to `BrowserKernel`:
 
 ```ts
-new BrowserKernel(transport, document, undefined, { historyEvent: "urlChanged" });
+new BrowserKernel(transport, document, { navigation: { historyEvent: "urlChanged" } });
 ```
 
 Omit it and the kernel never touches the URL, never listens for `popstate`,
@@ -314,13 +317,15 @@ before navigation existed.
 ### Request
 
 ```ts
-{
-  kind: "Navigate",
-  correlationId,
-  mode: "push" | "replace",   // push adds a history entry; replace rewrites the current one
-  url: string,                // resolved against the current location
-}
+| { kind: "Navigate", correlationId, operation: "push",    url }
+| { kind: "Navigate", correlationId, operation: "replace", url }
+| { kind: "Navigate", correlationId, operation: "back" }
+| { kind: "Navigate", correlationId, operation: "forward" }
 ```
+
+One member per legal operation, exactly as Storage. `back`/`forward` carry no
+`url` and the type says so — `{ operation: "back", url: "/x" }` cannot be
+written down.
 
 The kernel resolves the string and records it. It does not parse it, route on
 it, or attach any meaning to it.

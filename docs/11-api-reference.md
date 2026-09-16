@@ -331,30 +331,32 @@ call is atomic.
 ### `NavigationEffectRequest`
 
 ```ts
-type NavigationEffectRequest = {
-  kind: "Navigate";
-  correlationId: CorrelationId;
-  mode: "push" | "replace";   // push adds a history entry; replace rewrites the current one
-  url: string;                // resolved against the current location
-};
+type NavigationEffectRequest =
+  | { kind: "Navigate"; correlationId; operation: "push";    url: string }
+  | { kind: "Navigate"; correlationId; operation: "replace"; url: string }
+  | { kind: "Navigate"; correlationId; operation: "back" }
+  | { kind: "Navigate"; correlationId; operation: "forward" };
 ```
 
-Only executed when the kernel was constructed with a `navigation` binding;
-otherwise it reports `Failure { reason: "unavailable" }`. There is deliberately
-no `back`/`forward` — see [ROADMAP.md](ROADMAP.md).
+One member per legal operation. Only executed when the kernel was constructed
+with a `navigation` binding; otherwise it reports
+`Failure { reason: "unavailable" }`.
 
 ### `NavigationOutcome`
 
 ```ts
 type NavigationOutcome =
-  | { kind: "Success"; url: string }
+  | { kind: "Success"; url: string }   // push/replace — the resulting location
+  | { kind: "Accepted" }               // back/forward — queued; the history event is authoritative
   | { kind: "Failure"; reason: "unavailable" | "cross-origin" | "invalid-url" };
 ```
 
 `url` is the resulting location in the same normalized `pathname + search + hash`
-form the kernel reports inbound. `cross-origin` is a refusal, not a browser
-error: the kernel will not move the page off its own origin. No
-`OutcomeUnknown` — `pushState` is synchronous and same-document.
+form the kernel reports inbound. `Accepted` is not a lesser success: a
+traversal may land anywhere, or nowhere at the end of the stack, so the kernel
+reports only that the browser was asked. `cross-origin` is a refusal, not a
+browser error: the kernel will not move the page off its own origin. No
+`OutcomeUnknown` — nothing was dispatched to a remote party.
 
 ### `Capability`
 

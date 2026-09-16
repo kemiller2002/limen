@@ -151,18 +151,18 @@ Everything above works with no URL at all. Three additions give you real links.
 ### 1. Opt the kernel in
 
 ```ts
-await new BrowserKernel(
-  transport,
-  document,
-  undefined,                        // diagnostics — unchanged
-  { historyEvent: "urlChanged" },   // ← navigation
-).start();
+await new BrowserKernel(transport, document, {
+  navigation: { historyEvent: "urlChanged" },
+}).start();
 ```
+
+The third argument also still accepts a bare `DiagnosticsSink`, which is what
+it always meant; pass an options object when you want capabilities too.
 
 `historyEvent` is the `SemanticEvent` name dispatched when the browser moves the
 user through session history. **The kernel does not invent it.** You supply your
 application's own word, the same way `data-event="navigate"` supplies one in
-markup. Leave the argument off and nothing about the kernel changes: no
+markup. Leave `navigation` out and nothing about the kernel changes: no
 listener, no capability announced, no `location` sent.
 
 ### 2. Translate between URLs and screens — in the engine
@@ -227,7 +227,7 @@ case "Navigate": {
   return {
     state: arriveAt(state, command.screen),
     effects: [{ kind: "Navigate", correlationId: command.correlationId,
-                mode: "push", url: urlFor(command.screen) }],
+                operation: "push", url: urlFor(command.screen) }],
   };
 }
 

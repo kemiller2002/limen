@@ -93,6 +93,34 @@
     <section>
       <div class="section-heading">
         <div>
+          <p class="eyebrow">Install</p>
+          <h2>Copy it, and watch a capability work.</h2>
+        </div>
+        <p class="section-note">This button is not a copy helper. It is an engine state machine, a Clipboard effect, and a modelled failure.</p>
+      </div>
+
+      <!-- The button carries no text to copy and no knowledge of the
+           clipboard. It dispatches `copyInstall`; the engine holds the command
+           string, requests a Clipboard effect, and projects the label, the
+           disabled state and any error. Nothing here calls navigator.clipboard. -->
+      <div class="install">
+        <code class="install-command" data-text="installCommand"></code>
+        <button class="button primary" data-event="copyInstall" data-bind-disabled="copyBusy" data-text="copyLabel"></button>
+      </div>
+      <p class="install-note" role="status" aria-live="polite">
+        <template data-if="copySucceeded"><span class="ok">Copied to your clipboard.</span></template>
+        <template data-if="copyFailed"><span class="bad" data-text="copyError"></span></template>
+      </p>
+      <p class="section-note">
+        Copying can fail — a browser may require a secure context, a permission, or a recent
+        user gesture. <code>ClipboardOutcome</code> has a <code>Failure</code> case for each, the
+        engine turns it into a sentence, and you see it above instead of nothing happening.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
           <p class="eyebrow">Live</p>
           <h2>This counter is a real Limen application.</h2>
         </div>
@@ -225,8 +253,8 @@
         <p class="section-note">Recorded, not hidden. Several are deliberate.</p>
       </div>
       <div class="columns">
-        <div class="card"><h3>No router, but real URLs</h3><p>Back and forward move between screens and deep links work. What there is no router object: you map URLs to state with two pure functions in the engine, and the kernel owns <code>pushState</code> and <code>popstate</code>. No nested routes, no route params, no link interception.</p></div>
-        <div class="card"><h3>Three browser capabilities</h3><p>HTTP, <code>localStorage</code> and navigation. No clipboard, files, timers or IndexedDB — adding one is a deliberate protocol change.</p></div>
+        <div class="card"><h3>No router, but real URLs</h3><p>Back and forward move between screens and deep links work. What there is no router object: you map URLs to state with two pure functions in the engine, and the kernel owns <code>pushState</code> and <code>popstate</code>. No nested routes and no route params; link interception is opt-in and never takes a Ctrl-click.</p></div>
+        <div class="card"><h3>Four browser capabilities</h3><p>HTTP, <code>localStorage</code>, navigation and clipboard write. No files, timers, IndexedDB or clipboard <em>read</em> — adding one is a deliberate protocol change.</p></div>
         <div class="card"><h3>No focus management</h3><p>Removing a focused list item drops focus. A known gap.</p></div>
         <div class="card"><h3>No virtualization</h3><p>Every projected item becomes a DOM node.</p></div>
         <div class="card"><h3>More ceremony when trivial</h3><p>For a genuinely simple page, a small component framework is less work. Limen earns its keep when behavior is complex.</p></div>

@@ -39,6 +39,8 @@ let forbiddenBrowserTokens =
       "location.pathname"
       "location.search"
       "location.hash"
+      "navigator.clipboard"
+      "execCommand"
       "JsValue"
       "IJSRuntime" ]
 

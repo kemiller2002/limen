@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 15,
+  "nextSeq": 16,
   "items": [
     {
       "id": "WI-0001",
@@ -233,6 +233,25 @@
       "attachments": [],
       "createdAt": "2026-09-16T14:35:31.944Z",
       "updatedAt": "2026-09-16T14:35:34.005Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0015",
+      "title": "Navigation and clipboard browser capability architecture (SDE mission)",
+      "description": "Audit and rework Limen's browser history, routing, navigation and clipboard behaviour into explicit generic browser capabilities. Rework the navigation effect into a closed algebra with one constructor per legal operation (push/replace/back/forward) per SDE BOUNDARY-PRESERVATION. Add the clipboard capability (write-only). Add safe opt-in link interception. Document the GitHub Pages deep-link strategy, the push/replace contract, and the single-source-of-truth navigation lifecycle.",
+      "tags": [
+        "kernel",
+        "protocol",
+        "clipboard",
+        "navigation"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T15:10:20.913Z",
+      "updatedAt": "2026-09-16T15:10:23.515Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

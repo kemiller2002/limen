@@ -255,3 +255,71 @@ test("the placement quiz has a defensible answer for every task", () => {
     assert.ok(["html", "css", "kernel", "engine", "effect"].includes(task.answer));
   }
 });
+
+// ---------------------------------------------------------------------------
+// The install command's copy button — the site's own clipboard dogfooding.
+// ---------------------------------------------------------------------------
+
+/** Installs a clipboard stub for the duration of a test. */
+async function withClipboard<T>(writeText: ((text: string) => Promise<void>) | null, run: () => Promise<T>): Promise<T> {
+  const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", {
+    value: writeText === null ? {} : { clipboard: { writeText } },
+    configurable: true,
+  });
+  try {
+    return await run();
+  } finally {
+    if (saved) Object.defineProperty(globalThis, "navigator", saved);
+    else delete (globalThis as unknown as Record<string, unknown>).navigator;
+  }
+}
+
+test("the site's copy button writes the install command through the clipboard capability", { skip: built ? false : "not built" }, async () => {
+  const written: string[] = [];
+  await withClipboard(async (text) => { written.push(text); }, async () => {
+    await withDom(await bodyOf("index.html"), async (document) => {
+      await new BrowserKernel(createSiteTransport(), document, { clipboard: { enabled: true } }).start();
+
+      const button = document.querySelector("[data-event='copyInstall']") as HTMLButtonElement;
+      assert.equal(button.textContent, "Copy", "the engine projects the label");
+      // The command comes from the engine, not from the markup.
+      assert.equal(document.querySelector("[data-text='installCommand']")?.textContent, "npm install @echelon-foundry/typescript-wasm-kernel");
+
+      button.click();
+      await flush();
+
+      assert.deepEqual(written, ["npm install @echelon-foundry/typescript-wasm-kernel"]);
+      assert.equal(button.textContent, "Copied");
+      assert.ok(document.querySelector(".install-note .ok"), "success is shown to the visitor");
+    });
+  });
+});
+
+test("a refused copy is shown to the visitor rather than silently doing nothing", { skip: built ? false : "not built" }, async () => {
+  await withClipboard(async () => { throw new DOMException("no", "NotAllowedError"); }, async () => {
+    await withDom(await bodyOf("index.html"), async (document) => {
+      await new BrowserKernel(createSiteTransport(), document, { clipboard: { enabled: true } }).start();
+      (document.querySelector("[data-event='copyInstall']") as HTMLElement).click();
+      await flush();
+
+      const message = document.querySelector(".install-note .bad");
+      assert.ok(message, "a failed copy must say so");
+      assert.match(message.textContent ?? "", /manually/, "and tell the visitor what to do instead");
+      assert.equal(document.querySelector(".install-note .ok"), null, "success must not also be shown");
+    });
+  });
+});
+
+test("without the clipboard capability the site still loads and reports the failure", { skip: built ? false : "not built" }, async () => {
+  await withClipboard(async () => {}, async () => {
+    await withDom(await bodyOf("index.html"), async (document) => {
+      // No `clipboard` option: the capability is not announced, so the effect
+      // is refused rather than quietly honoured.
+      await new BrowserKernel(createSiteTransport(), document).start();
+      (document.querySelector("[data-event='copyInstall']") as HTMLElement).click();
+      await flush();
+      assert.ok(document.querySelector(".install-note .bad"), "the refusal reaches the visitor");
+    });
+  });
+});

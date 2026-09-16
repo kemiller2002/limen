@@ -102,6 +102,8 @@ Read the proxy's own state instead — `curl -sS "$HTTPS_PROXY/__agentproxy/stat
   ambiguities, and open questions
 - [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) —
   what Limen renamed and what it deliberately did not
+- [docs/25-browser-capabilities.md](docs/25-browser-capabilities.md) — every
+  browser operation an engine may request, and how to enable it
 - [examples/README.md](examples/README.md) — six verified example applications
 
 ## What this is

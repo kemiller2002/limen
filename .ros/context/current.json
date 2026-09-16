@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-16T14:54:13.629Z",
+  "updatedAt": "2026-09-16T15:38:48.541Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -288,6 +288,52 @@
       ],
       "updatedAt": "2026-09-16T14:54:13.629Z",
       "completedAt": "2026-09-16T14:54:13.629Z"
+    },
+    {
+      "id": "WI-0015",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/protocol.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "site/app/engine.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "examples/05-multi-screen/engine.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "scripts/check-architecture.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/site.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "cli/tests/Limen.Core.Tests/BoundaryTests.fs"
+        }
+      ],
+      "updatedAt": "2026-09-16T15:38:48.541Z",
+      "completedAt": "2026-09-16T15:38:48.541Z"
     }
   ]
 }

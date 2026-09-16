@@ -53,6 +53,21 @@ let ``an engine reading Initialize's location is not a violation`` () =
         "export const start = (message: Init) => screenFor(message.location);"
     Assert.Empty(engine "src/engine/a.ts" source)
 
+[<Theory>]
+[<InlineData("navigator.clipboard.writeText(\"x\")")>]
+[<InlineData("document.execCommand(\"copy\")")>]
+let ``engine code that reaches the clipboard is a violation`` (expression: string) =
+    // The engine decides what to copy; asking the browser to do it is an
+    // effect, so that a refusal becomes a modelled outcome instead of a
+    // swallowed exception.
+    Assert.NotEmpty(engine "src/engine/a.ts" (sprintf "const x = %s;" expression))
+
+[<Fact>]
+let ``an engine that merely says the word clipboard is not a violation`` () =
+    // User-facing text is the engine's job. Only the API is banned.
+    let source = "export const message = fun () -> reason;"
+    Assert.Empty(engine "src/engine/a.ts" source)
+
 [<Fact>]
 let ``kernel code that drives history is allowed`` () =
     Assert.Empty(kernel "src/kernel/bridge.ts" "const x = history.pushState(null, \"\", \"/x\");")

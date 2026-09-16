@@ -87,12 +87,23 @@ const hashOf = (url: string): string => {
   return at < 0 ? "" : url.slice(at);
 };
 
-/** Every URL that is not a known route is Home. A route is evidence, not a command. */
-export function screenFor(url: string): Screen {
+/**
+ * Parse a URL into a route. Pure string work — no `location`, no `history`.
+ *
+ * `null` means "this URL names no screen". Callers decide what to do with
+ * that, and they decide differently: arriving at an unknown URL falls back to
+ * Home and corrects the address bar, while *clicking a link* to an unknown
+ * URL does nothing at all. Collapsing both into "it's Home" would have made
+ * every stray link silently navigate somewhere.
+ */
+export function routeFor(url: string): Screen | null {
   const hash = url.slice(url.indexOf("#") + 1);
   const name = hash.replace(/^\/+/, "");
-  return isScreen(name) ? name : "home";
+  return isScreen(name) ? name : null;
 }
+
+/** Arriving at a URL: anything unrecognized is Home. */
+export const screenFor = (url: string): Screen => routeFor(url) ?? "home";
 
 // ---------------------------------------------------------------------------
 // Commands
@@ -109,6 +120,14 @@ export type Command =
   // `url` is where the browser actually is, which is not always the canonical
   // URL for the screen it resolves to — someone can type `#/nonsense`.
   | { readonly kind: "RestoreRoute"; readonly screen: Screen; readonly url: string; readonly correlationId: CorrelationId }
+  // The user asked the browser to move within its own history. The engine does
+  // not track where that goes — there is one history, the browser's, and this
+  // asks it to move. Where it lands arrives afterwards as RestoreRoute.
+  | { readonly kind: "GoBack"; readonly correlationId: CorrelationId }
+  | { readonly kind: "GoForward"; readonly correlationId: CorrelationId }
+  // A link the kernel took from the browser. `screen` is null when the href
+  // names no route, and then nothing happens at all.
+  | { readonly kind: "FollowLink"; readonly screen: Screen | null; readonly correlationId: CorrelationId }
   | { readonly kind: "FilterCustomers"; readonly value: string }
   | { readonly kind: "EditDisplayName"; readonly value: string }
   | { readonly kind: "SaveDisplayName" };
@@ -130,6 +149,15 @@ export function eventToCommand(event: SemanticEvent, correlationId: CorrelationI
       const url = event.value ?? "";
       return { kind: "RestoreRoute", screen: screenFor(url), url, correlationId };
     }
+    // Also configured in main.ts. The kernel has decided the browser had
+    // nothing better to do with this click; it has NOT decided the href means
+    // anything. That decision is here.
+    case "linkActivated":
+      return { kind: "FollowLink", screen: routeFor(event.value ?? ""), correlationId };
+    case "goBack":
+      return { kind: "GoBack", correlationId };
+    case "goForward":
+      return { kind: "GoForward", correlationId };
     case "filterCustomers":
       return { kind: "FilterCustomers", value: event.value ?? "" };
     case "editDisplayName":
@@ -176,7 +204,7 @@ function settle(state: State, screen: Screen, currentUrl: string, correlationId:
   const next = arriveAt(state, screen);
   return hashOf(currentUrl) === urlFor(screen)
     ? { state: next, effects: [] }
-    : { state: next, effects: [{ kind: "Navigate", correlationId, mode: "replace", url: urlFor(screen) }] };
+    : { state: next, effects: [{ kind: "Navigate", correlationId, operation: "replace", url: urlFor(screen) }] };
 }
 
 export function transition(state: State, command: Command): TransitionResult {
@@ -192,11 +220,24 @@ export function transition(state: State, command: Command): TransitionResult {
         effects: [{
           kind: "Navigate",
           correlationId: command.correlationId,
-          mode: "push",
+          operation: "push",
           url: urlFor(command.screen),
         }],
       };
     }
+    case "FollowLink":
+      // An href naming no route is not an error and not a navigation. The
+      // link simply does nothing, which is the right answer for a dead link.
+      return command.screen === null
+        ? { state, effects: [] }
+        : transition(state, { kind: "Navigate", screen: command.screen, correlationId: command.correlationId });
+
+    case "GoBack":
+      return { state, effects: [{ kind: "Navigate", correlationId: command.correlationId, operation: "back" }] };
+
+    case "GoForward":
+      return { state, effects: [{ kind: "Navigate", correlationId: command.correlationId, operation: "forward" }] };
+
     case "RestoreRoute":
       // Never a push — the browser is already here, it is what told us. Usually
       // no effect at all; the exception is a URL that names no screen, which

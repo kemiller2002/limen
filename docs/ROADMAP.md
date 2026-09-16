@@ -58,7 +58,7 @@ plain, JSON-serializable value.
 | 5 | Effect result return — Succeeded/Failed/Cancelled/OutcomeUnknown | ✅ | `EffectOutcome` in `protocol.ts` now carries all four (`Success`, `Failure`, `Cancelled`, `OutcomeUnknown`); `#classifyAbort` in the kernel classifies transport-level outcomes only, never business meaning | `kernel.test.ts`: Success/Failure(network)/Failure(invalid-response)/OutcomeUnknown/Cancelled — one test each |
 | 6 | DOM event wiring — click/input/change/submit/keyboard/focus | ✅ | `TRIGGER_BY_TAG` maps the exceptions (`form`→submit, `input`/`select`/`textarea`→change); everything else defaults to `click`; `data-on` overrides to any DOM event type, including keyboard/focus events — no special-casing needed since the trigger is data-driven | `kernel.test.ts`: default triggers + `data-on` override |
 | 7 | Form value extraction | ✅ | `readValue()` | covered by event-dispatch tests |
-| 8 | Browser navigation/history | ✅ (opt-in) | `NavigationEffectRequest` (`push`/`replace`) + `NavigationOutcome` in `protocol.ts`; `#executeNavigation`/`runNavigation` and one `popstate` listener in the kernel. Inbound, the opening URL rides on `Initialize.location` and later history moves dispatch a `SemanticEvent` whose name the host supplies — the kernel never invents route vocabulary, and never parses a URL for meaning. Enabled by `BrowserKernel`'s fourth argument; omitted, the kernel behaves exactly as before and announces only `["Http", "Storage"]`. Cross-origin navigation is refused, not attempted. Link interception and engine-driven `back`/`forward`: 🧊 deferred, see below. | `kernel.test.ts` navigation tests (push/replace, history event, cross-origin, invalid-url, unavailable); `examples.test.ts` drives Back/Forward through real DOM in `05-multi-screen` |
+| 8 | Browser navigation/history | ✅ (opt-in) | `NavigationEffectRequest` (`push`/`replace`) + `NavigationOutcome` in `protocol.ts`; `#executeNavigation`/`runNavigation` and one `popstate` listener in the kernel. Inbound, the opening URL rides on `Initialize.location` and later history moves dispatch a `SemanticEvent` whose name the host supplies — the kernel never invents route vocabulary, and never parses a URL for meaning. Four operations as a closed union (`push`/`replace`/`back`/`forward`), one member per operation so `back` cannot carry a url; `back`/`forward` report `Accepted` rather than a location, because a queued traversal's destination is not knowable synchronously. Opt-in link interception dispatches an eligible left-click as an event and never navigates by itself. Enabled by the `navigation` option; omitted, the kernel behaves exactly as before and announces only `["Http", "Storage"]`. Cross-origin navigation is refused, not attempted. | `kernel.test.ts` navigation tests (push/replace, history event, cross-origin, invalid-url, unavailable); `examples.test.ts` drives Back/Forward through real DOM in `05-multi-screen` |
 | 9 | Rendering helpers — text/attributes/visibility/lists/replace-update fragments | ✅ | `data-text`, `data-bind-<attr>` (visibility via `data-bind-hidden`), `data-each`, `data-if`. Arbitrary fragment replace/insert beyond keyed templates is deliberately unsupported — reconciliation is intentionally restricted to keyed repeated templates (zero-authoritative spec §25) | `kernel.test.ts` projection + list tests |
 | 10 | List rendering | ✅ (virtualization 🧊 deferred) | Keyed reconciliation preserves DOM node identity across reorder (`#applyEach`). Windowing/virtualization: no evidence yet that any list is large enough to need it — spec §30/§31 calls for measuring at 1k/10k/100k/1M records before optimizing. | `kernel.test.ts`: add/remove/reorder-preserves-identity |
 | 11 | Browser-local presentation state — focus, popovers, animation, pointer | ✅ by design | Left entirely to CSS/native browser behavior; the kernel does not track or synchronize any of it (`architecture.yaml`, zero-authoritative spec §4.3) | N/A — no kernel code exists to test |
@@ -67,7 +67,7 @@ plain, JSON-serializable value.
 | 14 | Diagnostics hooks | ✅ | `src/kernel/diagnostics.ts` — injectable `DiagnosticsSink`, defaults to a no-op. Reports `BridgeError` (dispatch/projection/effect phase) and `EffectTiming`. | `kernel.test.ts`: "the kernel reports effect timing…", both error-boundary tests |
 | 15 | Accessibility plumbing | ⚠️ Partial | `aria-live` regions work today because they're native HTML the kernel already updates via `data-text`/`textContent` (see `index.html`'s status paragraph) — no special kernel code needed. Focus restoration (e.g. after a keyed list item is removed) is 🧊 deferred, no demonstrated need yet. | — |
 | 16 | Scheduling primitives — rAF/timers/idle callbacks | 🧊 Deferred | No feature currently needs debounced/scheduled semantic events; the coalesce/debounce allowance in zero-authoritative spec §15 is explicitly evidence-driven, not default. | — |
-| 17 | File/browser API adapters | 🧊 Deferred | — | — |
+| 17 | File/browser API adapters | ⚠️ Partial | Clipboard (`writeText`, opt-in) — `ClipboardEffectRequest`/`ClipboardOutcome` in `protocol.ts`, `#executeClipboard`/`runClipboard` in the kernel. Four normalized failure reasons (`permission-denied`, `not-secure-context`, `unsupported`, `failed`), never a browser exception string. Clipboard **read** is deliberately not implemented (least capability). Contents are never logged. File adapters: 🧊 deferred. | `kernel.test.ts` clipboard tests (all five outcomes, the unwired refusal, and a test proving contents never reach diagnostics); `site.test.ts` drives the real Copy button |
 | 18 | Storage adapters | ✅ (`localStorage` only) | `StorageEffectRequest`/`StorageOutcome` in `protocol.ts`; `#executeStorage`/`runStorage` in the kernel. `get`/`set`/`remove` only, no `IndexedDB`/`Cache API` — build those when a feature demonstrates the need, same 🧊 policy as everything else here. No `OutcomeUnknown`: a single `localStorage` call is effectively atomic, so unlike Http there's no meaningful "dispatched but uncertain" state; failures classify as `unavailable` or `quota-exceeded`. | `kernel.test.ts`: set→get round-trip, remove→get reports `null`, quota-exceeded classification, stale-cancellation-is-a-no-op |
 | 19 | Network adapter | ✅ | `#runHttp` — classifies transport-level outcomes only (`Success`/`Failure`/`Cancelled`/`OutcomeUnknown`), never interprets a status code or decoded body as domain truth (per responsibility-spec §17: "TypeScript must not interpret business meaning"). Extended beyond `GET` to any of `PUT`/`POST`/`PATCH`/`DELETE` with caller-supplied headers (merged over the kernel's own `accept` default) and an opaque pre-serialized body — added for a real consumer's GitHub Contents API write (`PUT` + `Authorization` header + JSON body). Headers/body are never surfaced in a `DiagnosticEvent`. | `kernel.test.ts`: PUT with headers+body reaches `fetch()` correctly, GET omits body entirely, diagnostics never contain header/body content |
 
@@ -102,16 +102,29 @@ legend requires — the capability was designed against
 `examples/05-multi-screen/`, which had the screens and lacked the URLs, rather
 than against a hypothetical. Work item WI-0014.
 
-Two parts of the NAVIGATION system stay 🧊 deferred, for the same reason
-everything else on this list is:
+Item 8 was then completed under WI-0015, which added `back`/`forward` and
+opt-in link interception — both of which the previous round had deferred on
+the grounds that nothing had demonstrated the need. A direct requirement is
+that demonstration. The navigation effect was also reshaped from a record with
+a `mode` field into one union member per operation, per SDE
+`architecture/BOUNDARY-PRESERVATION.md`'s Host Contract rule ("effects
+described by a closed algebra, one constructor per legal operation — not a
+flat record with optional/nullable fields"); the old shape would have allowed
+`{ operation: "back", url: "/somewhere" }` to be written down.
 
-- **Link interception.** No blanket `<a href>` handler. Responsibility-spec §28
-  says prefer native links and do not replace browser behavior unless
-  application semantics require it; a blanket interceptor would also swallow
-  fragment links, downloads and `mailto:`. An in-app same-document link already
-  works — it fires the history event like any other traversal.
-- **Engine-driven `back`/`forward`.** The browser's own buttons already reach
-  the engine inbound. Nothing has needed the engine to *drive* a traversal.
+Still 🧊 deferred, for the same reason everything else on this list is:
+
+- **`document.title`.** A real gap for a routed single-page application: the
+  title will not follow the route, which affects the browser's history menu and
+  screen-reader announcements. Nothing shipped here has it — the site is static
+  HTML with a correct title per page. Options recorded in
+  [24-navigation-and-github-pages.md](24-navigation-and-github-pages.md#scroll-focus-and-the-document-title).
+- **Page reload, external navigation, open-in-new-tab.** A real `<a href>`
+  already does the last two better.
+- **Scroll restoration and focus management on route change.** Left to native
+  behaviour; the accessible focus pattern is documented but unimplemented.
+- **Clipboard read.** Least capability — see
+  [23-clipboard.md](23-clipboard.md#reading-the-clipboard).
 
 ## SHOULD NOT CONTAIN (invariants)
 

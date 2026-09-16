@@ -340,7 +340,9 @@ test("04-save-data: a timed-out POST offers reconciliation, never a blind retry"
 // Exactly what examples/05-multi-screen/main.ts ships, routing included, so
 // these tests drive the real configuration rather than a simpler one.
 const mountMultiScreen = (document: Document): Promise<void> =>
-  new BrowserKernel(createMultiScreenTransport(), document, undefined, { historyEvent: "urlChanged" }).start();
+  new BrowserKernel(createMultiScreenTransport(), document, {
+    navigation: { historyEvent: "urlChanged", linkEvent: "linkActivated" },
+  }).start();
 
 const windowOf = (document: Document): Window => {
   assert.ok(document.defaultView, "the test document has no window");

@@ -26,7 +26,10 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 | 05 | [Events and dispatch](05-events-and-dispatch.md) | How does a click become an application action? |
 | 06 | [Rendering](06-rendering.md) | How does state reach the screen? Is this a UI framework? |
 | 07 | [Effects and browser interop](07-effects-and-browser-interop.md) | How does anything leave the application? Includes HTTP and storage in full. |
-| 08 | [Multi-screen applications](08-multi-screen-applications.md) | How do I structure more than one screen? |
+| 08 | [Multi-screen applications](08-multi-screen-applications.md) | How do I structure more than one screen, with real URLs? |
+| 23 | [Clipboard](23-clipboard.md) | How do I copy text, and what happens when the browser refuses? |
+| 24 | [Navigation lifecycle and GitHub Pages](24-navigation-and-github-pages.md) | Push vs replace, Back/Forward, link interception, and making deep links load |
+| 25 | [Browser capabilities](25-browser-capabilities.md) | Every browser operation an engine may request, in one place |
 
 ## Working with it
 

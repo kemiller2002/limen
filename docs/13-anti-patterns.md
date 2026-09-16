@@ -529,6 +529,102 @@ helper in [`test/kernel.test.ts`](../test/kernel.test.ts).
 
 ## Quick reference
 
+## Routing and clipboard by hand
+
+### ❌ `pushState` from page JavaScript
+
+```js
+window.history.pushState({}, "", "/docs");
+showDocs();
+```
+
+Two things are wrong and they compound. The browser operation and the
+application decision are the same statement, so nothing can happen without the
+other — and JavaScript has quietly become the application authority. The URL
+and the engine's idea of where it is can now disagree, and nothing tells you
+which is right.
+
+### ✅ Request it, and let the engine own the meaning
+
+```ts
+// the engine, in a transition it validated first
+return {
+  state: arriveAt(state, command.screen),
+  effects: [{ kind: "Navigate", correlationId, operation: "push", url: urlFor(command.screen) }],
+};
+```
+
+### ❌ Pushing in response to Back
+
+```ts
+case "urlChanged":
+  // Wrong: the browser is already here. Pushing puts the user straight back
+  // where they just left, and destroys the forward history.
+  return { state: arriveAt(state, screen), effects: [{ operation: "push", url }] };
+```
+
+### ✅ Make it a different command
+
+```ts
+| { kind: "Navigate"; screen }       // the user chose: push
+| { kind: "RestoreRoute"; screen }   // the browser moved: never push
+```
+
+The rule is then structural rather than a comment someone has to remember.
+
+### ❌ Building paths at call sites
+
+```ts
+navigate("/docs/" + slug);
+navigate(`/docs/${slug}/`);   // and now there are two canonical forms
+```
+
+### ✅ One formatter, and its inverse
+
+```ts
+urlFor(DocumentationPage(slug))    // the only place a path is constructed
+routeFor(url)                      // the only place one is parsed
+```
+
+Test the round trip: `route → format → parse → the same route`.
+
+### ❌ Copying directly
+
+```js
+navigator.clipboard.writeText(value);
+element.innerText = "Copied!";
+```
+
+It says "Copied!" whether or not anything was copied — `writeText` rejects on a
+denied permission or an insecure page, and nothing here waits for it. The
+application's state is now in the DOM, and the engine can no longer be tested
+without a browser.
+
+### ✅ An effect, with its failure modelled
+
+```text
+CopyRequested → Clipboard effect → kernel → browser
+    → CopySucceeded | CopyFailed(reason) → engine state → normal render
+```
+
+### ❌ Intercepting every link
+
+```js
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a");
+  if (a) { e.preventDefault(); route(a.href); }   // breaks Ctrl-click, downloads, mailto:, external links
+});
+```
+
+### ✅ Let the kernel decide eligibility
+
+Name a `linkEvent` and the kernel takes only unmodified left-clicks on
+same-origin anchors with no `target`, no `download`, and no opt-out. A
+Ctrl-click still opens a tab. See
+[24-navigation-and-github-pages.md](24-navigation-and-github-pages.md#link-interception).
+
+---
+
 | Anti-pattern | Rule | Detected by |
 | --- | --- | --- |
 | State in JavaScript | 1.1, 1.2 | review |
@@ -544,6 +640,12 @@ helper in [`test/kernel.test.ts`](../test/kernel.test.ts).
 | Partial projection | 5.1 | **runtime** |
 | Index keys | 5.3 | review |
 | Logging credentials | 3.5 | review |
+| Logging clipboard contents | 3.5 | review / test |
+| `pushState` from page JavaScript | 2.1, 4.1 | **script** |
+| `navigator.clipboard` in an engine | 2.1, 4.1 | **script** |
+| Pushing in response to Back | 4.1 | review / test |
+| Paths built at call sites | 1.4 | review |
+| Intercepting every link | 3.1 | review |
 | Reference transport in production | — | runtime throw |
 | Double `start()` | — | review |
 
