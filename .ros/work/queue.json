@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 11,
+  "nextSeq": 12,
   "items": [
     {
       "id": "WI-0001",
@@ -168,6 +168,22 @@
       "attachments": [],
       "createdAt": "2026-09-16T12:18:01.903Z",
       "updatedAt": "2026-09-16T12:18:02.044Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0011",
+      "title": "Record the hosted-sandbox git and toolchain limits in CLAUDE.md",
+      "description": "Tag pushes and ref deletions are blocked by the session git proxy while branch pushes succeed; the .NET SDK is available via the Ubuntu archive. Record both, plus the two consequences (releases must be tagged by a human; a scratch branch is permanent and cancels main's CI) so the next agent does not rediscover them.",
+      "tags": [
+        "documentation"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T12:49:31.493Z",
+      "updatedAt": "2026-09-16T12:49:31.561Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
