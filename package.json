@@ -1,6 +1,6 @@
 {
   "name": "@echelon-foundry/typescript-wasm-kernel",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority — a dependency-free browser kernel library, plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
   "license": "MIT",
   "type": "module",
