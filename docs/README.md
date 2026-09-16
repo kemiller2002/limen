@@ -26,7 +26,10 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 | 05 | [Events and dispatch](05-events-and-dispatch.md) | How does a click become an application action? |
 | 06 | [Rendering](06-rendering.md) | How does state reach the screen? Is this a UI framework? |
 | 07 | [Effects and browser interop](07-effects-and-browser-interop.md) | How does anything leave the application? Includes HTTP and storage in full. |
-| 08 | [Multi-screen applications](08-multi-screen-applications.md) | How do I structure more than one screen? |
+| 08 | [Multi-screen applications](08-multi-screen-applications.md) | How do I structure more than one screen, with real URLs? |
+| 23 | [Clipboard](23-clipboard.md) | How do I copy text, and what happens when the browser refuses? |
+| 24 | [Navigation lifecycle and GitHub Pages](24-navigation-and-github-pages.md) | Push vs replace, Back/Forward, link interception, and making deep links load |
+| 25 | [Browser capabilities](25-browser-capabilities.md) | Every browser operation an engine may request, in one place |
 
 ## Working with it
 
@@ -47,7 +50,8 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 | 12 | [Design rules](12-design-rules.md) | What MUST/SHOULD/MAY I do? |
 | 13 | [Anti-patterns](13-anti-patterns.md) | What must I not do, and why? |
 | 14 | [Agent guide](14-agent-guide.md) | Where does a change belong? (written for AI coding agents) |
-| 17 | [WASM migration](17-wasm-migration.md) | Where is the WebAssembly, and what would adding it take? |
+| 17 | [WASM migration](17-wasm-migration.md) | Where is the WebAssembly, and what would moving an engine into it take? |
+| 26 | [The F# WebAssembly engine](26-fsharp-wasm-engine.md) | The engine that runs this project's own site: how it was built, what it cost, what it proved |
 | 18 | [Naming and compatibility](18-naming-and-compatibility.md) | What is Limen, what was renamed, and did anything break? |
 | — | [Glossary](glossary.md) | What does this word mean here? |
 

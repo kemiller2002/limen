@@ -19,9 +19,15 @@
           <p class="signal">Exactly one place owns application state, and it is not the browser.</p>
           <ul class="list-inline">
             <li>zero runtime dependencies</li>
-            <li>six HTML attributes</li>
+            <li>a handful of HTML attributes</li>
             <li>~80-line contract</li>
           </ul>
+          <!-- Filled in by site/app/main.ts once an engine has been chosen.
+               An architecture claim nobody can see is one nobody can check. -->
+          <p class="engine-badge">
+            Engine running this page:
+            <strong data-engine-name>checking…</strong>
+          </p>
         </div>
       </div>
     </section>
@@ -82,11 +88,50 @@
         </table>
       </div>
       <p class="prose">
-        The kernel understands six HTML attributes and no application vocabulary
+        <strong>The demos below are not running JavaScript.</strong> This site's engine —
+        every state machine, every transition, every projection on this page — is written in
+        <strong>F#</strong> and compiled to <strong>WebAssembly</strong>. The kernel carrying
+        events to it is the same <code>BrowserKernel</code> the npm package publishes,
+        unmodified: it was handed a different <code>EngineTransport</code> and cannot tell the
+        difference, because the contract between them was always plain, serializable data.
+        If the wasm module fails to load, the page falls back to an equivalent TypeScript
+        engine and says so above. See
+        <a href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/26-fsharp-wasm-engine.md">the write-up</a>.
+      </p>
+      <p class="prose">
+        The kernel understands a handful of HTML attributes and no application vocabulary
         at all. It does not know what <code>checkAvailability</code> means or what a
         <code>customers</code> list is. It moves opaque strings and plain data across a
         boundary — which is exactly what stops application logic from accumulating
         in the browser layer.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Install</p>
+          <h2>Copy it, and watch a capability work.</h2>
+        </div>
+        <p class="section-note">This button is not a copy helper. It is an engine state machine, a Clipboard effect, and a modelled failure.</p>
+      </div>
+
+      <!-- The button carries no text to copy and no knowledge of the
+           clipboard. It dispatches `copyInstall`; the engine holds the command
+           string, requests a Clipboard effect, and projects the label, the
+           disabled state and any error. Nothing here calls navigator.clipboard. -->
+      <div class="install">
+        <code class="install-command" data-text="installCommand"></code>
+        <button class="button primary" data-event="copyInstall" data-bind-disabled="copyBusy" data-text="copyLabel"></button>
+      </div>
+      <p class="install-note" role="status" aria-live="polite">
+        <template data-if="copySucceeded"><span class="ok">Copied to your clipboard.</span></template>
+        <template data-if="copyFailed"><span class="bad" data-text="copyError"></span></template>
+      </p>
+      <p class="section-note">
+        Copying can fail — a browser may require a secure context, a permission, or a recent
+        user gesture. <code>ClipboardOutcome</code> has a <code>Failure</code> case for each, the
+        engine turns it into a sentence, and you see it above instead of nothing happening.
       </p>
     </section>
 
@@ -225,9 +270,9 @@
         <p class="section-note">Recorded, not hidden. Several are deliberate.</p>
       </div>
       <div class="columns">
-        <div class="card"><h3>No routing or history</h3><p>Back and forward do not move between screens. Screens work within one page load; URL integration is not implemented.</p></div>
-        <div class="card"><h3>Two browser capabilities</h3><p>HTTP and <code>localStorage</code>. No clipboard, files, timers, navigation or IndexedDB — adding one is a deliberate protocol change.</p></div>
-        <div class="card"><h3>No focus management</h3><p>Removing a focused list item drops focus. A known gap.</p></div>
+        <div class="card"><h3>No router, but real URLs</h3><p>Back and forward move between screens and deep links work. What there is no router object: you map URLs to state with two pure functions in the engine, and the kernel owns <code>pushState</code> and <code>popstate</code>. No nested routes and no route params; link interception is opt-in and never takes a Ctrl-click.</p></div>
+        <div class="card"><h3>Five browser capabilities</h3><p>HTTP, <code>localStorage</code>, navigation, clipboard write, and focus/scroll on a route change. No files, timers, IndexedDB or clipboard <em>read</em> — adding one is a deliberate protocol change.</p></div>
+        <div class="card"><h3>Focus only on a route change</h3><p>Navigating moves focus to the new screen&rsquo;s heading, so a screen reader announces it. Focus after a list item is removed is still a known gap.</p></div>
         <div class="card"><h3>No virtualization</h3><p>Every projected item becomes a DOM node.</p></div>
         <div class="card"><h3>More ceremony when trivial</h3><p>For a genuinely simple page, a small component framework is less work. Limen earns its keep when behavior is complex.</p></div>
         <div class="card"><h3>No WebAssembly here</h3><p>The boundary is designed for it and one consumer runs an F# engine across it — but this package ships TypeScript.</p></div>

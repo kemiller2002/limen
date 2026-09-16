@@ -15,4 +15,10 @@
 | WI-0010 | Release 0.5.0: first release carrying the Limen lifecycle CLI | complete | release | high |
 | WI-0011 | Record the hosted-sandbox git and toolchain limits in CLAUDE.md | complete | documentation | medium |
 | WI-0012 | Fix the release workflow: npm pack --pack-destination needs the directory to exist | complete | tooling | high |
-| WI-0013 | Release 0.5.1: republish after the v0.5.0 pack failure | ready | release | high |
+| WI-0013 | Release 0.5.1: republish after the v0.5.0 pack failure | complete | release | high |
+| WI-0014 | Browser navigation and history integration (ROADMAP item 8) | complete | kernel, protocol | high |
+| WI-0015 | Navigation and clipboard browser capability architecture (SDE mission) | complete | kernel, protocol, clipboard, navigation | high |
+| WI-0016 | Document capability: title, focus and scroll on route change | complete | kernel, protocol, accessibility | high |
+| WI-0017 | Drive the Limen site from an F# engine compiled to WebAssembly | complete | wasm, fsharp, site | high |
+| WI-0018 | Pin the .NET SDK feature band so the wasm-tools workload installs where the build runs, and stop build-wasm.ts discarding dotnet's diagnostics | complete |  | medium |
+| WI-0019 | Correct the overstated claim that a C# shim is required to export from a .NET WebAssembly module | ready |  | medium |

@@ -7,6 +7,7 @@ import test from "node:test";
 import { BrowserKernel } from "../dist/kernel/browser-kernel.js";
 import type { DiagnosticEvent, DiagnosticsSink } from "../dist/kernel/diagnostics.js";
 import type { BrowserToEngineMessage, CorrelationId, EffectOutcome, EngineToBrowserMessage, EngineTransport } from "../dist/protocol.js";
+import type { BrowserKernelOptions } from "../dist/kernel/browser-kernel.js";
 import { withDom, withFetch } from "./dom-helpers.ts";
 
 function respond(overrides: Partial<EngineToBrowserMessage> = {}): EngineToBrowserMessage {
@@ -734,5 +735,740 @@ test("a cancellation naming an already-completed Storage effect is a harmless no
       document.querySelector("button").click();
       await new Promise((resolve) => { setTimeout(resolve, 50); });
     })());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Browser navigation / history (ROADMAP item 8, responsibility-spec §11)
+//
+// Two directions, and they are not symmetric. Inbound, the browser moves the
+// user and the kernel reports where they landed as ordinary evidence. Outbound,
+// the engine decides the application has moved and asks the kernel to record
+// it. Neither direction lets the kernel decide what a URL means.
+//
+// jsdom implements the History API with real browser semantics, verified here
+// rather than assumed: pushState/replaceState never fire popstate, history.back()
+// fires it on a later task, and a cross-origin pushState throws SecurityError.
+// ---------------------------------------------------------------------------
+
+// history.back() is a queued traversal, not a synchronous call, so a fixed
+// flush() is not enough — wait for the observable effect instead of a delay
+// long enough to "probably" cover it.
+async function until(condition: () => boolean, what: string): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (condition()) return;
+    await new Promise((resolve) => { setTimeout(resolve, 5); });
+  }
+  throw new Error(`timed out waiting for ${what}`);
+}
+
+const routing = { historyEvent: "urlChanged" } as const;
+
+test("without a navigation binding the kernel announces no Navigation capability and reports no location", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<div></div>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    // The pre-navigation wire shape, unchanged, byte for byte. Every consumer
+    // that never opts in must see exactly what it saw before.
+    assert.deepEqual(transport.calls[0], { kind: "Initialize", protocolVersion: 1, capabilities: ["Http", "Storage"] });
+  });
+});
+
+test("with a navigation binding Initialize announces Navigation and carries the opening location", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<div></div>`, async (document) => {
+    document.defaultView!.history.replaceState(null, "", "/customers?q=ada#top");
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+    assert.deepEqual(transport.calls[0], {
+      kind: "Initialize",
+      protocolVersion: 1,
+      capabilities: ["Http", "Storage", "Navigation"],
+      // Path, query and hash — everything that can vary within the origin,
+      // and nothing that cannot.
+      location: "/customers?q=ada#top",
+    });
+  });
+});
+
+test("a push Navigate effect moves the URL, adds a history entry, and reports the resulting location", async () => {
+  const correlationId = withCorrelation("n1");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    const before = view.history.length;
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+
+    assert.equal(view.location.pathname, "/settings");
+    assert.equal(view.history.length, before + 1, "push adds an entry the user can come back from");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result, {
+      kind: "NavigationResult",
+      correlationId,
+      outcome: { kind: "Success", url: "/settings" },
+    });
+  });
+});
+
+test("a replace Navigate effect moves the URL without adding a history entry", async () => {
+  const correlationId = withCorrelation("n2");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "replace", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    const before = view.history.length;
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+
+    assert.equal(view.location.pathname, "/settings");
+    assert.equal(view.history.length, before, "replace rewrites the current entry rather than adding one");
+  });
+});
+
+test("the kernel's own push does not report back as a history event", async () => {
+  const correlationId = withCorrelation("n3");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
+
+    // The engine asked for this move and already knows about it. Echoing it
+    // back as evidence is how a navigation loop starts.
+    const echoes = transport.calls.filter((call) => call.kind === "Event" && call.event.name === routing.historyEvent);
+    assert.deepEqual(echoes, []);
+  });
+});
+
+test("back dispatches the application's own history event carrying the new location", async () => {
+  const correlationId = withCorrelation("n4");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    view.history.replaceState(null, "", "/home");
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+    assert.equal(view.location.pathname, "/settings");
+
+    view.history.back();
+    await until(
+      () => transport.calls.some((call) => call.kind === "Event" && call.event.name === routing.historyEvent),
+      "the history event to reach the engine",
+    );
+
+    const event = transport.calls.filter((call) => call.kind === "Event").at(-1);
+    // The name is the application's, supplied by the host — the kernel never
+    // invents vocabulary. The location rides in `value`, like any other
+    // evidence read off the browser.
+    assert.deepEqual(event?.kind === "Event" && event.event, { kind: "Event", name: "urlChanged", value: "/home" });
+  });
+});
+
+test("a hash-only move is reported the same way, so hash routing needs no extra wiring", async () => {
+  const correlationId = withCorrelation("n5");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "push", url: "#/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+    assert.equal(view.location.hash, "#/settings");
+
+    view.history.back();
+    await until(
+      () => transport.calls.some((call) => call.kind === "Event" && call.event.name === routing.historyEvent),
+      "the history event to reach the engine",
+    );
+    const event = transport.calls.filter((call) => call.kind === "Event").at(-1);
+    assert.equal(event?.kind === "Event" && event.event.value, "/");
+  });
+});
+
+test("a cross-origin Navigate is refused and the page does not move", async () => {
+  const correlationId = withCorrelation("n6");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "push", url: "https://evil.example.com/steal" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+
+    // An engine — or a value that reached one — must not be able to use this
+    // effect to send the user to another site.
+    assert.equal(view.location.origin, "http://localhost");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "cross-origin" });
+  });
+});
+
+test("an unresolvable URL reports invalid-url rather than throwing", async () => {
+  const correlationId = withCorrelation("n7");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "push", url: "http://[" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    await assert.doesNotReject(new BrowserKernel(transport, document, { navigation: routing }).start());
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "invalid-url" });
+  });
+});
+
+test("a Navigate effect on a kernel with no navigation binding reports unavailable and touches nothing", async () => {
+  const correlationId = withCorrelation("n8");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "push", url: "/settings" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView!;
+    const before = { path: view.location.pathname, entries: view.history.length };
+    await new BrowserKernel(transport, document).start();
+
+    // The capability was never announced, so the kernel does not quietly
+    // honour the request anyway — it says so, and the engine can react.
+    assert.equal(view.location.pathname, before.path);
+    assert.equal(view.history.length, before.entries);
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "unavailable" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Navigation: history traversal (back/forward)
+//
+// A traversal is a request to the browser, not an edit the kernel makes. The
+// kernel cannot know where it lands, so it acknowledges and says no more — the
+// history event that follows is what tells the engine where it is.
+// ---------------------------------------------------------------------------
+
+test("back and forward are requests the kernel acknowledges rather than resolves", async () => {
+  const correlationId = withCorrelation("t1");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "back" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+    const result = transport.calls.find((call) => call.kind === "EffectResult");
+    // Not Success-with-a-url: at this instant the kernel genuinely does not
+    // know where the browser will land, or whether it will move at all.
+    assert.deepEqual(result?.kind === "EffectResult" && result.result, {
+      kind: "NavigationResult",
+      correlationId,
+      outcome: { kind: "Accepted" },
+    });
+  });
+});
+
+test("an engine-requested back actually moves the browser and reports the new location", async () => {
+  const push = withCorrelation("t2");
+  const back = withCorrelation("t3");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId: push, operation: "push", url: "/second" }] });
+    if (message.kind === "Event" && message.event.name === "goBack") {
+      return respond({ effects: [{ kind: "Navigate", correlationId: back, operation: "back" }] });
+    }
+    return respond();
+  });
+  await withDom(`<button data-event="goBack"></button>`, async (document) => {
+    const view = document.defaultView!;
+    view.history.replaceState(null, "", "/first");
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+    assert.equal(view.location.pathname, "/second");
+
+    document.querySelector("button")!.click();
+    await until(
+      () => transport.calls.some((call) => call.kind === "Event" && call.event.name === routing.historyEvent),
+      "the traversal to land and report",
+    );
+
+    // The proof that this is one history and not two: the engine asked, the
+    // browser moved, and the answer came back through the ordinary inbound path.
+    assert.equal(view.location.pathname, "/first");
+    const event = transport.calls.filter((call) => call.kind === "Event").at(-1);
+    assert.deepEqual(event?.kind === "Event" && event.event, { kind: "Event", name: "urlChanged", value: "/first" });
+  });
+});
+
+test("a back/forward request on a kernel without navigation reports unavailable", async () => {
+  const correlationId = withCorrelation("t4");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Navigate", correlationId, operation: "forward" }] });
+    return respond();
+  });
+  await withDom(`<div></div>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "unavailable" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Navigation: link interception
+//
+// Every test here is really one assertion: the kernel must not break something
+// the browser already does correctly. Taking a click the user meant as "open
+// this in a new tab" is a regression they experience as a broken page.
+// ---------------------------------------------------------------------------
+
+const linking = { historyEvent: "urlChanged", linkEvent: "linkActivated" } as const;
+
+/** A click with the modifiers a real browser would report. */
+function clickAnchor(document: Document, selector: string, init: Record<string, unknown> = {}): void {
+  const view = document.defaultView as Window & typeof globalThis;
+  const anchor = document.querySelector(selector)!;
+  anchor.dispatchEvent(new view.MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...init }));
+}
+
+const linkEvents = (transport: ScriptedTransport): string[] =>
+  transport.calls.flatMap((call) => (call.kind === "Event" && call.event.name === "linkActivated" ? [call.event.value ?? ""] : []));
+
+test("a plain left-click on an internal link becomes an event carrying the href", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<a id="go" href="/customers?q=ada#top">Customers</a>`, async (document) => {
+    await new BrowserKernel(transport, document, { navigation: linking }).start();
+    clickAnchor(document, "#go");
+    await flush();
+
+    // The kernel reports an intent. It has not navigated, and it has not
+    // decided the href means anything — the engine does that.
+    assert.deepEqual(linkEvents(transport), ["/customers?q=ada#top"]);
+    assert.equal(document.defaultView!.location.pathname, "/", "the kernel must not navigate on its own");
+  });
+});
+
+test("the intercepted click's default is prevented, so the browser does not also navigate", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<a id="go" href="/customers">Customers</a>`, async (document) => {
+    await new BrowserKernel(transport, document, { navigation: linking }).start();
+    const view = document.defaultView as Window & typeof globalThis;
+    const domEvent = new view.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 });
+    document.querySelector("#go")!.dispatchEvent(domEvent);
+
+    assert.equal(domEvent.defaultPrevented, true);
+  });
+});
+
+test("every click a browser would handle better is left to the browser", async () => {
+  const cases: ReadonlyArray<readonly [string, string, Record<string, unknown>]> = [
+    ["ctrl-click opens a tab", "#internal", { ctrlKey: true }],
+    ["cmd-click opens a tab", "#internal", { metaKey: true }],
+    ["shift-click opens a window", "#internal", { shiftKey: true }],
+    ["alt-click downloads", "#internal", { altKey: true }],
+    ["middle-click opens a tab", "#internal", { button: 1 }],
+    ["right-click opens the context menu", "#internal", { button: 2 }],
+    ["a different origin is not ours", "#external", {}],
+    ["a download is the browser's job", "#download", {}],
+    ["an explicit target was deliberate", "#blank", {}],
+    ["rel=external is an explicit opt-out", "#rel", {}],
+    ["data-native-link is an explicit opt-out", "#optout", {}],
+    ["mailto: belongs to the OS", "#mail", {}],
+    ["an anchor with no href is not a link", "#nohref", {}],
+  ];
+  const markup = `
+    <a id="internal" href="/customers">Customers</a>
+    <a id="external" href="https://example.com/x">External</a>
+    <a id="download" href="/file.zip" download>Download</a>
+    <a id="blank" href="/customers" target="_blank">New tab</a>
+    <a id="rel" href="/customers" rel="external noopener">Rel</a>
+    <a id="optout" href="/customers" data-native-link>Opt out</a>
+    <a id="mail" href="mailto:someone@example.com">Mail</a>
+    <a id="nohref">Not a link</a>`;
+
+  for (const [why, selector, init] of cases) {
+    const transport = new ScriptedTransport(() => respond());
+    await withDom(markup, async (document) => {
+      await new BrowserKernel(transport, document, { navigation: linking }).start();
+      const domEvent = new (document.defaultView as Window & typeof globalThis).MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...init });
+      document.querySelector(selector)!.dispatchEvent(domEvent);
+      await flush();
+
+      assert.deepEqual(linkEvents(transport), [], `${why}: should not have been intercepted`);
+      assert.equal(domEvent.defaultPrevented, false, `${why}: the browser's own behavior must survive`);
+    });
+  }
+});
+
+test("a click on an element inside a link still finds the link", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<a id="go" href="/customers"><span id="inner">Go</span></a>`, async (document) => {
+    await new BrowserKernel(transport, document, { navigation: linking }).start();
+    clickAnchor(document, "#inner");
+    await flush();
+    assert.deepEqual(linkEvents(transport), ["/customers"]);
+  });
+});
+
+test("without linkEvent no link is ever intercepted", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<a id="go" href="/customers">Customers</a>`, async (document) => {
+    // `routing` has historyEvent but no linkEvent: history still works, links
+    // stay entirely native.
+    await new BrowserKernel(transport, document, { navigation: routing }).start();
+    const domEvent = new (document.defaultView as Window & typeof globalThis).MouseEvent("click", { bubbles: true, cancelable: true, button: 0 });
+    document.querySelector("#go")!.dispatchEvent(domEvent);
+    await flush();
+
+    assert.deepEqual(linkEvents(transport), []);
+    assert.equal(domEvent.defaultPrevented, false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Clipboard
+// ---------------------------------------------------------------------------
+
+const clipboardOn = { enabled: true } as const;
+
+/** Installs a clipboard stub for the duration of a test. */
+async function withClipboard<T>(
+  writeText: ((text: string) => Promise<void>) | null,
+  run: () => Promise<T>,
+  secureContext = true,
+): Promise<T> {
+  const globals = globalThis as unknown as Record<string, unknown>;
+  const savedNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  const savedSecure = Object.getOwnPropertyDescriptor(globalThis, "isSecureContext");
+  Object.defineProperty(globalThis, "navigator", {
+    value: writeText === null ? {} : { clipboard: { writeText } },
+    configurable: true,
+  });
+  Object.defineProperty(globalThis, "isSecureContext", { value: secureContext, configurable: true });
+  try {
+    return await run();
+  } finally {
+    if (savedNavigator) Object.defineProperty(globalThis, "navigator", savedNavigator);
+    else delete globals.navigator;
+    if (savedSecure) Object.defineProperty(globalThis, "isSecureContext", savedSecure);
+    else delete globals.isSecureContext;
+  }
+}
+
+function copyOf(text: string, correlationId: CorrelationId): EngineToBrowserMessage {
+  return respond({ effects: [{ kind: "Clipboard", correlationId, operation: "writeText", text }] });
+}
+
+test("a clipboard write reaches the browser API and reports Success", async () => {
+  const correlationId = withCorrelation("c-w1");
+  const written: string[] = [];
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? copyOf("npm install limen", correlationId) : respond());
+
+  await withClipboard(async (text) => { written.push(text); }, () =>
+    withDom(`<div></div>`, async (document) => {
+      await new BrowserKernel(transport, document, { clipboard: clipboardOn }).start();
+      assert.deepEqual(written, ["npm install limen"], "the text reached the browser unchanged");
+      const result = transport.calls.at(-1);
+      assert.deepEqual(result?.kind === "EffectResult" && result.result, {
+        kind: "ClipboardResult",
+        correlationId,
+        outcome: { kind: "Success" },
+      });
+    }));
+});
+
+test("a refused clipboard write is a modelled outcome, not an exception", async () => {
+  const correlationId = withCorrelation("c-w2");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? copyOf("secret", correlationId) : respond());
+
+  await withClipboard(async () => { throw new DOMException("denied", "NotAllowedError"); }, () =>
+    withDom(`<div></div>`, async (document) => {
+      await assert.doesNotReject(new BrowserKernel(transport, document, { clipboard: clipboardOn }).start());
+      const result = transport.calls.at(-1);
+      assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "permission-denied" });
+    }));
+});
+
+test("a browser with no Clipboard API reports unsupported; an insecure one says so", async () => {
+  for (const [secure, reason] of [[true, "unsupported"], [false, "not-secure-context"]] as const) {
+    const correlationId = withCorrelation("c-w3");
+    const transport = new ScriptedTransport((message) =>
+      message.kind === "Initialize" ? copyOf("x", correlationId) : respond());
+
+    await withClipboard(null, () =>
+      withDom(`<div></div>`, async (document) => {
+        await new BrowserKernel(transport, document, { clipboard: clipboardOn }).start();
+        const result = transport.calls.at(-1);
+        // These are worth telling apart: one is fixed by deploying over
+        // HTTPS, the other is not fixable at all.
+        assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason });
+      }), secure);
+  }
+});
+
+test("an unexplained clipboard rejection is 'failed', not guessed at", async () => {
+  const correlationId = withCorrelation("c-w4");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? copyOf("x", correlationId) : respond());
+
+  await withClipboard(async () => { throw new Error("something went wrong"); }, () =>
+    withDom(`<div></div>`, async (document) => {
+      await new BrowserKernel(transport, document, { clipboard: clipboardOn }).start();
+      const result = transport.calls.at(-1);
+      assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "failed" });
+    }));
+});
+
+test("a clipboard effect on a kernel without the capability never reaches the browser", async () => {
+  const correlationId = withCorrelation("c-w5");
+  const written: string[] = [];
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? copyOf("x", correlationId) : respond());
+
+  await withClipboard(async (text) => { written.push(text); }, () =>
+    withDom(`<div></div>`, async (document) => {
+      await new BrowserKernel(transport, document).start();
+      assert.deepEqual(written, [], "an unannounced capability must not be quietly honoured");
+      const result = transport.calls.at(-1);
+      assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "unsupported" });
+    }));
+});
+
+test("clipboard contents never reach diagnostics", async () => {
+  const correlationId = withCorrelation("c-w6");
+  const secret = "hunter2-correct-horse-battery-staple";
+  const { sink, events } = collectDiagnostics();
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? copyOf(secret, correlationId) : respond());
+
+  await withClipboard(async () => {}, () =>
+    withDom(`<div></div>`, async (document) => {
+      await new BrowserKernel(transport, document, { diagnostics: sink, clipboard: clipboardOn }).start();
+      // A copied value is commonly a token, a password, or a customer's data.
+      // The kernel must not be the place it leaks. Same rule as Http headers.
+      const serialized = JSON.stringify(events);
+      assert.ok(!serialized.includes(secret), `diagnostics leaked the clipboard contents: ${serialized}`);
+      assert.ok(events.some((event) => event.kind === "EffectTiming"), "timing is still reported");
+    }));
+});
+
+test("capabilities are announced only when actually wired", async () => {
+  const cases: ReadonlyArray<readonly [BrowserKernelOptions, readonly string[]]> = [
+    [{}, ["Http", "Storage"]],
+    [{ navigation: routing }, ["Http", "Storage", "Navigation"]],
+    [{ clipboard: clipboardOn }, ["Http", "Storage", "Clipboard"]],
+    [{ navigation: routing, clipboard: clipboardOn }, ["Http", "Storage", "Navigation", "Clipboard"]],
+  ];
+  for (const [options, expected] of cases) {
+    const transport = new ScriptedTransport(() => respond());
+    await withDom(`<div></div>`, async (document) => {
+      await new BrowserKernel(transport, document, options).start();
+      const initialize = transport.calls[0];
+      assert.deepEqual(initialize?.kind === "Initialize" && initialize.capabilities, expected);
+    });
+  }
+});
+
+test("a diagnostics sink still works as the bare third argument", async () => {
+  // The original call shape. Every released consumer uses it, and it must keep
+  // meaning exactly what it did.
+  const { sink, events } = collectDiagnostics();
+  const transport: EngineTransport = {
+    start: async () => { throw new Error("engine failed to load"); },
+    dispatch: async () => { throw new Error("unreachable"); },
+  };
+  await withDom(`<div></div>`, async (document) => {
+    await new BrowserKernel(transport, document, sink).start();
+    assert.equal(events.length, 1);
+    assert.equal(events[0]?.kind, "BridgeError");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Document: the page title as a projection
+//
+// A title is a function of state, not an action, so it is `data-text` on
+// <title> rather than a capability. That only works because start() binds the
+// head as well as the body.
+// ---------------------------------------------------------------------------
+
+test("data-text on <title> makes the document title an ordinary projection", async () => {
+  const transport = new ScriptedTransport((message, calls) =>
+    respond({ view: { pageTitle: `Screen ${calls.length}` } }));
+
+  await withDom(`<button data-event="next"></button>`, async (document) => {
+    document.head.innerHTML = `<title data-text="pageTitle">placeholder</title>`;
+    await new BrowserKernel(transport, document).start();
+
+    // document.title reflects the <title> element's text content, so setting
+    // textContent is genuinely setting the title — no capability required.
+    assert.equal(document.title, "Screen 1");
+
+    document.querySelector("button")!.click();
+    await flush();
+    assert.equal(document.title, "Screen 2", "it follows state, without anything having to fire an effect");
+  });
+});
+
+test("a head with no bindings is left completely alone", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: {} }));
+  await withDom(`<div></div>`, async (document) => {
+    document.head.innerHTML = `<title>Untouched</title><meta name="description" content="x">`;
+    // No view key is projected for it, and nothing throws: binding the head is
+    // inert for every page that did not opt in.
+    await new BrowserKernel(transport, document).start();
+    assert.equal(document.title, "Untouched");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Document: focus and scroll
+// ---------------------------------------------------------------------------
+
+const documentOn = { enabled: true } as const;
+
+const documentEffect = (correlationId: CorrelationId, operation: "focusTarget" | "scrollToTop"): EngineToBrowserMessage =>
+  respond({ effects: [{ kind: "Document", correlationId, operation }] });
+
+test("focusTarget moves focus to the mounted data-focus-target element", async () => {
+  const correlationId = withCorrelation("d1");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2 data-focus-target id="heading">Customers</h2>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+
+    assert.equal(document.activeElement?.id, "heading");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result, {
+      kind: "DocumentResult",
+      correlationId,
+      outcome: { kind: "Success" },
+    });
+  });
+});
+
+test("a heading is made focusable, because focus() on one otherwise does nothing", async () => {
+  const correlationId = withCorrelation("d2");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2 data-focus-target id="heading">Customers</h2>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    // The silent no-op this prevents is exactly the kind of accessibility bug
+    // that survives review: the code looks right and nothing happens.
+    assert.equal(document.querySelector("#heading")!.getAttribute("tabindex"), "-1");
+  });
+});
+
+test("an author's own tabindex is respected rather than overwritten", async () => {
+  const correlationId = withCorrelation("d3");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<div data-focus-target id="target" tabindex="0">Panel</div>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    assert.equal(document.querySelector("#target")!.getAttribute("tabindex"), "0");
+    assert.equal(document.activeElement?.id, "target");
+  });
+});
+
+test("focus with no target mounted reports no-target rather than failing silently", async () => {
+  const correlationId = withCorrelation("d4");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2>No marker here</h2>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    // Almost always a missing attribute in the markup. Saying so beats doing
+    // nothing and leaving an accessibility regression invisible.
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "no-target" });
+  });
+});
+
+test("focusTarget finds the target inside a mounted data-if, and follows it when the screen changes", async () => {
+  const first = withCorrelation("d5");
+  const second = withCorrelation("d6");
+  // The view has to be held across round trips. Every response carries a
+  // COMPLETE ViewState, including the one acknowledging an effect result — and
+  // the effect result for a focus effect arrives immediately after it, so a
+  // transport that re-projected a different screen there would unmount the
+  // element it had just focused.
+  let onA = true;
+  const current = (): { onA: boolean; onB: boolean } => ({ onA, onB: !onA });
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ view: current(), effects: [{ kind: "Document", correlationId: first, operation: "focusTarget" }] });
+    }
+    if (message.kind === "Event") {
+      onA = false;
+      return respond({ view: current(), effects: [{ kind: "Document", correlationId: second, operation: "focusTarget" }] });
+    }
+    return respond({ view: current() });
+  });
+
+  const markup = `
+    <button data-event="go"></button>
+    <template data-if="onA"><h2 data-focus-target id="a">A</h2></template>
+    <template data-if="onB"><h2 data-focus-target id="b">B</h2></template>`;
+
+  await withDom(markup, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    assert.equal(document.activeElement?.id, "a");
+
+    document.querySelector("button")!.click();
+    await flush();
+    // The kernel does not know there are screens. It focuses whichever target
+    // is mounted, which is what makes this generic.
+    assert.equal(document.activeElement?.id, "b");
+  });
+});
+
+test("scrollToTop scrolls the window and reports Success", async () => {
+  const correlationId = withCorrelation("d7");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "scrollToTop") : respond());
+
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView as Window & { scrollTo: (x: number, y: number) => void };
+    const calls: Array<readonly [number, number]> = [];
+    view.scrollTo = (x, y) => { calls.push([x, y]); };
+
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+
+    assert.deepEqual(calls, [[0, 0]]);
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Success" });
+  });
+});
+
+test("a browser without scrollTo is not an effect failure", async () => {
+  const correlationId = withCorrelation("d8");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "scrollToTop") : respond());
+
+  await withDom(`<div></div>`, async (document) => {
+    // jsdom and some embedded webviews have no scrollTo. Not being able to
+    // scroll is not worth failing over.
+    delete (document.defaultView as unknown as Record<string, unknown>).scrollTo;
+    await assert.doesNotReject(new BrowserKernel(transport, document, { document: documentOn }).start());
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Success" });
+  });
+});
+
+test("a Document effect on a kernel without the capability touches nothing", async () => {
+  const correlationId = withCorrelation("d9");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2 data-focus-target id="heading">Customers</h2>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+
+    assert.notEqual(document.activeElement?.id, "heading", "an unannounced capability must not be quietly honoured");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "unavailable" });
   });
 });

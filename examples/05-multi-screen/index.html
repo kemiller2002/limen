@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Multi-screen — kernel example 05</title>
+    <!-- data-text on <title> — the page title is an ordinary projection.
+         The kernel binds the head as well as the body, so no capability and
+         no imperative "set the title" call is involved. -->
+    <title data-text="pageTitle">Multi-screen — kernel example 05</title>
     <link rel="stylesheet" href="../examples.css">
   </head>
   <body>
@@ -20,18 +23,43 @@
         </template>
       </nav>
 
+      <!-- Back and Forward ask the BROWSER to move within its own history.
+           The engine keeps no history stack of its own: there is one history,
+           and where a traversal lands comes back as an ordinary event. -->
+      <p class="row">
+        <button data-event="goBack">← Back</button>
+        <button data-event="goForward">Forward →</button>
+      </p>
+
       <!-- One data-if template per screen. Exactly one is mounted at a time
            because the engine projects exactly one of these as true. -->
       <template data-if="onHome">
         <section class="panel">
-          <h2>Home</h2>
+          <!-- data-focus-target marks where focus goes when the engine says a
+               route change happened. The engine decides WHEN; this says WHERE.
+               The kernel adds tabindex="-1" so a heading is actually
+               focusable, instead of focus() silently doing nothing. -->
+          <h2 data-focus-target data-text="screenHeading">Home</h2>
           <p data-text="greeting"></p>
+
+          <!-- An ordinary link with a real href. It still works with
+               JavaScript switched off, and it is still a link the browser
+               understands: Ctrl/Cmd-click opens a tab, middle-click opens a
+               tab, right-click offers "copy link address". Only a plain
+               left-click is taken by the kernel and offered to the engine.
+
+               The external link below is NEVER intercepted — a different
+               origin belongs to the browser. -->
+          <p>
+            <a href="#/settings">Settings</a> ·
+            <a href="https://example.com/" rel="external">An external link</a>
+          </p>
         </section>
       </template>
 
       <template data-if="onCustomers">
         <section class="panel">
-          <h2>Customers</h2>
+          <h2 data-focus-target data-text="screenHeading">Customers</h2>
           <label for="filter">Filter</label>
           <input id="filter" type="search"
                  data-event="filterCustomers" data-on="input"
@@ -49,7 +77,7 @@
 
       <template data-if="onSettings">
         <section class="panel">
-          <h2>Settings</h2>
+          <h2 data-focus-target data-text="screenHeading">Settings</h2>
           <label for="display-name">Display name</label>
           <input id="display-name" type="text"
                  data-event="editDisplayName" data-on="input"

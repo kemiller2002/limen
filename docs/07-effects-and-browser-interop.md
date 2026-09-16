@@ -68,22 +68,26 @@ action commonly repaints twice: once for "in progress", once for the outcome.
 
 ## What the kernel can actually do
 
-Two capabilities. It announces them at startup in
-`Initialize.capabilities: ["Http", "Storage"]`.
+Four capabilities, announced at startup in `Initialize.capabilities`. Http and
+Storage are always there; Navigation and Clipboard appear only when the host
+wired them, so the announcement is a fact about *this* kernel rather than a
+constant. The complete list, with every type, is
+[25-browser-capabilities.md](25-browser-capabilities.md).
 
 | Capability | Status | Covered below |
 | --- | --- | --- |
 | Http (`fetch`) | ✅ implemented | yes |
 | Storage (`localStorage`) | ✅ implemented | yes |
+| Navigation (URL, history) | ✅ implemented, opt-in | yes |
+| Clipboard (`writeText`) | ✅ implemented, opt-in | [23-clipboard.md](23-clipboard.md) |
+| Clipboard read | ❌ deliberately not implemented | [23-clipboard.md](23-clipboard.md#reading-the-clipboard) |
 | `sessionStorage`, `IndexedDB`, Cache API | ❌ not implemented | — |
-| Clipboard | ❌ not implemented | — |
-| Navigation / history / URL | ❌ not implemented | — |
 | Files (read, download, upload) | ❌ not implemented | — |
 | Timers, `requestAnimationFrame`, idle callbacks | ❌ not implemented | — |
 | Focus control | ❌ not implemented | — |
 | Geolocation, notifications, media, observers | ❌ not implemented | — |
 
-**If it is not in the first two rows, the engine cannot do it.** These are not
+**If it is not marked implemented above, the engine cannot do it.** These are not
 oversights: this repository treats building a capability before a feature needs
 it as an architecture violation in its own right (ROADMAP's 🧊 legend), because
 it produces untested surface with no design pressure behind it. Adding one is a
@@ -291,6 +295,86 @@ has the content.
 
 **Do not put anything sensitive in `localStorage`.** It is readable by any script
 on the origin and persists indefinitely.
+
+---
+
+## Navigation
+
+The only capability that is **opt-in**, and the only one with an inbound half.
+Full treatment, with a worked router:
+[08-multi-screen-applications.md](08-multi-screen-applications.md#putting-the-url-in-step).
+
+Wire it by passing a fourth argument to `BrowserKernel`:
+
+```ts
+new BrowserKernel(transport, document, { navigation: { historyEvent: "urlChanged" } });
+```
+
+Omit it and the kernel never touches the URL, never listens for `popstate`,
+and announces only `["Http", "Storage"]` — byte-identical to how it behaved
+before navigation existed.
+
+### Request
+
+```ts
+| { kind: "Navigate", correlationId, operation: "push",    url }
+| { kind: "Navigate", correlationId, operation: "replace", url }
+| { kind: "Navigate", correlationId, operation: "back" }
+| { kind: "Navigate", correlationId, operation: "forward" }
+```
+
+One member per legal operation, exactly as Storage. `back`/`forward` carry no
+`url` and the type says so — `{ operation: "back", url: "/x" }` cannot be
+written down.
+
+The kernel resolves the string and records it. It does not parse it, route on
+it, or attach any meaning to it.
+
+### Outcome
+
+```ts
+| { kind: "Success"; url: string }
+| { kind: "Failure"; reason: "unavailable" | "cross-origin" | "invalid-url" }
+```
+
+`url` on success is the resulting location, in the same normalized
+`pathname + search + hash` form the kernel reports inbound — so an engine
+comparing "where am I" against "where did I ask to be" compares like with like.
+
+- **`unavailable`** — navigation was not wired, or `pushState` is blocked (a
+  sandboxed frame, an opaque origin, some browsers on `file://`).
+- **`cross-origin`** — refused. The kernel will not move the page off its own
+  origin however the engine spells the request; a same-document history entry
+  is same-origin by definition, and this effect must not become a way to reach
+  another site.
+- **`invalid-url`** — the string would not resolve against the current location.
+
+### The inbound half
+
+Every other capability only answers questions. Navigation also reports a change
+the browser made on its own:
+
+- **At startup**, `Initialize.location` carries the URL the page was opened at —
+  present exactly when `"Navigation"` is in `capabilities`. It rides on
+  `Initialize` rather than arriving as an event so the engine can pick its
+  *initial* state from the URL instead of projecting a default and correcting it.
+- **Afterwards**, Back, Forward or an edited hash dispatches
+  `{ kind: "Event", name: <your historyEvent>, value: <the new URL> }`.
+
+The kernel's own pushes and replaces do **not** come back this way —
+`pushState` never fires `popstate`, and the engine asked for those moves.
+
+### Three things differ from Http
+
+**There is no `OutcomeUnknown`**, for the same reason Storage has none:
+`pushState` is synchronous and same-document, so nothing is ever dispatched-
+but-uncertain.
+
+**Cancellation is meaningless**, again as with Storage — it completes inside its
+own effect execution.
+
+**It has an inbound direction.** Http and Storage are asked; navigation is also
+told.
 
 ---
 

@@ -19,7 +19,7 @@ flowchart TB
         R["Layout / paint / native input<br/><small>the browser's own job</small>"]
     end
 
-    K["BrowserKernel — the bridge<br/><i>src/kernel/browser-kernel.ts</i><br/><small>the only code allowed to touch document, window, fetch, localStorage</small>"]
+    K["BrowserKernel — the bridge<br/><i>src/kernel/browser-kernel.ts</i><br/><small>the only code allowed to touch document, window, fetch, localStorage, history</small>"]
 
     P["Protocol — the contract<br/><i>src/protocol.ts</i><br/><small>plain JSON-serializable data; no DOM, no functions, no identity</small>"]
 
@@ -67,7 +67,8 @@ does all of it:
 - binds `data-*` attributes to DOM nodes at startup
 - forwards DOM events as `SemanticEvent`s
 - applies a `ViewState` to the DOM (text, attributes, mount/unmount, lists)
-- performs `EffectRequest`s (`fetch`, `localStorage`) and classifies outcomes
+- performs `EffectRequest`s (`fetch`, `localStorage`, `history`) and classifies outcomes
+- reports what the browser did on its own: the opening URL, and later history moves
 - funnels every round-trip through one error boundary
 
 What it does **not** do is decide anything. It never branches on what an event
@@ -90,7 +91,7 @@ Exactly two message shapes cross the boundary.
 
 ```ts
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: ["Http", "Storage"] }
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location?: string }
   | { kind: "Event";        event:  SemanticEvent }
   | { kind: "EffectResult"; result: EffectResult };
 
@@ -200,7 +201,7 @@ worth repeating.
 
 | Rule | Enforced by |
 | --- | --- |
-| `src/engine/**` contains no `document`, `window`, `fetch(`, `localStorage`, `sessionStorage` | **Script** — [`scripts/check-architecture.ts`](../scripts/check-architecture.ts), run by `npm test` |
+| `src/engine/**` contains no `document`, `window`, `fetch(`, `localStorage`, `sessionStorage`, or history/URL API (`history.pushState`, `location.pathname`, …) | **Script** — [`scripts/check-architecture.ts`](../scripts/check-architecture.ts), run by `npm test` |
 | `src/engine/**` contains no `any` or `dynamic` | **Script** — same |
 | No `eval`, `SetInnerHtml`, or `ExecuteScript` anywhere in `src/` | **Script** — same |
 | Every state is handled in every `switch` | **Compiler** — exhaustive unions + `assertNever` |
@@ -269,11 +270,18 @@ structural. See [17-wasm-migration.md](17-wasm-migration.md).
 Things this architecture does not currently give you. None of these are
 oversights being hidden — each is recorded in [ROADMAP.md](ROADMAP.md).
 
-- **No routing or history integration.** Back/forward buttons do not navigate
-  between screens. See [08-multi-screen-applications.md](08-multi-screen-applications.md).
-- **No browser capabilities beyond Http and `localStorage`.** No clipboard, no
-  files, no timers, no navigation, no `IndexedDB`. Adding one is a protocol
+- **No browser capabilities beyond Http, `localStorage` and navigation.** No
+  clipboard, no files, no timers, no `IndexedDB`. Adding one is a protocol
   change — see [15-recipes.md](15-recipes.md#add-a-new-browser-capability).
+- **No router, and no link interception.** There *is* URL and history
+  integration — back/forward move between screens and deep links work — but the
+  engine owns the URL-to-state mapping, and `<a href>` clicks are left to the
+  browser. See [08-multi-screen-applications.md](08-multi-screen-applications.md).
+- **No scroll restoration**, deliberately: browsers already restore scroll on
+  Back/Forward, and redoing it by hand loses the position the user returned to
+  see. Scroll *is* reset on a push, since `pushState` does not scroll.
+- **Focus is managed only on a route change**, via `data-focus-target`. Focus
+  after a keyed list item is removed is still a known gap.
 - **No focus management.** Removing a focused list item loses focus.
 - **No list virtualization.** Every projected item becomes a DOM node.
 - **No scheduling primitives.** No built-in debounce; `data-on="input"`

@@ -32,7 +32,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          # From global.json, so every job resolves the same SDK band. See the
+          # comment in that file: an unpinned `dotnet` on a runner carrying
+          # several SDKs picks the newest.
+          global-json-file: global.json
 
       - name: Install dependencies
         run: npm ci
@@ -41,6 +44,13 @@ jobs:
       # package in the way.
       - name: Test the lifecycle core
         run: npm run test:cli
+
+      # The site's F# engine, tested as ordinary F# — no WebAssembly, no
+      # browser. Building the wasm bundle needs an extra workload and about a
+      # minute, and the Pages workflow already does that on every pull request;
+      # this keeps the engine's own logic covered here for a few seconds.
+      - name: Test the F# site engine
+        run: npm run test:wasm
 
       # Build the CLI for this platform so the packaged-surface tests in
       # test/cli.test.ts run for real rather than reporting as skipped.
@@ -79,7 +89,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          # From global.json, so every job resolves the same SDK band. See the
+          # comment in that file: an unpinned `dotnet` on a runner carrying
+          # several SDKs picks the newest.
+          global-json-file: global.json
 
       - name: Install dependencies
         run: npm ci

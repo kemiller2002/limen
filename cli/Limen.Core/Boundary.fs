@@ -17,8 +17,32 @@ open System
 open Limen.Core.Types
 
 /// Browser capabilities the engine side must not name.
+///
+/// The navigation entries name specific APIs rather than the bare words
+/// "history" and "location". An engine legitimately receives the opening URL
+/// as `Initialize.location`, so banning the identifier outright would flag
+/// correct code; reading `location.pathname` or calling `history.pushState` is
+/// the actual violation, and it is what these catch.
 let forbiddenBrowserTokens =
-    [ "document"; "window"; "fetch("; "localStorage"; "sessionStorage"; "JsValue"; "IJSRuntime" ]
+    [ "document"
+      "window"
+      "fetch("
+      "localStorage"
+      "sessionStorage"
+      "history.pushState"
+      "history.replaceState"
+      "history.back"
+      "history.forward"
+      "location.href"
+      "location.assign"
+      "location.reload"
+      "location.pathname"
+      "location.search"
+      "location.hash"
+      "navigator.clipboard"
+      "execCommand"
+      "JsValue"
+      "IJSRuntime" ]
 
 /// Ways to defeat the type system, which is how meaning leaks across the
 /// boundary without anyone noticing.

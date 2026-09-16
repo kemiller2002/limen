@@ -129,6 +129,35 @@ assert.equal(p.textContent, "Saving…");     // REQUIRED — applying the respo
 Skip the flush and your test either fails flakily or passes because the
 assertion was vacuous.
 
+### A third regime: browser-originated navigation
+
+`history.back()` and `history.forward()` are **queued traversals**, not
+synchronous calls. A single `flush()` is not enough, and a longer fixed delay
+is a flake waiting to happen on a slower machine. Wait for the observable
+result instead:
+
+```ts
+async function until(condition: () => boolean, what: string): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (condition()) return;
+    await new Promise((resolve) => { setTimeout(resolve, 5); });
+  }
+  throw new Error(`timed out waiting for ${what}`);
+}
+
+view.history.back();
+await until(() => document.querySelector("#filter") !== null, "Back to reach Customers");
+```
+
+jsdom implements the History API with real browser semantics — `pushState` and
+`replaceState` never fire `popstate`, and a cross-origin `pushState` throws —
+so navigation is genuinely testable without a browser. Worked tests:
+`test/kernel.test.ts`'s navigation section and `05-multi-screen` in
+[`test/examples.test.ts`](../test/examples.test.ts).
+
+The one assertion worth writing every time: **`history.length` must not grow
+when the engine responds to Back.** That is the routing bug everyone ships once.
+
 ### Never call `start()` twice
 
 It re-binds the whole document and double-registers every listener. To get a

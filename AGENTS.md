@@ -116,12 +116,24 @@ The kernel understands exactly six HTML attributes and interprets none of them:
 
 These are MUST-level. Violating one is a defect regardless of whether tests pass.
 
+> **Navigation and clipboard, in one place.** Application code never calls
+> `history.pushState`, `history.back`, `location.assign` or
+> `navigator.clipboard`. Routes are typed application concepts; a browser
+> location crosses the boundary as plain data; navigation and copying are
+> requested as effects and their failures are handled. Browser Back/Forward is
+> authoritative and arrives as an event — never push in response to it. Full
+> rules in [docs/25-browser-capabilities.md](docs/25-browser-capabilities.md).
+
 1. **Authoritative application state lives in the engine.** Exactly one place.
    Never add a second store in `src/kernel/**` or in page JavaScript.
-2. **`src/engine/**` MUST NOT reference** `document`, `window`, `fetch`,
-   `localStorage`, or `sessionStorage`, and MUST NOT use the words `any` or
-   `dynamic`. This is mechanically enforced by
-   [`scripts/check-architecture.ts`](scripts/check-architecture.ts).
+2. **Engine code MUST NOT reference** `document`, `window`, `fetch`,
+   `localStorage`, `sessionStorage`, a history/URL API such as
+   `history.pushState` or `location.pathname`, `navigator.clipboard`, or
+   `execCommand`, and MUST NOT use the words `any` or `dynamic`. This is
+   mechanically enforced by
+   [`scripts/check-architecture.ts`](scripts/check-architecture.ts) across
+   `src/engine/**`, `site/app/**` and every `examples/NN-*/` engine — an
+   example is the first thing a newcomer copies.
 3. **`src/kernel/**` MUST NOT branch on application meaning.** If you are
    writing `switch` on an event name or a view key inside the kernel, the
    boundary is breaking. Event names and view keys are opaque strings there.
@@ -141,6 +153,34 @@ These are MUST-level. Violating one is a defect regardless of whether tests pass
    record it.
 8. **Preserve the public contract.** `src/protocol.ts` and the exports in
    `src/index.ts` are consumed externally.
+9. **Routes are typed application concepts, never strings sprinkled about.**
+   Parse with one pure `url -> Route` function and format with its inverse
+   `Route -> url`. Never build a path by concatenation at a call site
+   (`navigate("/docs/" + slug)`); call the formatter.
+10. **Browser Back/Forward is authoritative.** It arrives as a `SemanticEvent`
+    and the engine catches up. **Never push a history entry in response to it**
+    — that is the routing bug that breaks Forward and traps the user. Make it
+    a separate command from the one a click produces, so the rule is
+    structural rather than remembered.
+11. **Clipboard and navigation failures MUST be handled.** Both have `Failure`
+    cases that occur in normal use — a denied permission, an insecure page, a
+    refused cross-origin URL. Never assume success.
+12. **A page title is a projection, never an effect.** Bind
+    `<title data-text="pageTitle">`; there is no `setTitle` capability and there
+    should not be one. The general rule: derivable from state ⇒ projection;
+    happens *at* a moment ⇒ effect.
+13. **Focus and scroll on a route change are the engine's decision, but never
+    the engine's selector.** Request `Document`/`focusTarget`; mark the
+    destination in markup with `data-focus-target`. Passing an element id or a
+    CSS selector across the boundary breaks rule 4 — the engine never sees a
+    DOM node.
+14. **A cold page load must not steal focus.** That includes a deep link, which
+    reaches its screen by moving there from the initial state. Move focus when
+    the user navigates and when the browser does, never on arrival.
+15. **Never log clipboard contents**, in the kernel or in a diagnostics sink.
+    A copied value is commonly a token or a password. Record the operation,
+    outcome and duration; never the payload. The same already applies to Http
+    headers and bodies.
 
 ## Where do I put this change?
 
@@ -150,7 +190,7 @@ Is it document structure?                      → HTML. Stop.
 Does it decide, validate, or remember anything
 about the application?                         → src/engine/. Stop.
 Does it need a browser API the kernel already
-has (Http, localStorage)?                      → engine requests an EffectRequest.
+has (Http, localStorage, history, clipboard)?  → engine requests an EffectRequest.
 Does it need a browser API the kernel does NOT
 have (clipboard, history, files, timers)?      → extend the protocol + kernel
                                                  (see docs/15-recipes.md), then

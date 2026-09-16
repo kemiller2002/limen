@@ -113,3 +113,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
    the current tab from the accessibility state rather than from a class the
    bridge would have to maintain. */
 .nav button[aria-current="true"] { background: var(--accent); color: var(--panel); border-color: transparent; }
+
+/* A heading focused programmatically after a route change. Screen readers
+   announce it; sighted mouse users did not ask for a focus ring on a heading
+   they never tabbed to, so it is shown only for keyboard interaction. */
+[data-focus-target]:focus { outline: none; }
+[data-focus-target]:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }

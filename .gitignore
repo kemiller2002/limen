@@ -23,3 +23,9 @@ cli/**/obj/
 
 # The release archive staged by publish.yml (npm pack --pack-destination).
 release/
+
+# The F# engine's published WebAssembly bundle, staged for the site build.
+# Build output: `npm run build:wasm` regenerates it from wasm/.
+site/wasm/
+wasm/**/bin/
+wasm/**/obj/

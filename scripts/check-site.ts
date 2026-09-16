@@ -34,6 +34,21 @@ for (const required of ["assets/css/limen.css", "site/app/main.js", "site/app/en
   if (!await exists(join(SITE, required))) note(`required runtime asset missing: ${required}`);
 }
 
+// The F# engine is the site's central claim, and the TypeScript fallback is
+// good enough to hide its absence completely: a site shipped without the
+// bundle looks perfect and quietly disproves its own front page.
+//
+// Locally the bundle is optional — it needs the .NET wasm-tools workload and a
+// minute of build time, and a contributor editing CSS should not need either.
+// The Pages workflow sets LIMEN_REQUIRE_WASM=1, so the one context where the
+// artifact is actually published is the one context where it cannot be missing.
+const wasmEngine = "wasm/_framework/dotnet.js";
+if (!await exists(join(SITE, wasmEngine))) {
+  const missing = `the F# WebAssembly engine is missing from the artifact (${wasmEngine}) — run \`npm run build:wasm\``;
+  if (process.env.LIMEN_REQUIRE_WASM === "1") note(missing);
+  else console.warn(`  ! ${missing}; the site would fall back to TypeScript.`);
+}
+
 const ATTR = /(?:href|src)="([^"]+)"/g;
 
 for (const page of htmlPages) {

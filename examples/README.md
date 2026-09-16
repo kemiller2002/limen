@@ -54,7 +54,7 @@ without reproducing any kernel behavior.
 | **02-form** | Validation as pure functions; `data-on="input"`; `data-if` for messages; `data-bind-value`/`data-bind-disabled`; an illegal transition rejected explicitly. |
 | **03-fetch-data** | The first external effect. Http request, `data-each` list rendering, all four `EffectOutcome` variants as distinct states, and a stale-result guard. |
 | **04-save-data** | Full lifecycle `Restoring → Editing → Saving → Saved / SaveFailed / SaveOutcomeUnknown`. Storage effect for a local draft. Shows why a timed-out **POST** must not be retried — contrast 03's GET. |
-| **05-multi-screen** | Screens as ordinary state. `data-each` navigation carrying item keys, shared vs. screen-local lifetimes, engine-side filtering. (No URL/history — not supported.) |
+| **05-multi-screen** | Screens as ordinary state. `data-each` navigation carrying item keys, shared vs. screen-local lifetimes, engine-side filtering, and real URLs — hash routes, deep links, and Back/Forward moving between screens. |
 | **06-time-entries** | A realistic feature assembled only from the above: load on startup, validate, add, mark processed, refresh. A failed refresh keeps the list; a failed initial load does not. |
 
 ## Deliberately absent

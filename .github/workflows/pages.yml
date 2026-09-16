@@ -34,17 +34,54 @@ jobs:
           node-version: 22
           cache: npm
 
+      # The site's engine is F# compiled to WebAssembly, so building the site
+      # means building it with the .NET SDK.
+      # Resolved from global.json rather than a version here, so the pin lives
+      # in one place. The runner image already carries .NET 9 and 10; without
+      # the pin `dotnet` picks the newest, and the workload below then installs
+      # into that band while the project builds in 8.0 — which is exactly how
+      # this job failed the first time it ran.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Targeting browser-wasm needs this workload; the SDK alone cannot emit a
+      # WebAssembly runtime. Installed into the band of the resolved SDK, which
+      # is why the pin has to come first.
+      - name: Install the WebAssembly workload
+        run: dotnet workload install wasm-tools
+
+      # Two lines, printed so that a future band mismatch is legible from the
+      # log instead of surfacing as an unexplained publish failure.
+      - name: Report the resolved SDK and workload
+        run: dotnet --version && dotnet workload list
+
       - name: Install dependencies
         run: npm ci
 
+      # Must precede the build below: `build:site` copies site/wasm/ into the
+      # artifact, and `npm run check` runs test/wasm.test.ts, which exercises
+      # the module and holds the two engines to identical projections. Without
+      # this step both would quietly degrade — the artifact to a TypeScript
+      # fallback, the test to a skip.
+      - name: Build the F# engine for WebAssembly
+        run: npm run build:wasm
+
       # Builds the kernel, the examples and the site, then runs the
       # architecture check, the documentation check, and every test — including
-      # test/site.test.ts, which drives the built pages through the real kernel.
+      # test/site.test.ts, which drives the built pages through the real kernel,
+      # and test/wasm.test.ts, which drives the F# engine through it.
       - name: Build and test everything
         run: npm run check
 
+      # LIMEN_REQUIRE_WASM turns a missing engine from a warning into a failure.
+      # This workflow is the one that publishes, so this is the one place where
+      # shipping the fallback by accident must be impossible.
       - name: Verify the built site
         run: node --experimental-strip-types scripts/check-site.ts
+        env:
+          LIMEN_REQUIRE_WASM: "1"
 
       # Only main produces a deployable artifact. A pull request has proven the
       # site builds and passes its checks, which is all it is entitled to do.

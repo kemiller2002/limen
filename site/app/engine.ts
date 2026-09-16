@@ -10,6 +10,7 @@
 // engine — a view is just a projection, and different pages may project less.
 import type {
   BrowserToEngineMessage,
+  ClipboardOutcome,
   CorrelationId,
   EffectOutcome,
   EffectRequest,
@@ -50,6 +51,20 @@ export type Flags = {
   readonly isComplete: boolean;
 };
 
+/**
+ * The install command's copy button.
+ *
+ * Copying can genuinely fail — the browser may require a secure context, a
+ * permission, or a recent user gesture — so "it failed" is a state the UI can
+ * show, not something swallowed. That is the whole reason this is modelled at
+ * all rather than being two lines of JavaScript.
+ */
+export type CopyState =
+  | { readonly kind: "Idle" }
+  | { readonly kind: "Copying" }
+  | { readonly kind: "Copied" }
+  | { readonly kind: "CopyFailed"; readonly reason: string };
+
 export type Placement = "html" | "css" | "kernel" | "engine" | "effect";
 
 export type PlacementTask = {
@@ -77,6 +92,7 @@ export type State = {
   readonly answered: number;
   readonly correct: number;
   readonly trace: readonly TraceEntry[];
+  readonly copy: CopyState;
   readonly sequence: number;
 };
 
@@ -101,6 +117,7 @@ export const initialState: State = {
   answered: 0,
   correct: 0,
   trace: [],
+  copy: { kind: "Idle" },
   sequence: 0,
 };
 
@@ -120,7 +137,9 @@ export type Command =
   | { readonly kind: "Load"; readonly scenario: Scenario; readonly correlationId: CorrelationId }
   | { readonly kind: "RecordLoad"; readonly correlationId: CorrelationId; readonly outcome: EffectOutcome }
   | { readonly kind: "Pick"; readonly choice: Placement }
-  | { readonly kind: "NextTask" };
+  | { readonly kind: "NextTask" }
+  | { readonly kind: "CopyInstall"; readonly correlationId: CorrelationId }
+  | { readonly kind: "RecordCopy"; readonly outcome: ClipboardOutcome };
 
 const FLAGS: Readonly<Record<string, keyof Flags>> = {
   toggleLoading: "isLoading",
@@ -156,6 +175,7 @@ export function eventToCommand(event: SemanticEvent, correlationId: CorrelationI
     case "failSave": return { kind: "FailSave" };
     case "resetSave": return { kind: "ResetSave" };
     case "nextTask": return { kind: "NextTask" };
+    case "copyInstall": return { kind: "CopyInstall", correlationId };
     case "pick": {
       // The choice arrives as a data-each item key — a string from the DOM,
       // so it is validated here rather than trusted.
@@ -207,6 +227,18 @@ export type TransitionResult = {
 const decodeCount = (body: unknown): number | null =>
   Array.isArray(body) ? body.length : null;
 
+export const INSTALL_COMMAND = "npm install @echelon-foundry/typescript-wasm-kernel";
+
+// Every ClipboardOutcome failure reason gets a sentence a visitor can act on.
+// The engine turns a normalized browser condition into application meaning;
+// the kernel never writes user-facing text.
+const COPY_FAILURE: Readonly<Record<"permission-denied" | "not-secure-context" | "unsupported" | "failed", string>> = {
+  "permission-denied": "Your browser blocked the copy. Select the command and copy it manually.",
+  "not-secure-context": "Copying needs a secure (HTTPS) page. Select the command and copy it manually.",
+  "unsupported": "This browser has no clipboard API. Select the command and copy it manually.",
+  "failed": "The copy did not complete. Select the command and copy it manually.",
+};
+
 export function transition(state: State, command: Command): TransitionResult {
   const step = (next: State, effect = "—"): TransitionResult => ({
     state: next,
@@ -215,6 +247,26 @@ export function transition(state: State, command: Command): TransitionResult {
   });
 
   switch (command.kind) {
+    // The install command's text lives here, in the engine, and is sent to the
+    // browser as an effect. The button in the markup carries no text to copy
+    // and no knowledge of the clipboard.
+    case "CopyInstall": {
+      // Copying twice at once is not a legal move.
+      if (state.copy.kind === "Copying") return step(state);
+      return {
+        state: { ...state, copy: { kind: "Copying" } },
+        effects: [{ kind: "Clipboard", correlationId: command.correlationId, operation: "writeText", text: INSTALL_COMMAND }],
+        step: { command: command.kind, from: describe(state), to: "Copying", effect: "Clipboard writeText" },
+      };
+    }
+
+    case "RecordCopy": {
+      const copy: CopyState = command.outcome.kind === "Success"
+        ? { kind: "Copied" }
+        : { kind: "CopyFailed", reason: COPY_FAILURE[command.outcome.reason] };
+      return step({ ...state, copy });
+    }
+
     case "Increment": return step({ ...state, counter: state.counter + 1 });
     case "Decrement": return step({ ...state, counter: Math.max(0, state.counter - 1) });
     case "ResetCounter": return step({ ...state, counter: 0 });
@@ -365,6 +417,16 @@ export function project(state: State): ViewState {
   const right = revealed && task !== undefined && state.picked === task.answer;
 
   return {
+    // The install command and its copy button. Every one of these is a
+    // decision the engine made — including the button's label and whether it
+    // is available. The DOM re-derives none of it.
+    installCommand: INSTALL_COMMAND,
+    copyLabel: state.copy.kind === "Copied" ? "Copied" : state.copy.kind === "Copying" ? "Copying…" : "Copy",
+    copyBusy: state.copy.kind === "Copying",
+    copySucceeded: state.copy.kind === "Copied",
+    copyFailed: state.copy.kind === "CopyFailed",
+    copyError: state.copy.kind === "CopyFailed" ? state.copy.reason : "",
+
     // Demo 1 — counter and the live trace.
     counter: state.counter,
     decrementDisabled: state.counter === 0,
@@ -486,13 +548,19 @@ export function createSiteTransport(): EngineTransport {
           return apply(transition(state, eventToCommand(message.event, nextCorrelationId())), label);
         }
         case "EffectResult": {
-          if (message.result.kind !== "HttpResult") {
-            throw new Error("This engine never requests a Storage effect.");
+          // Narrowed by name. "Anything that is not Http is Storage" stopped
+          // being true the moment a third capability existed.
+          switch (message.result.kind) {
+            case "HttpResult":
+              return apply(
+                transition(state, { kind: "RecordLoad", correlationId: message.result.correlationId, outcome: message.result.outcome }),
+                "EffectResult",
+              );
+            case "ClipboardResult":
+              return apply(transition(state, { kind: "RecordCopy", outcome: message.result.outcome }), "EffectResult");
+            default:
+              throw new Error(`This engine never requests a ${message.result.kind} effect.`);
           }
-          return apply(
-            transition(state, { kind: "RecordLoad", correlationId: message.result.correlationId, outcome: message.result.outcome }),
-            "EffectResult",
-          );
         }
       }
     },

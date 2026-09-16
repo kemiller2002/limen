@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 14,
+  "nextSeq": 20,
   "items": [
     {
       "id": "WI-0001",
@@ -216,6 +216,106 @@
       "attachments": [],
       "createdAt": "2026-09-16T13:31:33.636Z",
       "updatedAt": "2026-09-16T13:31:33.721Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0014",
+      "title": "Browser navigation and history integration (ROADMAP item 8)",
+      "description": "Implement the NAVIGATION system: the engine owns which route the application is on; the kernel owns URL, history and popstate. Adds a Navigation capability, a Navigate effect request with a two-case outcome, an optional location on Initialize, and a popstate-driven SemanticEvent whose name the host application supplies. Back/forward move between screens; screens become linkable and bookmarkable.",
+      "tags": [
+        "kernel",
+        "protocol"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T14:35:31.944Z",
+      "updatedAt": "2026-09-16T14:35:34.005Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0015",
+      "title": "Navigation and clipboard browser capability architecture (SDE mission)",
+      "description": "Audit and rework Limen's browser history, routing, navigation and clipboard behaviour into explicit generic browser capabilities. Rework the navigation effect into a closed algebra with one constructor per legal operation (push/replace/back/forward) per SDE BOUNDARY-PRESERVATION. Add the clipboard capability (write-only). Add safe opt-in link interception. Document the GitHub Pages deep-link strategy, the push/replace contract, and the single-source-of-truth navigation lifecycle.",
+      "tags": [
+        "kernel",
+        "protocol",
+        "clipboard",
+        "navigation"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T15:10:20.913Z",
+      "updatedAt": "2026-09-16T15:10:23.515Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0016",
+      "title": "Document capability: title, focus and scroll on route change",
+      "description": "Close the two named gaps from WI-0015. Bind the document head so <title data-text> makes the page title an ordinary projection. Add a Document capability with focusTarget and scrollToTop so an engine can move focus to the new screen's heading and reset scroll on a route change, without the engine ever naming a DOM element.",
+      "tags": [
+        "kernel",
+        "protocol",
+        "accessibility"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T16:49:56.819Z",
+      "updatedAt": "2026-09-16T16:49:56.884Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0017",
+      "title": "Drive the Limen site from an F# engine compiled to WebAssembly",
+      "description": "Port the site's application engine to F#, compile it to WebAssembly via the .NET browser-wasm runtime, and drive the real Limen site through it using the UNMODIFIED BrowserKernel and a WasmTransport implementing EngineTransport. Makes docs/17-wasm-migration.md real: hand-written JSON codec across the boundary per SDE BOUNDARY-PRESERVATION, exhaustive matching preserved, and no host callbacks from the engine.",
+      "tags": [
+        "wasm",
+        "fsharp",
+        "site"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T17:19:27.482Z",
+      "updatedAt": "2026-09-16T17:19:27.554Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0018",
+      "title": "Pin the .NET SDK feature band so the wasm-tools workload installs where the build runs, and stop build-wasm.ts discarding dotnet's diagnostics",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T17:53:13.049Z",
+      "updatedAt": "2026-09-16T17:53:18.705Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0019",
+      "title": "Correct the overstated claim that a C# shim is required to export from a .NET WebAssembly module",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T18:09:28.801Z",
+      "updatedAt": "2026-09-16T18:09:31.827Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

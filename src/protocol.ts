@@ -35,12 +35,91 @@ export type StorageOutcome =
   | { readonly kind: "Success"; readonly value: string | null }
   | { readonly kind: "Failure"; readonly reason: "unavailable" | "quota-exceeded" };
 
+// Two different things can be true after a navigation request, and collapsing
+// them into one "Success" would have the kernel claim knowledge it does not
+// have.
+//
+// `Success` carries the resulting location, in the same normalized form the
+// kernel reports inbound, so an engine comparing "where am I" against "where
+// did I ask to be" compares like with like. Only "push"/"replace" can report
+// it: they are synchronous, same-document and cannot partially apply.
+//
+// `Accepted` means the request was handed to the browser and nothing more is
+// known yet. "back"/"forward" are queued history traversals — they may move
+// anywhere, or nowhere at all at the end of the stack — so the resulting
+// location arrives later, as a history event. That event is authoritative;
+// this outcome is only an acknowledgement.
+//
+// There is no `OutcomeUnknown`: unlike Http, nothing was dispatched to a
+// remote party that might have acted on it.
+export type NavigationOutcome =
+  | { readonly kind: "Success"; readonly url: string }
+  | { readonly kind: "Accepted" }
+  // "unavailable": this kernel was not wired for navigation, so it did not
+  // announce the capability and will not touch history.
+  // "cross-origin": the kernel refuses to move the page off its own origin
+  // however the engine spells the request. Same-document history entries are
+  // same-origin by definition, and an engine must not be able to reach
+  // through this effect to a different site.
+  // "invalid-url": the string would not resolve against the current location.
+  | { readonly kind: "Failure"; readonly reason: "unavailable" | "cross-origin" | "invalid-url" };
+
+// A clipboard write can fail for reasons that are not the engine's fault and
+// not bugs: the browser may require a secure context, a permission, or a
+// recent user gesture. None of that is knowable in advance, so failure is an
+// ordinary modelled outcome rather than an exception.
+//
+// The reasons are normalized browser conditions, never a browser exception
+// string — an engine must be able to branch on them exhaustively.
+export type ClipboardOutcome =
+  | { readonly kind: "Success" }
+  // "permission-denied": the user or the browser refused.
+  // "not-secure-context": the Clipboard API requires HTTPS or localhost.
+  // "unsupported": this browser exposes no Clipboard API at all.
+  // "failed": the API existed, was allowed, and still did not complete.
+  | { readonly kind: "Failure"; readonly reason: "permission-denied" | "not-secure-context" | "unsupported" | "failed" };
+
+// Moving focus and resetting scroll are browser-local presentation actions.
+// They are effects rather than projections because they are one-shot: "the
+// user has arrived somewhere new, put them at the top of it" happens once, at
+// a moment the engine chooses. A projected `focused: true` would re-fire on
+// every round trip and fight the user for the caret.
+//
+// Note what is NOT here: the document title. A title is a *function of state*,
+// not an action — it should change whenever the state it describes changes,
+// and it should not need the engine to remember to fire something. So it is an
+// ordinary projection instead: `<title data-text="pageTitle">`. See
+// docs/24-navigation-and-github-pages.md.
+export type DocumentOutcome =
+  | { readonly kind: "Success" }
+  // "unavailable": this kernel was not wired for the Document capability.
+  // "no-target": focus was requested but no element carrying
+  // `data-focus-target` is mounted right now. Worth distinguishing: it almost
+  // always means the markup is missing the marker, and a silent no-op there
+  // would be an accessibility bug nobody notices.
+  | { readonly kind: "Failure"; readonly reason: "unavailable" | "no-target" };
+
 export type EffectResult =
   | { readonly kind: "HttpResult"; readonly correlationId: CorrelationId; readonly outcome: EffectOutcome }
-  | { readonly kind: "StorageResult"; readonly correlationId: CorrelationId; readonly outcome: StorageOutcome };
+  | { readonly kind: "StorageResult"; readonly correlationId: CorrelationId; readonly outcome: StorageOutcome }
+  | { readonly kind: "NavigationResult"; readonly correlationId: CorrelationId; readonly outcome: NavigationOutcome }
+  | { readonly kind: "ClipboardResult"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome }
+  | { readonly kind: "DocumentResult"; readonly correlationId: CorrelationId; readonly outcome: DocumentOutcome };
+
+// What the bridge can actually do, announced once at startup. Http and Storage
+// are always present. "Navigation" and "Clipboard" appear only when the host
+// wired them, so the announcement is a fact about *this* kernel rather than a
+// constant, and an engine can tell instead of assuming.
+export type Capability = "Http" | "Storage" | "Navigation" | "Clipboard" | "Document";
 
 export type BrowserToEngineMessage =
-  | { readonly kind: "Initialize"; readonly protocolVersion: typeof PROTOCOL_VERSION; readonly capabilities: readonly ["Http", "Storage"] }
+  // `location` is the browser's location at page load, in the same normalized
+  // form as every other URL that crosses this boundary. It is present exactly
+  // when the Navigation capability is announced. It rides on Initialize
+  // rather than arriving as a separate event so the engine can choose its
+  // *initial* state from the URL — a route delivered one message later would
+  // mean projecting the wrong screen first and then correcting it.
+  | { readonly kind: "Initialize"; readonly protocolVersion: typeof PROTOCOL_VERSION; readonly capabilities: readonly Capability[]; readonly location?: string }
   | { readonly kind: "Event"; readonly event: SemanticEvent }
   | { readonly kind: "EffectResult"; readonly result: EffectResult };
 
@@ -73,7 +152,65 @@ export type StorageEffectRequest =
   | { readonly kind: "Storage"; readonly correlationId: CorrelationId; readonly operation: "set"; readonly key: string; readonly value: string }
   | { readonly kind: "Storage"; readonly correlationId: CorrelationId; readonly operation: "remove"; readonly key: string };
 
-export type EffectRequest = HttpEffectRequest | StorageEffectRequest;
+// The engine decides what a route means and when the application has moved;
+// the kernel owns the mechanism. `url` is resolved against the current
+// location, so a relative "/customers" or "#/customers" is the normal form —
+// the kernel neither parses it for meaning nor invents one.
+//
+// "push" adds a history entry (the user can come back to where they were);
+// "replace" rewrites the current one (correcting a URL that should never have
+// been a stop on the back button). Which of the two a change deserves is a
+// domain decision, so the engine makes it.
+//
+// "back"/"forward" carry no url, and the type says so: they ask the browser to
+// move within the history it already has. They exist so an application with an
+// in-page Back button does not have to keep a second history stack of its own
+// — there is one history, the browser's, and this is how you ask it to move.
+//
+// One member per legal operation, exactly as StorageEffectRequest above. A
+// single record with an operation field and an optional url would let
+// `{ operation: "back", url: "/somewhere" }` be written down, and the whole
+// point of the shape is that it cannot be.
+export type NavigationEffectRequest =
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "push"; readonly url: string }
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "replace"; readonly url: string }
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "back" }
+  | { readonly kind: "Navigate"; readonly correlationId: CorrelationId; readonly operation: "forward" };
+
+// Only "writeText" today. Reading the clipboard is a far more sensitive
+// capability — it exposes whatever the user last copied, from any application
+// — and nothing here needs it. It is left out on the least-capability rule,
+// not overlooked; the shape it would take is recorded in
+// docs/23-clipboard.md so that adding it later is a deliberate decision
+// rather than a discovery.
+//
+// `text` is opaque to the kernel and must never reach a DiagnosticEvent: a
+// copied value is commonly a token, a password, or a customer's data.
+export type ClipboardEffectRequest =
+  | { readonly kind: "Clipboard"; readonly correlationId: CorrelationId; readonly operation: "writeText"; readonly text: string };
+
+// Neither operation names an element, and that is the point.
+//
+// `docs/01-architecture.md` states that the engine never sees a DOM node or an
+// element id, and a selector would break exactly that: the engine would have
+// to know there is an `<h2 id="main-heading">` on the Customers screen. So the
+// division is three-way — the engine decides *when* focus should move, the
+// markup declares *where* with `data-focus-target`, and the kernel does *how*.
+//
+// "scrollToTop" exists because `pushState` deliberately does not scroll: a new
+// screen otherwise appears already scrolled down. History traversal is left
+// alone, since browsers restore scroll for it natively and doing it again by
+// hand fights the browser and loses.
+export type DocumentEffectRequest =
+  | { readonly kind: "Document"; readonly correlationId: CorrelationId; readonly operation: "focusTarget" }
+  | { readonly kind: "Document"; readonly correlationId: CorrelationId; readonly operation: "scrollToTop" };
+
+export type EffectRequest =
+  | HttpEffectRequest
+  | StorageEffectRequest
+  | NavigationEffectRequest
+  | ClipboardEffectRequest
+  | DocumentEffectRequest;
 
 export type EngineToBrowserMessage = {
   readonly view: ViewState;

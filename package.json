@@ -80,7 +80,9 @@
     "test": "npm run check:architecture && npm run check:docs && npm run check:site && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
     "prepack": "npm run clean && npm run check && npm run build:cli:all",
-    "check:site": "node --experimental-strip-types scripts/check-site.ts"
+    "check:site": "node --experimental-strip-types scripts/check-site.ts",
+    "build:wasm": "node --experimental-strip-types scripts/build-wasm.ts",
+    "test:wasm": "dotnet test wasm/tests/Limen.Engine.Tests/Limen.Engine.Tests.fsproj --nologo -v q"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

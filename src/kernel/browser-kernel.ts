@@ -1,5 +1,83 @@
-import { PROTOCOL_VERSION, type BrowserToEngineMessage, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { PROTOCOL_VERSION, type BrowserToEngineMessage, type Capability, type ClipboardEffectRequest, type ClipboardOutcome, type DocumentEffectRequest, type DocumentOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
+
+/**
+ * Opts this kernel into browser navigation. Omit it and the kernel touches
+ * neither the URL nor history, does not announce the Navigation capability,
+ * and behaves exactly as it did before navigation existed.
+ */
+export type NavigationBinding = {
+  /**
+   * The `SemanticEvent` name to dispatch when the browser moves the user
+   * within session history — back, forward, or a hash edited in the address
+   * bar. The kernel does not invent this name: it is the application's own
+   * vocabulary, supplied here the same way `data-event` supplies one from
+   * markup. The event carries the new location in `value`.
+   *
+   * The kernel's own pushes and replaces do not fire it. `pushState` and
+   * `replaceState` never emit `popstate`, and the engine asked for those
+   * moves, so telling it about them would only invite a loop.
+   */
+  readonly historyEvent: string;
+
+  /**
+   * Optional. The `SemanticEvent` name to dispatch when the user activates an
+   * *eligible* in-application link, instead of letting the browser perform a
+   * full page load. The event carries the link's href in `value`.
+   *
+   * The kernel does not navigate here and does not decide what the href means.
+   * It reports an intent; the engine decides whether that destination is legal
+   * and, if so, asks for a `Navigate` effect. A link the engine ignores simply
+   * does nothing, which is the correct outcome for a route that does not exist.
+   *
+   * Eligibility is deliberately narrow — see `isEnhanceableLink`. Anything the
+   * browser would do better is left to the browser: other origins, downloads,
+   * `target`, and every modifier-click that means "open this somewhere else".
+   * Omit this and no link is ever intercepted.
+   */
+  readonly linkEvent?: string;
+};
+
+/**
+ * Opts this kernel into clipboard access. Omit it and the kernel never touches
+ * the clipboard and does not announce the Clipboard capability.
+ *
+ * There is nothing to configure: unlike navigation, the clipboard has no
+ * inbound direction and so needs no application-supplied event name. The
+ * object exists so that enabling the capability is an explicit act.
+ */
+export type ClipboardBinding = {
+  /** Reserved so the shape can gain options without a breaking change. */
+  readonly enabled: true;
+};
+
+/**
+ * Opts this kernel into document-level presentation actions: moving focus to
+ * the current screen, and resetting scroll.
+ *
+ * There is nothing to name here. The engine decides *when* focus should move;
+ * the markup declares *where* with `data-focus-target`. Passing a selector
+ * across the boundary would mean the engine knew about an element id, which is
+ * exactly what the architecture says it never does.
+ */
+export type DocumentBinding = {
+  /** Reserved so the shape can gain options without a breaking change. */
+  readonly enabled: true;
+};
+
+/**
+ * Everything optional about a kernel, in one place.
+ *
+ * This is the third constructor argument. A `DiagnosticsSink` is also still
+ * accepted there, exactly as before, so every existing call site keeps
+ * working unchanged — see the constructor.
+ */
+export type BrowserKernelOptions = {
+  readonly diagnostics?: DiagnosticsSink;
+  readonly navigation?: NavigationBinding;
+  readonly clipboard?: ClipboardBinding;
+  readonly document?: DocumentBinding;
+};
 
 // Exceptions to the "click" default: element types whose most natural
 // interaction isn't a click. Any other element (a row, a card, a div acting
@@ -83,13 +161,43 @@ export class BrowserKernel {
   readonly #flushable = new Map<HTMLFormElement, Array<{ readonly element: HTMLElement; readonly fire: () => Promise<void> }>>();
   readonly #root: Scope = emptyScope();
   readonly #diagnostics: DiagnosticsSink;
+  readonly #navigation: NavigationBinding | null;
+  readonly #clipboard: ClipboardBinding | null;
+  readonly #documentActions: DocumentBinding | null;
   readonly transport: EngineTransport;
   readonly document: Document;
 
-  constructor(transport: EngineTransport, document: Document, diagnostics: DiagnosticsSink = noopDiagnostics) {
+  /**
+   * The third argument is either a `DiagnosticsSink` — the original shape,
+   * still accepted verbatim — or an options object carrying the sink and any
+   * capabilities this kernel should have.
+   *
+   * Two optional capabilities would have meant a fourth and fifth positional
+   * argument, and a sixth for the next one. The union keeps every released
+   * call site (`(transport, document)` and `(transport, document, sink)`)
+   * compiling and behaving identically, and gives capabilities somewhere to
+   * live that is named rather than counted.
+   */
+  constructor(
+    transport: EngineTransport,
+    document: Document,
+    options: DiagnosticsSink | BrowserKernelOptions = noopDiagnostics,
+  ) {
+    // A sink is identified by the method it must have; an options object never
+    // has one. Nothing else can be confused for either.
+    const settings: BrowserKernelOptions = "report" in options ? { diagnostics: options } : options;
     this.transport = transport;
     this.document = document;
-    this.#diagnostics = diagnostics;
+    this.#diagnostics = settings.diagnostics ?? noopDiagnostics;
+    this.#navigation = settings.navigation ?? null;
+    this.#clipboard = settings.clipboard ?? null;
+    this.#documentActions = settings.document ?? null;
+  }
+
+  // The window that owns the injected document — not the ambient global, so
+  // a kernel driven against one document never reads another's history.
+  get #window(): Window | null {
+    return this.document.defaultView;
   }
 
   async start(): Promise<void> {
@@ -100,6 +208,12 @@ export class BrowserKernel {
       return;
     }
     try {
+      // The head as well as the body, so `<title data-text="pageTitle">` makes
+      // the page title an ordinary projection rather than needing a capability
+      // of its own — a title is a function of state, not an action. Nothing in
+      // a head binds unless it was written to, so this is inert for every page
+      // that does not opt in.
+      this.#bindElement(this.document.head, this.#root, undefined);
       this.#bindElement(this.document.body, this.#root, undefined);
     } catch (error) {
       // A malformed binding is a bridge integration failure, not a domain
@@ -109,7 +223,56 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "binding", detail: String(error) });
       return;
     }
-    await this.#send({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: ["Http", "Storage"] });
+    const view = this.#window;
+    // Navigation needs a window: with no window there is no history to bind
+    // to and no location to report, so the capability is not announced and
+    // the engine is never told URLs are available when they are not.
+    const navigation = view === null ? null : this.#navigation;
+    if (view !== null && navigation !== null) this.#bindHistory(view, navigation);
+    // Every capability is announced only if it is genuinely present, so an
+    // engine can branch on `capabilities` instead of guessing.
+    const capabilities: readonly Capability[] = [
+      "Http",
+      "Storage",
+      ...(navigation !== null ? (["Navigation"] as const) : []),
+      ...(this.#clipboard !== null ? (["Clipboard"] as const) : []),
+      ...(this.#documentActions !== null ? (["Document"] as const) : []),
+    ];
+    await this.#send({
+      kind: "Initialize",
+      protocolVersion: PROTOCOL_VERSION,
+      capabilities,
+      // The URL the page was opened at. Present exactly when the capability
+      // is, so "no location field" and "no navigation" are the same fact.
+      ...(view !== null && navigation !== null ? { location: currentLocation(view) } : {}),
+    });
+  }
+
+  // Two listeners at most, for the two ways a location reaches the kernel
+  // without the engine having asked: the browser moving through history, and
+  // the user activating a link. Neither decides what a URL means.
+  #bindHistory(view: Window, navigation: NavigationBinding): void {
+    // The one thing the browser does entirely on its own. The resulting
+    // location is handed over as evidence, exactly like a form field's value.
+    view.addEventListener("popstate", () => {
+      void this.#send({ kind: "Event", event: makeEvent(navigation.historyEvent, undefined, currentLocation(view)) });
+    });
+
+    const linkEvent = navigation.linkEvent;
+    if (linkEvent === undefined) return;
+
+    // Delegated from the document, so links inside a data-if or data-each that
+    // mounted later are covered without rebinding anything.
+    this.document.addEventListener("click", (domEvent) => {
+      const anchor = enhanceableAnchor(domEvent, view);
+      if (anchor === null) return;
+      // Only now, having decided the browser has nothing better to do with
+      // this click, does the kernel take it. The engine still decides whether
+      // the destination is a real route; an href it does not recognise simply
+      // produces no navigation, which is the right answer for a dead link.
+      domEvent.preventDefault();
+      void this.#send({ kind: "Event", event: makeEvent(linkEvent, undefined, relativize(anchor.href, view)) });
+    });
   }
 
   // Binds only root's descendants, not root itself — the recursive step
@@ -277,9 +440,19 @@ export class BrowserKernel {
 
   async #executeEffect(effect: EffectRequest): Promise<void> {
     const started = performance.now();
-    const result = effect.kind === "Http" ? await this.#executeHttp(effect) : this.#executeStorage(effect);
+    const result = await this.#runEffect(effect);
     this.#diagnostics.report({ kind: "EffectTiming", correlationId: effect.correlationId, durationMs: performance.now() - started });
     await this.#send({ kind: "EffectResult", result });
+  }
+
+  async #runEffect(effect: EffectRequest): Promise<EffectResult> {
+    switch (effect.kind) {
+      case "Http": return this.#executeHttp(effect);
+      case "Storage": return this.#executeStorage(effect);
+      case "Navigate": return this.#executeNavigation(effect);
+      case "Clipboard": return this.#executeClipboard(effect);
+      case "Document": return this.#executeDocument(effect);
+    }
   }
 
   async #executeHttp(effect: HttpEffectRequest): Promise<EffectResult> {
@@ -333,6 +506,190 @@ export class BrowserKernel {
   #executeStorage(effect: StorageEffectRequest): EffectResult {
     return { kind: "StorageResult", correlationId: effect.correlationId, outcome: runStorage(effect) };
   }
+
+  // Synchronous like Storage: a same-document history entry either exists
+  // after the call or the call threw, and a traversal is either queued or it
+  // is not. Nothing is dispatched to a remote party, so there is no in-flight
+  // state to cancel and no "dispatched but uncertain" to report.
+  #executeNavigation(effect: NavigationEffectRequest): EffectResult {
+    const view = this.#window;
+    const outcome: NavigationOutcome =
+      this.#navigation === null || view === null
+        ? { kind: "Failure", reason: "unavailable" }
+        : runNavigation(view, effect);
+    return { kind: "NavigationResult", correlationId: effect.correlationId, outcome };
+  }
+
+  // Asynchronous, unlike every other non-Http effect: the browser may prompt,
+  // consult a permission, or refuse. It is still not cancellable — there is no
+  // abort signal on the Clipboard API — and a refusal is an ordinary outcome
+  // rather than an error.
+  // Synchronous, and never cancellable: focusing an element and scrolling a
+  // window either happen or the capability was not wired.
+  #executeDocument(effect: DocumentEffectRequest): EffectResult {
+    const view = this.#window;
+    const outcome: DocumentOutcome =
+      this.#documentActions === null || view === null
+        ? { kind: "Failure", reason: "unavailable" }
+        : this.#runDocument(effect, view);
+    return { kind: "DocumentResult", correlationId: effect.correlationId, outcome };
+  }
+
+  #runDocument(effect: DocumentEffectRequest, view: Window): DocumentOutcome {
+    if (effect.operation === "scrollToTop") {
+      // `scrollTo` is missing in jsdom and in a few embedded webviews. Not
+      // being able to scroll is not worth failing an effect over.
+      if (typeof view.scrollTo === "function") view.scrollTo(0, 0);
+      return { kind: "Success" };
+    }
+
+    // Whichever target is mounted right now. With one screen mounted at a time
+    // this is that screen's; the kernel does not know or care which.
+    const target = this.document.querySelector("[data-focus-target]");
+    if (!(target instanceof HTMLElement)) return { kind: "Failure", reason: "no-target" };
+
+    // A heading is not focusable by default, so `focus()` on one would do
+    // nothing at all — the exact silent no-op that makes this class of
+    // accessibility bug survive review. Making an element programmatically
+    // focusable is pure mechanism, so the kernel does it rather than requiring
+    // every author to remember `tabindex="-1"`.
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus();
+    return { kind: "Success" };
+  }
+
+  async #executeClipboard(effect: ClipboardEffectRequest): Promise<EffectResult> {
+    const outcome: ClipboardOutcome =
+      this.#clipboard === null
+        ? { kind: "Failure", reason: "unsupported" }
+        : await runClipboard(effect);
+    return { kind: "ClipboardResult", correlationId: effect.correlationId, outcome };
+  }
+}
+
+// Everything the boundary carries as a URL uses this one spelling, inbound
+// and outbound alike, so an engine comparing "where am I" against "where did
+// I ask to be" is comparing like with like. The origin is deliberately left
+// off: it cannot vary within an application, and the engine has no business
+// with it.
+function currentLocation(view: Window): string {
+  const { pathname, search, hash } = view.location;
+  return `${pathname}${search}${hash}`;
+}
+
+/** The same normalized spelling the kernel reports inbound. */
+function relativize(href: string, view: Window): string {
+  const target = resolve(href, view.location.href);
+  return target === null ? href : `${target.pathname}${target.search}${target.hash}`;
+}
+
+function runNavigation(view: Window, effect: NavigationEffectRequest): NavigationOutcome {
+  // A traversal is a request to the browser, not an edit the kernel performs.
+  // Where it lands — or whether it lands anywhere, at the end of the stack —
+  // is not knowable here, so the outcome acknowledges and says no more. The
+  // history event that follows is what actually tells the engine where it is.
+  if (effect.operation === "back" || effect.operation === "forward") {
+    try {
+      if (effect.operation === "back") view.history.back();
+      else view.history.forward();
+      return { kind: "Accepted" };
+    } catch {
+      return { kind: "Failure", reason: "unavailable" };
+    }
+  }
+
+  const target = resolve(effect.url, view.location.href);
+  if (target === null) return { kind: "Failure", reason: "invalid-url" };
+  // A same-document history entry is same-origin by definition, and the
+  // engine must not be able to reach through this effect to move the page to
+  // another site. Refusing here rather than letting pushState throw makes it
+  // an explicit outcome the engine can handle instead of an opaque failure.
+  if (target.origin !== view.location.origin) return { kind: "Failure", reason: "cross-origin" };
+  try {
+    const entry = `${target.pathname}${target.search}${target.hash}`;
+    if (effect.operation === "push") view.history.pushState(null, "", entry);
+    else view.history.replaceState(null, "", entry);
+    return { kind: "Success", url: currentLocation(view) };
+  } catch {
+    // pushState is unavailable in a few real places — a sandboxed frame, an
+    // opaque origin, a page opened from file:// in some browsers.
+    return { kind: "Failure", reason: "unavailable" };
+  }
+}
+
+function resolve(url: string, base: string): URL | null {
+  try {
+    return new URL(url, base);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The anchor this click should be taken away from the browser for, or null.
+ *
+ * Every rule here exists to *not* break something the browser already does
+ * well. A link the kernel takes must be an ordinary left-click, unmodified,
+ * on a same-origin anchor that the author has not marked for other handling.
+ * Anything else — a new tab, a download, a different origin, a framed target
+ * — belongs to the browser, and silently swallowing it would be a regression
+ * the user experiences as a broken page.
+ */
+function enhanceableAnchor(domEvent: Event, view: Window): HTMLAnchorElement | null {
+  // Bare globals, as everywhere else in this file — see the note in
+  // test/dom-helpers.ts about why they are installed for tests.
+  if (!(domEvent instanceof MouseEvent)) return null;
+  // Not a plain primary-button click: middle-click opens a tab, right-click
+  // opens the context menu, and Ctrl/Cmd/Shift/Alt each mean "somewhere else".
+  if (domEvent.button !== 0) return null;
+  if (domEvent.ctrlKey || domEvent.metaKey || domEvent.shiftKey || domEvent.altKey) return null;
+  // Something earlier already handled it; do not handle it twice.
+  if (domEvent.defaultPrevented) return null;
+
+  const target = domEvent.target;
+  if (!(target instanceof Element)) return null;
+  const anchor = target.closest("a");
+  if (!(anchor instanceof HTMLAnchorElement)) return null;
+
+  // No href, or an explicit opt-out the author wrote.
+  if (!anchor.hasAttribute("href")) return null;
+  if (anchor.hasAttribute("download")) return null;
+  if (anchor.hasAttribute("data-native-link")) return null;
+  // A target other than this frame is a deliberate instruction to the browser.
+  const frame = anchor.getAttribute("target");
+  if (frame !== null && frame !== "" && frame !== "_self") return null;
+  if ((anchor.getAttribute("rel") ?? "").split(/\s+/).includes("external")) return null;
+
+  const destination = resolve(anchor.getAttribute("href") ?? "", view.location.href);
+  if (destination === null) return null;
+  // Another origin, or a scheme the browser owns entirely: mailto:, tel:,
+  // blob:, a download served from elsewhere.
+  if (destination.origin !== view.location.origin) return null;
+  if (destination.protocol !== view.location.protocol) return null;
+  return anchor;
+}
+
+// Normalized browser conditions, never a browser exception string: an engine
+// has to be able to branch on these exhaustively. The copied text is never
+// read, never logged, and never appears in any value returned from here.
+async function runClipboard(effect: ClipboardEffectRequest): Promise<ClipboardOutcome> {
+  const api = globalThis.navigator?.clipboard;
+  // `isSecureContext` is the specific, checkable reason the API is commonly
+  // missing, and it is worth telling apart from a browser that simply has no
+  // Clipboard API: one is fixed by deploying over HTTPS, the other is not.
+  if (api === undefined || typeof api.writeText !== "function") {
+    return { kind: "Failure", reason: globalThis.isSecureContext === false ? "not-secure-context" : "unsupported" };
+  }
+  try {
+    await api.writeText(effect.text);
+    return { kind: "Success" };
+  } catch (error) {
+    return { kind: "Failure", reason: isPermissionDenied(error) ? "permission-denied" : "failed" };
+  }
+}
+
+function isPermissionDenied(error: unknown): boolean {
+  return error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "SecurityError");
 }
 
 function runStorage(effect: StorageEffectRequest): StorageOutcome {

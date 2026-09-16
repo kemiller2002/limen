@@ -34,8 +34,8 @@ Limen         is the threshold: it carries events in and effects out.
 The engine    owns state, transitions, validation, and what to show.
 ```
 
-The Limen kernel understands **six HTML attributes** and no application
-vocabulary at all. It does not know what `"checkAvailability"` means or what a
+The Limen kernel understands **a handful of HTML attributes** and no
+application vocabulary at all. It does not know what `"checkAvailability"` means or what a
 `"customers"` list is. It moves opaque strings and plain data across a
 boundary — which is precisely what stops application logic from accumulating
 in the browser layer.
@@ -57,7 +57,7 @@ flowchart LR
     E -- "ViewState" --> K
     K -- "textContent, attributes, mount/unmount" --> DOM
     E -- "EffectRequest" --> K
-    K -- "fetch / localStorage" --> X(("Network<br/>Storage"))
+    K -- "fetch / localStorage / history" --> X(("Network<br/>Storage<br/>URL"))
     X -- "EffectResult" --> K
     K -- "EffectResult" --> E
 ```
@@ -90,12 +90,14 @@ These are consequences of the boundary, not aspirations. The mechanically
 enforced one is the second-to-last:
 [`scripts/check-architecture.ts`](scripts/check-architecture.ts) fails the build
 if `src/engine/**` so much as mentions `document`, `window`, `fetch(`,
-`localStorage`, or `sessionStorage`.
+`localStorage`, `sessionStorage`, or a history/URL API.
 
-**Tradeoffs are real**, and documented rather than hidden: no routing or
-history, no browser capabilities beyond HTTP and `localStorage`, no focus
-management, no list virtualization, more ceremony than a small component
-framework for a genuinely simple page. See
+**Tradeoffs are real**, and documented rather than hidden: no browser
+capabilities beyond HTTP, `localStorage`, navigation, clipboard write and
+route-change focus; no router (URLs and history work, but the engine owns what
+a route means),
+no list virtualization, more ceremony than a small component framework for a
+genuinely simple page. See
 [docs/01-architecture.md § Honest limits](docs/01-architecture.md#6-honest-limits).
 
 ## The smallest working example
@@ -191,7 +193,8 @@ never overwrites a file you have edited, and never overwrites a file that was
 there before it arrived. Running it twice makes no second round of changes.
 
 `verify` then enforces the boundary this README opens with: engine code must not
-name `document`, `window`, `fetch(`, `localStorage` or `sessionStorage`, and
+name `document`, `window`, `fetch(`, `localStorage`, `sessionStorage` or a
+history/URL API such as `history.pushState`, and
 neither side may use `eval`. It is a lexical check — a guard rail, not a proof.
 
 For CI and agents, every command takes `--json` (a single document on stdout,

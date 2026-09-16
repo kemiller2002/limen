@@ -1,0 +1,7 @@
+{
+  "//": "Pins the .NET SDK feature band for every project here (cli/ and wasm/, both net8.0). This is not housekeeping: `dotnet workload install wasm-tools` installs into the band of the RESOLVED SDK, so on a machine carrying several — a GitHub runner has 8, 9 and 10 — an unpinned `dotnet` resolves to the newest, installs the workload for that band, and then fails to build a net8.0 browser-wasm project because the band it is building in has no wasm-tools. The error says nothing about SDK bands. rollForward latestFeature keeps 8.0.1xx through 8.0.4xx acceptable, so this does not have to name an exact patch.",
+  "sdk": {
+    "version": "8.0.100",
+    "rollForward": "latestFeature"
+  }
+}

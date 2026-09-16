@@ -16,7 +16,7 @@ Know what you are allowed to depend on.
 
 | Tier | What | Examples |
 | --- | --- | --- |
-| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `PROTOCOL_VERSION`, the six `data-*` attributes |
+| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `PROTOCOL_VERSION`, the `data-*` attributes |
 | **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport` (write your own), `DiagnosticsSink` (supply your own) |
 | **Reference implementation** | Ships, but is this repo's demo. Do **not** build on it. | `DirectTypeScriptTransport`, `ReferenceEngine`, `project`, `State`, `Command`, `TransitionResult`, `EmailAddress` |
 | **Internal** | Private; may change without notice. | every `#`-prefixed member of `BrowserKernel`, `Scope`/binding types, `TRIGGER_BY_TAG`, `BOOLEAN_PROPS` |
@@ -64,20 +64,47 @@ The bridge. One per page.
 
 ```ts
 class BrowserKernel {
-  constructor(transport: EngineTransport, document: Document, diagnostics?: DiagnosticsSink);
+  constructor(
+    transport: EngineTransport,
+    document: Document,
+    options?: DiagnosticsSink | BrowserKernelOptions,
+  );
   readonly transport: EngineTransport;
   readonly document: Document;
   start(): Promise<void>;
 }
+
+type BrowserKernelOptions = {
+  readonly diagnostics?: DiagnosticsSink;
+  readonly navigation?: NavigationBinding;   // URL + history
+  readonly clipboard?: ClipboardBinding;     // { enabled: true }
+  readonly document?: DocumentBinding;       // { enabled: true } — focus + scroll
+};
+
+type NavigationBinding = {
+  readonly historyEvent: string;   // required: the name for a history move
+  readonly linkEvent?: string;     // optional: enables link interception
+};
 ```
 
-### `constructor(transport, document, diagnostics?)`
+### `constructor(transport, document, options?)`
 
 | Parameter | Type | Notes |
 | --- | --- | --- |
 | `transport` | `EngineTransport` | your engine. Required. |
 | `document` | `Document` | normally the global `document`; injectable for tests. |
-| `diagnostics` | `DiagnosticsSink` | optional. **Defaults to a no-op** — without it, bridge errors are silent. |
+| `options` | `DiagnosticsSink \| BrowserKernelOptions` | optional. |
+
+The third argument accepts **either** a `DiagnosticsSink` — the original shape,
+which still means exactly what it always did — or an options object carrying
+the sink and any capabilities this kernel should have. Every released call
+shape keeps working unchanged.
+
+Capabilities are opt-in and announced only when wired, so an engine can read
+`Initialize.capabilities` and trust it. See
+[25-browser-capabilities.md](25-browser-capabilities.md).
+
+Construction is inert: nothing is bound, dispatched, or touched until `start()`.
 
 Construction is inert: nothing is bound, dispatched, or touched until `start()`.
 
@@ -87,12 +114,20 @@ Performs, in order:
 
 1. `await transport.start()` — **if this rejects, reports
    `BridgeError { phase: "dispatch" }` and returns. Nothing is bound.**
-2. Recursively binds `document.body`, collecting all `data-*` bindings. **If a
-   binding is malformed** — `data-each` without `data-key`, a `data-if` on a
-   non-`<template>` element, a template with more than one root — it reports
+2. Recursively binds `document.head` **and** `document.body`, collecting all
+   `data-*` bindings. The head is included so `<title data-text="pageTitle">`
+   works; a head with no bindings is untouched. **If a binding is malformed** —
+   `data-each` without `data-key`, a `data-if` on a non-`<template>` element, a
+   template with more than one root — it reports
    `BridgeError { phase: "binding" }` and returns without dispatching
    `Initialize`.
-3. Dispatches `Initialize { protocolVersion: 1, capabilities: ["Http", "Storage"] }`.
+3. If `navigation` was supplied and the document has a window, registers a
+   `popstate` listener, plus a delegated `click` listener when `linkEvent` was
+   also supplied.
+4. Dispatches `Initialize { protocolVersion: 1, capabilities, location? }`.
+   `capabilities` is `["Http", "Storage"]` plus one entry per wired capability;
+   `location` is present exactly when `"Navigation"` is, and carries the URL
+   the page was opened at.
 
 **Never rejects.** All failures go to diagnostics. The page stays at its
 placeholder content, which is the visible symptom of a failure in step 1 or 2.
@@ -170,7 +205,7 @@ performing effects yourself instead of requesting them; forgetting that
 
 ```ts
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly ["Http", "Storage"] }
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location?: string }
   | { kind: "Event";        event:  SemanticEvent }
   | { kind: "EffectResult"; result: EffectResult };
 ```
@@ -308,13 +343,81 @@ type StorageOutcome =
 `null`/unused for `set`/`remove`. No `OutcomeUnknown` — a single `localStorage`
 call is atomic.
 
+### `NavigationEffectRequest`
+
+```ts
+type NavigationEffectRequest =
+  | { kind: "Navigate"; correlationId; operation: "push";    url: string }
+  | { kind: "Navigate"; correlationId; operation: "replace"; url: string }
+  | { kind: "Navigate"; correlationId; operation: "back" }
+  | { kind: "Navigate"; correlationId; operation: "forward" };
+```
+
+One member per legal operation. Only executed when the kernel was constructed
+with a `navigation` binding; otherwise it reports
+`Failure { reason: "unavailable" }`.
+
+### `NavigationOutcome`
+
+```ts
+type NavigationOutcome =
+  | { kind: "Success"; url: string }   // push/replace — the resulting location
+  | { kind: "Accepted" }               // back/forward — queued; the history event is authoritative
+  | { kind: "Failure"; reason: "unavailable" | "cross-origin" | "invalid-url" };
+```
+
+`url` is the resulting location in the same normalized `pathname + search + hash`
+form the kernel reports inbound. `Accepted` is not a lesser success: a
+traversal may land anywhere, or nowhere at the end of the stack, so the kernel
+reports only that the browser was asked. `cross-origin` is a refusal, not a
+browser error: the kernel will not move the page off its own origin. No
+`OutcomeUnknown` — nothing was dispatched to a remote party.
+
+### `DocumentEffectRequest`
+
+```ts
+type DocumentEffectRequest =
+  | { kind: "Document"; correlationId; operation: "focusTarget" }
+  | { kind: "Document"; correlationId; operation: "scrollToTop" };
+```
+
+`focusTarget` focuses whichever element carrying `data-focus-target` is
+currently mounted, adding `tabindex="-1"` if it has none. No selector crosses
+the boundary: the engine decides when, the markup decides where.
+
+### `DocumentOutcome`
+
+```ts
+type DocumentOutcome =
+  | { kind: "Success" }
+  | { kind: "Failure"; reason: "unavailable" | "no-target" };
+```
+
+`no-target` means focus was requested and no marked element is mounted.
+
+### `Capability`
+
+```ts
+type Capability = "Http" | "Storage" | "Navigation" | "Clipboard" | "Document";
+```
+
+Announced in `Initialize.capabilities`. `"Navigation"` is present only when the
+host wired it, so an engine can tell rather than assume.
+
 ### `EffectResult`
 
 ```ts
 type EffectResult =
-  | { kind: "HttpResult";    correlationId: CorrelationId; outcome: EffectOutcome }
-  | { kind: "StorageResult"; correlationId: CorrelationId; outcome: StorageOutcome };
+  | { kind: "HttpResult";       correlationId: CorrelationId; outcome: EffectOutcome }
+  | { kind: "StorageResult";    correlationId: CorrelationId; outcome: StorageOutcome }
+  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome }
+  | { kind: "ClipboardResult";  correlationId: CorrelationId; outcome: ClipboardOutcome }
+  | { kind: "DocumentResult";   correlationId: CorrelationId; outcome: DocumentOutcome };
 ```
+
+**Narrow this by name, never by elimination.** "Anything that is not an
+`HttpResult` is a `StorageResult`" was true when there were two variants and
+stopped being true the moment there were three.
 
 ---
 
@@ -367,6 +470,11 @@ The kernel's complete DOM surface.
 | `data-if="key"` | mount/unmount a `<template>` | **`<template>` only**; one root element; missing key ⇒ falsy |
 | `data-each="key"` | repeat a `<template>` | **`<template>` only**; **requires `data-key`** |
 | `data-key="field"` | item identity for `data-each` | must be stable and unique |
+| `data-focus-target` | marks where focus goes on a route change | a marker, not a binding; the kernel adds `tabindex="-1"` if absent. Requires the Document capability. |
+| `data-native-link` | opt a link out of interception | a marker, not a binding; only meaningful when `linkEvent` is wired |
+
+`data-text` works on `<title>` too, because the kernel binds the document head:
+that is how the page title is set, rather than a capability.
 
 Default triggers: `<form>` → `submit` (with `preventDefault`);
 `<input>`/`<select>`/`<textarea>` → `change`; everything else → `click`.

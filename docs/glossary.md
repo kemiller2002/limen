@@ -113,7 +113,7 @@ never directly. See
 
 **Canonical name** for the generic bridge, `src/kernel/browser-kernel.ts`. The
 only code permitted to touch `document`, `window`, `fetch`, or `localStorage`.
-Understands six `data-*` attributes and interprets none of them.
+Understands a small, fixed set of `data-*` attributes and interprets none of them.
 
 Say **"the Limen kernel"** where the bridge could be confused with the product.
 
@@ -211,7 +211,7 @@ design has drifted.
 | Virtual DOM / reconciler | No VDOM. Only keyed list reconciliation. |
 | Store / reducer / action creator | The engine is not a Redux-style store. Commands are not actions. |
 | Hook / subscription | No subscription API. The kernel applies whole projections. |
-| Router | Not implemented. No URL or history integration. |
+| Router | No router object, no route table in the kernel, no nested routes or route params. URL and history integration exists as an opt-in capability; the engine maps URLs to state with its own pure functions. |
 | Middleware | Nothing intercepts the round trip except the error boundary. |
 | Selector | Projections are computed wholesale, not selected or memoized. |
 | Two-way binding | `data-bind-value` writes *to* the DOM; reads come back only as events. |

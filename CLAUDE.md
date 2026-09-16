@@ -25,14 +25,25 @@ Run `./ros add "…"` → `./ros work ready WI-####` → `./ros work start WI-##
 complete WI-#### --evidence …` afterwards. See
 [AGENTS.md](AGENTS.md) Part 1 for the exact sequence.
 
-## There is no WebAssembly in this repository
+## There is no WebAssembly in the *published package*
 
-No `.wasm` file, no loader, no `WebAssembly.instantiate`. The name describes
-the *boundary shape* — narrow and serializable, therefore WASM-ready. The
-component that owns application meaning is called **the engine**, and it is
-TypeScript today (`src/engine/`). If you went looking for the WASM and could
-not find it, nothing is missing: read
-[docs/17-wasm-migration.md](docs/17-wasm-migration.md).
+`src/engine/` is TypeScript, `DirectTypeScriptTransport` is what ships, and
+`wasm/` is not in `package.json`'s `files`. A consumer's engine is TypeScript.
+The package name describes the *boundary shape* — narrow and serializable,
+therefore WASM-ready — not the technology behind it.
+
+**There is WebAssembly in the repository**, and it is not part of the package.
+`wasm/Limen.Engine/` is an F# engine compiled to WebAssembly that drives this
+project's own website through the unmodified `BrowserKernel`. It exists to make
+the boundary claim demonstrable rather than merely argued. Do not move it into
+`src/`, do not add it to `files`, and do not "fix" the TypeScript engine by
+deleting it — the two are held to identical behaviour by `test/wasm.test.ts`,
+and that agreement test is the only thing preventing them from drifting apart.
+
+Read [docs/26-fsharp-wasm-engine.md](docs/26-fsharp-wasm-engine.md) for what
+building it cost and what it did and did not prove;
+[docs/17-wasm-migration.md](docs/17-wasm-migration.md) is the guide for moving
+some other engine into WebAssembly.
 
 Note the terminology collision: **kernel** here means the *browser-side
 bridge* (`BrowserKernel`), the opposite side of the boundary from the engine.
@@ -64,6 +75,7 @@ Measured, not assumed — each of these cost real time to rediscover.
 | Capability | Reality |
 | --- | --- |
 | .NET SDK 8 | **Available.** `apt-get install dotnet-sdk-8.0` works. Microsoft's own CDN (`builds.dotnet.microsoft.com`) is proxy-blocked, but the Ubuntu archive is not — do not conclude from the CDN failure that F# is unavailable. |
+| `wasm-tools` workload | **Available.** `dotnet workload install wasm-tools` resolves from NuGet, which is not proxy-blocked. The blocked Microsoft CDN says nothing about this either; `npm run build:wasm` publishes a real browser-wasm bundle from here. |
 | Pushing a branch | **Allowed** — create and update both work. |
 | Pushing a tag | **Blocked.** Every form fails identically: annotated, lightweight, explicit refspec. The error is `send-pack: unexpected disconnect`, which looks transient and is not. |
 | Deleting any ref | **Blocked**, branches included. |
@@ -102,6 +114,10 @@ Read the proxy's own state instead — `curl -sS "$HTTPS_PROXY/__agentproxy/stat
   ambiguities, and open questions
 - [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) —
   what Limen renamed and what it deliberately did not
+- [docs/25-browser-capabilities.md](docs/25-browser-capabilities.md) — every
+  browser operation an engine may request, and how to enable it
+- [docs/26-fsharp-wasm-engine.md](docs/26-fsharp-wasm-engine.md) — the F# engine
+  that runs this project's site: how it was built, what it cost, what it proved
 - [examples/README.md](examples/README.md) — six verified example applications
 
 ## What this is
@@ -124,7 +140,8 @@ src/engine/   →  application meaning only (state, transitions, validation)
 ```
 
 `src/engine/**` must never reference `document`, `window`, `fetch`,
-`localStorage`, `sessionStorage`, or use `any`/`dynamic` typing —
+`localStorage`, `sessionStorage`, or a history/URL API (`history.pushState`,
+`location.pathname`, …), or use `any`/`dynamic` typing —
 `scripts/check-architecture.ts` mechanically enforces this substring/word
 ban and runs as part of `npm test`. `src/kernel/**` is the only place
 allowed to touch the browser. If you find yourself writing a `switch` on
@@ -190,6 +207,19 @@ code, not after.
 - `examples/01-counter/` … `examples/06-time-entries/` — six progressive
   example applications, each driven by `test/examples.test.ts` against its own
   real `index.html`, so none can silently rot. Start at `01-counter`.
+- `wasm/Limen.Engine/` — the site's engine in F#: pure, no browser, no JS
+  interop. `Json.fs` is a hand-written codec (deliberately, not for lack of
+  `System.Text.Json`). Tested as ordinary .NET by `npm run test:wasm`.
+- `wasm/Limen.Host/Interop.cs` — 41 lines of C#, and the only C# here. `[JSExport]`
+  is a Roslyn source generator and F# does not run those, so an F# method
+  carrying the attribute registers nothing, silently — verified in Chromium, not
+  assumed. That is the whole of what was established: no alternative route was
+  exhausted, so treat "C# is required here" as unproven rather than settled. If
+  you find a pure-F# path, this file, `docs/26` and the shim all go together.
+- `site/app/` — the site's own wiring: `wasm-transport.ts` (an `EngineTransport`
+  over the module), `engine.ts` (the TypeScript twin), `main.ts` (chooses one).
+- `test/wasm.test.ts` — drives the real module through the real kernel, and
+  holds the two engines to identical projections, keys, effects and refusals.
 - `docs/ROADMAP.md` — status of every bridge responsibility against what's
   actually implemented and tested. Read this before assuming something is
   missing or done.
@@ -220,7 +250,18 @@ npm run check              # alias for npm test (pretest already builds)
 npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)
 npm run build:cli          # publish the CLI binary for this platform
 npm run build:cli:all      # publish all five platform binaries
+
+npm run test:wasm          # dotnet test — the site's F# engine, as plain .NET
+npm run build:wasm         # publish that engine to browser-wasm, stage site/wasm/
+npm run build:site         # build dist-site/ (copies site/wasm/ if it exists)
+npm run serve:site         # build and serve the site on :4174
 ```
+
+`build:wasm` needs the `wasm-tools` workload and takes about a minute, so it is
+deliberately **not** part of `pretest`: a contributor editing CSS should not pay
+for it. The cost of that choice is that `test/wasm.test.ts` reports as *skipped*
+until the bundle exists. Run `npm run build:wasm` before trusting a green run to
+mean the two engines still agree. The Pages workflow always builds it.
 
 Always run `npm run check` (or `npm test`) before considering a change
 done — not just `tsc`. The architecture check, the docs check, and the kernel
@@ -258,10 +299,19 @@ automatically.
 - `architecture.yaml` documents its own enforcement gap in its header
   comment as of this writing — check it hasn't drifted from
   `scripts/check-architecture.ts` again before trusting it at face value.
-- The package is named for WebAssembly but contains none; "kernel" names the
+- The *package* is named for WebAssembly but ships none, and "kernel" names the
   browser bridge here while the package name implies the engine. Both are
   recorded as findings A-2 and N-1 in `docs/DOCUMENTATION-AUDIT.md`, along with
   a confirmed defect (P-1) and the open questions this audit could not answer.
+  A-2 is now half-closed: a real WebAssembly engine exists in `wasm/` and runs
+  the site, but the published package is unchanged, so the name still promises
+  the consumer something it does not deliver.
+- The site ships two engines — F# on WebAssembly, and a TypeScript fallback for
+  when the 1.6 MB bundle does not load. That is duplication of one semantic
+  decision, accepted deliberately and held together by an agreement test rather
+  than by discipline. If you change `site/app/engine.ts`, change
+  `wasm/Limen.Engine/` to match, or `test/wasm.test.ts` will fail — which is the
+  intended outcome, not an obstacle.
 
 ## Definition of done
 

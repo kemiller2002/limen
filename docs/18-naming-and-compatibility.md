@@ -63,7 +63,7 @@ classified before anything was renamed. Nothing was find-and-replaced.
 | --- | --- | --- | --- |
 | **Published package name** | `@echelon-foundry/typescript-wasm-kernel` | 17 | **PRESERVED** — renaming breaks every consumer |
 | **Public API symbol** | `BrowserKernel`, `EngineTransport`, `DirectTypeScriptTransport`, `ReferenceEngine`, `PROTOCOL_VERSION` | 26 | **PRESERVED** |
-| **Wire contract** | `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, the six `data-*` attributes | all | **PRESERVED** |
+| **Wire contract** | `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, the `data-*` attributes | all | **PRESERVED** |
 | **Filesystem path** | `src/kernel/`, `src/kernel/browser-kernel.ts`, `test/kernel.test.ts` | 3 | **PRESERVED** — renaming churns imports and `dist/` output paths for no functional gain |
 | **Component term** | "the kernel" meaning the browser bridge | many | **KEPT** — accurate; clarified to "the Limen kernel" where ambiguous |
 | **Product name** | "TypeScript WASM Kernel", "the WASM kernel" as a product | many | **RENAMED → Limen** |
@@ -89,6 +89,44 @@ import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
 ```
 
 No deprecation, no alias, no shim, no codemod. The rename is documentation-only.
+
+## The navigation capability: what it cost
+
+Adding navigation ([ROADMAP.md](ROADMAP.md) item 8) is the one change since the
+rename that is not purely additive. At **runtime** it is: a kernel constructed
+the way every existing consumer constructs it announces exactly
+`["Http", "Storage"]`, sends no `location`, registers no listener, and touches
+neither the URL nor history. Nothing observable changed.
+
+At the **type** level, two widenings can surface a compile error. Both are
+narrow, both are loud, and neither can fail silently at runtime:
+
+**1. `EffectResult` has a third variant.** Code that narrowed it by elimination
+breaks:
+
+```ts
+// Was fine with two variants. Now wrong — and TypeScript says so.
+if (result.kind === "HttpResult") { /* … */ }
+return handleStorage(result);          // ← result may be a NavigationResult
+
+// Narrow by name instead.
+if (result.kind !== "StorageResult") throw new Error("unexpected effect result");
+```
+
+This is the compiler doing its job: the assumption "anything that is not Http is
+Storage" stopped being true, and an engine acting on it would have mishandled a
+real message. `examples/04-save-data/engine.ts` in this repository had exactly
+this shape and was fixed the same way.
+
+**2. `Initialize.capabilities` is `readonly Capability[]`**, not the literal
+tuple `readonly ["Http", "Storage"]`. Reading it, iterating it, or destructuring
+it is unaffected; only annotating a variable with the old tuple type breaks.
+It had to widen, because the point of announcing capabilities is that the
+announcement can differ between kernels — a constant is not an announcement.
+
+The alternative was a union of two tuple types, which breaks the same
+annotation, reads worse, and would have to grow again for every future
+capability. Nothing was renamed, and nothing was removed.
 
 ### If you write about it
 
