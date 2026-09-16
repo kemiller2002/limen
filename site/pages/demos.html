@@ -1,0 +1,284 @@
+    <section class="page-intro">
+      <p class="eyebrow">Demonstrations</p>
+      <h1>Watch the boundary work.</h1>
+      <p class="lead">
+        Everything on this page is driven by the real Limen kernel and one real
+        engine — the same package you would install. Nothing here is a simulation
+        of the architecture; the traces are written by the engine as each message
+        actually crosses, and the network scenarios perform real requests.
+      </p>
+      <noscript><p class="no-js">These demonstrations need JavaScript. Limen is a browser runtime, so there is no meaningful static fallback for them — the explanations around them still read fine.</p></noscript>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Demo 01</p>
+          <h2>The round trip, recorded as it happens.</h2>
+        </div>
+        <p class="section-note">DOM event → SemanticEvent → command → transition → projection → DOM.</p>
+      </div>
+
+      <div class="demo">
+        <div class="demo-head">
+          <h3>Counter and event trace</h3>
+          <span class="note" data-text="traceCount">0</span>
+        </div>
+        <div class="demo-body">
+          <div class="demo-controls">
+            <button class="button primary" data-event="increment">increment</button>
+            <button class="button" data-event="decrement" data-bind-disabled="decrementDisabled">decrement</button>
+            <button class="button ghost" data-event="resetCounter" data-bind-disabled="resetDisabled">resetCounter</button>
+            <button class="button ghost small" data-event="clearTrace">Clear trace</button>
+          </div>
+          <div class="readout">
+            <div><span class="label">Counter</span><span class="value" data-text="counter">0</span></div>
+            <div><span class="label">Messages recorded</span><span class="value" data-text="traceCount">0</span></div>
+          </div>
+
+          <template data-if="traceEmpty">
+            <p class="trace-empty">Nothing yet. Press a button above — or trigger an effect further down; every message lands here.</p>
+          </template>
+          <template data-if="hasTrace">
+            <ol class="trace" aria-label="Event trace, newest first">
+              <template data-each="trace" data-key="id">
+                <li>
+                  <span class="seq" data-text="id"></span>
+                  <span class="step">
+                    <b data-text="event"></b>
+                    <span class="arrow">→</span><span data-text="command"></span>
+                    <span class="arrow">→</span><span data-text="to"></span>
+                    <span class="arrow">·</span><span class="muted" data-text="effect"></span>
+                  </span>
+                </li>
+              </template>
+            </ol>
+          </template>
+        </div>
+      </div>
+
+      <p class="prose">
+        The engine records each step because it sees every message — that is what
+        makes this trace honest rather than decorative. The kernel keeps no log of
+        its own; the trace is ordinary projected state, rendered with
+        <code>data-each</code> like any other list.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Demo 02</p>
+          <h2>Impossible states, side by side.</h2>
+        </div>
+        <p class="section-note">One model can represent nonsense. The other cannot.</p>
+      </div>
+
+      <div class="split">
+        <div class="demo">
+          <div class="demo-head">
+            <h3>Four independent booleans</h3>
+            <span class="status" data-bind-data-tone="flagTone">16 combinations</span>
+          </div>
+          <div class="demo-body">
+            <p class="note">Set any combination you like. Nothing stops you — that is the point.</p>
+            <div class="flags">
+              <label class="flag"><input type="checkbox" data-event="toggleLoading" data-bind-checked="isLoading"> isLoading</label>
+              <label class="flag"><input type="checkbox" data-event="toggleSaving" data-bind-checked="isSaving"> isSaving</label>
+              <label class="flag"><input type="checkbox" data-event="toggleError" data-bind-checked="hasError"> hasError</label>
+              <label class="flag"><input type="checkbox" data-event="toggleComplete" data-bind-checked="isComplete"> isComplete</label>
+            </div>
+            <p class="verdict" data-bind-data-tone="flagTone" data-text="flagVerdict" role="status"></p>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo-head">
+            <h3>One explicit union</h3>
+            <span class="status" data-bind-data-tone="saveTone" data-text="saveState">Idle</span>
+          </div>
+          <div class="demo-body">
+            <p class="note">The same feature as a discriminated union. Try to reach two states at once.</p>
+            <div class="demo-controls">
+              <button class="button primary" data-event="advanceSave" data-bind-disabled="advanceDisabled">Advance</button>
+              <button class="button" data-event="failSave" data-bind-disabled="failDisabled">Make it fail</button>
+              <button class="button ghost" data-event="resetSave">Reset</button>
+            </div>
+            <div class="readout">
+              <div><span class="label">State</span><span class="value small" data-text="saveState">Idle</span></div>
+            </div>
+            <p class="verdict" data-bind-data-tone="saveTone" data-text="saveHint" role="status"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="split">
+        <figure class="code-figure">
+          <figcaption>Representable, and meaningless</figcaption>
+          <pre><code><span class="k">type</span> State = {
+  isLoading: <span class="k">boolean</span>;
+  isSaving: <span class="k">boolean</span>;
+  hasError: <span class="k">boolean</span>;
+  isComplete: <span class="k">boolean</span>;
+};
+
+<span class="c">// 16 combinations. Most are nonsense.</span>
+<span class="c">// Nothing prevents any of them.</span></code></pre>
+        </figure>
+        <figure class="code-figure">
+          <figcaption>Only what can actually be true</figcaption>
+          <pre><code><span class="k">type</span> SaveState =
+  | { kind: <span class="s">"Idle"</span> }
+  | { kind: <span class="s">"Editing"</span> }
+  | { kind: <span class="s">"Saving"</span> }
+  | { kind: <span class="s">"Saved"</span> }
+  | { kind: <span class="s">"SaveFailed"</span>; reason: <span class="k">string</span> };
+
+<span class="c">// Five states. "Saving and Saved" cannot be</span>
+<span class="c">// written down, so it cannot happen.</span></code></pre>
+        </figure>
+      </div>
+      <p class="prose">
+        The second model also makes the compiler useful: a projection that
+        switches over <code>kind</code> and ends in <code>assertNever</code> will fail to build the day
+        somebody adds a sixth state and forgets a branch. Four booleans give you
+        no such alarm.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Demo 03</p>
+          <h2>Four outcomes, five real requests.</h2>
+        </div>
+        <p class="section-note">These perform genuine fetches. Open your network panel and watch.</p>
+      </div>
+
+      <div class="demo">
+        <div class="demo-head">
+          <h3>Effects and their outcomes</h3>
+          <span class="status" data-bind-data-tone="loadTone" data-text="loadState">Idle</span>
+        </div>
+        <div class="demo-body">
+          <div class="demo-controls">
+            <button class="button primary" data-event="loadSuccess" data-bind-disabled="loadBusy">Success (200)</button>
+            <button class="button" data-event="loadNotFound" data-bind-disabled="loadBusy">Missing file (404)</button>
+            <button class="button" data-event="loadInvalid" data-bind-disabled="loadBusy">Not JSON</button>
+            <button class="button" data-event="loadNetwork" data-bind-disabled="loadBusy">Unreachable host</button>
+            <button class="button" data-event="loadTimeout" data-bind-disabled="loadBusy">Timeout (1&nbsp;ms budget)</button>
+          </div>
+          <p class="verdict" data-bind-data-tone="loadTone" data-text="loadMessage" role="status" aria-live="polite"></p>
+
+          <template data-if="canRetryLoad">
+            <p class="note">This one is worth retrying — the request never reached anybody.</p>
+          </template>
+          <template data-if="needsReconciliation">
+            <p class="note">
+              Deliberately no retry button. The request was dispatched and then abandoned,
+              so it may already have been processed. For a read that is merely wasteful;
+              for a write it is how duplicate records get created.
+            </p>
+          </template>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>What each button actually does</caption>
+          <thead>
+            <tr><th scope="col">Scenario</th><th scope="col">Real request</th><th scope="col">Kernel reports</th><th scope="col">Engine decides</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Success</th><td><code>GET ./demo/customers.json</code></td><td><code>Success { status: 200 }</code></td><td>Decode, then show the count</td></tr>
+            <tr><th scope="row">Missing file</th><td><code>GET ./demo/no-such-file.json</code></td><td><code>Failure { invalid-response, status: 404 }</code></td><td>The server refused <em>and</em> its error page is HTML — so the status, not the body, is what makes this actionable</td></tr>
+            <tr><th scope="row">Not JSON</th><td><code>GET ./demo/not-json.txt</code></td><td><code>Failure { invalid-response, status: 200 }</code></td><td>A 200 whose body is malformed. Not retryable — it would fail identically</td></tr>
+            <tr><th scope="row">Unreachable host</th><td><code>GET https://…​.invalid/</code></td><td><code>Failure { network }</code></td><td>Retryable — nobody received it</td></tr>
+            <tr><th scope="row">Timeout</th><td><code>GET ./demo/customers.json</code>, 1&nbsp;ms budget</td><td><code>OutcomeUnknown</code></td><td>Reconcile; never blind-retry a write</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        The first two rows look identical at a glance and are not. Both are
+        <code>invalid-response</code> — a real response arrived and would not decode — but the
+        <em>status</em> separates them, which is why the kernel carries it. A 404 or 500
+        whose error page is HTML is the server refusing; a 200 whose body is
+        malformed is a broken payload. The first can be worth retrying. The second
+        never is.
+      </p>
+      <p class="note">
+        This distinction was added because building this page exposed its absence:
+        the status was being discarded, leaving the two cases indistinguishable.
+        Note also what the kernel does <em>not</em> do — it never decides that 404 means
+        &ldquo;not found&rdquo;. In a lookup that may be routine; in a save it is a bug. Only
+        the engine knows which.
+      </p>
+      <p class="prose">
+        The last row is why <code>OutcomeUnknown</code> exists as its own outcome rather than
+        being folded into failure. A request that timed out <em>after dispatch</em> may
+        have been processed. Calling that a failure is a lie, and it is the lie
+        that produces duplicate orders.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Demo 04</p>
+          <h2>Where does this code go?</h2>
+        </div>
+        <p class="section-note">The question an agent has to answer correctly every time.</p>
+      </div>
+
+      <div class="demo">
+        <div class="demo-head">
+          <h3>Task <span data-text="taskNumber">1</span> of <span data-text="taskTotal">8</span></h3>
+          <span class="note" data-text="scoreText"></span>
+        </div>
+        <div class="demo-body">
+          <p class="lead" data-text="taskPrompt"></p>
+          <div class="choices">
+            <template data-each="choices" data-key="id">
+              <button class="button" data-event="pick" data-text="label" data-bind-aria-pressed="pressed"></button>
+            </template>
+          </div>
+          <template data-if="revealed">
+            <div>
+              <p class="verdict" data-bind-data-tone="verdictTone" data-text="verdictText" role="status"></p>
+              <button class="button primary" data-event="nextTask" data-bind-disabled="nextDisabled">Next task</button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <p class="prose">
+        This is the decision Limen is really about. Every task above has exactly
+        one right answer, and the rule that produces it is short enough to state:
+        <strong>if the application would behave differently because of it, it belongs
+        in the engine.</strong> Appearance is CSS. Structure is HTML. Reaching the outside
+        world is an effect request. Carrying an event across the boundary is the
+        kernel's job, and the only one it has.
+      </p>
+    </section>
+
+    <section class="method-band">
+      <div>
+        <p class="eyebrow">What you just used</p>
+        <h2>One kernel. One engine. No framework.</h2>
+        <p>
+          Every demonstration on this page is bound with the same six attributes and
+          served by a single <code>BrowserKernel</code> over one engine. The page itself is
+          static HTML — the prose you are reading is not managed by anything.
+        </p>
+        <p><a href="./architecture.html">How the boundary is drawn →</a></p>
+      </div>
+      <ol>
+        <li><span>01</span><div><code>data-event</code> — forward an interaction as a named application event</div></li>
+        <li><span>02</span><div><code>data-on</code> — override which DOM event triggers it</div></li>
+        <li><span>03</span><div><code>data-text</code> — set textContent from a projected value</div></li>
+        <li><span>04</span><div><code>data-bind-*</code> — set an attribute or property from a projected value</div></li>
+        <li><span>05</span><div><code>data-if</code> — mount a template when a projected value is truthy</div></li>
+        <li><span>06</span><div><code>data-each</code> + <code>data-key</code> — repeat a template per projected item</div></li>
+      </ol>
+    </section>

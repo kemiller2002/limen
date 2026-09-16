@@ -27,6 +27,14 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
+      # The published package contains a self-contained binary per platform,
+      # cross-published from this one runner. Release must never depend on a
+      # developer's machine having produced them.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - name: Install dependencies
         run: npm ci
 
@@ -40,11 +48,61 @@ jobs:
             exit 1
           fi
 
+      - name: Test the lifecycle core
+        run: npm run test:cli
+
+      - name: Build the lifecycle CLI for this platform
+        run: npm run build:cli
+
       - name: Build and test
         run: npm run check
 
-      - name: Verify package contents
-        run: npm pack --dry-run
+      # Build the real archive and exercise it, rather than trusting that the
+      # source tree passing means the published package will work.
+      - name: Pack the release archive
+        run: npm pack --pack-destination ./release
+
+      - name: Verify the packed archive contains every platform binary
+        shell: bash
+        run: |
+          archive="$(ls ./release/*.tgz)"
+          echo "Inspecting $archive"
+          contents="$(tar -tzf "$archive")"
+          echo "$contents"
+          for runtime in linux-x64 linux-arm64 win-x64 osx-x64 osx-arm64; do
+            expected="package/runtimes/$runtime/limen"
+            [[ "$runtime" == win-* ]] && expected="$expected.exe"
+            if ! grep -qx "$expected" <<<"$contents"; then
+              echo "missing $expected from the package"
+              exit 1
+            fi
+          done
+          if grep -q "package/dist/main\." <<<"$contents"; then
+            echo "dist/main.* must not ship"
+            exit 1
+          fi
+
+      # Install the archive into a throwaway repository and run the documented
+      # quick start against it. This is the last gate before publishing.
+      - name: Exercise the packed archive as a consumer would
+        shell: bash
+        run: |
+          archive="$(cd release && ls *.tgz)"
+          workspace="$(mktemp -d)"
+          cp "release/$archive" "$workspace/"
+          cd "$workspace"
+          git init -q .
+          mkdir -p src/engine src/kernel
+          echo 'export const add = (a: number, b: number) => a + b;' > src/engine/domain.ts
+          echo 'export const mount = () => document.body;' > src/kernel/bridge.ts
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund "./$archive"
+          npx limen --version
+          npx limen init
+          npx limen init --check
+          npx limen status --json > /dev/null
+          npx limen verify --strict
+          npx limen doctor
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --access public ./release/*.tgz

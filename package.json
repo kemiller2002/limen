@@ -1,7 +1,7 @@
 {
   "name": "@echelon-foundry/typescript-wasm-kernel",
   "version": "0.4.1",
-  "description": "A dependency-free TypeScript browser kernel with a stable engine boundary for WebAssembly applications.",
+  "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority — a dependency-free browser kernel library, plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,8 +24,15 @@
       "import": "./dist/engine/transport.js"
     }
   },
+  "bin": {
+    "limen": "./bin/limen.js",
+    "typescript-wasm-kernel": "./bin/limen.js"
+  },
   "files": [
     "dist",
+    "!dist/main.*",
+    "bin",
+    "runtimes",
     "README.md",
     "LICENSE",
     "architecture.yaml"
@@ -44,7 +51,12 @@
     "typescript",
     "webassembly",
     "wasm",
-    "functional-core"
+    "functional-core",
+    "limen",
+    "echelon-foundry",
+    "cli",
+    "repository-tooling",
+    "verification"
   ],
   "engines": {
     "node": ">=22"
@@ -56,11 +68,19 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json",
+    "build:examples": "tsc -p tsconfig.examples.json",
+    "build:site": "tsc -p tsconfig.site.json && node --experimental-strip-types scripts/build-site.ts",
+    "serve:site": "npm run build:site && python3 -m http.server 4174 -d dist-site",
     "check:architecture": "node --experimental-strip-types scripts/check-architecture.ts",
-    "pretest": "npm run build",
-    "test": "npm run check:architecture && node --experimental-strip-types --test test/*.test.ts",
+    "check:docs": "node --experimental-strip-types scripts/check-docs.ts",
+    "build:cli": "node --experimental-strip-types scripts/build-cli.ts --current",
+    "build:cli:all": "node --experimental-strip-types scripts/build-cli.ts",
+    "test:cli": "dotnet test cli/tests/Limen.Core.Tests/Limen.Core.Tests.fsproj --nologo -v q",
+    "pretest": "npm run build && npm run build:examples && npm run build:site",
+    "test": "npm run check:architecture && npm run check:docs && npm run check:site && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
-    "prepack": "npm run clean && npm run check"
+    "prepack": "npm run clean && npm run check && npm run build:cli:all",
+    "check:site": "node --experimental-strip-types scripts/check-site.ts"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

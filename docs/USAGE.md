@@ -1,5 +1,19 @@
 # Usage
 
+> **Newer documentation is available.** This page predates the documentation
+> audit and is kept for continuity; it remains accurate. For building an
+> application from scratch see [02-getting-started.md](02-getting-started.md);
+> for the full effect model see
+> [07-effects-and-browser-interop.md](07-effects-and-browser-interop.md); for
+> exact signatures see [11-api-reference.md](11-api-reference.md). Start at the
+> [documentation index](README.md).
+>
+> One correction: the `DirectTypeScriptTransport` shown in §3 below is
+> **hard-wired to this repository's email-availability demo** and understands
+> only the event names `emailChanged` and `checkAvailability`. Do not use it for
+> your own application — write your own `EngineTransport`, which is about eight
+> lines. See [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md) finding A-1.
+
 Step-by-step instructions for using `@echelon-foundry/typescript-wasm-kernel`
 once it is installed.
 

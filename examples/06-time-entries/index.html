@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Time entries — kernel example 06</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Time entries</h1>
+
+      <p>
+        Backed by <code>GET/POST /api/time-entries</code> and
+        <code>PATCH /api/time-entries/{id}</code>. With no backend running, the
+        page shows the typed load-failure state.
+      </p>
+
+      <p role="status" aria-live="polite" data-text="notice"></p>
+
+      <template data-if="loading">
+        <p>Loading entries…</p>
+      </template>
+
+      <template data-if="loadFailed">
+        <div class="panel">
+          <p class="error" role="alert" data-text="loadError"></p>
+          <button data-event="retryLoad">Try again</button>
+        </div>
+      </template>
+
+      <!-- Add form. Every field is bound both ways: data-bind-value writes the
+           engine's value in, data-event/data-on="input" sends edits back out. -->
+      <form data-event="addEntry" class="panel">
+        <h2>Add an entry</h2>
+
+        <label for="date">Date</label>
+        <input id="date" name="date" type="date"
+               data-event="dateChanged" data-on="input"
+               data-bind-value="date" data-bind-disabled="fieldsDisabled">
+        <template data-if="dateErrorVisible">
+          <p class="error" role="alert" data-text="dateError"></p>
+        </template>
+
+        <label for="hours">Hours</label>
+        <input id="hours" name="hours" type="number" step="0.25" min="0" max="24"
+               data-event="hoursChanged" data-on="input"
+               data-bind-value="hours" data-bind-disabled="fieldsDisabled">
+        <template data-if="hoursErrorVisible">
+          <p class="error" role="alert" data-text="hoursError"></p>
+        </template>
+
+        <label for="description">Description</label>
+        <input id="description" name="description" type="text"
+               data-event="descriptionChanged" data-on="input"
+               data-bind-value="description" data-bind-disabled="fieldsDisabled">
+        <template data-if="descriptionErrorVisible">
+          <p class="error" role="alert" data-text="descriptionError"></p>
+        </template>
+
+        <button type="submit" data-bind-disabled="addDisabled">Add entry</button>
+      </form>
+
+      <h2>Entries</h2>
+      <p data-text="summary"></p>
+      <button data-event="refresh" data-bind-disabled="refreshDisabled">Refresh</button>
+
+      <template data-if="isEmpty">
+        <p>No entries yet.</p>
+      </template>
+
+      <template data-if="hasEntries">
+        <ul class="list">
+          <template data-each="entries" data-key="id">
+            <li>
+              <span data-text="date"></span>
+              <span data-text="hours"></span>
+              <span data-text="description"></span>
+              <span class="status" data-text="status"></span>
+              <!-- Clicking here sends SemanticEvent { name: "markProcessed",
+                   key: <this entry's id> }. The engine projects whether the
+                   button is available per row. -->
+              <button data-event="markProcessed" data-bind-disabled="processDisabled">
+                Mark processed
+              </button>
+            </li>
+          </template>
+        </ul>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

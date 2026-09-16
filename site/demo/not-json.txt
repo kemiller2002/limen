@@ -1,0 +1,10 @@
+This file is deliberately not JSON.
+
+The "invalid response" scenario on the demos page fetches it. The server
+answers 200 with a perfectly good response — it simply is not JSON, so
+response.json() throws and the Limen kernel classifies the outcome as
+Failure { reason: "invalid-response", status: 200 }.
+
+That is a different thing from a network failure, and the engine treats it
+differently: a network failure is worth retrying, this is not. Retrying would
+fetch this same file and fail in exactly the same way.

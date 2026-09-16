@@ -5,6 +5,75 @@ than duplicating them. If something here and a linked doc disagree, the doc
 is more likely current — but treat that as a bug to fix (in whichever file
 is stale), not something to silently pick a side on.
 
+## This repository is Limen
+
+**Limen** is the product name for the architecture implemented here: an
+explicit boundary keeping browser capabilities separate from application
+authority. The published package is still
+`@echelon-foundry/typescript-wasm-kernel`, and **no exported symbol, file path,
+or protocol type was renamed** — see
+[docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md).
+
+"Kernel" is still correct for the **browser-side bridge** (`BrowserKernel`,
+`src/kernel/`) — not for the product, and not for the application side.
+
+## Before meaningful changes: open a ROS work item
+
+CI's `validate` job rejects branches whose changes lack work-item attribution.
+Run `./ros add "…"` → `./ros work ready WI-####` → `./ros work start WI-####`
+**before** editing, and complete it with `ROS_BASE_REF=origin/main ./ros work
+complete WI-#### --evidence …` afterwards. See
+[AGENTS.md](AGENTS.md) Part 1 for the exact sequence.
+
+## There is no WebAssembly in this repository
+
+No `.wasm` file, no loader, no `WebAssembly.instantiate`. The name describes
+the *boundary shape* — narrow and serializable, therefore WASM-ready. The
+component that owns application meaning is called **the engine**, and it is
+TypeScript today (`src/engine/`). If you went looking for the WASM and could
+not find it, nothing is missing: read
+[docs/17-wasm-migration.md](docs/17-wasm-migration.md).
+
+Note the terminology collision: **kernel** here means the *browser-side
+bridge* (`BrowserKernel`), the opposite side of the boundary from the engine.
+See [docs/glossary.md](docs/glossary.md).
+
+## The lifecycle CLI lives in `cli/` and is F#
+
+The same npm package ships a lifecycle tool — `init`, `status`, `verify`,
+`upgrade`, `doctor` — implemented in F# under `cli/Limen.Core/` (the domain) and
+`cli/Limen.Cli/` (argument parsing and rendering only). `bin/limen.js` is a
+launcher that picks a platform binary and forwards arguments; **no lifecycle
+logic belongs in it**.
+
+The layering mirrors this repository's own rule: inspect → plan → validate →
+execute → verify, with planning pure and `Execute.fs` the only module that
+writes. If you find yourself reading the filesystem inside the planner, that is
+the boundary breaking.
+
+It is under `cli/` rather than `src/` deliberately: `src/` is the published
+TypeScript library, governed by the engine/kernel rule below, and mixing a
+second language into it would muddy that rule. See
+[docs/20-lifecycle-cli.md](docs/20-lifecycle-cli.md) and
+[docs/21-installation-and-upgrade.md](docs/21-installation-and-upgrade.md).
+
+Note: `.NET SDK 8` is installable here via `apt-get install dotnet-sdk-8.0`
+(the Ubuntu archive works even though Microsoft's own CDN is proxy-blocked).
+
+## Documentation map
+
+- [AGENTS.md](AGENTS.md) — agent entry point: rules, landmarks, reading order
+- [docs/README.md](docs/README.md) — the full documentation index
+- [docs/01-architecture.md](docs/01-architecture.md) — what runs where, and why
+- [docs/12-design-rules.md](docs/12-design-rules.md) — MUST/SHOULD/MAY, with
+  how each is enforced
+- [docs/13-anti-patterns.md](docs/13-anti-patterns.md) — wrong/right pairs
+- [docs/DOCUMENTATION-AUDIT.md](docs/DOCUMENTATION-AUDIT.md) — known findings,
+  ambiguities, and open questions
+- [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) —
+  what Limen renamed and what it deliberately did not
+- [examples/README.md](examples/README.md) — six verified example applications
+
 ## What this is
 
 A dependency-minimal reference implementation of a browser architecture
@@ -88,11 +157,15 @@ code, not after.
   interactive reference for every bridge primitive and every
   `EffectOutcome`, driven by a throwaway demo engine (not part of the
   published package).
+- `examples/01-counter/` … `examples/06-time-entries/` — six progressive
+  example applications, each driven by `test/examples.test.ts` against its own
+  real `index.html`, so none can silently rot. Start at `01-counter`.
 - `docs/ROADMAP.md` — status of every bridge responsibility against what's
   actually implemented and tested. Read this before assuming something is
   missing or done.
-- `docs/USAGE.md` — step-by-step for *consuming* the published package in
-  another project.
+- `docs/USAGE.md` — the original consumer walkthrough. Still accurate, but
+  `docs/02-getting-started.md` is the better starting point, and
+  `docs/11-api-reference.md` is the reference.
 - `test/domain.test.ts` — pure engine-logic tests, run directly against
   `src/*.ts` (their only import from `protocol.ts` is type-only, so no build
   is required first).
@@ -107,14 +180,22 @@ code, not after.
 
 ```bash
 npm run build              # tsc → dist/
+npm run build:examples     # tsc → examples/**/*.js, emitted in place
 npm run check:architecture # scripts/check-architecture.ts
-npm test                   # pretest (build) → check:architecture → node --test
+npm run check:docs         # scripts/check-docs.ts — links, paths, orphans
+npm test                   # pretest (build + build:examples) → architecture
+                           #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)
+
+npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)
+npm run build:cli          # publish the CLI binary for this platform
+npm run build:cli:all      # publish all five platform binaries
 ```
 
 Always run `npm run check` (or `npm test`) before considering a change
-done — not just `tsc`. The architecture check and the kernel tests both
-require a fresh `dist/`; `pretest` handles that automatically.
+done — not just `tsc`. The architecture check, the docs check, and the kernel
+and example tests all require a fresh `dist/`; `pretest` handles that
+automatically.
 
 ## Testing conventions
 
@@ -147,6 +228,10 @@ require a fresh `dist/`; `pretest` handles that automatically.
 - `architecture.yaml` documents its own enforcement gap in its header
   comment as of this writing — check it hasn't drifted from
   `scripts/check-architecture.ts` again before trusting it at face value.
+- The package is named for WebAssembly but contains none; "kernel" names the
+  browser bridge here while the package name implies the engine. Both are
+  recorded as findings A-2 and N-1 in `docs/DOCUMENTATION-AUDIT.md`, along with
+  a confirmed defect (P-1) and the open questions this audit could not answer.
 
 ## Definition of done
 

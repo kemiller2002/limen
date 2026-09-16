@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fetch data — kernel example 03</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Customers</h1>
+
+      <p>
+        This page calls <code>GET /api/customers</code>. With no backend running
+        it demonstrates the typed failure path instead — which is the point:
+        failure is a state, not an exception.
+      </p>
+
+      <button data-event="load" data-bind-disabled="loadDisabled">Load customers</button>
+
+      <p role="status" aria-live="polite" data-text="statusText"></p>
+
+      <template data-if="canRetry">
+        <button data-event="retry">Try again</button>
+      </template>
+
+      <!-- data-each instantiates the template once per item in view.customers,
+           keyed by each item's `id` field. Inside the template, data-text keys
+           resolve against the *item*, not the top-level view. -->
+      <template data-if="hasCustomers">
+        <ul class="list">
+          <template data-each="customers" data-key="id">
+            <li>
+              <strong data-text="name"></strong>
+              <span data-text="email"></span>
+            </li>
+          </template>
+        </ul>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

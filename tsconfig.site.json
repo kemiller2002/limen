@@ -1,0 +1,26 @@
+{
+  // Type-checks and emits the site's Limen application. Same shape as
+  // tsconfig.examples.json: emit is in place (rootDir === outDir) so the
+  // emitted import specifiers stay valid both here and in the deployed tree,
+  // and `exclude` must be set explicitly because TypeScript's default exclude
+  // is the outDir, which would exclude every input.
+  //
+  // The site app imports the kernel from dist/ exactly as a consumer would.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmitOnError": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "rootDir": "site",
+    "outDir": "site"
+  },
+  "include": ["site/**/*.ts"],
+  "exclude": []
+}

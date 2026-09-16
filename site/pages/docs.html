@@ -1,0 +1,108 @@
+    <section class="page-intro">
+      <p class="eyebrow">Documentation</p>
+      <h1>One source, several doors.</h1>
+      <p class="lead">
+        The documentation lives in the repository, beside the code it describes, so
+        that a change to one fails the build when it contradicts the other. This
+        page is an index into it — not a second copy of it.
+      </p>
+      <p class="note">
+        Links resolve to <code>main</code> on GitHub. Markdown links, prose file paths, and
+        every example are checked automatically on each run; a document that drifts
+        out of the index is reported as orphaned.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Start here</p><h2>First hour.</h2></div>
+        <p class="section-note">In order.</p>
+      </div>
+      <div class="grid">
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel#readme"><p class="card-kicker">00</p><h3>README</h3><p>What Limen is, why it exists, and the smallest complete example.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/01-architecture.md"><p class="card-kicker">01</p><h3>Architecture</h3><p>What runs where, who owns what, and which rules are actually enforced.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/02-getting-started.md"><p class="card-kicker">02</p><h3>Getting started</h3><p>Empty directory to working interaction, with every command verified.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/03-kernel-lifecycle.md"><p class="card-kicker">03</p><h3>Lifecycle</h3><p>Page load through interaction, step by step, with the error boundary.</p></a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Core concepts</p><h2>The model itself.</h2></div>
+      </div>
+      <div class="grid">
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/04-state-model.md"><p class="card-kicker">04</p><h3>State model</h3><p>Where state lives, how to shape it, and what happens on an illegal transition.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/05-events-and-dispatch.md"><p class="card-kicker">05</p><h3>Events and dispatch</h3><p>How a click becomes a state change, every step of the way.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/06-rendering.md"><p class="card-kicker">06</p><h3>Rendering</h3><p>How state reaches the screen — and why this is not a UI framework.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/07-effects-and-browser-interop.md"><p class="card-kicker">07</p><h3>Effects and interop</h3><p>HTTP and storage in full, and what each of the four outcomes means.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/08-multi-screen-applications.md"><p class="card-kicker">08</p><h3>Multi-screen</h3><p>Structuring more than one screen — and what routing support does not exist.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/09-testing-and-debugging.md"><p class="card-kicker">09</p><h3>Testing and debugging</h3><p>Three testing levels, the two timing regimes, and how to trace a round trip.</p></a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Reference and rules</p><h2>When you need the exact answer.</h2></div>
+      </div>
+      <div class="grid">
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/11-api-reference.md"><p class="card-kicker">11</p><h3>API reference</h3><p>Every public signature, with stability tiers and compatibility notes.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/12-design-rules.md"><p class="card-kicker">12</p><h3>Design rules</h3><p>MUST, SHOULD and MAY — each labelled with how it is enforced.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md"><p class="card-kicker">13</p><h3>Anti-patterns</h3><p>Fifteen ways to get it wrong, each with a wrong and a right version.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md"><p class="card-kicker">15</p><h3>Recipes</h3><p>One task at a time, with every layer that changes listed.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/16-troubleshooting.md"><p class="card-kicker">16</p><h3>Troubleshooting</h3><p>Symptom, cause, fix — starting with the one that makes failures visible.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/glossary.md"><p class="card-kicker">—</p><h3>Glossary</h3><p>Canonical terms, discouraged aliases, and concepts deliberately absent.</p></a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Examples</p><h2>Six applications, each verified on every run.</h2></div>
+        <p class="section-note">Driven by the real kernel against their own real markup, so none can rot.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>The example ladder</caption>
+          <thead><tr><th scope="col">Example</th><th scope="col">Introduces</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><a href="https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter">01 counter</a></th><td>The whole mechanism in about seventy lines, and projecting a capability</td></tr>
+            <tr><th scope="row"><a href="https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/02-form">02 form</a></th><td>Validation as pure functions, conditional messages, a rejected illegal transition</td></tr>
+            <tr><th scope="row"><a href="https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/03-fetch-data">03 fetch-data</a></th><td>The first effect, list rendering, all four outcomes, a stale-result guard</td></tr>
+            <tr><th scope="row"><a href="https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/04-save-data">04 save-data</a></th><td>A full save lifecycle, a storage effect, and why a timed-out write is not retried</td></tr>
+            <tr><th scope="row"><a href="https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/05-multi-screen">05 multi-screen</a></th><td>Screens as state, shared versus screen-local lifetimes, engine-side filtering</td></tr>
+            <tr><th scope="row"><a href="https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/06-time-entries">06 time-entries</a></th><td>A realistic feature assembled only from the above</td></tr>
+            <tr><th scope="row"><a href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/kitchen-sink.html">kitchen sink</a></th><td>Every primitive and every outcome on one page, with live diagnostics</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Project status</p><h2>What is built, and what is not.</h2></div>
+        <p class="section-note">Including the parts that are deliberately absent.</p>
+      </div>
+      <div class="columns">
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/ROADMAP.md"><h3>Roadmap</h3><p>Every bridge responsibility against what is actually implemented and tested — and why several are deferred on purpose.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md"><h3>Documentation audit</h3><p>Findings, ambiguities, defects found and fixed, and the questions left open rather than guessed at.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md"><h3>WebAssembly</h3><p>What exists, what does not, and what a real WASM transport would take.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md"><h3>Naming and compatibility</h3><p>What &ldquo;Limen&rdquo; renamed, what it deliberately did not, and why nothing broke.</p></a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Install</p><h2>The package.</h2></div>
+      </div>
+      <pre><code>npm install @echelon-foundry/typescript-wasm-kernel</code></pre>
+      <p class="prose">
+        The published name is unchanged. Limen is the product name; no exported
+        symbol, file path, or protocol type was renamed, so there is nothing to
+        migrate — no deprecation, no alias, no codemod.
+      </p>
+      <p class="prose">
+        Requires Node 22 or newer to build and test, TypeScript 5.9 or newer for the
+        types, and a browser with ES2022 modules, <code>fetch</code> and <code>AbortController</code>.
+        It has no runtime dependencies. Versioning is semver and currently
+        <code>0.x</code>, so the protocol may still change in a minor release.
+      </p>
+    </section>

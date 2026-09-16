@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Multi-screen — kernel example 05</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Multi-screen</h1>
+
+      <!-- The nav is a data-each over projected items. A click inside an
+           instantiated item carries that item's key (here, the screen name)
+           as SemanticEvent.key — that is how the engine knows which tab was
+           clicked without the kernel understanding tabs. -->
+      <nav class="nav">
+        <template data-each="navItems" data-key="id">
+          <button data-event="navigate" data-text="label" data-bind-aria-current="active"></button>
+        </template>
+      </nav>
+
+      <!-- One data-if template per screen. Exactly one is mounted at a time
+           because the engine projects exactly one of these as true. -->
+      <template data-if="onHome">
+        <section class="panel">
+          <h2>Home</h2>
+          <p data-text="greeting"></p>
+        </section>
+      </template>
+
+      <template data-if="onCustomers">
+        <section class="panel">
+          <h2>Customers</h2>
+          <label for="filter">Filter</label>
+          <input id="filter" type="search"
+                 data-event="filterCustomers" data-on="input"
+                 data-bind-value="customerFilter">
+          <ul class="list">
+            <template data-each="customers" data-key="id">
+              <li data-text="name"></li>
+            </template>
+          </ul>
+          <template data-if="noMatches">
+            <p>No customers match that filter.</p>
+          </template>
+        </section>
+      </template>
+
+      <template data-if="onSettings">
+        <section class="panel">
+          <h2>Settings</h2>
+          <label for="display-name">Display name</label>
+          <input id="display-name" type="text"
+                 data-event="editDisplayName" data-on="input"
+                 data-bind-value="settingsDraft">
+          <button data-event="saveDisplayName" data-bind-disabled="saveNameDisabled">Save</button>
+          <p>Currently: <strong data-text="displayName"></strong></p>
+        </section>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

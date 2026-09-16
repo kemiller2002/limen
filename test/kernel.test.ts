@@ -161,6 +161,157 @@ test("submitting a form flushes a pending change-bound field before its own even
   });
 });
 
+// Regression for finding P-1. #applyIf/#applyEach used to bind the cloned root
+// while it was still detached, so `el.form` was null and the pending-field
+// flush never registered — a conditionally-shown field edited without blurring
+// was silently missing from the draft the engine saw on submit. Both now insert
+// before binding.
+test("a data-if field inside a form flushes before submit (P-1 regression)", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { show: true } }));
+  await withDom(`<form data-event="go"><template data-if="show"><input data-event="fieldChanged"></template></form>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    const initial = transport.calls.length;
+    document.querySelector("input")!.value = "unblurred edit";
+    document.querySelector("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+    await flush();
+    const fired = transport.calls.slice(initial);
+    assert.equal(fired.length, 2, "the conditionally-mounted field should flush before the form's own event");
+    assert.deepEqual(fired[0]?.kind === "Event" && fired[0].event, { kind: "Event", name: "fieldChanged", value: "unblurred edit" });
+    assert.equal(fired[1]?.kind === "Event" && fired[1].event.name, "go");
+  });
+});
+
+test("a data-each field inside a form flushes before submit (P-1 regression)", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { rows: [{ id: "r1" }] } }));
+  await withDom(`<form data-event="go"><template data-each="rows" data-key="id"><input data-event="rowChanged"></template></form>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    const initial = transport.calls.length;
+    document.querySelector("input")!.value = "row edit";
+    document.querySelector("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+    await flush();
+    const fired = transport.calls.slice(initial);
+    assert.equal(fired.length, 2);
+    assert.equal(fired[0]?.kind === "Event" && fired[0].event.key, "r1", "the row's key still travels with the flushed event");
+  });
+});
+
+// A binding whose element has been unmounted must not keep firing. Before the
+// fix, every remount pushed another callback onto the form's flush list and
+// none were ever removed.
+test("unmounting a data-if drops its pending-field binding instead of accumulating", async () => {
+  let show = true;
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Event" && message.event.name === "toggle") show = !show;
+    return respond({ view: { show } });
+  });
+  await withDom(
+    `<form data-event="go"><template data-if="show"><input data-event="fieldChanged"></template></form><button data-event="toggle"></button>`,
+    async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await flush();
+      // Toggle off, on, off, on — four remounts of the same conditional field.
+      for (let i = 0; i < 4; i += 1) {
+        document.querySelector("button")!.click();
+        await flush();
+      }
+      assert.ok(document.querySelector("input"), "the field is mounted again");
+      const initial = transport.calls.length;
+      document.querySelector("form")!.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+      await flush();
+      const fired = transport.calls.slice(initial);
+      assert.equal(fired.length, 2, "exactly one field flush plus the form's own event — not one per past mount");
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Misplaced binding attributes — finding P-2
+// ---------------------------------------------------------------------------
+
+test("data-if on a non-template element is reported, not silently ignored (P-2)", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  const { sink, events } = collectDiagnostics();
+  await withDom(`<p data-if="ready">never appears</p>`, async (document) => {
+    await new BrowserKernel(transport, document, sink).start();
+    const error = events.find((event) => event.kind === "BridgeError");
+    assert.ok(error, "a BridgeError was reported");
+    assert.equal(error.kind === "BridgeError" && error.phase, "binding");
+    assert.match(error.kind === "BridgeError" ? error.detail : "", /only supported on a <template> element/);
+    assert.match(error.kind === "BridgeError" ? error.detail : "", /<p>/);
+    assert.equal(transport.calls.length, 0, "Initialize is not dispatched when binding failed");
+  });
+});
+
+test("data-each on a non-template element is reported too (P-2)", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  const { sink, events } = collectDiagnostics();
+  await withDom(`<ul data-each="items" data-key="id"></ul>`, async (document) => {
+    await new BrowserKernel(transport, document, sink).start();
+    const error = events.find((event) => event.kind === "BridgeError");
+    assert.ok(error);
+    assert.equal(error.kind === "BridgeError" && error.phase, "binding");
+    assert.match(error.kind === "BridgeError" ? error.detail : "", /<ul>/);
+  });
+});
+
+test("start() still resolves when a binding is malformed, rather than rejecting", async () => {
+  const transport = new ScriptedTransport(() => respond());
+  await withDom(`<template data-each="items"><li></li></template>`, async (document) => {
+    // data-each without data-key throws inside binding; start() must absorb it.
+    await assert.doesNotReject(() => new BrowserKernel(transport, document).start());
+  });
+});
+
+// Regression for finding P-3. A response that arrives but will not decode used
+// to report `Failure { invalid-response }` with no status, so a 500 returning an
+// HTML error page was indistinguishable from a 200 returning malformed JSON —
+// the first is often worth retrying, the second never is.
+test("an undecodable response carries the status so the engine can classify it (P-3)", async () => {
+  const outcomes: EffectOutcome[] = [];
+  const correlationId = withCorrelation("c1");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/err", timeoutMs: 1000 }] });
+    }
+    if (message.kind === "EffectResult" && message.result.kind === "HttpResult") outcomes.push(message.result.outcome);
+    return respond();
+  });
+  const notJson = (status: number): Response => ({
+    status,
+    json: async () => { throw new Error("Unexpected token < in JSON"); },
+  } as unknown as Response);
+
+  await withFetch(async () => notJson(503), async () => {
+    await withDom(`<p></p>`, async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await new Promise((resolve) => { setTimeout(resolve, 20); });
+      assert.deepEqual(outcomes[0], { kind: "Failure", reason: "invalid-response", status: 503 });
+    });
+  });
+});
+
+test("a network failure carries no status, because nothing came back (P-3)", async () => {
+  const outcomes: EffectOutcome[] = [];
+  const correlationId = withCorrelation("c2");
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/gone", timeoutMs: 1000 }] });
+    }
+    if (message.kind === "EffectResult" && message.result.kind === "HttpResult") outcomes.push(message.result.outcome);
+    return respond();
+  });
+  await withFetch(async () => { throw new Error("DNS failure"); }, async () => {
+    await withDom(`<p></p>`, async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await new Promise((resolve) => { setTimeout(resolve, 20); });
+      assert.deepEqual(outcomes[0], { kind: "Failure", reason: "network" });
+      assert.ok(!("status" in (outcomes[0] ?? {})), "absence of status is what distinguishes it");
+    });
+  });
+});
+
 test("clicking inside a data-each item includes that item's key", async () => {
   const transport = new ScriptedTransport((message) => {
     if (message.kind === "Initialize") return respond({ view: { items: [{ id: "a", label: "Alpha" }, { id: "b", label: "Beta" }] } });
@@ -336,7 +487,10 @@ test("a response that fails to decode reports Failure with reason invalid-respon
   await withFetch(fetchImpl, () => withDom(`<div></div>`, async (document) => {
     await new BrowserKernel(transport, document).start();
     const result = transport.calls.at(-1);
-    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "invalid-response" });
+    // The status rides along now (finding P-3): a response did arrive, it just
+    // would not decode, and 200-with-broken-JSON must stay distinguishable from
+    // a server that refused with an HTML error page.
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "invalid-response", status: 200 });
   }));
 });
 

@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { JSDOM } from "jsdom";
 
 // The kernel checks element identity with bare global class names
@@ -32,6 +33,19 @@ export async function withDom<T>(bodyHtml: string, run: (document: Document) => 
     for (const key of DOM_GLOBALS) globals[key] = saved.get(key);
     dom.window.close();
   }
+}
+
+// Reads an example's real index.html and returns its <body> markup with the
+// module <script> removed. Tests drive the actual shipped file rather than a
+// copy of its markup, so an example whose HTML drifts from its documented
+// behavior fails the suite instead of rotting silently.
+export async function exampleBody(exampleDir: string): Promise<string> {
+  const html = await readFile(new URL(`../examples/${exampleDir}/index.html`, import.meta.url), "utf8");
+  const dom = new JSDOM(html);
+  for (const script of Array.from(dom.window.document.querySelectorAll("script"))) script.remove();
+  const body = dom.window.document.body.innerHTML;
+  dom.window.close();
+  return body;
 }
 
 export async function withFetch<T>(impl: typeof fetch, run: () => Promise<T>): Promise<T> {

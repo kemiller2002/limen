@@ -1,0 +1,250 @@
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <p class="eyebrow">Browser architecture</p>
+          <h1>The threshold your application stands behind.</h1>
+          <p class="lead">
+            Limen is an explicit boundary that keeps browser capabilities separate
+            from application authority. The browser renders and interacts. Your
+            application owns what things mean. Nothing crosses between them except
+            plain, serializable data.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="./demos.html">See it run</a>
+            <a class="button ghost" href="./architecture.html">How it works</a>
+            <a class="button ghost" href="https://github.com/kemiller2002/typescript-wasm-kernel">Source</a>
+          </div>
+        </div>
+        <div class="stack">
+          <p class="signal">Exactly one place owns application state, and it is not the browser.</p>
+          <ul class="list-inline">
+            <li>zero runtime dependencies</li>
+            <li>six HTML attributes</li>
+            <li>~80-line contract</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">The problem</p>
+          <h2>Truth gets smeared across three places.</h2>
+        </div>
+        <p class="section-note">Most browser applications end up here by accretion, not by decision.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <p class="card-kicker">Symptom</p>
+          <h3>Three copies, no owner</h3>
+          <p>A JavaScript store, the DOM itself, and the server each hold a version of the same fact. When they disagree, nothing tells you which one is right.</p>
+        </div>
+        <div class="card">
+          <p class="card-kicker">Symptom</p>
+          <h3>Impossible states, representable</h3>
+          <p><code>isSaving</code> and <code>isComplete</code> and <code>hasError</code> can all be true at once. Nothing prevents it, so every reader must invent a meaning for it.</p>
+        </div>
+        <div class="card">
+          <p class="card-kicker">Symptom</p>
+          <h3>Decisions hidden in handlers</h3>
+          <p>Business rules end up inside click handlers, mixed with DOM updates and network calls, where they cannot be tested without a browser.</p>
+        </div>
+        <div class="card">
+          <p class="card-kicker">Symptom</p>
+          <h3>Agents edit the wrong layer</h3>
+          <p>When any layer could plausibly hold a rule, an AI agent has to guess which one does — and it will guess, silently, then keep going.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">The core idea</p>
+          <h2>Five responsibilities, none overlapping.</h2>
+        </div>
+        <p class="section-note">If a layer could hold a rule, eventually it will. So none of them can.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Who owns what</caption>
+          <thead>
+            <tr><th scope="col">Layer</th><th scope="col">Owns</th><th scope="col">Never</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">HTML</th><td>Document structure, semantics, labels, native validation</td><td>Decides anything</td></tr>
+            <tr><th scope="row">CSS</th><td>Presentation, hover, focus, motion</td><td>Encodes a business rule</td></tr>
+            <tr><th scope="row">Browser</th><td>Layout, paint, native input behavior</td><td>Is asked for permission</td></tr>
+            <tr><th scope="row">Limen kernel</th><td>Carrying events in, applying projections out, performing effects</td><td>Knows what an event <em>means</em></td></tr>
+            <tr><th scope="row">Engine</th><td>State, transitions, validation, capabilities, what to show</td><td>Touches a browser API</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose">
+        The kernel understands six HTML attributes and no application vocabulary
+        at all. It does not know what <code>checkAvailability</code> means or what a
+        <code>customers</code> list is. It moves opaque strings and plain data across a
+        boundary — which is exactly what stops application logic from accumulating
+        in the browser layer.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Live</p>
+          <h2>This counter is a real Limen application.</h2>
+        </div>
+        <p class="section-note">Not an animation. The trace below is written by the engine as each round trip happens.</p>
+      </div>
+
+      <div class="demo">
+        <div class="demo-head">
+          <h3>Event → transition → projection → DOM</h3>
+          <span class="status" data-bind-data-tone="loadTone">live</span>
+        </div>
+        <div class="demo-body">
+          <div class="demo-controls">
+            <button class="button primary" data-event="increment">Add one</button>
+            <button class="button" data-event="decrement" data-bind-disabled="decrementDisabled">Subtract one</button>
+            <button class="button ghost" data-event="resetCounter" data-bind-disabled="resetDisabled">Reset</button>
+          </div>
+          <div class="readout">
+            <div>
+              <span class="label">Counter</span>
+              <span class="value" data-text="counter">0</span>
+            </div>
+            <div>
+              <span class="label">Round trips recorded</span>
+              <span class="value" data-text="traceCount">0</span>
+            </div>
+          </div>
+
+          <template data-if="traceEmpty">
+            <p class="trace-empty">Press a button. Every message across the boundary will appear here.</p>
+          </template>
+          <template data-if="hasTrace">
+            <ol class="trace">
+              <template data-each="trace" data-key="id">
+                <li>
+                  <span class="seq" data-text="id"></span>
+                  <span class="step">
+                    <b data-text="event"></b><span class="arrow">→</span><span data-text="command"></span><span class="arrow">→</span><span data-text="to"></span>
+                  </span>
+                </li>
+              </template>
+            </ol>
+          </template>
+
+          <noscript><p class="no-js">This demonstration needs JavaScript, because Limen is a browser runtime. The surrounding explanation does not.</p></noscript>
+        </div>
+      </div>
+      <p class="note">
+        Notice <code>Subtract one</code> and <code>Reset</code> disable themselves at zero. The engine
+        projects that as a value; the DOM never works it out from the number on screen.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">The whole mechanism</p>
+          <h2>Three files. Nothing elided.</h2>
+        </div>
+        <p class="section-note">This is the counter above, in full.</p>
+      </div>
+      <div class="split">
+        <figure class="code-figure">
+          <figcaption>index.html — structure and bindings</figcaption>
+          <pre><code>&lt;button <span class="k">data-event</span>=<span class="s">"increment"</span>&gt;Add one&lt;/button&gt;
+&lt;button <span class="k">data-event</span>=<span class="s">"reset"</span>
+        <span class="k">data-bind-disabled</span>=<span class="s">"resetDisabled"</span>&gt;Reset&lt;/button&gt;
+&lt;p&gt;Count: &lt;span <span class="k">data-text</span>=<span class="s">"count"</span>&gt;0&lt;/span&gt;&lt;/p&gt;</code></pre>
+        </figure>
+        <figure class="code-figure">
+          <figcaption>engine.ts — all the meaning</figcaption>
+          <pre><code><span class="c">// Pure. No DOM, no fetch, no globals.</span>
+<span class="k">const</span> transition = (state, name) =&gt; {
+  <span class="k">switch</span> (name) {
+    <span class="k">case</span> <span class="s">"increment"</span>: <span class="k">return</span> { count: state.count + 1 };
+    <span class="k">case</span> <span class="s">"reset"</span>:     <span class="k">return</span> { count: 0 };
+    <span class="k">default</span>: <span class="k">throw new</span> Error(`Unrecognized event: ${name}`);
+  }
+};
+
+<span class="c">// Pure. Publishes a capability, not just data.</span>
+<span class="k">const</span> project = (state) =&gt; ({
+  count: state.count,
+  <span class="hl">resetDisabled: state.count === 0</span>,
+});</code></pre>
+        </figure>
+      </div>
+      <figure class="code-figure">
+        <figcaption>main.ts — the wiring, in full</figcaption>
+        <pre><code><span class="k">import</span> { BrowserKernel } <span class="k">from</span> <span class="s">"@echelon-foundry/typescript-wasm-kernel"</span>;
+<span class="k">import</span> { createCounterTransport } <span class="k">from</span> <span class="s">"./engine.js"</span>;
+
+<span class="k">await new</span> BrowserKernel(createCounterTransport(), document).start();</code></pre>
+      </figure>
+      <p class="prose">
+        That is the entire mechanism. A click becomes
+        <code>SemanticEvent { name: "increment" }</code>, the transition returns a new state,
+        the projection turns it into <code>{ count: 1, resetDisabled: false }</code>, and the
+        kernel writes <code>1</code> into the span and enables the button.
+      </p>
+    </section>
+
+    <section class="method-band">
+      <div>
+        <p class="eyebrow">What follows from the boundary</p>
+        <h2>Consequences, not claims.</h2>
+        <p>
+          Each of these is true by construction — it follows from where the line
+          is drawn. None of them is a measured result, and this site does not
+          present them as one.
+        </p>
+        <p><a href="./evidence.html">What has and has not been measured →</a></p>
+      </div>
+      <ol>
+        <li><span>01</span><div><strong>One source of truth.</strong> State exists only in the engine. The DOM is output, never input.</div></li>
+        <li><span>02</span><div><strong>Illegal states unrepresentable.</strong> State is a union, so &ldquo;saving and already saved&rdquo; cannot be written down.</div></li>
+        <li><span>03</span><div><strong>Deterministic transitions.</strong> <code>(state, command) → state</code> is pure, and testable with no browser.</div></li>
+        <li><span>04</span><div><strong>Honest failure.</strong> Every effect reports Success, Failure, Cancelled, or OutcomeUnknown. &ldquo;We don't know&rdquo; is a real outcome.</div></li>
+        <li><span>05</span><div><strong>Portable logic.</strong> The engine touches no browser API, so it can move to another language without rewriting behavior.</div></li>
+        <li><span>06</span><div><strong>Less to audit.</strong> Browser access lives in one file, and the build fails if it leaks.</div></li>
+      </ol>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Honest limits</p>
+          <h2>What Limen does not give you.</h2>
+        </div>
+        <p class="section-note">Recorded, not hidden. Several are deliberate.</p>
+      </div>
+      <div class="columns">
+        <div class="card"><h3>No routing or history</h3><p>Back and forward do not move between screens. Screens work within one page load; URL integration is not implemented.</p></div>
+        <div class="card"><h3>Two browser capabilities</h3><p>HTTP and <code>localStorage</code>. No clipboard, files, timers, navigation or IndexedDB — adding one is a deliberate protocol change.</p></div>
+        <div class="card"><h3>No focus management</h3><p>Removing a focused list item drops focus. A known gap.</p></div>
+        <div class="card"><h3>No virtualization</h3><p>Every projected item becomes a DOM node.</p></div>
+        <div class="card"><h3>More ceremony when trivial</h3><p>For a genuinely simple page, a small component framework is less work. Limen earns its keep when behavior is complex.</p></div>
+        <div class="card"><h3>No WebAssembly here</h3><p>The boundary is designed for it and one consumer runs an F# engine across it — but this package ships TypeScript.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Next</p>
+          <h2>Where to go.</h2>
+        </div>
+      </div>
+      <div class="grid">
+        <a class="card card-link" href="./architecture.html"><p class="card-kicker">Understand</p><h3>Architecture</h3><p>What runs where, who owns state, and why the line is drawn where it is.</p></a>
+        <a class="card card-link" href="./demos.html"><p class="card-kicker">See</p><h3>Interactive demos</h3><p>Event flow, illegal states, and all four effect outcomes — driven by the real kernel.</p></a>
+        <a class="card card-link" href="./agents.html"><p class="card-kicker">Build</p><h3>For AI agents</h3><p>The contract, the decision tree, and where a change belongs.</p></a>
+        <a class="card card-link" href="./docs.html"><p class="card-kicker">Reference</p><h3>Documentation</h3><p>Getting started, effects, testing, recipes, troubleshooting, API.</p></a>
+      </div>
+    </section>

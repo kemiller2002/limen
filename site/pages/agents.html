@@ -1,0 +1,161 @@
+    <section class="page-intro">
+      <p class="eyebrow">For AI coding agents</p>
+      <h1>Where the change goes.</h1>
+      <p class="lead">
+        Humans ask when architecture is unclear. Agents infer and continue. So this
+        page states where things go rather than describing qualities to aim for —
+        and the repository's <code>AGENTS.md</code> is the machine-readable version of it.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Contract</p><h2>Ten rules, all MUST.</h2></div>
+        <p class="section-note">Violating one is a defect regardless of whether tests pass.</p>
+      </div>
+      <div class="method-band">
+        <div>
+          <p class="eyebrow">Before you change anything</p>
+          <h2>Read the boundary first.</h2>
+          <p>
+            The architecture here is unusual, and code that looks reasonable by
+            mainstream front-end conventions is often wrong. The single most useful
+            file is the protocol — about eighty lines, and it <em>is</em> the architecture.
+          </p>
+          <p><a href="./architecture.html">The boundary, in detail →</a></p>
+        </div>
+        <ol>
+          <li><span>01</span><div>Authoritative application state lives in the <strong>engine</strong>, nowhere else</div></li>
+          <li><span>02</span><div>Do not introduce application state in JavaScript outside the engine</div></li>
+          <li><span>03</span><div>Browser events enter only through <code>data-event</code> and the kernel</div></li>
+          <li><span>04</span><div>Validation, legality and what-to-show are engine decisions</div></li>
+          <li><span>05</span><div>Browser capabilities are reached only through an effect request</div></li>
+          <li><span>06</span><div>HTML stays structural; CSS stays presentational</div></li>
+          <li><span>07</span><div>The kernel stays generic — never branch on domain meaning in it</div></li>
+          <li><span>08</span><div>All four HTTP outcomes are represented; <code>OutcomeUnknown</code> is not a failure</div></li>
+          <li><span>09</span><div>Existing public contracts are preserved</div></li>
+          <li><span>10</span><div>The repository's full check passes before you are done</div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Routing</p><h2>The decision tree.</h2></div>
+        <p class="section-note">Most ambiguity resolves in the first three branches.</p>
+      </div>
+      <pre><code>I need to add behavior.
+│
+├─ Is it purely visual (color, spacing, motion, hover)?
+│  └─ <span class="k">YES</span> → CSS. Stop. Do not route it through the engine.
+│
+├─ Is it document structure (an element, a label, a landmark)?
+│  └─ <span class="k">YES</span> → HTML. Add data-* only if the engine must drive it.
+│
+├─ Does it decide, validate, remember, or compute anything
+│  about the application?
+│  └─ <span class="k">YES</span> → the engine. Add a state, a command, a transition,
+│            and a projected key.
+│
+├─ Does it need HTTP or local storage?
+│  └─ <span class="k">YES</span> → the engine returns an EffectRequest. It does NOT
+│            call fetch.
+│
+├─ Does it need a browser capability that does not exist yet
+│  (clipboard, history, files, timers, focus)?
+│  └─ <span class="k">YES</span> → a protocol extension. A bigger change: propose it,
+│            do not slip it in.
+│
+└─ Am I about to hold application state in JavaScript,
+   outside the engine?
+   └─ <span class="hl">STOP. That is rule 1. Go back to the third branch.</span></code></pre>
+      <p class="prose">
+        The test that resolves most cases in one line: <strong>would the application
+        behave differently because of this?</strong> Yes means the engine. No means HTML or
+        CSS. &ldquo;Which tab is showing&rdquo; passes that test — it changes what is legal and
+        what matters, so it is application state. &ldquo;What color the active tab is&rdquo;
+        fails it, so it is CSS.
+      </p>
+      <p class="note">Try it on eight real tasks: <a href="./demos.html">Demo 04 on the demos page</a>.</p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Recognition</p><h2>Stop if you are writing these.</h2></div>
+        <p class="section-note">Each is a boundary breaking, not a shortcut.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Signals that a change is going in the wrong layer</caption>
+          <thead><tr><th scope="col">You are writing</th><th scope="col">The problem</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>document.querySelector</code> outside the kernel</th><td>Reading the DOM as truth</td></tr>
+            <tr><th scope="row"><code>fetch(</code> in the engine</th><td>A hidden effect — and the build will fail</td></tr>
+            <tr><th scope="row"><code>let currentX</code> in page JavaScript</th><td>A second state store</td></tr>
+            <tr><th scope="row"><code>switch (event.name)</code> in the kernel</th><td>The kernel learning domain meaning</td></tr>
+            <tr><th scope="row"><code>innerHTML</code>, or markup in a template string</th><td>Markup generated by application logic</td></tr>
+            <tr><th scope="row"><code>.classList.add</code> to reflect application state</th><td>A capability re-derived in the DOM</td></tr>
+            <tr><th scope="row"><code>setTimeout</code> to &ldquo;wait for&rdquo; a projection</th><td>Racing the round trip</td></tr>
+            <tr><th scope="row"><code>case "Failure": case "OutcomeUnknown":</code> together</th><td>Conflating two genuinely different outcomes</td></tr>
+            <tr><th scope="row">An array index as a list key</th><td>Unstable identity; focus and input land on the wrong row</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Checklist</p><h2>Before and after.</h2></div>
+        <p class="section-note">Answer 1–8 before writing; confirm 9–13 before finishing.</p>
+      </div>
+      <div class="split">
+        <div class="card">
+          <p class="card-kicker">Before</p>
+          <ol>
+            <li>What state changes? Which union member, in which state type?</li>
+            <li>What event causes it, and from which element?</li>
+            <li>Is the transition legal from every state it can be requested in? What happens when it is not?</li>
+            <li>Is an external effect required, and of which kind?</li>
+            <li>Who performs it? (The answer is: the kernel.)</li>
+            <li>How does the result return, and how is a <em>stale</em> one rejected?</li>
+            <li>Which projected keys change? Are capabilities projected explicitly?</li>
+            <li>What HTML or CSS is needed? (Usually: none.)</li>
+          </ol>
+        </div>
+        <div class="card">
+          <p class="card-kicker">After</p>
+          <ol start="9">
+            <li>Am I creating duplicate state anywhere?</li>
+            <li>Am I adding application logic outside the engine?</li>
+            <li>Am I bypassing a boundary for convenience?</li>
+            <li>What tests prove this — including the illegal case and the stale result?</li>
+            <li>Does the full repository check pass?</li>
+          </ol>
+          <p class="note">
+            This repository also enforces a work-item protocol in CI. Open one before
+            editing, or the pull request is rejected regardless of whether the code is
+            correct — see <code>AGENTS.md</code>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="method-band">
+      <div>
+        <p class="eyebrow">If the documentation does not cover your case</p>
+        <h2>Reason from the boundary, in order.</h2>
+        <p>
+          And if you conclude the architecture itself is the obstacle, say so
+          explicitly and record it. Do not route around it silently — that is the
+          one failure mode this design is least tolerant of.
+        </p>
+        <p><a href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/AGENTS.md">AGENTS.md — the full entry point →</a></p>
+      </div>
+      <ol>
+        <li><span>01</span><div>Does this decide anything about the application? → the engine</div></li>
+        <li><span>02</span><div>Does this touch the outside world? → an effect request; if no capability exists, it is a protocol change</div></li>
+        <li><span>03</span><div>Is this about how something looks? → CSS</div></li>
+        <li><span>04</span><div>Is this about what something is? → HTML</div></li>
+        <li><span>05</span><div>Still unsure? → ask. Do not infer a new mechanism and continue.</div></li>
+      </ol>
+    </section>

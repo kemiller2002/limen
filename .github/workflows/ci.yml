@@ -27,11 +27,65 @@ jobs:
           node-version: 22
           cache: npm
 
+      # The lifecycle CLI is F#. `npm pack` builds it through prepack, so the
+      # SDK is required even for the package-contents check below.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - name: Install dependencies
         run: npm ci
 
+      # The F# core: the lifecycle rules themselves, tested without a CLI or a
+      # package in the way.
+      - name: Test the lifecycle core
+        run: npm run test:cli
+
+      # Build the CLI for this platform so the packaged-surface tests in
+      # test/cli.test.ts run for real rather than reporting as skipped.
+      - name: Build the lifecycle CLI
+        run: npm run build:cli
+
+      # Runs, in order: build → build:examples → build:site →
+      # check:architecture → check:docs → check:site → all tests (kernel,
+      # domain, example, site and CLI verification).
       - name: Build and test
         run: npm run check
 
       - name: Verify package contents
         run: npm pack --dry-run
+
+  # The npm package ships a binary per platform, so the launcher has to be
+  # exercised on each of them. Testing only Linux would leave the Windows and
+  # macOS paths — different executable name, different permissions — unproven.
+  packaged-cli:
+    name: Packaged CLI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the lifecycle CLI for this platform
+        run: npm run build:cli
+
+      - name: Exercise the CLI through the npm bootstrap
+        run: node --experimental-strip-types --test test/cli.test.ts

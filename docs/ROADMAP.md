@@ -11,12 +11,21 @@ HTML/CSS
     ↓ events
 TypeScript Bridge
     ↓ commands
-WASM Kernel (today: ReferenceEngine, TypeScript)
+Engine (today: ReferenceEngine, TypeScript)
     ↓ effect requests / projections
 TypeScript Bridge
     ↓
 Browser APIs + DOM
 ```
+
+> **Terminology note.** Earlier revisions of this diagram labelled the third row
+> "WASM Kernel". There is no WebAssembly in this repository — the component that
+> owns application meaning is called **the engine**, and it is TypeScript today.
+> Confusingly, "kernel" elsewhere in this repo means the *browser-side bridge*
+> (`BrowserKernel`), i.e. the opposite side of the boundary. See
+> [17-wasm-migration.md](17-wasm-migration.md) for what exists and what a real
+> WASM transport would take, [glossary.md](glossary.md) for canonical terms, and
+> [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md) findings A-2 and N-1.
 
 The bridge (`src/kernel/browser-kernel.ts`) is the only layer permitted to
 touch `document`, `window`, `fetch`, or `localStorage`. The engine (`src/engine/`) never sees

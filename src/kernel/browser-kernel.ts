@@ -78,7 +78,9 @@ function makeEvent(name: string, key: string | undefined, value: string | undefi
 
 export class BrowserKernel {
   readonly #controllers = new Map<CorrelationId, AbortController>();
-  readonly #flushable = new Map<HTMLFormElement, Array<() => Promise<void>>>();
+  // The element is kept alongside its callback so an unmounted binding (a
+  // data-if that closed, a data-each row removed) can be pruned at flush time.
+  readonly #flushable = new Map<HTMLFormElement, Array<{ readonly element: HTMLElement; readonly fire: () => Promise<void> }>>();
   readonly #root: Scope = emptyScope();
   readonly #diagnostics: DiagnosticsSink;
   readonly transport: EngineTransport;
@@ -97,7 +99,16 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
       return;
     }
-    this.#bindElement(this.document.body, this.#root, undefined);
+    try {
+      this.#bindElement(this.document.body, this.#root, undefined);
+    } catch (error) {
+      // A malformed binding is a bridge integration failure, not a domain
+      // outcome — the same rule #send applies. Reporting rather than throwing
+      // keeps start()'s "never rejects" contract true and routes the failure
+      // through the one channel consumers already watch.
+      this.#diagnostics.report({ kind: "BridgeError", phase: "binding", detail: String(error) });
+      return;
+    }
     await this.#send({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: ["Http", "Storage"] });
   }
 
@@ -127,6 +138,16 @@ export class BrowserKernel {
       scope.eachs.push({ anchor, template: el, listKey, itemKey: field, instances: new Map() });
       return;
     }
+    // data-if/data-each mount and unmount a <template>'s *content*, so they are
+    // meaningless anywhere else. Written on an ordinary element they used to be
+    // ignored in silence — invisible until someone loaded the page and noticed
+    // the content never appeared. That happened in a real consumer project; see
+    // docs/19-evidence.md. Fail loudly instead.
+    for (const misplaced of ["data-if", "data-each"]) {
+      if (el.hasAttribute(misplaced)) {
+        throw new Error(`${misplaced}="${el.getAttribute(misplaced)}" is only supported on a <template> element, but was found on <${el.tagName.toLowerCase()}>`);
+      }
+    }
     if (el.hasAttribute("data-event")) this.#bindEvent(el, itemKey);
     if (el.hasAttribute("data-text")) scope.texts.push({ element: el, key: el.getAttribute("data-text")! });
     for (const attr of Array.from(el.attributes)) {
@@ -146,7 +167,7 @@ export class BrowserKernel {
     const form = "form" in el ? (el as HTMLInputElement).form : null;
     if (trigger !== "submit" && form !== null) {
       const pending = this.#flushable.get(form) ?? [];
-      pending.push(fire);
+      pending.push({ element: el, fire });
       this.#flushable.set(form, pending);
     }
   }
@@ -154,7 +175,13 @@ export class BrowserKernel {
   async #fire(el: HTMLElement, name: string, itemKey: string | undefined): Promise<void> {
     if (el instanceof HTMLFormElement) {
       if (!el.reportValidity()) return;
-      for (const flush of this.#flushable.get(el) ?? []) await flush();
+      // Prune bindings whose element has since been unmounted. Without this,
+      // repeatedly toggling a conditional section accumulates stale callbacks
+      // and dispatches events for elements no longer on the page.
+      const pending = this.#flushable.get(el) ?? [];
+      const live = pending.filter((entry) => entry.element.isConnected);
+      if (live.length !== pending.length) this.#flushable.set(el, live);
+      for (const entry of live) await entry.fire();
     }
     const value = readValue(el);
     await this.#send({ kind: "Event", event: makeEvent(name, itemKey, value) });
@@ -201,9 +228,14 @@ export class BrowserKernel {
     const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
     const root = fragment.firstElementChild;
     if (!(root instanceof HTMLElement)) throw new Error(`data-if="${binding.key}" template must contain exactly one root element`);
+    // Insert BEFORE binding. An element only has a `.form` owner once it is in
+    // the document, and #bindEvent reads that to register the pending-field
+    // flush — binding a detached clone skipped the registration silently, so a
+    // conditionally-shown field edited without blurring never reached the
+    // engine on submit.
+    binding.anchor.after(root);
     const scope = emptyScope();
     this.#bindElement(root, scope, binding.itemKey);
-    binding.anchor.after(root);
     this.#applyScope(scope, view);
     binding.mounted = { root, scope };
   }
@@ -226,6 +258,9 @@ export class BrowserKernel {
         const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
         const root = fragment.firstElementChild;
         if (!(root instanceof HTMLElement)) throw new Error(`data-each="${binding.listKey}" template must contain exactly one root element`);
+        // Insert before binding, for the reason given in #applyIf. The reorder
+        // below is then a no-op for this freshly placed item.
+        parent.insertBefore(root, cursor.nextSibling);
         const scope = emptyScope();
         this.#bindElement(root, scope, key);
         instance = { root, scope };
@@ -273,7 +308,11 @@ export class BrowserKernel {
       try {
         return { kind: "Success", status: response.status, body: await response.json() as unknown };
       } catch {
-        return controller.signal.aborted ? this.#classifyAbort(controller) : { kind: "Failure", reason: "invalid-response" };
+        // A response did arrive — it simply would not decode. Carry the status
+        // so the engine can tell a 500 error page apart from a malformed 200.
+        return controller.signal.aborted
+          ? this.#classifyAbort(controller)
+          : { kind: "Failure", reason: "invalid-response", status: response.status };
       }
     } catch {
       return this.#classifyAbort(controller);

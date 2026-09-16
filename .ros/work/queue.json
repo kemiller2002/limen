@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 2,
+  "nextSeq": 10,
   "items": [
     {
       "id": "WI-0001",
@@ -16,6 +16,142 @@
       "attachments": [],
       "createdAt": "2026-09-02T19:59:10.250Z",
       "updatedAt": "2026-09-02T19:59:40.757Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0002",
+      "title": "Documentation audit and reconstruction: rewrite README/AGENTS, add docs/ set, six verified examples, docs+example CI verification",
+      "description": null,
+      "tags": [
+        "docs",
+        "examples",
+        "ci"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-14T15:44:49.380Z",
+      "updatedAt": "2026-09-14T15:44:56.052Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0003",
+      "title": "Limen productization: name the kernel Limen in human-facing surfaces, rewrite README/AGENTS front door, preserve compatibility-sensitive identifiers",
+      "description": null,
+      "tags": [
+        "limen",
+        "naming",
+        "docs"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-14T16:28:35.797Z",
+      "updatedAt": "2026-09-14T16:28:44.052Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0004",
+      "title": "Fix kernel silent-failure defects P-1/P-2, packaging D-9, transport clarity A-1; publish evidence findings",
+      "description": null,
+      "tags": [
+        "limen",
+        "defect",
+        "evidence"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-14T17:01:02.944Z",
+      "updatedAt": "2026-09-14T17:01:03.052Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0005",
+      "title": "Limen showcase site: Echelon Foundry identity, interactive demos driven by real Limen, Pages deployment",
+      "description": null,
+      "tags": [
+        "limen",
+        "site",
+        "pages"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-14T17:27:29.600Z",
+      "updatedAt": "2026-09-14T17:27:29.694Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0006",
+      "title": "Standardized Echelon lifecycle CLI: F# core + npm bootstrap for init/status/verify/upgrade/doctor",
+      "description": "Add an F#-implemented, npm-distributed lifecycle CLI (init, status, verify, upgrade, doctor) with a minimal Node bootstrap, installation manifest, file-ownership model, JSON output and stable exit codes, without changing existing library behavior.",
+      "tags": [
+        "tooling"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-15T15:38:36.583Z",
+      "updatedAt": "2026-09-15T15:38:40.388Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0007",
+      "title": "Document the lifecycle conversion: CLI reference, installation and ownership, conversion report",
+      "description": "Write docs/20-lifecycle-cli.md, docs/21-installation-and-upgrade.md and docs/22-lifecycle-conversion-report.md, and correct the .NET availability entry in the documentation audit.",
+      "tags": [
+        "documentation"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-15T16:11:45.217Z",
+      "updatedAt": "2026-09-15T16:11:48.624Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0008",
+      "title": "Make --verbose meaningful on verify, init and upgrade",
+      "description": "The flag was documented on every command but only changed status output. Wire it through verify and the lifecycle commands, and test that it changes what is printed.",
+      "tags": [
+        "tooling"
+      ],
+      "priority": "low",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-15T16:14:33.902Z",
+      "updatedAt": "2026-09-15T16:14:33.982Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0009",
+      "title": "Record cross-platform CI results in the CLI documentation",
+      "description": "The packaged-CLI matrix has run on Linux, Windows and macOS. Replace the 'untested' statements with the measured results, and state precisely which two shipped binaries have never been executed.",
+      "tags": [
+        "documentation"
+      ],
+      "priority": "low",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-15T16:19:00.953Z",
+      "updatedAt": "2026-09-15T16:19:01.031Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

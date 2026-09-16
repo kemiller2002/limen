@@ -1,3 +1,22 @@
 node_modules/
 dist/
 .DS_Store
+
+# The numbered examples are authored in TypeScript and compiled in place by
+# `npm run build:examples` so each index.html can load ./main.js directly.
+# The .ts files are the source of truth; the emitted .js is build output.
+# (examples/kitchen-sink.js is hand-written source and stays tracked.)
+examples/[0-9][0-9]-*/*.js
+
+# The site's Limen application compiles in place, same as the examples, so its
+# emitted import specifiers stay valid in the deployed tree. Build output.
+site/app/*.js
+dist-site/
+
+# The F# lifecycle CLI compiles to platform binaries staged for npm packaging.
+# They are build output: `npm run build:cli:all` regenerates them, and the
+# publish workflow builds them fresh from source.
+runtimes/
+cli/**/bin/
+cli/**/obj/
+

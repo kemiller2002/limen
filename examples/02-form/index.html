@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Form — kernel example 02</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Create an account</h1>
+
+      <!-- A <form>'s data-event fires on submit, and the kernel calls
+           preventDefault() for you. Native browser validation still runs
+           first: reportValidity() gates the dispatch. -->
+      <form data-event="submit">
+        <label for="name">Name</label>
+        <!-- data-on="input" overrides the default trigger for <input>
+             (which is "change", i.e. on blur) so each keystroke is dispatched. -->
+        <input id="name" name="name" type="text"
+               data-event="nameChanged" data-on="input"
+               data-bind-value="name" data-bind-disabled="fieldsDisabled">
+        <!-- A data-if template mounts only when view.nameErrorVisible is truthy.
+             It must wrap exactly one root element. -->
+        <template data-if="nameErrorVisible">
+          <p class="error" role="alert" data-text="nameError"></p>
+        </template>
+
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email"
+               data-event="emailChanged" data-on="input"
+               data-bind-value="email" data-bind-disabled="fieldsDisabled">
+        <template data-if="emailErrorVisible">
+          <p class="error" role="alert" data-text="emailError"></p>
+        </template>
+
+        <button type="submit" data-bind-disabled="submitDisabled">Create account</button>
+      </form>
+
+      <p class="error" role="status" aria-live="polite" data-text="formMessage"></p>
+
+      <template data-if="submitted">
+        <div class="panel">
+          <p role="status" data-text="confirmation"></p>
+          <button data-event="startOver">Start over</button>
+        </div>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

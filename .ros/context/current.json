@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-02T19:59:27.806Z",
+  "updatedAt": "2026-09-15T16:19:49.136Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -38,6 +38,150 @@
       ],
       "updatedAt": "2026-09-02T19:59:27.806Z",
       "completedAt": "2026-09-02T19:59:27.806Z"
+    },
+    {
+      "id": "WI-0002",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/check-docs.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-14T15:45:01.256Z",
+      "completedAt": "2026-09-14T15:45:01.256Z"
+    },
+    {
+      "id": "WI-0003",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/18-naming-and-compatibility.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-09-14T16:32:25.770Z",
+      "completedAt": "2026-09-14T16:32:25.770Z"
+    },
+    {
+      "id": "WI-0004",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-14T17:08:21.982Z",
+      "completedAt": "2026-09-14T17:08:21.982Z"
+    },
+    {
+      "id": "WI-0005",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "site/app/engine.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/site.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-14T17:58:59.735Z",
+      "completedAt": "2026-09-14T17:58:59.735Z"
+    },
+    {
+      "id": "WI-0006",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "cli/Limen.Core/Operations.fs"
+        },
+        {
+          "type": "tests",
+          "path": "cli/tests/Limen.Core.Tests/LifecycleTests.fs"
+        }
+      ],
+      "updatedAt": "2026-09-15T16:08:08.097Z",
+      "completedAt": "2026-09-15T16:08:08.097Z"
+    },
+    {
+      "id": "WI-0007",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/22-lifecycle-conversion-report.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/cli.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-15T16:11:48.782Z",
+      "completedAt": "2026-09-15T16:11:48.782Z"
+    },
+    {
+      "id": "WI-0008",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "cli/Limen.Cli/Render.fs"
+        },
+        {
+          "type": "tests",
+          "path": "cli/tests/Limen.Core.Tests/CliTests.fs"
+        }
+      ],
+      "updatedAt": "2026-09-15T16:14:34.248Z",
+      "completedAt": "2026-09-15T16:14:34.248Z"
+    },
+    {
+      "id": "WI-0009",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/20-lifecycle-cli.md"
+        },
+        {
+          "type": "tests",
+          "path": "docs/22-lifecycle-conversion-report.md"
+        }
+      ],
+      "updatedAt": "2026-09-15T16:19:49.136Z",
+      "completedAt": "2026-09-15T16:19:49.136Z"
     }
   ]
 }
