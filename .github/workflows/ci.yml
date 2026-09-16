@@ -32,7 +32,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          # From global.json, so every job resolves the same SDK band. See the
+          # comment in that file: an unpinned `dotnet` on a runner carrying
+          # several SDKs picks the newest.
+          global-json-file: global.json
 
       - name: Install dependencies
         run: npm ci
@@ -86,7 +89,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          # From global.json, so every job resolves the same SDK band. See the
+          # comment in that file: an unpinned `dotnet` on a runner carrying
+          # several SDKs picks the newest.
+          global-json-file: global.json
 
       - name: Install dependencies
         run: npm ci

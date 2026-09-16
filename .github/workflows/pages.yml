@@ -36,15 +36,26 @@ jobs:
 
       # The site's engine is F# compiled to WebAssembly, so building the site
       # means building it with the .NET SDK.
+      # Resolved from global.json rather than a version here, so the pin lives
+      # in one place. The runner image already carries .NET 9 and 10; without
+      # the pin `dotnet` picks the newest, and the workload below then installs
+      # into that band while the project builds in 8.0 — which is exactly how
+      # this job failed the first time it ran.
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          global-json-file: global.json
 
-      # Targeting browser-wasm needs this workload; the SDK alone cannot emit
-      # a WebAssembly runtime. It is cached by setup-dotnet across runs.
+      # Targeting browser-wasm needs this workload; the SDK alone cannot emit a
+      # WebAssembly runtime. Installed into the band of the resolved SDK, which
+      # is why the pin has to come first.
       - name: Install the WebAssembly workload
         run: dotnet workload install wasm-tools
+
+      # Two lines, printed so that a future band mismatch is legible from the
+      # log instead of surfacing as an unexplained publish failure.
+      - name: Report the resolved SDK and workload
+        run: dotnet --version && dotnet workload list
 
       - name: Install dependencies
         run: npm ci

@@ -27,10 +27,34 @@ async function totalBytes(directory: string): Promise<number> {
 
 async function main(): Promise<void> {
   console.log("Publishing the F# engine to WebAssembly (this takes a minute)…");
-  execFileSync("dotnet", ["publish", PROJECT, "-c", "Release", "--nologo"], {
-    cwd: ROOT,
-    stdio: process.env.LIMEN_WASM_VERBOSE === "1" ? "inherit" : ["ignore", "ignore", "inherit"],
-  });
+  const verbose = process.env.LIMEN_WASM_VERBOSE === "1";
+  try {
+    execFileSync("dotnet", ["publish", PROJECT, "-c", "Release", "--nologo"], {
+      cwd: ROOT,
+      // Captured rather than discarded, because `dotnet` writes build errors to
+      // STDOUT. An earlier version ignored stdout to keep the log quiet, and a
+      // CI failure then reported nothing at all beyond a non-zero exit — the
+      // one moment the output was worth having.
+      stdio: verbose ? "inherit" : ["ignore", "pipe", "pipe"],
+      encoding: "utf8",
+    });
+  } catch (error) {
+    const failure = error as { stdout?: string; stderr?: string };
+    const output = `${failure.stdout ?? ""}${failure.stderr ?? ""}`.trim();
+    if (output.length > 0) console.error(output);
+    // The failure this has actually produced, named rather than left to be
+    // rediscovered: workloads install into the band of the resolved SDK.
+    console.error("\n`dotnet publish` failed. If the error mentions a missing workload or an"
+      + "\nunknown `browser-wasm` runtime identifier, check that the SDK resolved here is"
+      + "\nthe one `wasm-tools` was installed into — `dotnet --version` and `dotnet workload"
+      + "\nlist` must agree on the feature band. global.json pins it; a machine with several"
+      + "\nSDKs installed will otherwise use the newest.");
+    // Exit rather than rethrow: the thrown error carries the captured output as
+    // properties, and Node would print the compiler's diagnostics a second and
+    // third time underneath a stack trace that points at this script rather
+    // than at the F# that failed to compile.
+    process.exit(1);
+  }
 
   if (!existsSync(BUNDLE)) throw new Error(`dotnet publish produced no bundle at ${BUNDLE}`);
 
