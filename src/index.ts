@@ -3,7 +3,7 @@ export { DirectTypeScriptTransport } from "./engine/transport.js";
 export { ReferenceEngine, project } from "./engine/engine.js";
 export { PROTOCOL_VERSION } from "./protocol.js";
 
-export type { BrowserKernelOptions, ClipboardBinding, NavigationBinding } from "./kernel/browser-kernel.js";
+export type { BrowserKernelOptions, ClipboardBinding, DocumentBinding, NavigationBinding } from "./kernel/browser-kernel.js";
 
 export type {
   BrowserToEngineMessage,
@@ -11,6 +11,8 @@ export type {
   ClipboardEffectRequest,
   ClipboardOutcome,
   CorrelationId,
+  DocumentEffectRequest,
+  DocumentOutcome,
   EffectOutcome,
   EffectRequest,
   EffectResult,

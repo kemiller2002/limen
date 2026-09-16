@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 16,
+  "nextSeq": 17,
   "items": [
     {
       "id": "WI-0001",
@@ -252,6 +252,24 @@
       "attachments": [],
       "createdAt": "2026-09-16T15:10:20.913Z",
       "updatedAt": "2026-09-16T15:10:23.515Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0016",
+      "title": "Document capability: title, focus and scroll on route change",
+      "description": "Close the two named gaps from WI-0015. Bind the document head so <title data-text> makes the page title an ordinary projection. Add a Document capability with focusTarget and scrollToTop so an engine can move focus to the new screen's heading and reset scroll on a route change, without the engine ever naming a DOM element.",
+      "tags": [
+        "kernel",
+        "protocol",
+        "accessibility"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T16:49:56.819Z",
+      "updatedAt": "2026-09-16T16:49:56.884Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

@@ -262,35 +262,142 @@ opinion about which form you chose.
 
 ## Scroll, focus, and the document title
 
-Deliberately minimal, and the gaps are named rather than implied.
+A route change is three things at once: the URL moves, the screen changes, and
+the user needs to end up somewhere sensible. The third is the part applications
+usually forget.
 
-**Scroll.** The kernel does not restore scroll position. Browsers already do a
-reasonable job on Back/Forward for same-document history entries, and custom
-restoration is the kind of thing that fights the browser and loses. If a screen
-must return to a remembered offset, that offset is engine state like anything
-else that outlives the DOM.
+### The document title is a projection, not an effect
 
-**Focus.** Not managed. Leaving a screen destroys its DOM, and focus goes with
-it. For a significant route change the accessible pattern is to move focus to
-the new screen's heading, so a screen reader announces where it is — but
-aggressive focus movement surprises users, and the kernel has no way to know
-which route changes are significant. This is an application decision and a
-**known gap**: there is no kernel support for it today.
+```html
+<title data-text="pageTitle">Fallback title</title>
+```
 
-**Document title.** There is no capability for setting `document.title`, and
-none is implemented. This is a real limitation for a routed single-page
-application: the title will not follow the route, which affects the browser's
-own history menu and screen-reader announcements.
+```ts
+pageTitle: TITLES[state.screen],
+```
 
-It is left out because nothing shipped here needs it — the site is static HTML
-with a correct `<title>` per page, and the examples are single demos. Building
-it before a real requirement would add an always-succeeding effect whose
-outcome type would be noise. When a requirement appears, the options are a
-small `Document` capability with `setTitle`, or extending binding to cover
-`<title data-text="pageTitle">` in the document head. Recorded in
-[ROADMAP.md](ROADMAP.md) rather than left to be rediscovered.
+That is all. The kernel binds the document **head** as well as the body, and
+`document.title` reflects the `<title>` element's text content, so an ordinary
+`data-text` binding sets the real browser tab title.
 
----
+**There is deliberately no `setTitle` capability**, because a title is a
+*function of state*, not an action. As a projection it cannot drift: it changes
+whenever the state it describes changes, and no transition has to remember to
+fire anything. An imperative `setTitle` effect would have to be issued from
+every path that changes the screen, and the one you forget is the bug.
+
+This is the general rule for deciding between the two:
+
+| | Use |
+| --- | --- |
+| Derivable from state at any moment | a **projection** (`data-text`, `data-bind-*`) |
+| A one-shot thing that happens *at* a moment | an **effect** |
+
+A head with no bindings is untouched, so this costs nothing for a page that
+does not opt in.
+
+### Focus and scroll are effects
+
+They are the other side of that rule — "put the user at the top of the new
+screen" happens once, at a moment the engine chooses. A projected
+`focused: true` would re-fire on every round trip and fight the user for the
+caret.
+
+Enable them with the `document` capability:
+
+```ts
+new BrowserKernel(transport, document, {
+  navigation: { historyEvent: "urlChanged" },
+  document: { enabled: true },
+});
+```
+
+```ts
+{ kind: "Document", correlationId, operation: "focusTarget" }
+{ kind: "Document", correlationId, operation: "scrollToTop" }
+```
+
+**Neither names an element.** Mark the target in markup instead:
+
+```html
+<h2 data-focus-target data-text="screenHeading">Customers</h2>
+```
+
+The division is three-way, and it matters:
+
+| | Decides |
+| --- | --- |
+| The engine | **when** focus should move |
+| The markup | **where** it goes |
+| The kernel | **how** — find the mounted target, make it focusable, focus it |
+
+Passing a CSS selector instead would mean the engine knew there was an
+`<h2 id="main-heading">` on the Customers screen —
+[01-architecture.md](01-architecture.md) says the engine never sees a DOM node
+or an element id, and that would break it.
+
+The kernel adds `tabindex="-1"` if the target does not already have one. A
+heading is not focusable by default, so `focus()` on one does **nothing at
+all** — precisely the silent no-op that lets this class of accessibility bug
+survive review. If no marked element is mounted, the outcome is
+`Failure { reason: "no-target" }` rather than silence, because that almost
+always means the markup is missing the attribute.
+
+Hide the focus ring for pointer users but keep it for keyboard users:
+
+```css
+[data-focus-target]:focus { outline: none; }
+[data-focus-target]:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+```
+
+### When to fire them
+
+Three arrivals, three different answers. Example 05 encodes exactly this:
+
+| Arrival | Move focus? | Reset scroll? |
+| --- | --- | --- |
+| **Initial load**, including a deep link | **No** | No |
+| **The user navigated** (a tab, a link) | Yes | Yes |
+| **The browser moved** (Back / Forward) | Yes | **No** |
+
+**Initial load must not steal focus.** The user has not navigated yet; moving
+focus on load jumps them past the skip link and the header they were one Tab
+away from. Note that a deep link *does* change the screen — it arrives at
+Settings from an initial state of Home — so a rule keyed only on "did the
+screen change" gets this wrong. Distinguish arriving from navigating:
+
+```ts
+type Arrival = "initial" | "user" | "history";
+
+function arrivalEffects(correlationId: CorrelationId, cause: Arrival): readonly EffectRequest[] {
+  if (cause === "initial") return [];
+  const focus = { kind: "Document", correlationId, operation: "focusTarget" } as const;
+  return cause === "user"
+    ? [{ kind: "Document", correlationId, operation: "scrollToTop" }, focus]
+    : [focus];
+}
+```
+
+**Focus moves on Back and Forward too.** Leaving a screen destroys its DOM, so
+focus would otherwise fall to `<body>` and a screen-reader user would get no
+indication that anything happened. Focusing the new heading announces it, which
+is the entire point — no extra `aria-live` region is needed for the route
+change itself.
+
+**Scroll resets only when the user navigated.** `pushState` deliberately does
+not scroll, so a new screen would otherwise open halfway down. But browsers
+already restore scroll for history traversal (`history.scrollRestoration`
+defaults to `"auto"`), and doing it again by hand throws away the position the
+user came back to see. There is no scroll-restoration capability, and that is
+the reason: the native behaviour is the correct behaviour.
+
+### One trap worth knowing
+
+An effect result is a round trip, and every response carries a **complete**
+`ViewState`. A response that acknowledges a focus effect by re-projecting a
+*different* screen will unmount the element that was just focused. Keep the
+projection stable across the acknowledgement — which it is, if you project from
+state rather than from the message you happen to be handling.
 
 ## Related
 

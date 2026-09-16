@@ -165,7 +165,19 @@ These are MUST-level. Violating one is a defect regardless of whether tests pass
 11. **Clipboard and navigation failures MUST be handled.** Both have `Failure`
     cases that occur in normal use — a denied permission, an insecure page, a
     refused cross-origin URL. Never assume success.
-12. **Never log clipboard contents**, in the kernel or in a diagnostics sink.
+12. **A page title is a projection, never an effect.** Bind
+    `<title data-text="pageTitle">`; there is no `setTitle` capability and there
+    should not be one. The general rule: derivable from state ⇒ projection;
+    happens *at* a moment ⇒ effect.
+13. **Focus and scroll on a route change are the engine's decision, but never
+    the engine's selector.** Request `Document`/`focusTarget`; mark the
+    destination in markup with `data-focus-target`. Passing an element id or a
+    CSS selector across the boundary breaks rule 4 — the engine never sees a
+    DOM node.
+14. **A cold page load must not steal focus.** That includes a deep link, which
+    reaches its screen by moving there from the initial state. Move focus when
+    the user navigates and when the browser does, never on arrival.
+15. **Never log clipboard contents**, in the kernel or in a diagnostics sink.
     A copied value is commonly a token or a password. Record the operation,
     outcome and duration; never the payload. The same already applies to Http
     headers and bodies.

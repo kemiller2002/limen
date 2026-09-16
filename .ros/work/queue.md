@@ -17,4 +17,5 @@
 | WI-0012 | Fix the release workflow: npm pack --pack-destination needs the directory to exist | complete | tooling | high |
 | WI-0013 | Release 0.5.1: republish after the v0.5.0 pack failure | complete | release | high |
 | WI-0014 | Browser navigation and history integration (ROADMAP item 8) | complete | kernel, protocol | high |
-| WI-0015 | Navigation and clipboard browser capability architecture (SDE mission) | ready | kernel, protocol, clipboard, navigation | high |
+| WI-0015 | Navigation and clipboard browser capability architecture (SDE mission) | complete | kernel, protocol, clipboard, navigation | high |
+| WI-0016 | Document capability: title, focus and scroll on route change | ready | kernel, protocol, accessibility | high |

@@ -34,8 +34,8 @@ Limen         is the threshold: it carries events in and effects out.
 The engine    owns state, transitions, validation, and what to show.
 ```
 
-The Limen kernel understands **six HTML attributes** and no application
-vocabulary at all. It does not know what `"checkAvailability"` means or what a
+The Limen kernel understands **a handful of HTML attributes** and no
+application vocabulary at all. It does not know what `"checkAvailability"` means or what a
 `"customers"` list is. It moves opaque strings and plain data across a
 boundary — which is precisely what stops application logic from accumulating
 in the browser layer.
@@ -93,10 +93,11 @@ if `src/engine/**` so much as mentions `document`, `window`, `fetch(`,
 `localStorage`, `sessionStorage`, or a history/URL API.
 
 **Tradeoffs are real**, and documented rather than hidden: no browser
-capabilities beyond HTTP, `localStorage` and navigation, no router or link
-interception (URLs and history work, but the engine owns what a route means),
-no focus management, no list virtualization, more ceremony than a small
-component framework for a genuinely simple page. See
+capabilities beyond HTTP, `localStorage`, navigation, clipboard write and
+route-change focus; no router (URLs and history work, but the engine owns what
+a route means),
+no list virtualization, more ceremony than a small component framework for a
+genuinely simple page. See
 [docs/01-architecture.md § Honest limits](docs/01-architecture.md#6-honest-limits).
 
 ## The smallest working example

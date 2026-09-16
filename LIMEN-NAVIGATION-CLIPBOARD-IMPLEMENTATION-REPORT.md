@@ -374,15 +374,10 @@ it manually." — which is precisely why the failure is modelled.
 1. **No `SDE-MAP.md`.** Required by `method/FEATURE-MANIFESTS.md` for a
    nontrivial adopting repository. Not created here: inventing feature
    boundaries to fill a template would be worse than the visible gap.
-2. **`document.title` is not settable.** A real limitation for a routed
-   single-page application — the title will not follow the route, which affects
-   the browser's history menu and screen-reader announcements. Nothing shipped
-   here has the defect (the site is static HTML with a correct title per page).
-   Two implementation options are recorded in `docs/24`.
-3. **Focus is not managed on route change.** The accessible pattern — move
-   focus to the new screen's heading — is documented but unimplemented. A known
-   gap, not a silent one.
-4. **Scroll restoration** is left to native browser behaviour.
+2. ~~**`document.title` is not settable.**~~ **Closed in WI-0016** — see §10.
+3. ~~**Focus is not managed on route change.**~~ **Closed in WI-0016** — see §10.
+4. **Scroll *restoration*** is left to native browser behaviour, deliberately.
+   Scroll is now reset on a push (WI-0016, §10).
 5. **Clipboard read**, page reload, and external-navigation capabilities do not
    exist. Shapes recorded; adding any should follow a named requirement.
 6. **`linkEvent` and `historyEvent` are separate names.** An application must
@@ -424,3 +419,111 @@ meaning in *this* repository is TypeScript, and the boundary it sits behind is
 plain serializable data specifically so that an F# engine can take its place
 without the kernel changing. That substitution is the repository's documented
 position, not a compromise made here.
+
+
+---
+
+## 10. Follow-up: WI-0016 — the two named gaps
+
+Items 8.2 and 8.3 above were closed on request. Both were real; neither needed
+what the earlier report assumed it would.
+
+### The document title needed no capability at all
+
+The gap was recorded with "two implementation options: a small `Document`
+capability with `setTitle`, or extending binding to cover `<title>`". The
+second turned out to be strictly better, and the reason generalizes:
+
+> **A title is a function of state, not an action.**
+
+As a projection it cannot drift — it changes whenever the state it describes
+changes, and nothing has to remember to fire it. As an imperative `setTitle`
+effect it would have to be issued from every path that changes the screen, and
+the one you forget is the bug.
+
+So `start()` now binds `document.head` as well as `document.body`, and:
+
+```html
+<title data-text="pageTitle">Fallback</title>
+```
+
+is the whole feature. **Zero protocol surface**, and a head with no bindings is
+untouched, so it costs nothing for a page that does not opt in. The general
+rule is now written down in `docs/24`: derivable from state ⇒ projection;
+happens *at* a moment ⇒ effect.
+
+### Focus and scroll: the engine decides when, the markup decides where
+
+These genuinely are one-shot actions, so they are effects — a new opt-in
+`Document` capability:
+
+```ts
+| { kind: "Document"; correlationId; operation: "focusTarget" }
+| { kind: "Document"; correlationId; operation: "scrollToTop" }
+
+type DocumentOutcome =
+  | { kind: "Success" }
+  | { kind: "Failure"; reason: "unavailable" | "no-target" };
+```
+
+**Neither operation names an element**, and that was the hard constraint.
+`docs/01-architecture.md` states that the engine never sees a DOM node or an
+element id; a `{ operation: "focus", selector: "#main-heading" }` would have
+broken exactly that, and it was the obvious first design. The three-way split
+instead:
+
+| | Decides |
+| --- | --- |
+| The engine | **when** focus should move |
+| The markup (`data-focus-target`) | **where** |
+| The kernel | **how** |
+
+The kernel adds `tabindex="-1"` when the target lacks one, because `focus()` on
+a plain heading does **nothing at all** — the silent no-op that lets this class
+of accessibility bug survive review. A missing marker reports
+`Failure { reason: "no-target" }` rather than nothing.
+
+### When they fire — three arrivals, three answers
+
+| Arrival | Focus | Scroll |
+| --- | --- | --- |
+| Initial load, **including a deep link** | No | No |
+| The user navigated | Yes | Yes |
+| The browser moved (Back/Forward) | Yes | **No** |
+
+The deep-link row is the one worth calling out, and the test suite caught it:
+a rule keyed on "did the screen change" gets it **wrong**, because a deep link
+reaches Settings by moving there from an initial state of Home — so a cold page
+load would have yanked focus past the skip link. The engine distinguishes
+*arriving* from *navigating*. Confirmed failing against the pre-fix engine, so
+the test is not vacuous.
+
+Scroll resets only on a push because `pushState` deliberately does not scroll;
+history traversal is left to the browser's own restoration, which is why there
+is still no scroll-*restoration* capability and should not be.
+
+### Verification
+
+| | |
+| --- | --- |
+| `npm run check` | **160 passed, 0 failed, 0 skipped** (was 145) |
+| `npm run test:cli` | **107 passed, 0 skipped** |
+| Real browser (Chromium 141, CDP) | **13 checks, all passing** |
+
+The browser run covered what jsdom cannot: the real tab title changing across
+navigation and back again, real focus landing on a real `<h2>` with the
+kernel-added `tabindex`, a cold load and a deep link **not** stealing focus,
+and a genuinely scrolled page being reset by a push.
+
+One test defect found and fixed along the way: a scripted transport that
+re-projected a different screen when acknowledging the focus effect, which
+unmounted the element it had just focused. That is a real hazard for anyone
+writing one — an effect result is a round trip carrying a complete `ViewState`
+— and it is now documented in `docs/24`.
+
+### Still open after this
+
+- Focus restoration after a **keyed list item is removed** (a different problem
+  from route-change focus, and still unaddressed).
+- Scroll **restoration**, deliberately not built.
+- Cross-browser verification: Chromium only, as before.

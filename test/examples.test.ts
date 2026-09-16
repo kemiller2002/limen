@@ -342,6 +342,7 @@ test("04-save-data: a timed-out POST offers reconciliation, never a blind retry"
 const mountMultiScreen = (document: Document): Promise<void> =>
   new BrowserKernel(createMultiScreenTransport(), document, {
     navigation: { historyEvent: "urlChanged", linkEvent: "linkActivated" },
+    document: { enabled: true },
   }).start();
 
 const windowOf = (document: Document): Window => {
@@ -562,6 +563,94 @@ test("05-multi-screen: re-clicking the current tab adds no history entry", async
     // Otherwise leaving the page would take one press of Back per idle click.
     assert.equal(view.history.length, entries);
     assert.equal(view.location.hash, "#/customers");
+  });
+});
+
+test("05-multi-screen: a route change moves focus to the new screen's heading", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    await mountMultiScreen(document);
+    // A page that has only just loaded keeps its focus. Yanking it to the
+    // heading on load would jump a keyboard user past the skip link and the
+    // header they were one Tab away from.
+    assert.notEqual(document.activeElement?.textContent, "Home", "initial load must not steal focus");
+
+    // Navigating is different: leaving a screen destroys its DOM, so without
+    // this focus falls to <body> and a screen-reader user gets no indication
+    // that anything happened.
+    Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!.click();
+    await flush();
+    assert.equal(document.activeElement?.textContent, "Customers");
+    assert.equal(
+      (document.activeElement as HTMLElement).getAttribute("tabindex"),
+      "-1",
+      "the kernel made the heading focusable; focus() on a bare <h2> does nothing",
+    );
+  });
+});
+
+test("05-multi-screen: a deep link does not steal focus either", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    windowOf(document).history.replaceState(null, "", "#/settings");
+    await mountMultiScreen(document);
+
+    // A deep link reaches its screen by "moving" there from the initial state,
+    // so a rule keyed only on "did the screen change" would yank focus on a
+    // cold page load. The engine distinguishes arriving from navigating.
+    assert.equal(present(document, "#display-name"), true, "it did open on Settings");
+    assert.notEqual(document.activeElement?.textContent, "Settings", "but a cold load keeps its focus");
+  });
+});
+
+test("05-multi-screen: Back also moves focus, because the screen changed either way", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document);
+    await mountMultiScreen(document);
+
+    Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[2]!.click();
+    await flush();
+    assert.equal(document.activeElement?.textContent, "Settings");
+
+    view.history.back();
+    await until(() => document.activeElement?.textContent === "Home", "Back to move focus to Home");
+  });
+});
+
+test("05-multi-screen: the engine projects the page title, and it follows the screen", async () => {
+  // exampleBody() strips the head, so bind a copy of the example's own <title>
+  // here. The shipped markup is verified in a real browser instead.
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    document.head.innerHTML = `<title data-text="pageTitle">placeholder</title>`;
+    await mountMultiScreen(document);
+    assert.equal(document.title, "Home — Multi-screen example");
+
+    Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!.click();
+    await flush();
+    // No effect fired for this. The title is a projection, so it cannot drift
+    // out of step with the screen it names.
+    assert.equal(document.title, "Customers — Multi-screen example");
+  });
+});
+
+test("05-multi-screen: scroll resets when the user navigates, but not when the browser does", async () => {
+  await withDom(await exampleBody("05-multi-screen"), async (document) => {
+    const view = windowOf(document) as Window & { scrollTo: (x: number, y: number) => void };
+    const scrolls: Array<readonly [number, number]> = [];
+    view.scrollTo = (x, y) => { scrolls.push([x, y]); };
+    await mountMultiScreen(document);
+    scrolls.length = 0;
+
+    // The user chose to go somewhere: pushState does not scroll, so the engine
+    // asks for it, or the new screen opens halfway down.
+    Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!.click();
+    await flush();
+    assert.deepEqual(scrolls, [[0, 0]]);
+
+    // The browser moved the user: it restores scroll itself, and redoing it by
+    // hand would throw away the position they came back to see.
+    scrolls.length = 0;
+    view.history.back();
+    await until(() => document.querySelector("[data-text='greeting']") !== null, "Back to reach Home");
+    assert.deepEqual(scrolls, [], "history traversal must keep the browser's own restoration");
   });
 });
 

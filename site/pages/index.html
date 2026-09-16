@@ -19,7 +19,7 @@
           <p class="signal">Exactly one place owns application state, and it is not the browser.</p>
           <ul class="list-inline">
             <li>zero runtime dependencies</li>
-            <li>six HTML attributes</li>
+            <li>a handful of HTML attributes</li>
             <li>~80-line contract</li>
           </ul>
         </div>
@@ -82,7 +82,7 @@
         </table>
       </div>
       <p class="prose">
-        The kernel understands six HTML attributes and no application vocabulary
+        The kernel understands a handful of HTML attributes and no application vocabulary
         at all. It does not know what <code>checkAvailability</code> means or what a
         <code>customers</code> list is. It moves opaque strings and plain data across a
         boundary — which is exactly what stops application logic from accumulating
@@ -254,8 +254,8 @@
       </div>
       <div class="columns">
         <div class="card"><h3>No router, but real URLs</h3><p>Back and forward move between screens and deep links work. What there is no router object: you map URLs to state with two pure functions in the engine, and the kernel owns <code>pushState</code> and <code>popstate</code>. No nested routes and no route params; link interception is opt-in and never takes a Ctrl-click.</p></div>
-        <div class="card"><h3>Four browser capabilities</h3><p>HTTP, <code>localStorage</code>, navigation and clipboard write. No files, timers, IndexedDB or clipboard <em>read</em> — adding one is a deliberate protocol change.</p></div>
-        <div class="card"><h3>No focus management</h3><p>Removing a focused list item drops focus. A known gap.</p></div>
+        <div class="card"><h3>Five browser capabilities</h3><p>HTTP, <code>localStorage</code>, navigation, clipboard write, and focus/scroll on a route change. No files, timers, IndexedDB or clipboard <em>read</em> — adding one is a deliberate protocol change.</p></div>
+        <div class="card"><h3>Focus only on a route change</h3><p>Navigating moves focus to the new screen&rsquo;s heading, so a screen reader announces it. Focus after a list item is removed is still a known gap.</p></div>
         <div class="card"><h3>No virtualization</h3><p>Every projected item becomes a DOM node.</p></div>
         <div class="card"><h3>More ceremony when trivial</h3><p>For a genuinely simple page, a small component framework is less work. Limen earns its keep when behavior is complex.</p></div>
         <div class="card"><h3>No WebAssembly here</h3><p>The boundary is designed for it and one consumer runs an F# engine across it — but this package ships TypeScript.</p></div>

@@ -1284,3 +1284,191 @@ test("a diagnostics sink still works as the bare third argument", async () => {
     assert.equal(events[0]?.kind, "BridgeError");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Document: the page title as a projection
+//
+// A title is a function of state, not an action, so it is `data-text` on
+// <title> rather than a capability. That only works because start() binds the
+// head as well as the body.
+// ---------------------------------------------------------------------------
+
+test("data-text on <title> makes the document title an ordinary projection", async () => {
+  const transport = new ScriptedTransport((message, calls) =>
+    respond({ view: { pageTitle: `Screen ${calls.length}` } }));
+
+  await withDom(`<button data-event="next"></button>`, async (document) => {
+    document.head.innerHTML = `<title data-text="pageTitle">placeholder</title>`;
+    await new BrowserKernel(transport, document).start();
+
+    // document.title reflects the <title> element's text content, so setting
+    // textContent is genuinely setting the title — no capability required.
+    assert.equal(document.title, "Screen 1");
+
+    document.querySelector("button")!.click();
+    await flush();
+    assert.equal(document.title, "Screen 2", "it follows state, without anything having to fire an effect");
+  });
+});
+
+test("a head with no bindings is left completely alone", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: {} }));
+  await withDom(`<div></div>`, async (document) => {
+    document.head.innerHTML = `<title>Untouched</title><meta name="description" content="x">`;
+    // No view key is projected for it, and nothing throws: binding the head is
+    // inert for every page that did not opt in.
+    await new BrowserKernel(transport, document).start();
+    assert.equal(document.title, "Untouched");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Document: focus and scroll
+// ---------------------------------------------------------------------------
+
+const documentOn = { enabled: true } as const;
+
+const documentEffect = (correlationId: CorrelationId, operation: "focusTarget" | "scrollToTop"): EngineToBrowserMessage =>
+  respond({ effects: [{ kind: "Document", correlationId, operation }] });
+
+test("focusTarget moves focus to the mounted data-focus-target element", async () => {
+  const correlationId = withCorrelation("d1");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2 data-focus-target id="heading">Customers</h2>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+
+    assert.equal(document.activeElement?.id, "heading");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result, {
+      kind: "DocumentResult",
+      correlationId,
+      outcome: { kind: "Success" },
+    });
+  });
+});
+
+test("a heading is made focusable, because focus() on one otherwise does nothing", async () => {
+  const correlationId = withCorrelation("d2");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2 data-focus-target id="heading">Customers</h2>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    // The silent no-op this prevents is exactly the kind of accessibility bug
+    // that survives review: the code looks right and nothing happens.
+    assert.equal(document.querySelector("#heading")!.getAttribute("tabindex"), "-1");
+  });
+});
+
+test("an author's own tabindex is respected rather than overwritten", async () => {
+  const correlationId = withCorrelation("d3");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<div data-focus-target id="target" tabindex="0">Panel</div>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    assert.equal(document.querySelector("#target")!.getAttribute("tabindex"), "0");
+    assert.equal(document.activeElement?.id, "target");
+  });
+});
+
+test("focus with no target mounted reports no-target rather than failing silently", async () => {
+  const correlationId = withCorrelation("d4");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2>No marker here</h2>`, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    // Almost always a missing attribute in the markup. Saying so beats doing
+    // nothing and leaving an accessibility regression invisible.
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "no-target" });
+  });
+});
+
+test("focusTarget finds the target inside a mounted data-if, and follows it when the screen changes", async () => {
+  const first = withCorrelation("d5");
+  const second = withCorrelation("d6");
+  // The view has to be held across round trips. Every response carries a
+  // COMPLETE ViewState, including the one acknowledging an effect result — and
+  // the effect result for a focus effect arrives immediately after it, so a
+  // transport that re-projected a different screen there would unmount the
+  // element it had just focused.
+  let onA = true;
+  const current = (): { onA: boolean; onB: boolean } => ({ onA, onB: !onA });
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ view: current(), effects: [{ kind: "Document", correlationId: first, operation: "focusTarget" }] });
+    }
+    if (message.kind === "Event") {
+      onA = false;
+      return respond({ view: current(), effects: [{ kind: "Document", correlationId: second, operation: "focusTarget" }] });
+    }
+    return respond({ view: current() });
+  });
+
+  const markup = `
+    <button data-event="go"></button>
+    <template data-if="onA"><h2 data-focus-target id="a">A</h2></template>
+    <template data-if="onB"><h2 data-focus-target id="b">B</h2></template>`;
+
+  await withDom(markup, async (document) => {
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+    assert.equal(document.activeElement?.id, "a");
+
+    document.querySelector("button")!.click();
+    await flush();
+    // The kernel does not know there are screens. It focuses whichever target
+    // is mounted, which is what makes this generic.
+    assert.equal(document.activeElement?.id, "b");
+  });
+});
+
+test("scrollToTop scrolls the window and reports Success", async () => {
+  const correlationId = withCorrelation("d7");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "scrollToTop") : respond());
+
+  await withDom(`<div></div>`, async (document) => {
+    const view = document.defaultView as Window & { scrollTo: (x: number, y: number) => void };
+    const calls: Array<readonly [number, number]> = [];
+    view.scrollTo = (x, y) => { calls.push([x, y]); };
+
+    await new BrowserKernel(transport, document, { document: documentOn }).start();
+
+    assert.deepEqual(calls, [[0, 0]]);
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Success" });
+  });
+});
+
+test("a browser without scrollTo is not an effect failure", async () => {
+  const correlationId = withCorrelation("d8");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "scrollToTop") : respond());
+
+  await withDom(`<div></div>`, async (document) => {
+    // jsdom and some embedded webviews have no scrollTo. Not being able to
+    // scroll is not worth failing over.
+    delete (document.defaultView as unknown as Record<string, unknown>).scrollTo;
+    await assert.doesNotReject(new BrowserKernel(transport, document, { document: documentOn }).start());
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Success" });
+  });
+});
+
+test("a Document effect on a kernel without the capability touches nothing", async () => {
+  const correlationId = withCorrelation("d9");
+  const transport = new ScriptedTransport((message) =>
+    message.kind === "Initialize" ? documentEffect(correlationId, "focusTarget") : respond());
+
+  await withDom(`<h2 data-focus-target id="heading">Customers</h2>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+
+    assert.notEqual(document.activeElement?.id, "heading", "an unannounced capability must not be quietly honoured");
+    const result = transport.calls.at(-1);
+    assert.deepEqual(result?.kind === "EffectResult" && result.result.outcome, { kind: "Failure", reason: "unavailable" });
+  });
+});

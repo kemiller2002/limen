@@ -13,7 +13,7 @@ cannot do it.
 
 An engine never calls a browser API. It returns an `EffectRequest`; the kernel
 performs it and returns an outcome. That is the whole model, and it is the same
-for all four capabilities.
+for all five capabilities.
 
 ```text
 engine decides  →  EffectRequest  →  kernel  →  browser API
@@ -35,7 +35,7 @@ Three properties hold for every capability below:
 
 ---
 
-## The four capabilities
+## The five capabilities
 
 | Capability | Default | Operations | Outcome cases |
 | --- | --- | --- | --- |
@@ -43,6 +43,7 @@ Three properties hold for every capability below:
 | **Storage** | always on | `get` `set` `remove` (`localStorage`) | `Success` · `Failure` |
 | **Navigation** | **opt-in** | `push` `replace` `back` `forward` | `Success` · `Accepted` · `Failure` |
 | **Clipboard** | **opt-in** | `writeText` | `Success` · `Failure` |
+| **Document** | **opt-in** | `focusTarget` `scrollToTop` | `Success` · `Failure` |
 
 ### Switching the opt-in ones on
 
@@ -52,6 +53,7 @@ new BrowserKernel(transport, document, {
   navigation: { historyEvent: "urlChanged",              // required to enable
                 linkEvent: "linkActivated" },            // optional
   clipboard: { enabled: true },
+  document: { enabled: true },                           // focus + scroll
 });
 ```
 
@@ -151,6 +153,37 @@ Full treatment: [23-clipboard.md](23-clipboard.md).
 
 ---
 
+## Document
+
+```ts
+| { kind: "Document", correlationId, operation: "focusTarget" }
+| { kind: "Document", correlationId, operation: "scrollToTop" }
+```
+
+```ts
+type DocumentOutcome =
+  | { kind: "Success" }
+  | { kind: "Failure"; reason: "unavailable" | "no-target" };
+```
+
+Presentation actions for a route change. **Neither names an element**: the
+markup marks the destination with `data-focus-target`, the engine decides only
+*when* focus should move. `no-target` means no marked element is mounted —
+said out loud rather than silently skipped, because it almost always means a
+missing attribute.
+
+The kernel adds `tabindex="-1"` to the target if it has none, since `focus()`
+on a plain heading does nothing at all.
+
+**The document title is not here.** It is a projection —
+`<title data-text="pageTitle">` — because a title is a function of state, not
+an action. See
+[24-navigation-and-github-pages.md](24-navigation-and-github-pages.md#the-document-title-is-a-projection-not-an-effect).
+
+Full treatment: [24-navigation-and-github-pages.md](24-navigation-and-github-pages.md#scroll-focus-and-the-document-title).
+
+---
+
 ## What does not exist
 
 Not oversights. This repository treats building a capability before a feature
@@ -161,10 +194,10 @@ untested surface with no design pressure behind it
 | Not implemented | Notes |
 | --- | --- |
 | Clipboard **read** | Least-capability: exposes anything the user copied anywhere. Shape recorded in [23-clipboard.md](23-clipboard.md). |
-| `document.title` | A real gap for routed applications. Options recorded in [24-navigation-and-github-pages.md](24-navigation-and-github-pages.md#scroll-focus-and-the-document-title). |
 | Page reload | No `location.reload()` capability. Nothing has needed one. |
 | External navigation / new tab | Use a real `<a href>`; the kernel never intercepts another origin. |
-| Focus control, scroll restoration | Known gaps; left to native behaviour. |
+| Scroll **restoration** | Deliberate. Browsers restore scroll on history traversal natively, and redoing it by hand throws away the position the user came back to see. |
+| Focusing an arbitrary element | Only the marked route target. Focusing whatever you like on every state change is how focus management becomes hostile. |
 | Timers, `requestAnimationFrame` | No scheduling primitives; no debounce. |
 | Files, geolocation, notifications, media, observers | — |
 | `sessionStorage`, `IndexedDB`, Cache API | — |

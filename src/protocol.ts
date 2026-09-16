@@ -79,17 +79,38 @@ export type ClipboardOutcome =
   // "failed": the API existed, was allowed, and still did not complete.
   | { readonly kind: "Failure"; readonly reason: "permission-denied" | "not-secure-context" | "unsupported" | "failed" };
 
+// Moving focus and resetting scroll are browser-local presentation actions.
+// They are effects rather than projections because they are one-shot: "the
+// user has arrived somewhere new, put them at the top of it" happens once, at
+// a moment the engine chooses. A projected `focused: true` would re-fire on
+// every round trip and fight the user for the caret.
+//
+// Note what is NOT here: the document title. A title is a *function of state*,
+// not an action — it should change whenever the state it describes changes,
+// and it should not need the engine to remember to fire something. So it is an
+// ordinary projection instead: `<title data-text="pageTitle">`. See
+// docs/24-navigation-and-github-pages.md.
+export type DocumentOutcome =
+  | { readonly kind: "Success" }
+  // "unavailable": this kernel was not wired for the Document capability.
+  // "no-target": focus was requested but no element carrying
+  // `data-focus-target` is mounted right now. Worth distinguishing: it almost
+  // always means the markup is missing the marker, and a silent no-op there
+  // would be an accessibility bug nobody notices.
+  | { readonly kind: "Failure"; readonly reason: "unavailable" | "no-target" };
+
 export type EffectResult =
   | { readonly kind: "HttpResult"; readonly correlationId: CorrelationId; readonly outcome: EffectOutcome }
   | { readonly kind: "StorageResult"; readonly correlationId: CorrelationId; readonly outcome: StorageOutcome }
   | { readonly kind: "NavigationResult"; readonly correlationId: CorrelationId; readonly outcome: NavigationOutcome }
-  | { readonly kind: "ClipboardResult"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome };
+  | { readonly kind: "ClipboardResult"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome }
+  | { readonly kind: "DocumentResult"; readonly correlationId: CorrelationId; readonly outcome: DocumentOutcome };
 
 // What the bridge can actually do, announced once at startup. Http and Storage
 // are always present. "Navigation" and "Clipboard" appear only when the host
 // wired them, so the announcement is a fact about *this* kernel rather than a
 // constant, and an engine can tell instead of assuming.
-export type Capability = "Http" | "Storage" | "Navigation" | "Clipboard";
+export type Capability = "Http" | "Storage" | "Navigation" | "Clipboard" | "Document";
 
 export type BrowserToEngineMessage =
   // `location` is the browser's location at page load, in the same normalized
@@ -168,7 +189,28 @@ export type NavigationEffectRequest =
 export type ClipboardEffectRequest =
   | { readonly kind: "Clipboard"; readonly correlationId: CorrelationId; readonly operation: "writeText"; readonly text: string };
 
-export type EffectRequest = HttpEffectRequest | StorageEffectRequest | NavigationEffectRequest | ClipboardEffectRequest;
+// Neither operation names an element, and that is the point.
+//
+// `docs/01-architecture.md` states that the engine never sees a DOM node or an
+// element id, and a selector would break exactly that: the engine would have
+// to know there is an `<h2 id="main-heading">` on the Customers screen. So the
+// division is three-way — the engine decides *when* focus should move, the
+// markup declares *where* with `data-focus-target`, and the kernel does *how*.
+//
+// "scrollToTop" exists because `pushState` deliberately does not scroll: a new
+// screen otherwise appears already scrolled down. History traversal is left
+// alone, since browsers restore scroll for it natively and doing it again by
+// hand fights the browser and loses.
+export type DocumentEffectRequest =
+  | { readonly kind: "Document"; readonly correlationId: CorrelationId; readonly operation: "focusTarget" }
+  | { readonly kind: "Document"; readonly correlationId: CorrelationId; readonly operation: "scrollToTop" };
+
+export type EffectRequest =
+  | HttpEffectRequest
+  | StorageEffectRequest
+  | NavigationEffectRequest
+  | ClipboardEffectRequest
+  | DocumentEffectRequest;
 
 export type EngineToBrowserMessage = {
   readonly view: ViewState;

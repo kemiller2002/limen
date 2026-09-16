@@ -9,6 +9,10 @@ import { createMultiScreenTransport } from "./engine.js";
 // names an event in markup.
 //
 // Omit `navigation` entirely and the kernel never touches the URL.
+// `document` opts in to the two presentation actions a route change needs:
+// moving focus to the new screen, and resetting scroll. Neither names an
+// element — the markup's `data-focus-target` says where.
 await new BrowserKernel(createMultiScreenTransport(), document, {
   navigation: { historyEvent: "urlChanged", linkEvent: "linkActivated" },
+  document: { enabled: true },
 }).start();

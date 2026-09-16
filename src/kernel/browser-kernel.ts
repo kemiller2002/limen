@@ -1,4 +1,4 @@
-import { PROTOCOL_VERSION, type BrowserToEngineMessage, type Capability, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { PROTOCOL_VERSION, type BrowserToEngineMessage, type Capability, type ClipboardEffectRequest, type ClipboardOutcome, type DocumentEffectRequest, type DocumentOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
 
 /**
@@ -52,6 +52,20 @@ export type ClipboardBinding = {
 };
 
 /**
+ * Opts this kernel into document-level presentation actions: moving focus to
+ * the current screen, and resetting scroll.
+ *
+ * There is nothing to name here. The engine decides *when* focus should move;
+ * the markup declares *where* with `data-focus-target`. Passing a selector
+ * across the boundary would mean the engine knew about an element id, which is
+ * exactly what the architecture says it never does.
+ */
+export type DocumentBinding = {
+  /** Reserved so the shape can gain options without a breaking change. */
+  readonly enabled: true;
+};
+
+/**
  * Everything optional about a kernel, in one place.
  *
  * This is the third constructor argument. A `DiagnosticsSink` is also still
@@ -62,6 +76,7 @@ export type BrowserKernelOptions = {
   readonly diagnostics?: DiagnosticsSink;
   readonly navigation?: NavigationBinding;
   readonly clipboard?: ClipboardBinding;
+  readonly document?: DocumentBinding;
 };
 
 // Exceptions to the "click" default: element types whose most natural
@@ -148,6 +163,7 @@ export class BrowserKernel {
   readonly #diagnostics: DiagnosticsSink;
   readonly #navigation: NavigationBinding | null;
   readonly #clipboard: ClipboardBinding | null;
+  readonly #documentActions: DocumentBinding | null;
   readonly transport: EngineTransport;
   readonly document: Document;
 
@@ -175,6 +191,7 @@ export class BrowserKernel {
     this.#diagnostics = settings.diagnostics ?? noopDiagnostics;
     this.#navigation = settings.navigation ?? null;
     this.#clipboard = settings.clipboard ?? null;
+    this.#documentActions = settings.document ?? null;
   }
 
   // The window that owns the injected document — not the ambient global, so
@@ -191,6 +208,12 @@ export class BrowserKernel {
       return;
     }
     try {
+      // The head as well as the body, so `<title data-text="pageTitle">` makes
+      // the page title an ordinary projection rather than needing a capability
+      // of its own — a title is a function of state, not an action. Nothing in
+      // a head binds unless it was written to, so this is inert for every page
+      // that does not opt in.
+      this.#bindElement(this.document.head, this.#root, undefined);
       this.#bindElement(this.document.body, this.#root, undefined);
     } catch (error) {
       // A malformed binding is a bridge integration failure, not a domain
@@ -213,6 +236,7 @@ export class BrowserKernel {
       "Storage",
       ...(navigation !== null ? (["Navigation"] as const) : []),
       ...(this.#clipboard !== null ? (["Clipboard"] as const) : []),
+      ...(this.#documentActions !== null ? (["Document"] as const) : []),
     ];
     await this.#send({
       kind: "Initialize",
@@ -427,6 +451,7 @@ export class BrowserKernel {
       case "Storage": return this.#executeStorage(effect);
       case "Navigate": return this.#executeNavigation(effect);
       case "Clipboard": return this.#executeClipboard(effect);
+      case "Document": return this.#executeDocument(effect);
     }
   }
 
@@ -499,6 +524,40 @@ export class BrowserKernel {
   // consult a permission, or refuse. It is still not cancellable — there is no
   // abort signal on the Clipboard API — and a refusal is an ordinary outcome
   // rather than an error.
+  // Synchronous, and never cancellable: focusing an element and scrolling a
+  // window either happen or the capability was not wired.
+  #executeDocument(effect: DocumentEffectRequest): EffectResult {
+    const view = this.#window;
+    const outcome: DocumentOutcome =
+      this.#documentActions === null || view === null
+        ? { kind: "Failure", reason: "unavailable" }
+        : this.#runDocument(effect, view);
+    return { kind: "DocumentResult", correlationId: effect.correlationId, outcome };
+  }
+
+  #runDocument(effect: DocumentEffectRequest, view: Window): DocumentOutcome {
+    if (effect.operation === "scrollToTop") {
+      // `scrollTo` is missing in jsdom and in a few embedded webviews. Not
+      // being able to scroll is not worth failing an effect over.
+      if (typeof view.scrollTo === "function") view.scrollTo(0, 0);
+      return { kind: "Success" };
+    }
+
+    // Whichever target is mounted right now. With one screen mounted at a time
+    // this is that screen's; the kernel does not know or care which.
+    const target = this.document.querySelector("[data-focus-target]");
+    if (!(target instanceof HTMLElement)) return { kind: "Failure", reason: "no-target" };
+
+    // A heading is not focusable by default, so `focus()` on one would do
+    // nothing at all — the exact silent no-op that makes this class of
+    // accessibility bug survive review. Making an element programmatically
+    // focusable is pure mechanism, so the kernel does it rather than requiring
+    // every author to remember `tabindex="-1"`.
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus();
+    return { kind: "Success" };
+  }
+
   async #executeClipboard(effect: ClipboardEffectRequest): Promise<EffectResult> {
     const outcome: ClipboardOutcome =
       this.#clipboard === null

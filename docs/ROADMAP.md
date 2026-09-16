@@ -54,7 +54,7 @@ plain, JSON-serializable value.
 | 1 | WASM lifecycle — load, initialize, version-check | ⚠️ Partial | `BrowserKernel.start()` dispatches `Initialize` with `PROTOCOL_VERSION`; `ReferenceEngine.handle()` rejects a mismatched version. "Expose the kernel instance" deliberately not done — no global handle, matching `architecture.yaml`'s `ambient_authority: forbidden`. | `kernel.test.ts`: "start() dispatches Initialize…", "a transport whose start() rejects…" |
 | 2 | Command dispatch | ✅ | `#bindEvent` / `#fire` | `kernel.test.ts` event-dispatch tests |
 | 3 | Projection rendering | ✅ | `#applyScope`, `#applyIf`, `#applyEach` | `kernel.test.ts` projection tests |
-| 4 | Effect execution | ⚠️ Partial | Http (`#runHttp`, any of `GET`/`PUT`/`POST`/`PATCH`/`DELETE`, caller headers merged over the default, opaque pre-serialized body) and Storage (`#executeStorage`/`runStorage`, `localStorage`-backed). Navigation (`#executeNavigation`, opt-in — see item 8). File/clipboard/auth adapters: 🧊 deferred, see below. | `kernel.test.ts` effect-execution tests |
+| 4 | Effect execution | ⚠️ Partial | Http (`#runHttp`, any of `GET`/`PUT`/`POST`/`PATCH`/`DELETE`, caller headers merged over the default, opaque pre-serialized body) and Storage (`#executeStorage`/`runStorage`, `localStorage`-backed). Navigation (`#executeNavigation`, opt-in — see item 8), Clipboard (`#executeClipboard`, opt-in — see item 17) and Document focus/scroll (`#executeDocument`, opt-in — see item 15). File/auth adapters: 🧊 deferred, see below. | `kernel.test.ts` effect-execution tests |
 | 5 | Effect result return — Succeeded/Failed/Cancelled/OutcomeUnknown | ✅ | `EffectOutcome` in `protocol.ts` now carries all four (`Success`, `Failure`, `Cancelled`, `OutcomeUnknown`); `#classifyAbort` in the kernel classifies transport-level outcomes only, never business meaning | `kernel.test.ts`: Success/Failure(network)/Failure(invalid-response)/OutcomeUnknown/Cancelled — one test each |
 | 6 | DOM event wiring — click/input/change/submit/keyboard/focus | ✅ | `TRIGGER_BY_TAG` maps the exceptions (`form`→submit, `input`/`select`/`textarea`→change); everything else defaults to `click`; `data-on` overrides to any DOM event type, including keyboard/focus events — no special-casing needed since the trigger is data-driven | `kernel.test.ts`: default triggers + `data-on` override |
 | 7 | Form value extraction | ✅ | `readValue()` | covered by event-dispatch tests |
@@ -65,7 +65,7 @@ plain, JSON-serializable value.
 | 12 | Serialization boundary | 🧊 Deferred | `DirectTypeScriptTransport` is in-process; no serialization occurs. `protocol.ts` types are already plain, JSON-serializable data by construction, so adding a codec later doesn't require a protocol redesign. Becomes relevant only once an out-of-process/WASM transport exists. | — |
 | 13 | Error boundary | ✅ | Every engine round-trip funnels through one chokepoint, `#send()`. A transport throw or a malformed projection is caught, reported via diagnostics, and does not propagate or leave a half-applied view. | `kernel.test.ts`: "a transport.dispatch() rejection is reported…", "a malformed projection is reported…" |
 | 14 | Diagnostics hooks | ✅ | `src/kernel/diagnostics.ts` — injectable `DiagnosticsSink`, defaults to a no-op. Reports `BridgeError` (dispatch/projection/effect phase) and `EffectTiming`. | `kernel.test.ts`: "the kernel reports effect timing…", both error-boundary tests |
-| 15 | Accessibility plumbing | ⚠️ Partial | `aria-live` regions work today because they're native HTML the kernel already updates via `data-text`/`textContent` (see `index.html`'s status paragraph) — no special kernel code needed. Focus restoration (e.g. after a keyed list item is removed) is 🧊 deferred, no demonstrated need yet. | — |
+| 15 | Accessibility plumbing | ✅ (route-change focus) | `aria-live` regions work today because they're native HTML the kernel already updates via `data-text`/`textContent` (see `index.html`'s status paragraph) — no special kernel code needed. Route-change focus is implemented: the `Document` capability's `focusTarget` moves focus to whichever element carries `data-focus-target`, adding `tabindex="-1"` so `focus()` on a heading is not a silent no-op. The engine decides *when*, the markup *where*, so no element id crosses the boundary. Focus restoration after a keyed list item is removed is still 🧊 deferred. | `kernel.test.ts` focus tests (target found inside a mounted `data-if`, author tabindex respected, `no-target`, unwired refusal); `examples.test.ts` asserts focus moves on navigation and on Back, and that a cold load and a deep link do **not** steal it |
 | 16 | Scheduling primitives — rAF/timers/idle callbacks | 🧊 Deferred | No feature currently needs debounced/scheduled semantic events; the coalesce/debounce allowance in zero-authoritative spec §15 is explicitly evidence-driven, not default. | — |
 | 17 | File/browser API adapters | ⚠️ Partial | Clipboard (`writeText`, opt-in) — `ClipboardEffectRequest`/`ClipboardOutcome` in `protocol.ts`, `#executeClipboard`/`runClipboard` in the kernel. Four normalized failure reasons (`permission-denied`, `not-secure-context`, `unsupported`, `failed`), never a browser exception string. Clipboard **read** is deliberately not implemented (least capability). Contents are never logged. File adapters: 🧊 deferred. | `kernel.test.ts` clipboard tests (all five outcomes, the unwired refusal, and a test proving contents never reach diagnostics); `site.test.ts` drives the real Copy button |
 | 18 | Storage adapters | ✅ (`localStorage` only) | `StorageEffectRequest`/`StorageOutcome` in `protocol.ts`; `#executeStorage`/`runStorage` in the kernel. `get`/`set`/`remove` only, no `IndexedDB`/`Cache API` — build those when a feature demonstrates the need, same 🧊 policy as everything else here. No `OutcomeUnknown`: a single `localStorage` call is effectively atomic, so unlike Http there's no meaningful "dispatched but uncertain" state; failures classify as `unavailable` or `quota-exceeded`. | `kernel.test.ts`: set→get round-trip, remove→get reports `null`, quota-exceeded classification, stale-cancellation-is-a-no-op |
@@ -114,17 +114,24 @@ flat record with optional/nullable fields"); the old shape would have allowed
 
 Still 🧊 deferred, for the same reason everything else on this list is:
 
-- **`document.title`.** A real gap for a routed single-page application: the
-  title will not follow the route, which affects the browser's history menu and
-  screen-reader announcements. Nothing shipped here has it — the site is static
-  HTML with a correct title per page. Options recorded in
-  [24-navigation-and-github-pages.md](24-navigation-and-github-pages.md#scroll-focus-and-the-document-title).
 - **Page reload, external navigation, open-in-new-tab.** A real `<a href>`
   already does the last two better.
-- **Scroll restoration and focus management on route change.** Left to native
-  behaviour; the accessible focus pattern is documented but unimplemented.
+- **Scroll *restoration*.** Deliberate, not a gap: browsers restore scroll on
+  history traversal natively (`history.scrollRestoration` defaults to `"auto"`),
+  and redoing it by hand throws away the position the user came back to see.
+  Resetting scroll on a *push* is implemented, because `pushState` deliberately
+  does not scroll.
+- **Focusing an arbitrary element.** Only the marked route target. A capability
+  that focuses anything on any state change is how focus management becomes
+  hostile to the user it is meant to help.
 - **Clipboard read.** Least capability — see
   [23-clipboard.md](23-clipboard.md#reading-the-clipboard).
+
+The `document.title` gap recorded here after WI-0015 was closed in WI-0016
+without a capability at all: the kernel binds the document head, so
+`<title data-text="pageTitle">` makes the title an ordinary projection. A title
+is a function of state, not an action, and modelling it as an effect would have
+meant every path that changes the screen having to remember to fire it.
 
 ## SHOULD NOT CONTAIN (invariants)
 

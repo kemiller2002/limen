@@ -63,7 +63,7 @@ classified before anything was renamed. Nothing was find-and-replaced.
 | --- | --- | --- | --- |
 | **Published package name** | `@echelon-foundry/typescript-wasm-kernel` | 17 | **PRESERVED** — renaming breaks every consumer |
 | **Public API symbol** | `BrowserKernel`, `EngineTransport`, `DirectTypeScriptTransport`, `ReferenceEngine`, `PROTOCOL_VERSION` | 26 | **PRESERVED** |
-| **Wire contract** | `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, the six `data-*` attributes | all | **PRESERVED** |
+| **Wire contract** | `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, the `data-*` attributes | all | **PRESERVED** |
 | **Filesystem path** | `src/kernel/`, `src/kernel/browser-kernel.ts`, `test/kernel.test.ts` | 3 | **PRESERVED** — renaming churns imports and `dist/` output paths for no functional gain |
 | **Component term** | "the kernel" meaning the browser bridge | many | **KEPT** — accurate; clarified to "the Limen kernel" where ambiguous |
 | **Product name** | "TypeScript WASM Kernel", "the WASM kernel" as a product | many | **RENAMED → Limen** |

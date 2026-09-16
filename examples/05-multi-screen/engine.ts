@@ -200,11 +200,41 @@ function arriveAt(state: State, screen: Screen): State {
  * a step to go Back from. `replaceState` does not fire `popstate`, so this
  * cannot feed itself.
  */
-function settle(state: State, screen: Screen, currentUrl: string, correlationId: CorrelationId): TransitionResult {
+/**
+ * What arriving on a screen costs, besides the state change.
+ *
+ * Focus moves on EVERY route change, including Back and Forward. Leaving a
+ * screen destroys its DOM, so focus would otherwise fall to `<body>` and a
+ * screen-reader user would get no indication that anything happened. Focusing
+ * the new heading announces it, which is the whole point.
+ *
+ * Scroll is reset only when the USER navigated. `pushState` deliberately does
+ * not scroll, so a new screen would otherwise open halfway down; but browsers
+ * already restore scroll for history traversal, and redoing it by hand would
+ * throw away the position the user came back to see.
+ */
+type Arrival = "initial" | "user" | "history";
+
+function arrivalEffects(correlationId: CorrelationId, cause: Arrival): readonly EffectRequest[] {
+  // A page that has only just loaded must not have focus yanked out of it —
+  // including a deep link, which reaches its screen by "moving" there from the
+  // initial state. The user has not navigated yet, and moving focus here would
+  // jump them past the skip link and the header they were one Tab from.
+  if (cause === "initial") return [];
+
+  const focus = { kind: "Document", correlationId, operation: "focusTarget" } as const;
+  return cause === "user"
+    ? [{ kind: "Document", correlationId, operation: "scrollToTop" }, focus]
+    : [focus];
+}
+
+function settle(state: State, screen: Screen, currentUrl: string, correlationId: CorrelationId, cause: Arrival): TransitionResult {
   const next = arriveAt(state, screen);
-  return hashOf(currentUrl) === urlFor(screen)
-    ? { state: next, effects: [] }
-    : { state: next, effects: [{ kind: "Navigate", correlationId, operation: "replace", url: urlFor(screen) }] };
+  const moved = next.screen !== state.screen;
+  const correction: readonly EffectRequest[] = hashOf(currentUrl) === urlFor(screen)
+    ? []
+    : [{ kind: "Navigate", correlationId, operation: "replace", url: urlFor(screen) }];
+  return { state: next, effects: [...correction, ...(moved ? arrivalEffects(correlationId, cause) : [])] };
 }
 
 export function transition(state: State, command: Command): TransitionResult {
@@ -217,12 +247,10 @@ export function transition(state: State, command: Command): TransitionResult {
       if (command.screen === state.screen) return { state, effects: [] };
       return {
         state: arriveAt(state, command.screen),
-        effects: [{
-          kind: "Navigate",
-          correlationId: command.correlationId,
-          operation: "push",
-          url: urlFor(command.screen),
-        }],
+        effects: [
+          { kind: "Navigate", correlationId: command.correlationId, operation: "push", url: urlFor(command.screen) },
+          ...arrivalEffects(command.correlationId, "user"),
+        ],
       };
     }
     case "FollowLink":
@@ -243,7 +271,7 @@ export function transition(state: State, command: Command): TransitionResult {
       // no effect at all; the exception is a URL that names no screen, which
       // resolves to Home and gets corrected so the address bar cannot go on
       // claiming something the application is not showing.
-      return settle(state, command.screen, command.url, command.correlationId);
+      return settle(state, command.screen, command.url, command.correlationId, "history");
     case "FilterCustomers":
       return { state: state.screen === "customers" ? { ...state, customerFilter: command.value } : state, effects: [] };
     case "EditDisplayName":
@@ -266,6 +294,16 @@ const LABELS: Readonly<Record<Screen, string>> = {
   settings: "Settings",
 };
 
+// The page title is a *function of state*, so it is projected like anything
+// else and bound with `<title data-text="pageTitle">`. It is not an effect:
+// nothing has to remember to fire it, and it cannot drift out of step with the
+// screen it names.
+const TITLES: Readonly<Record<Screen, string>> = {
+  home: "Home — Multi-screen example",
+  customers: "Customers — Multi-screen example",
+  settings: "Settings — Multi-screen example",
+};
+
 export function project(state: State): ViewState {
   const filter = state.customerFilter.trim().toLowerCase();
   const visible = filter === ""
@@ -286,6 +324,9 @@ export function project(state: State): ViewState {
     onHome: state.screen === "home",
     onCustomers: state.screen === "customers",
     onSettings: state.screen === "settings",
+
+    pageTitle: TITLES[state.screen],
+    screenHeading: LABELS[state.screen],
 
     greeting: `Hello, ${state.displayName}.`,
     displayName: state.displayName,
@@ -329,13 +370,13 @@ export function createMultiScreenTransport(): EngineTransport {
           // screen, should still leave the user on a URL that round-trips.
           // Same rule as a history move, so: same function.
           const location = message.location;
-          return respond(settle(state, screenFor(location), location, nextCorrelationId()));
+          return respond(settle(state, screenFor(location), location, nextCorrelationId(), "initial"));
         }
         case "Event":
           return respond(transition(state, eventToCommand(message.event, nextCorrelationId())));
         case "EffectResult": {
-          if (message.result.kind !== "NavigationResult") {
-            throw new Error("This engine only ever requests a Navigate effect.");
+          if (message.result.kind !== "NavigationResult" && message.result.kind !== "DocumentResult") {
+            throw new Error(`This engine never requests a ${message.result.kind} effect.`);
           }
           // A refused navigation leaves the screen where it is. The address
           // bar and the application then disagree, which is worth knowing

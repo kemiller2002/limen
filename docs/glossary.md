@@ -113,7 +113,7 @@ never directly. See
 
 **Canonical name** for the generic bridge, `src/kernel/browser-kernel.ts`. The
 only code permitted to touch `document`, `window`, `fetch`, or `localStorage`.
-Understands six `data-*` attributes and interprets none of them.
+Understands a small, fixed set of `data-*` attributes and interprets none of them.
 
 Say **"the Limen kernel"** where the bridge could be confused with the product.
 

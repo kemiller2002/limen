@@ -277,8 +277,11 @@ oversights being hidden — each is recorded in [ROADMAP.md](ROADMAP.md).
   integration — back/forward move between screens and deep links work — but the
   engine owns the URL-to-state mapping, and `<a href>` clicks are left to the
   browser. See [08-multi-screen-applications.md](08-multi-screen-applications.md).
-- **No scroll restoration.** Leaving a screen destroys its DOM and nothing puts
-  the scroll offset back.
+- **No scroll restoration**, deliberately: browsers already restore scroll on
+  Back/Forward, and redoing it by hand loses the position the user returned to
+  see. Scroll *is* reset on a push, since `pushState` does not scroll.
+- **Focus is managed only on a route change**, via `data-focus-target`. Focus
+  after a keyed list item is removed is still a known gap.
 - **No focus management.** Removing a focused list item loses focus.
 - **No list virtualization.** Every projected item becomes a DOM node.
 - **No scheduling primitives.** No built-in debounce; `data-on="input"`
