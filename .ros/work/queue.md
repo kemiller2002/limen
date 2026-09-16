@@ -13,4 +13,5 @@
 | WI-0008 | Make --verbose meaningful on verify, init and upgrade | complete | tooling | low |
 | WI-0009 | Record cross-platform CI results in the CLI documentation | complete | documentation | low |
 | WI-0010 | Release 0.5.0: first release carrying the Limen lifecycle CLI | complete | release | high |
-| WI-0011 | Record the hosted-sandbox git and toolchain limits in CLAUDE.md | ready | documentation | medium |
+| WI-0011 | Record the hosted-sandbox git and toolchain limits in CLAUDE.md | complete | documentation | medium |
+| WI-0012 | Fix the release workflow: npm pack --pack-destination needs the directory to exist | ready | tooling | high |

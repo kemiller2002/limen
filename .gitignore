@@ -20,3 +20,6 @@ runtimes/
 cli/**/bin/
 cli/**/obj/
 
+
+# The release archive staged by publish.yml (npm pack --pack-destination).
+release/

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 12,
+  "nextSeq": 13,
   "items": [
     {
       "id": "WI-0001",
@@ -184,6 +184,22 @@
       "attachments": [],
       "createdAt": "2026-09-16T12:49:31.493Z",
       "updatedAt": "2026-09-16T12:49:31.561Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0012",
+      "title": "Fix the release workflow: npm pack --pack-destination needs the directory to exist",
+      "description": "The v0.5.0 publish failed at the pack step with ENOENT because --pack-destination does not create its target directory. Create it first, and verify the remaining pack/verify/exercise chain locally since those steps had never executed.",
+      "tags": [
+        "tooling"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-16T13:19:21.889Z",
+      "updatedAt": "2026-09-16T13:19:21.952Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

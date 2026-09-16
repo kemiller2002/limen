@@ -59,8 +59,15 @@ jobs:
 
       # Build the real archive and exercise it, rather than trusting that the
       # source tree passing means the published package will work.
+      #
+      # `--pack-destination` does not create the directory: npm opens the
+      # tarball path for writing and fails with ENOENT if the parent is
+      # missing. That is what broke the v0.5.0 release.
       - name: Pack the release archive
-        run: npm pack --pack-destination ./release
+        shell: bash
+        run: |
+          mkdir -p release
+          npm pack --pack-destination ./release
 
       - name: Verify the packed archive contains every platform binary
         shell: bash
