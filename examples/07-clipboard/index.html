@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clipboard — kernel example 07</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Copy a link</h1>
+
+      <!-- One row per share. The button carries the item's key, so the engine
+           learns *which* share was clicked without the kernel knowing that a
+           "share" is a thing. The URL on screen is projected from the same
+           state the engine copies from — they cannot drift apart. -->
+      <ul class="list">
+        <template data-each="shares" data-key="id">
+          <li>
+            <strong data-text="label"></strong>
+            <code data-text="url"></code>
+            <button data-event="copy" data-bind-disabled="copyDisabled">Copy</button>
+          </li>
+        </template>
+      </ul>
+
+      <!-- Mounted only while there is something to say. The engine decides
+           that; the DOM does not test the status string for emptiness. -->
+      <template data-if="showStatus">
+        <p class="status" role="status" data-text="statusText"></p>
+      </template>
+
+      <!-- Offered only for the one failure a retry can fix. -->
+      <template data-if="canRetry">
+        <p>The clipboard is usually granted on a fresh click.</p>
+      </template>
+
+      <template data-if="showStatus">
+        <button data-event="dismiss" data-bind-disabled="copyDisabled">Dismiss</button>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

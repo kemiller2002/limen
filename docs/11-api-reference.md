@@ -16,7 +16,7 @@ Know what you are allowed to depend on.
 
 | Tier | What | Examples |
 | --- | --- | --- |
-| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `PROTOCOL_VERSION`, the six `data-*` attributes |
+| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, the six `data-*` attributes |
 | **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport` (write your own), `DiagnosticsSink` (supply your own) |
 | **Reference implementation** | Ships, but is this repo's demo. Do **not** build on it. | `DirectTypeScriptTransport`, `ReferenceEngine`, `project`, `State`, `Command`, `TransitionResult`, `EmailAddress` |
 | **Internal** | Private; may change without notice. | every `#`-prefixed member of `BrowserKernel`, `Scope`/binding types, `TRIGGER_BY_TAG`, `BOOLEAN_PROPS` |
@@ -92,7 +92,10 @@ Performs, in order:
    non-`<template>` element, a template with more than one root — it reports
    `BridgeError { phase: "binding" }` and returns without dispatching
    `Initialize`.
-3. Dispatches `Initialize { protocolVersion: 1, capabilities: ["Http", "Storage"] }`.
+3. Registers one `popstate` listener on `window`, which sends
+   `LocationChanged` whenever the browser moves through history on its own.
+4. Dispatches `Initialize { protocolVersion: 1, capabilities: [...], location }`,
+   where `location` is the URL the page was loaded at.
 
 **Never rejects.** All failures go to diagnostics. The page stays at its
 placeholder content, which is the visible symptom of a failure in step 1 or 2.
@@ -169,11 +172,26 @@ performing effects yourself instead of requesting them; forgetting that
 ### `BrowserToEngineMessage`
 
 ```ts
+type Capability = "Http" | "Storage" | "Clipboard" | "Navigation";
+
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly ["Http", "Storage"] }
-  | { kind: "Event";        event:  SemanticEvent }
-  | { kind: "EffectResult"; result: EffectResult };
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation }
+  | { kind: "Event";           event:    SemanticEvent }
+  | { kind: "EffectResult";    result:   EffectResult }
+  | { kind: "LocationChanged"; location: BrowserLocation };
 ```
+
+`capabilities` lists what the **kernel implements** — not what this browser will
+permit. Availability and permission are reported per effect, in that effect's
+own outcome. Do not use this list to pre-disable a control.
+
+`LocationChanged` is the one message nobody requested: the browser moved on its
+own (Back, Forward, a gesture). It is not an `EffectResult` because nothing
+correlates it. An engine may ignore it; it simply will not react to Back.
+
+**Failure behavior**: an engine whose `dispatch` throws on an unrecognised
+message kind will break on a `LocationChanged` it did not expect. Handle it, or
+return the current projection unchanged.
 
 ### `EngineToBrowserMessage`
 
@@ -308,13 +326,90 @@ type StorageOutcome =
 `null`/unused for `set`/`remove`. No `OutcomeUnknown` — a single `localStorage`
 call is atomic.
 
+### `ClipboardEffectRequest`
+
+```ts
+type ClipboardEffectRequest = {
+  kind: "Clipboard";
+  correlationId: CorrelationId;
+  operation: "writeText";   // write-only; there is no readText
+  text: string;             // never surfaced in a DiagnosticEvent
+};
+```
+
+**Failure behavior**: `denied` (the browser refused this attempt — usually a
+stale user gesture; a retry often works), `unavailable` (no Clipboard API in
+this browser or context — a retry never works), `unknown`.
+
+**Common mistake**: offering a retry for `unavailable`. Full guide:
+[clipboard.md](clipboard.md).
+
+### `ClipboardOutcome`
+
+```ts
+type ClipboardOutcome =
+  | { kind: "Success" }
+  | { kind: "Failure"; reason: "denied" | "unavailable" | "unknown" };
+```
+
+No payload on success, and no `OutcomeUnknown`: a refused write did not happen.
+
+### `NavigationEffectRequest`
+
+```ts
+type NavigationEffectRequest =
+  | { kind: "Navigation"; correlationId; operation: "push";    url: string }
+  | { kind: "Navigation"; correlationId; operation: "replace"; url: string }
+  | { kind: "Navigation"; correlationId; operation: "back" }
+  | { kind: "Navigation"; correlationId; operation: "forward" };
+```
+
+`url` must be same-origin; anything else is refused with `not-same-origin` and
+the page does not move. No history state object is stored — the engine already
+owns the state a URL stands for.
+
+**Common mistake**: requesting a navigation in response to `LocationChanged`.
+The browser has already moved; pushing again traps the user. Full guide:
+[routing.md](routing.md).
+
+### `NavigationOutcome`
+
+```ts
+type NavigationOutcome =
+  | { kind: "Success"; location: BrowserLocation }   // push/replace
+  | { kind: "Dispatched" }                           // back/forward: asked, not moved
+  | { kind: "Failure"; reason: "unavailable" | "not-same-origin" };
+```
+
+`Dispatched` is not a weaker `Success`. `back`/`forward` only ask; the move
+arrives later as `LocationChanged`, or never, if there was nowhere to go.
+
+### `BrowserLocation`
+
+```ts
+type BrowserLocation = {
+  path:  string;   // "/invoices/42"       — always begins with "/"
+  query: string;   // "?tab=history" or "" — leading "?" included
+  hash:  string;   // "#totals" or ""      — leading "#" included
+};
+```
+
+Split mechanically by the kernel and not interpreted further. The origin is
+deliberately absent.
+
 ### `EffectResult`
 
 ```ts
 type EffectResult =
-  | { kind: "HttpResult";    correlationId: CorrelationId; outcome: EffectOutcome }
-  | { kind: "StorageResult"; correlationId: CorrelationId; outcome: StorageOutcome };
+  | { kind: "HttpResult";       correlationId: CorrelationId; outcome: EffectOutcome }
+  | { kind: "StorageResult";    correlationId: CorrelationId; outcome: StorageOutcome }
+  | { kind: "ClipboardResult";  correlationId: CorrelationId; outcome: ClipboardOutcome }
+  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome };
 ```
+
+An effect kind the kernel does not implement produces **no result at all** — it
+is reported as `BridgeError { phase: "effect" }`. An engine waiting on that
+correlation id waits forever, which is why it is reported loudly.
 
 ---
 

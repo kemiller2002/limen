@@ -313,6 +313,92 @@ Write your own `EngineTransport` — about eight lines,
 
 ---
 
+## An effect runs but the result never comes back
+
+The engine sits in `Loading`/`Copying`/`Saving` forever. Nothing throws.
+
+**Almost always**: the kernel could not run the effect at all. It reports
+`BridgeError { phase: "effect" }` and sends **no result**, because there is no
+outcome it could report honestly — so an engine awaiting that correlation id
+waits forever.
+
+1. Install a diagnostics sink (top of this document) and look for
+   `phase: "effect"`. The detail names the effect.
+2. `Unsupported effect kind: …` means the engine emitted a `kind` the kernel
+   does not implement. The four are `Http`, `Storage`, `Clipboard`,
+   `Navigation`. Check for a typo or a capability you assumed existed.
+3. If the effect *did* run (you see `EffectTiming` for its correlation id), the
+   result reached the engine and the engine discarded it — see the next entry.
+
+## The result arrives but the state does not change
+
+Your `transition` rejected it as stale. That is usually correct behavior, and
+occasionally a bug in the correlation id.
+
+1. Log the id the engine is waiting on and the id on the result. A mismatch
+   means the state moved on — check whether it should have.
+2. A result arriving in a state that no longer expects one (`Idle` receiving a
+   `Loaded`) is *also* correctly ignored.
+3. Minting a fresh id per request is required; reusing one across two in-flight
+   requests makes the stale guard unable to tell them apart.
+
+## A clipboard copy never succeeds
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| `Failure { reason: "unavailable" }` always | not a secure context (`http://` on a non-localhost host), or a browser with no Clipboard API | serve over `https://` or `localhost`; there is no code fix |
+| `Failure { reason: "denied" }` always | no fresh user gesture — the copy runs after an `await` on a fetch, a timer, or a non-user event | copy what you already have, inside the click's own round trip |
+| `denied` only in an iframe | missing `allow="clipboard-write"` | add it to the iframe |
+| Nothing happens at all, no result | see "An effect runs but the result never comes back" | — |
+
+`jsdom` has no Clipboard API, so tests hit `unavailable` unless they stub
+`window.navigator.clipboard` — which is the intended way to reach the other
+paths. See [clipboard.md](clipboard.md#testing-it).
+
+## The Back button changes the URL but not the screen
+
+Your engine is not handling `LocationChanged`.
+
+1. Confirm the kernel is sending it: log every message the transport receives.
+   The kernel registers its `popstate` listener inside `start()`, so an engine
+   whose `start()` never completed will never see one.
+2. Confirm your `dispatch` has a `LocationChanged` branch. TypeScript catches a
+   missing case in an exhaustive `switch`; an `if/else` chain does not.
+3. Confirm `parseRoute` recognises the URL you went back to. An unrecognised
+   URL should produce a `NotFound` route, not nothing.
+
+## Back becomes impossible — the page traps the user
+
+You are requesting a navigation in response to `LocationChanged`. Back fires
+`popstate`, your engine pushes the old URL again, and the stack never unwinds.
+
+A browser-initiated move needs **no effect**: the address bar is already
+correct. Only an application-initiated move pushes. See
+[routing.md](routing.md#the-asymmetry-that-matters).
+
+## A route works locally but 404s on GitHub Pages
+
+1. **Are you using path routing?** A direct load of `/invoices/42` asks the host
+   for a file that does not exist. Query routing (`?route=/invoices/42`) has no
+   such problem, which is why
+   [examples/08-routing](../examples/08-routing/README.md) uses it.
+2. **Did you capture the base path?** An app served from `/my-app/` must build
+   URLs from `Initialize.location.path`, not from `/`. Forgetting this is the
+   single most common cause.
+3. **Test a direct load and a refresh**, not in-app navigation. In-app
+   navigation works in both configurations and hides the problem.
+
+## `Failure { reason: "not-same-origin" }`
+
+The kernel refuses to navigate off the origin, and the page does not move.
+Leaving the site ends the application and discards all engine state — use an
+ordinary `<a href>`, which needs no capability.
+
+If the URL *looks* same-origin, check for a missing base (`invoices/42` resolves
+against the current directory) or a protocol-relative `//host/path`.
+
+---
+
 ## Nothing loads from `file://`
 
 ES modules require `http://`. Serve the directory:

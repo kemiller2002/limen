@@ -99,9 +99,31 @@ JavaScript side of a WASM boundary, this one says **kernel**.
 
 ### `Initialize`
 
-The first message the kernel sends, carrying `protocolVersion` and
-`capabilities`. Its response is an ordinary `EngineToBrowserMessage` and may
-carry effects — which is how startup loads happen.
+The first message the kernel sends, carrying `protocolVersion`, `capabilities`
+and the `BrowserLocation` the page was loaded at. Its response is an ordinary
+`EngineToBrowserMessage` and may carry effects — which is how startup loads
+happen, and the location is how a routing engine picks its first screen without
+rendering a default first.
+
+### `BrowserLocation`
+
+The current URL, split by the kernel into `path`, `query` and `hash`, and not
+interpreted further. The origin is deliberately absent. Splitting is browser
+mechanism; deciding that `/invoices/42` names an invoice is application
+meaning.
+
+### `LocationChanged`
+
+The message the kernel sends when the browser moved through history **on its
+own** — Back, Forward, or a gesture. It is not an `EffectResult`, because no
+effect was requested and nothing correlates it. An engine that ignores it still
+works; it simply will not react to Back.
+
+### Route
+
+An engine-defined type describing what a URL means — `Home`, `Invoice(id)`,
+`NotFound(raw)`. Limen has no route table and no path matching: `parseRoute`
+and `routeToUrl` are functions you write. See [routing.md](routing.md).
 
 ### Interop
 

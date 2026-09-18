@@ -27,5 +27,10 @@
   // default exclude is the outDir itself, which would exclude every input.
   // Emitted .js never matches the include glob, so there is no feedback loop.
   "include": ["examples/**/*.ts"],
-  "exclude": []
+  // examples/minimal/ is the copy shipped inside the npm package. It imports
+  // the kernel by its published package name, which does not resolve inside
+  // this repository (the package is not installed into its own node_modules),
+  // and it needs no build step at all — that is the point of it. It is
+  // type-checked against the *installed* package by scripts/clean-room.ts.
+  "exclude": ["examples/minimal"]
 }

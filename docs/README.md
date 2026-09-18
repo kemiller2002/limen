@@ -11,6 +11,17 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 
 ## Start here
 
+Read these four in order and you will not need to read the source to use Limen.
+
+| Document | Answers |
+| --- | --- |
+| [Quick start](quick-start.md) | How do I get something working in five minutes? |
+| [Mental model](mental-model.md) | Who owns state, the DOM, routing, decisions? |
+| [Where does code go?](where-code-goes.md) | I have a change — which layer does it belong in? |
+| [Three complete traces](traces.md) | What actually happens, file by file, in one interaction? |
+
+Then, for depth:
+
 | # | Document | Answers |
 | --- | --- | --- |
 | — | [Root README](../README.md) | What is this, and why does it exist? |
@@ -25,8 +36,10 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 | 04 | [State model](04-state-model.md) | Where does state live, and how is it shaped? |
 | 05 | [Events and dispatch](05-events-and-dispatch.md) | How does a click become an application action? |
 | 06 | [Rendering](06-rendering.md) | How does state reach the screen? Is this a UI framework? |
-| 07 | [Effects and browser interop](07-effects-and-browser-interop.md) | How does anything leave the application? Includes HTTP and storage in full. |
+| 07 | [Effects and browser interop](07-effects-and-browser-interop.md) | How does anything leave the application? Every capability, in full. |
 | 08 | [Multi-screen applications](08-multi-screen-applications.md) | How do I structure more than one screen? |
+| — | [Routing](routing.md) | URLs, Back/Forward, deep links, static hosting |
+| — | [Clipboard](clipboard.md) | Copying text, and the browser rules you cannot engineer around |
 
 ## Working with it
 
@@ -83,7 +96,13 @@ so they cannot silently stop working.
 | [04-save-data](../examples/04-save-data/) | Full save lifecycle, Storage effect, non-idempotent write safety |
 | [05-multi-screen](../examples/05-multi-screen/) | Screens as state, shared vs. screen-local state, engine-side filtering |
 | [06-time-entries](../examples/06-time-entries/) | A realistic feature: load, validate, add, mutate, refresh |
+| [07-clipboard](../examples/07-clipboard/) | The Clipboard capability: three failure reasons, only one worth retrying |
+| [08-routing](../examples/08-routing/) | The Navigation capability: typed routes, deep links, Back and Forward |
+| [minimal](../examples/minimal/) | The copy shipped inside the npm package: four files, no build step |
 | [kitchen-sink](../examples/kitchen-sink.html) | Every bridge primitive and every effect outcome, interactively |
+
+Every example has its own README covering its state model, event and effect
+flow, exercises, and the mistakes people actually make with it.
 
 ## Governance and process
 

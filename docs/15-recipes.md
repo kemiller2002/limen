@@ -351,7 +351,14 @@ the kernel.**
 Read [12-design-rules.md](12-design-rules.md) 7.4 first: do not build a
 capability before a real feature needs it.
 
-Worked example — clipboard:
+The worked example below is **Clipboard, and it is now real** — these are the
+steps that were actually taken to add it. Read the finished version alongside
+it: [`src/protocol.ts`](../src/protocol.ts) for the types,
+[`src/kernel/browser-kernel.ts`](../src/kernel/browser-kernel.ts) for
+`writeClipboardText`, and [clipboard.md](clipboard.md) for the guide it
+produced. `Navigation` was added the same way, with one extra step: it also
+introduced a browser-originated message (`LocationChanged`), which is what you
+need when the browser can act without being asked.
 
 **1. Extend the protocol** ([`src/protocol.ts`](../src/protocol.ts)):
 
@@ -374,7 +381,10 @@ export type EffectResult =
   | { readonly kind: "ClipboardResult"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome };
 ```
 
-**2. Announce it** — add `"Clipboard"` to the `Initialize` capabilities tuple.
+**2. Announce it** — add `"Clipboard"` to the `Capability` union, which is what
+`Initialize` carries. Announce it **unconditionally**: the list says what the
+kernel implements, not what this browser will permit. Availability belongs in
+the outcome.
 
 **3. Execute it** ([`browser-kernel.ts`](../src/kernel/browser-kernel.ts)):
 
@@ -390,9 +400,13 @@ async #executeClipboard(effect: ClipboardEffectRequest): Promise<EffectResult> {
 }
 ```
 
-**4. Route it** in `#executeEffect`.
+**4. Route it** in `#runEffect`'s `switch`. The switch ends in
+`assertNeverEffect`, so a variant you add to `EffectRequest` without a branch
+is a **compile error** rather than an effect that silently vanishes.
 
-**5. Test it** in `test/kernel.test.ts`, including the failure classification.
+**5. Test it** in `test/kernel.test.ts`, including every failure
+classification. Provoke each one for real — a reason you cannot produce in a
+test is a reason you do not understand.
 
 **6. Document it** — [07-effects-and-browser-interop.md](07-effects-and-browser-interop.md),
 [11-api-reference.md](11-api-reference.md), and [ROADMAP.md](ROADMAP.md).
@@ -406,6 +420,156 @@ async #executeClipboard(effect: ClipboardEffectRequest): Promise<EffectResult> {
   possible. It is for Http; it is not for Storage or a clipboard write.
 - ❌ No domain vocabulary anywhere in the kernel.
 - ❌ No orchestration, retries, or sequencing.
+
+---
+
+## Copy text to the clipboard
+
+**Layers:** engine. **Kernel:** none — the capability exists.
+
+```ts
+// 1. A state for the wait. It is real: the write is async and can be refused.
+type State =
+  | { kind: "Idle" }
+  | { kind: "Copying"; correlationId: CorrelationId }
+  | { kind: "Copied" }
+  | { kind: "CopyFailed"; reason: "denied" | "unavailable" | "unknown" };
+
+// 2. Ask.
+case "Copy":
+  if (state.kind === "Copying") return stay(state);   // refuse a racing second click
+  return go({ kind: "Copying", correlationId }, [
+    { kind: "Clipboard", correlationId, operation: "writeText", text: command.text },
+  ]);
+
+// 3. Record. Check the correlation id first.
+case "RecordCopy":
+  if (state.kind !== "Copying" || state.correlationId !== command.correlationId) return stay(state);
+  return command.outcome.kind === "Success"
+    ? go({ kind: "Copied" })
+    : go({ kind: "CopyFailed", reason: command.outcome.reason });
+```
+
+Copy from **state**, never by reading the text back out of the DOM, and keep
+the round trip inside the click: a copy that waits on a fetch first has usually
+lost the user gesture and will come back `denied`.
+
+Only `denied` is worth offering a retry for. Full detail:
+[clipboard.md](clipboard.md). Running example:
+[examples/07-clipboard](../examples/07-clipboard/README.md).
+
+---
+
+## Handle the browser's Back and Forward buttons
+
+**Layers:** engine. **Kernel:** none — the capability exists.
+
+Two directions, two commands, and they are **not** symmetrical:
+
+```ts
+// The application decided to move: change the route AND ask the browser.
+case "Navigate":
+  if (sameRoute(state.route, command.route)) return stay(state);   // no duplicate entries
+  return go({ ...state, route: command.route }, [
+    { kind: "Navigation", correlationId, operation: "push", url: routeToUrl(state.base, command.route) },
+  ]);
+
+// The browser moved on its own: adopt, and ask for NOTHING.
+case "AdoptLocation":
+  return go({ ...state, route: parseRoute(command.location) });
+```
+
+```ts
+case "LocationChanged":
+  return respond(transition(state, { kind: "AdoptLocation", location: message.location }));
+```
+
+Requesting a navigation here is the classic trap — Back fires `popstate`, you
+push the old URL back on, and the user cannot leave. Assert it in a test:
+
+```ts
+assert.equal(routeTransition(state, adoptCommand).effects.length, 0);
+```
+
+Take the first screen from `Initialize.location` so a deep link does not render
+the default screen first. Full detail: [routing.md](routing.md). Running
+example: [examples/08-routing](../examples/08-routing/README.md).
+
+---
+
+## Validate a form
+
+**Layers:** engine. **Kernel:** none.
+
+```ts
+// 1. Rules are pure functions, and they live in exactly one place.
+const isEmailValid = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
+// 2. An empty field is incomplete, not wrong. Do not scold someone who has not
+//    typed yet.
+const emailMessage = (value: string): string =>
+  value === "" || isEmailValid(value) ? "" : "Enter a valid email address.";
+
+// 3. Project both the message and the capability.
+const project = (state: State): ViewState => ({
+  emailMessage: emailMessage(state.draft.email),
+  showEmailMessage: emailMessage(state.draft.email) !== "",
+  submitDisabled: !isDraftValid(state.draft),
+});
+
+// 4. And ALSO refuse the illegal transition. The disabled button is a
+//    projection of the rule, not the rule.
+case "Submit":
+  return isDraftValid(state.draft) ? go({ kind: "Submitted", draft: state.draft }) : stay(state);
+```
+
+Native `required`/`pattern` attributes are a convenience for the user — the
+kernel calls `reportValidity()` before dispatching a submit — but they are not
+where the rule lives. Running example:
+[examples/02-form](../examples/02-form/README.md).
+
+---
+
+## Debug an event that goes nowhere
+
+**Layers:** diagnostics.
+
+A button does nothing. Work down this list; each step eliminates one layer.
+
+1. **Is the kernel bound?** Install a `DiagnosticsSink`
+   ([16-troubleshooting.md](16-troubleshooting.md)). A `BridgeError` with
+   `phase: "binding"` means `start()` bailed out and **nothing** on the page is
+   wired.
+2. **Is the attribute spelled right?** `data-event`, not `data-events`. An
+   unrecognised `data-*` attribute is silently ignored — it is just an
+   attribute.
+3. **Is the trigger what you think?** `<input>` defaults to `change`, not
+   `input`. Add `data-on="input"` if you want every keystroke.
+4. **Does the event reach the transport?** Wrap it and log both directions:
+
+   ```ts
+   const logged: EngineTransport = {
+     start: () => inner.start(),
+     dispatch: async (message) => {
+       console.log("→", message);
+       const response = await inner.dispatch(message);
+       console.log("←", response);
+       return response;
+     },
+   };
+   ```
+
+5. **Does the engine recognise the name?** An unmapped name should throw
+   `Unrecognized event: …`, which surfaces as `BridgeError { phase: "dispatch" }`
+   rather than a crash. Silence here means your `eventToCommand` has a
+   `default` that swallows it.
+6. **Did the transition accept it?** Log `accepted`. A refused illegal
+   transition looks exactly like nothing happening — and is often correct.
+7. **Did the projection change?** If the response's `view` is identical, the
+   DOM correctly does nothing.
+8. **Is the element inside a `data-each`?** Bindings there resolve against the
+   **item**, not the top-level view. A missing key fails the whole projection
+   with `BridgeError { phase: "projection" }`.
 
 ---
 

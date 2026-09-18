@@ -7,27 +7,26 @@ Working example: [`examples/05-multi-screen/`](../examples/05-multi-screen/).
 
 ---
 
-## Start with the limitation
+## Start with the choice
 
-**There is no router, and no browser-history integration.** ROADMAP item 8 is
-deferred. Concretely:
+This document covers screens **without URLs**: several screens inside one page
+load, where the address bar never changes.
 
-- The URL does not change when the screen does.
-- Back and forward do not navigate between screens. Back leaves the application.
-- Screens are not linkable, bookmarkable, or shareable.
-- There is no `popstate` handling, because the kernel has no navigation
-  capability at all.
+That is a real choice, not a limitation. A tab strip, a wizard step, a detail
+pane — giving those URLs commits you to keeping them working forever, and most
+of them were never meant to be bookmarked.
 
-If your application needs real URLs, this kernel does not provide them today.
-Adding them is a protocol extension (a Navigation capability) plus an
-`EffectRequest` variant — see
-[15-recipes.md](15-recipes.md#add-a-new-browser-capability). Do not work around
-it by calling `history.pushState` from page JavaScript: that puts navigation
-state outside the engine and creates exactly the split-brain the architecture
-exists to prevent.
+When a screen **should** be linkable, shareable, or survive a reload, that is
+routing, and Limen has a `Navigation` capability for it: push, replace, back,
+forward, the browser's own moves, and the URL the page was loaded at. See
+[routing.md](routing.md) and
+[examples/08-routing](../examples/08-routing/README.md).
 
-What *is* supported is multiple screens within one page load. That is what
-follows.
+What you must not do in either case is call `history.pushState` from page
+JavaScript. That puts navigation state outside the engine and creates exactly
+the split-brain the architecture exists to prevent.
+
+What follows is the no-URL case.
 
 ---
 

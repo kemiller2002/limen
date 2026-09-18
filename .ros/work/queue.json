@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 15,
+  "nextSeq": 17,
   "items": [
     {
       "id": "WI-0001",
@@ -233,6 +233,39 @@
       "attachments": [],
       "createdAt": "2026-09-18T06:09:16.438Z",
       "updatedAt": "2026-09-18T06:09:22.625Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0015",
+      "title": "Add clipboard, routing and npm-minimal examples with per-example READMEs",
+      "description": null,
+      "tags": [
+        "examples",
+        "documentation"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:16:22.820Z",
+      "updatedAt": "2026-09-18T06:16:27.215Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0016",
+      "title": "Documentation: mental model, where-code-goes, quick start, traces, routing and clipboard guides",
+      "description": null,
+      "tags": [
+        "documentation"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:36:27.660Z",
+      "updatedAt": "2026-09-18T06:36:27.714Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

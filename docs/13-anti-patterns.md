@@ -527,6 +527,105 @@ helper in [`test/kernel.test.ts`](../test/kernel.test.ts).
 
 ---
 
+## 16. Pushing a URL in response to `LocationChanged`
+
+The single most common routing bug, and it makes a page inescapable.
+
+**Wrong:**
+
+```ts
+case "LocationChanged": {
+  const route = parseRoute(message.location);
+  return {
+    view: project({ ...state, route }),
+    // The browser has ALREADY moved. Asking it to move again re-pushes the
+    // URL the user just left, so Back can never unwind the stack.
+    effects: [{ kind: "Navigation", correlationId, operation: "push", url: routeToUrl(route) }],
+    cancellations: [],
+  };
+}
+```
+
+**Right:**
+
+```ts
+case "LocationChanged":
+  // Adopt. Request nothing: the address bar is already correct.
+  return respond(transition(state, { kind: "AdoptLocation", location: message.location }));
+```
+
+**Why it happens**: the two directions look symmetrical and are not. An
+application-initiated move must tell the browser; a browser-initiated move must
+not. Keep them as two separate commands — `Navigate` and `AdoptLocation` — and
+the mistake becomes hard to write.
+
+**Rule**: 1.4 (one source of truth — including for "where are we?").
+**Detected by**: a test that asserts `AdoptLocation` produces zero effects.
+
+---
+
+## 17. Using the capability list as a permission check
+
+**Wrong:**
+
+```ts
+case "Initialize":
+  // `capabilities` says what the KERNEL implements. It always contains
+  // "Clipboard". This disables nothing, and on a browser that would have
+  // refused the write it still shows an enabled button.
+  return { view: project({ ...state, canCopy: message.capabilities.includes("Clipboard") }), … };
+```
+
+**Right:**
+
+```ts
+// Try. The outcome tells you the truth, and distinguishes the failure you can
+// recover from ("denied" — click again) from the one you cannot ("unavailable").
+case "RecordCopy":
+  return command.outcome.kind === "Success"
+    ? go({ kind: "Copied" })
+    : go({ kind: "CopyFailed", reason: command.outcome.reason });
+```
+
+**Why it matters**: permission and availability are properties of *this call in
+this context at this moment* — a stale user gesture, an insecure origin, an
+iframe without `allow`. A startup list cannot know any of that, and a UI built
+on it will be confidently wrong.
+
+**Rule**: 4.3 (represent outcomes, do not predict them).
+**Detected by**: review; and by a test that drives the unavailable path.
+
+---
+
+## 18. Advising a retry that cannot succeed
+
+**Wrong:**
+
+```ts
+const message = (state: State) =>
+  state.kind === "CopyFailed" ? "Copy failed. Please try again." : "";
+```
+
+**Right:**
+
+```ts
+switch (state.reason) {
+  case "denied":      return "The browser refused the copy. Click Copy again — it usually works on a fresh click.";
+  case "unavailable": return "This browser will not give the page clipboard access. Select the link and copy it manually.";
+  case "unknown":     return "The copy did not complete.";
+}
+```
+
+**Why it matters**: the reasons are distinguished in the protocol *because* the
+answers differ. Collapsing them throws away the only honest advice you can
+give, and sends the user into a loop that can never end.
+
+**Rule**: 4.4 (every outcome variant means something; handle it).
+**Detected by**: review; and by projecting `canRetry` rather than a bare
+`failed` flag.
+
+---
+
 ## Quick reference
 
 | Anti-pattern | Rule | Detected by |
@@ -546,6 +645,9 @@ helper in [`test/kernel.test.ts`](../test/kernel.test.ts).
 | Logging credentials | 3.5 | review |
 | Reference transport in production | — | runtime throw |
 | Double `start()` | — | review |
+| Push on `LocationChanged` | 1.4 | test |
+| Capability list as permission | 4.3 | review |
+| Retry advice that cannot work | 4.4 | review |
 
 ---
 

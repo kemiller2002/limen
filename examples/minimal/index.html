@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Limen — minimal application</title>
+  </head>
+  <body>
+    <main>
+      <h1>Counter</h1>
+
+      <!-- data-event sends SemanticEvent { name: "increment" } to the engine.
+           The kernel has no idea what "increment" means. -->
+      <button data-event="increment">Add one</button>
+
+      <!-- data-bind-disabled sets the .disabled property from view.resetDisabled.
+           The engine decides availability; the DOM does not re-derive it. -->
+      <button data-event="reset" data-bind-disabled="resetDisabled">Reset</button>
+
+      <!-- data-text sets textContent from view.count. -->
+      <p>Count: <span data-text="count">0</span></p>
+    </main>
+
+    <!-- Browsers cannot resolve a bare package name on their own. An import
+         map points it at the installed package — no bundler, no build step.
+         A bundler (Vite, esbuild, webpack) would resolve it instead, and then
+         this block is unnecessary. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@echelon-foundry/typescript-wasm-kernel": "./node_modules/@echelon-foundry/typescript-wasm-kernel/dist/index.js"
+        }
+      }
+    </script>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
