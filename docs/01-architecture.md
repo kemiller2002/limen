@@ -84,15 +84,16 @@ needed. It has no access to the browser — enforced mechanically, see §4.
 
 ## 2. The contract
 
-Exactly two message shapes cross the boundary.
+Two message shapes cross the boundary — one in each direction.
 
 **Browser → Engine** ([`protocol.ts`](../src/protocol.ts)):
 
 ```ts
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: ["Http", "Storage"] }
-  | { kind: "Event";        event:  SemanticEvent }
-  | { kind: "EffectResult"; result: EffectResult };
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation }
+  | { kind: "Event";           event:    SemanticEvent }
+  | { kind: "EffectResult";    result:   EffectResult }
+  | { kind: "LocationChanged"; location: BrowserLocation };
 
 type SemanticEvent = {
   kind: "Event";
@@ -269,11 +270,14 @@ structural. See [17-wasm-migration.md](17-wasm-migration.md).
 Things this architecture does not currently give you. None of these are
 oversights being hidden — each is recorded in [ROADMAP.md](ROADMAP.md).
 
-- **No routing or history integration.** Back/forward buttons do not navigate
-  between screens. See [08-multi-screen-applications.md](08-multi-screen-applications.md).
-- **No browser capabilities beyond Http and `localStorage`.** No clipboard, no
-  files, no timers, no navigation, no `IndexedDB`. Adding one is a protocol
-  change — see [15-recipes.md](15-recipes.md#add-a-new-browser-capability).
+- **No router.** There is a `Navigation` capability — push, replace, back,
+  forward, and the browser's own moves — but no route table and no path
+  matching. What a URL *means* is yours to decide, which is the point. See
+  [routing.md](routing.md).
+- **No browser capabilities beyond Http, `localStorage`, clipboard *write*, and
+  history.** No files, no timers, no focus control, no `IndexedDB`, and no
+  clipboard *read*. Adding one is a protocol change — see
+  [15-recipes.md](15-recipes.md#add-a-new-browser-capability).
 - **No focus management.** Removing a focused list item loses focus.
 - **No list virtualization.** Every projected item becomes a DOM node.
 - **No scheduling primitives.** No built-in debounce; `data-on="input"`

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 14,
+  "nextSeq": 22,
   "items": [
     {
       "id": "WI-0001",
@@ -216,6 +216,138 @@
       "attachments": [],
       "createdAt": "2026-09-16T13:31:33.636Z",
       "updatedAt": "2026-09-16T13:31:33.721Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0014",
+      "title": "Add Clipboard and Navigation browser capabilities to the Limen protocol and kernel",
+      "description": null,
+      "tags": [
+        "capability",
+        "protocol"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:09:16.438Z",
+      "updatedAt": "2026-09-18T06:09:22.625Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0015",
+      "title": "Add clipboard, routing and npm-minimal examples with per-example READMEs",
+      "description": null,
+      "tags": [
+        "examples",
+        "documentation"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:16:22.820Z",
+      "updatedAt": "2026-09-18T06:16:27.215Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0016",
+      "title": "Documentation: mental model, where-code-goes, quick start, traces, routing and clipboard guides",
+      "description": null,
+      "tags": [
+        "documentation"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:36:27.660Z",
+      "updatedAt": "2026-09-18T06:36:27.714Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0017",
+      "title": "npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check",
+      "description": null,
+      "tags": [
+        "packaging"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:42:52.672Z",
+      "updatedAt": "2026-09-18T06:42:52.726Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0018",
+      "title": "Surface the new capabilities and documents on the Limen site, and record the usability report",
+      "description": null,
+      "tags": [
+        "documentation",
+        "site"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:45:38.193Z",
+      "updatedAt": "2026-09-18T06:45:38.249Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0019",
+      "title": "Sweep the documents the new capabilities made stale, add BrowserLocation.origin, and guard against the recurrence",
+      "description": null,
+      "tags": [
+        "documentation",
+        "protocol"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:52:51.061Z",
+      "updatedAt": "2026-09-18T06:52:51.118Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0020",
+      "title": "Record the decision to defer Playwright adoption rather than leave it an open question",
+      "description": null,
+      "tags": [
+        "documentation"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T10:32:32.041Z",
+      "updatedAt": "2026-09-18T10:32:42.208Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0021",
+      "title": "Release as 0.6.1: the v0.6.0 tag was pushed at the pre-merge commit and cannot be re-pointed",
+      "description": null,
+      "tags": [
+        "release"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T10:40:15.438Z",
+      "updatedAt": "2026-09-18T10:40:23.690Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

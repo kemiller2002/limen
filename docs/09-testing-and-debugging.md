@@ -21,9 +21,11 @@ can.
 | **Transition** | `transition(state, command)` | nothing | legality, state machine shape, effect requests, stale-evidence guards |
 | **Projection** | `project(state)` | nothing | capability keys, formatting, list shape |
 | **Integration** | kernel + jsdom | `jsdom`, built `dist/` | bindings, event wiring, applied DOM, effect execution |
+| **Browser** | the examples in real Chromium | Playwright, installed yourself | anything jsdom models rather than implements |
 
 Default to the first two. Reach for the third only when the DOM is genuinely
-what you are testing.
+what you are testing, and the fourth when jsdom cannot settle the question —
+see below.
 
 ## Transition tests
 
@@ -175,20 +177,59 @@ fails. Examples are product, not decoration.
 resolve, that file paths mentioned in prose exist, and that no document under
 `docs/` is orphaned.
 
+## Testing the package a consumer receives
+
+```sh
+npm run check:package      # the tarball's contents, and every link in packaged docs
+npm run check:clean-room   # install the tarball into an empty project and build from it
+```
+
+Everything else here tests the source tree, which resolves imports a consumer
+cannot. The clean-room check packs the package, installs it into an empty
+project, runs the documented minimal example against the **installed** copy, and
+type-checks a TypeScript consumer against the shipped `.d.ts` files.
+
+## Testing in a real browser
+
+```sh
+npm i -g playwright && playwright install chromium   # once
+npm run smoke:browser
+```
+
+[`scripts/browser-smoke.ts`](../scripts/browser-smoke.ts) serves the repository
+and drives the counter, clipboard and routing examples in real Chromium.
+
+It exists because two of the newer capabilities are ones jsdom **models rather
+than implements**:
+
+- jsdom has no Clipboard API at all, so a jsdom test can only reach the
+  `unavailable` path or a stub you wrote yourself. The browser check copies a
+  URL and reads it back out of the real clipboard.
+- jsdom's history is a model of session history. The browser check presses the
+  browser's own Back and Forward buttons, and loads a deep link cold.
+
+**Playwright is deliberately not a dependency.** A package with zero runtime
+dependencies does not acquire a browser automation stack for a check that runs
+by hand. Without Playwright installed the script says so and exits 0, so
+`npm run check` never depends on it — `test/kernel.test.ts` and
+`test/examples.test.ts` remain the gate.
+
 ## Running everything
 
 ```sh
 npm run check
 ```
 
-Which runs: `build` → `build:examples` → `check:architecture` → `check:docs` →
-all tests. Run this before calling anything done — not just `tsc`.
+Which runs: `build` → `build:examples` → `build:site` → `check:architecture` →
+`check:docs` → `check:site` → `check:package` → all tests. Run this before
+calling anything done — not just `tsc`.
 
 ### What is *not* covered
 
-- **Real-browser behavior.** jsdom is not Chrome. Anything touching layout,
-  focus, or caret needs a real browser. Per this repository's definition of
-  done, DOM-affecting changes are exercised in a browser as well.
+- **Real-browser behavior, automatically.** `npm run smoke:browser` covers it on
+  demand, but it is not part of `npm run check` and does not run in CI. Per this
+  repository's definition of done, DOM-affecting changes are exercised in a
+  browser before they are called done.
 - **Visual appearance.** No screenshot testing.
 - **Accessibility.** No automated a11y assertions.
 

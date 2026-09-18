@@ -72,7 +72,13 @@ now; the kernel makes the DOM match.
 
 ---
 
-## The five primitives
+## The six attributes
+
+`data-event`, `data-on`, `data-text`, `data-bind-<attr>`, `data-if` and
+`data-each`. (`data-key` is a required *modifier* of `data-each`, not an
+attribute of its own — which is why the count is six and the table below has
+five rendering entries: `data-event` belongs to
+[05-events-and-dispatch.md](05-events-and-dispatch.md).)
 
 ### `data-text="key"` — text content
 
@@ -202,6 +208,28 @@ changes when one is inserted.
 array, so a `data-each` inside a `data-each` has nothing valid to read and will
 throw `requires an array view value`. Flatten the list, or render one level and
 project a summary for the other.
+
+**A `data-if` inside a row does work**, and resolves against the item:
+
+```html
+<template data-each="rows" data-key="id">
+  <li>
+    <span data-text="name"></span>
+    <template data-if="flagged"><b>Needs review</b></template>
+  </li>
+</template>
+```
+
+```ts
+rows: entries.map((entry) => ({ id: entry.id, name: entry.name, flagged: entry.status === "review" })),
+```
+
+That is the general rule, and the one people are bitten by: **every binding
+inside a `data-each` row resolves against the item, never the top-level view.**
+A row binding a key that only exists at the top level fails the whole
+projection with `BridgeError { phase: "projection" }`. Project per-row values —
+including per-row capabilities like `copyDisabled` — onto each item. They are
+computed from one state, so they are not duplicated state.
 
 ### `data-on="type"` — trigger override
 

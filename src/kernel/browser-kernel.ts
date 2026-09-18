@@ -1,4 +1,4 @@
-import { PROTOCOL_VERSION, type BrowserToEngineMessage, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
 
 // Exceptions to the "click" default: element types whose most natural
@@ -16,6 +16,14 @@ const TRIGGER_BY_TAG: Readonly<Record<string, string>> = {
 // The only attributes the bridge reflects as DOM/IDL boolean properties
 // rather than string attributes, per section 11.3 of the spec.
 const BOOLEAN_PROPS = new Set(["disabled", "checked", "selected", "hidden", "open"]);
+
+// Announced once, in Initialize. This is the list of effect kinds the kernel
+// can execute — not a promise that any of them will succeed in this browser.
+// A clipboard write can still be denied and localStorage can still be absent;
+// both are reported in that effect's own outcome, never by withholding the
+// capability here. Keeping the announcement static means an engine's startup
+// branch does not silently change between browsers.
+const CAPABILITIES: readonly Capability[] = ["Http", "Storage", "Clipboard", "Navigation"];
 
 type TextBinding = { readonly element: HTMLElement; readonly key: string };
 type AttrBinding = { readonly element: HTMLElement; readonly attr: string; readonly key: string };
@@ -109,7 +117,14 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "binding", detail: String(error) });
       return;
     }
-    await this.#send({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: ["Http", "Storage"] });
+    // Browser-originated navigation — Back, Forward, or a gesture that does
+    // the same thing. It is not correlated with any effect the engine
+    // requested, so it arrives as its own message rather than an
+    // EffectResult. An engine that does not route simply never reacts to it.
+    window.addEventListener("popstate", () => {
+      void this.#send({ kind: "LocationChanged", location: readLocation() });
+    });
+    await this.#send({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: CAPABILITIES, location: readLocation() });
   }
 
   // Binds only root's descendants, not root itself — the recursive step
@@ -277,9 +292,35 @@ export class BrowserKernel {
 
   async #executeEffect(effect: EffectRequest): Promise<void> {
     const started = performance.now();
-    const result = effect.kind === "Http" ? await this.#executeHttp(effect) : this.#executeStorage(effect);
+    let result: EffectResult;
+    try {
+      result = await this.#runEffect(effect);
+    } catch (error) {
+      // The kernel could not run the effect at all: an effect kind it does not
+      // implement, or a browser API that threw where its own contract says it
+      // cannot. There is no outcome it could report honestly, so it reports
+      // nothing to the engine and everything to diagnostics. An engine waiting
+      // on this correlation id now waits forever — which is exactly why this
+      // is the loudest thing the bridge can say, rather than a silent drop.
+      this.#diagnostics.report({ kind: "BridgeError", phase: "effect", detail: String(error) });
+      return;
+    }
     this.#diagnostics.report({ kind: "EffectTiming", correlationId: effect.correlationId, durationMs: performance.now() - started });
     await this.#send({ kind: "EffectResult", result });
+  }
+
+  // Exhaustive by construction: adding a variant to EffectRequest without a
+  // branch here is a compile error, not a silently dropped effect. An effect
+  // that vanished used to be the single hardest Limen failure to diagnose —
+  // the engine waits forever for a result that is never coming.
+  async #runEffect(effect: EffectRequest): Promise<EffectResult> {
+    switch (effect.kind) {
+      case "Http": return await this.#executeHttp(effect);
+      case "Storage": return this.#executeStorage(effect);
+      case "Clipboard": return await this.#executeClipboard(effect);
+      case "Navigation": return this.#executeNavigation(effect);
+      default: return assertNeverEffect(effect);
+    }
   }
 
   async #executeHttp(effect: HttpEffectRequest): Promise<EffectResult> {
@@ -333,7 +374,26 @@ export class BrowserKernel {
   #executeStorage(effect: StorageEffectRequest): EffectResult {
     return { kind: "StorageResult", correlationId: effect.correlationId, outcome: runStorage(effect) };
   }
+
+  // `effect.text` is never reported to diagnostics, for the same reason an
+  // Http header is not: whatever an application copies for its user is the
+  // user's, and a bridge that logged it would make every consumer's log a
+  // place secrets accumulate.
+  async #executeClipboard(effect: ClipboardEffectRequest): Promise<EffectResult> {
+    return { kind: "ClipboardResult", correlationId: effect.correlationId, outcome: await writeClipboardText(effect.text) };
+  }
+
+  // Synchronous, like Storage: history.pushState either applies or throws,
+  // and back()/forward() return immediately having only *asked*. There is
+  // therefore nothing to cancel, and no correlation controller to register.
+  #executeNavigation(effect: NavigationEffectRequest): EffectResult {
+    return { kind: "NavigationResult", correlationId: effect.correlationId, outcome: runNavigation(effect) };
+  }
 }
+
+const assertNeverEffect = (effect: never): never => {
+  throw new Error(`Unsupported effect kind: ${JSON.stringify(effect)}`);
+};
 
 function runStorage(effect: StorageEffectRequest): StorageOutcome {
   try {
@@ -349,4 +409,78 @@ function runStorage(effect: StorageEffectRequest): StorageOutcome {
 
 function isQuotaExceeded(error: unknown): boolean {
   return error instanceof DOMException && (error.name === "QuotaExceededError" || error.code === 22 || error.code === 1014);
+}
+
+// --- Clipboard -------------------------------------------------------------
+
+// The Clipboard API is asynchronous, permission-gated, and in most browsers
+// only granted while a user gesture is still being handled. The kernel does
+// not try to smooth any of that over: it performs the write and classifies
+// what came back, so the engine can decide whether "try again" is honest
+// advice or not.
+async function writeClipboardText(text: string): Promise<ClipboardOutcome> {
+  const clipboard: Clipboard | undefined = window.navigator?.clipboard;
+  if (typeof clipboard?.writeText !== "function") return { kind: "Failure", reason: "unavailable" };
+  try {
+    await clipboard.writeText(text);
+    return { kind: "Success" };
+  } catch (error) {
+    return { kind: "Failure", reason: classifyClipboardError(error) };
+  }
+}
+
+// "denied" is the recoverable one — the user can click again, and a browser
+// that refused because the gesture had expired will usually allow the next
+// attempt. Collapsing it into "unknown" would cost the engine the only piece
+// of advice it can honestly give.
+function classifyClipboardError(error: unknown): "denied" | "unavailable" | "unknown" {
+  if (!(error instanceof DOMException)) return "unknown";
+  if (error.name === "NotAllowedError" || error.name === "SecurityError") return "denied";
+  if (error.name === "NotSupportedError") return "unavailable";
+  return "unknown";
+}
+
+// --- Navigation ------------------------------------------------------------
+
+function readLocation(): BrowserLocation {
+  const { origin, pathname, search, hash } = window.location;
+  return { origin, path: pathname, query: search, hash };
+}
+
+// No history state is written. The engine already holds the state this URL
+// stands for, and a copy stored in the history entry is a second source of
+// truth that can disagree with it after a reload or a deploy. On the way back,
+// the engine re-derives its state from the URL — which is the only thing the
+// browser can be trusted to have preserved.
+function runNavigation(effect: NavigationEffectRequest): NavigationOutcome {
+  const history = window.history;
+  if (typeof history?.pushState !== "function") return { kind: "Failure", reason: "unavailable" };
+  switch (effect.operation) {
+    // Only *asks*. Whether the browser actually moves — and where to — arrives
+    // later as a LocationChanged message, or never, if there was no entry to
+    // move to. See NavigationOutcome in ../protocol.ts.
+    case "back": history.back(); return { kind: "Dispatched" };
+    case "forward": history.forward(); return { kind: "Dispatched" };
+    case "push":
+    case "replace": {
+      const target = resolveSameOrigin(effect.url);
+      if (target === null) return { kind: "Failure", reason: "not-same-origin" };
+      if (effect.operation === "push") history.pushState(null, "", target.href);
+      else history.replaceState(null, "", target.href);
+      return { kind: "Success", location: readLocation() };
+    }
+  }
+}
+
+// Leaving the origin is not navigation the engine gets to perform: it ends the
+// application, discards every piece of state the engine owns, and cannot be
+// undone by a later transition. An ordinary <a href> is the right tool, and it
+// needs no capability at all.
+function resolveSameOrigin(url: string): URL | null {
+  try {
+    const resolved = new URL(url, window.location.href);
+    return resolved.origin === window.location.origin ? resolved : null;
+  } catch {
+    return null;
+  }
 }

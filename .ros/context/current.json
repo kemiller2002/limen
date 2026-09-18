@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-16T13:33:56.030Z",
+  "updatedAt": "2026-09-18T10:41:52.035Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -254,6 +254,150 @@
       ],
       "updatedAt": "2026-09-16T13:33:56.030Z",
       "completedAt": "2026-09-16T13:33:56.030Z"
+    },
+    {
+      "id": "WI-0014",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T06:16:15.404Z",
+      "completedAt": "2026-09-18T06:16:15.404Z"
+    },
+    {
+      "id": "WI-0015",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/README.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T07:05:28.900Z",
+      "completedAt": "2026-09-18T07:05:28.900Z"
+    },
+    {
+      "id": "WI-0016",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/README.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T07:05:28.980Z",
+      "completedAt": "2026-09-18T07:05:28.980Z"
+    },
+    {
+      "id": "WI-0017",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/README.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T07:05:29.046Z",
+      "completedAt": "2026-09-18T07:05:29.046Z"
+    },
+    {
+      "id": "WI-0018",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/README.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T07:05:29.115Z",
+      "completedAt": "2026-09-18T07:05:29.115Z"
+    },
+    {
+      "id": "WI-0019",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/README.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T07:05:29.186Z",
+      "completedAt": "2026-09-18T07:05:29.186Z"
+    },
+    {
+      "id": "WI-0020",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "LIMEN-DOCUMENTATION-USABILITY-REPORT.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T10:33:05.588Z",
+      "completedAt": "2026-09-18T10:33:05.588Z"
+    },
+    {
+      "id": "WI-0021",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "package.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T10:41:52.035Z",
+      "completedAt": "2026-09-18T10:41:52.035Z"
     }
   ]
 }

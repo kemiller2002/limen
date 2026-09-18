@@ -17,9 +17,10 @@
         <figure class="code-figure">
           <figcaption>Browser → Engine</figcaption>
           <pre><code><span class="k">type</span> BrowserToEngineMessage =
-  | { kind: <span class="s">"Initialize"</span>; protocolVersion; capabilities }
-  | { kind: <span class="s">"Event"</span>;        event:  SemanticEvent }
-  | { kind: <span class="s">"EffectResult"</span>; result: EffectResult };
+  | { kind: <span class="s">"Initialize"</span>; protocolVersion; capabilities; location }
+  | { kind: <span class="s">"Event"</span>;           event:    SemanticEvent }
+  | { kind: <span class="s">"EffectResult"</span>;    result:   EffectResult }
+  | { kind: <span class="s">"LocationChanged"</span>; location: BrowserLocation };
 
 <span class="k">type</span> SemanticEvent = {
   name:   <span class="k">string</span>;   <span class="c">// the data-event value, verbatim</span>

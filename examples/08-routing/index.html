@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Routing — kernel example 08</title>
+    <link rel="stylesheet" href="../examples.css">
+  </head>
+  <body>
+    <main>
+      <h1>Routing</h1>
+
+      <!-- Ordinary buttons, not <a href>. An <a> would let the browser
+           navigate on its own, discarding every piece of state the engine
+           owns; here the engine decides, and then asks the browser to catch
+           up. (Leaving the site entirely is the one case an <a href> is still
+           exactly right for.) -->
+      <nav class="nav">
+        <button data-event="goHome">Home</button>
+        <button data-event="goInvoices">Invoices</button>
+        <button data-event="goBack">Back</button>
+      </nav>
+
+      <p>URL: <code data-text="currentUrl"></code></p>
+
+      <!-- Two capabilities at once, which is the point: the engine composes an
+           absolute link from the route it owns plus the origin it was given at
+           startup, and asks the kernel to put it on the clipboard. -->
+      <button data-event="copyLink" data-bind-disabled="copyDisabled">Copy link</button>
+      <template data-if="showCopyStatus">
+        <p class="status" role="status" data-text="copyStatus"></p>
+      </template>
+
+      <!-- Shown only when the kernel could not perform a navigation the engine
+           asked for. The screen is right; the address bar is not. -->
+      <template data-if="urlOutOfSync">
+        <p class="error" role="alert">The address bar could not be updated, so this link will not reopen this screen.</p>
+      </template>
+
+      <template data-if="onHome">
+        <section class="panel">
+          <h2>Home</h2>
+          <p>Open Invoices, click a row, then press the browser's own Back button.</p>
+        </section>
+      </template>
+
+      <template data-if="onInvoices">
+        <section class="panel">
+          <h2>Invoices</h2>
+          <ul class="list">
+            <!-- The row's data-key becomes SemanticEvent.key, which is how the
+                 engine learns which invoice was opened. -->
+            <template data-each="invoices" data-key="id">
+              <li>
+                <button data-event="openInvoice" data-text="customer"></button>
+                <code data-text="total"></code>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </template>
+
+      <template data-if="onInvoice">
+        <section class="panel">
+          <h2>Invoice <span data-text="invoiceId"></span></h2>
+          <p data-text="invoiceCustomer"></p>
+          <p data-text="invoiceTotal"></p>
+        </section>
+      </template>
+
+      <!-- A URL nobody recognises is an ordinary screen, not an error page. -->
+      <template data-if="onNotFound">
+        <section class="panel">
+          <h2>Not found</h2>
+          <p>Nothing here answers to <code data-text="unknownPath"></code>.</p>
+        </section>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

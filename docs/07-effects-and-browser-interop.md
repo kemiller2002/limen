@@ -68,27 +68,48 @@ action commonly repaints twice: once for "in progress", once for the outcome.
 
 ## What the kernel can actually do
 
-Two capabilities. It announces them at startup in
-`Initialize.capabilities: ["Http", "Storage"]`.
+Four capabilities. It announces them at startup in
+`Initialize.capabilities: ["Http", "Storage", "Clipboard", "Navigation"]`.
 
 | Capability | Status | Covered below |
 | --- | --- | --- |
 | Http (`fetch`) | ✅ implemented | yes |
 | Storage (`localStorage`) | ✅ implemented | yes |
+| Clipboard (write) | ✅ implemented | yes — and [clipboard.md](clipboard.md) |
+| Navigation (history, URL) | ✅ implemented | yes — and [routing.md](routing.md) |
+| Clipboard **read** | ❌ deliberately absent | [clipboard.md](clipboard.md#write-only-deliberately) |
 | `sessionStorage`, `IndexedDB`, Cache API | ❌ not implemented | — |
-| Clipboard | ❌ not implemented | — |
-| Navigation / history / URL | ❌ not implemented | — |
 | Files (read, download, upload) | ❌ not implemented | — |
 | Timers, `requestAnimationFrame`, idle callbacks | ❌ not implemented | — |
 | Focus control | ❌ not implemented | — |
 | Geolocation, notifications, media, observers | ❌ not implemented | — |
 
-**If it is not in the first two rows, the engine cannot do it.** These are not
+### Capabilities are not permissions
+
+`Initialize.capabilities` says what the **kernel implements**. It is not a
+statement about what this browser will permit when the effect actually runs: a
+clipboard write can still be `denied`, `localStorage` can still be `unavailable`
+in a private window, and `history` can be missing in an exotic embedding.
+
+Permission and availability are reported **per effect, in that effect's own
+outcome**, never by withholding the capability. This keeps an engine's startup
+branch from silently changing between browsers — and it means you should not
+use the capability list to pre-disable a control. Whether a copy works is only
+knowable by trying.
+
+**If it is not in the first four rows, the engine cannot do it.** These are not
 oversights: this repository treats building a capability before a feature needs
 it as an architecture violation in its own right (ROADMAP's 🧊 legend), because
 it produces untested surface with no design pressure behind it. Adding one is a
 deliberate, small, documented change — see
 [15-recipes.md](15-recipes.md#add-a-new-browser-capability).
+
+Each capability has **its own outcome type**, rather than sharing one. A
+`StorageOutcome` has no `Cancelled`, because a synchronous local call cannot be
+cancelled; a `ClipboardOutcome` has no `OutcomeUnknown`, because a refused write
+did not happen. A shared outcome type would force every caller to handle
+variants that cannot occur, and every one of those branches would be untestable
+and eventually wrong.
 
 ---
 
@@ -294,6 +315,120 @@ on the origin and persists indefinitely.
 
 ---
 
+## Clipboard
+
+Full guide, including the browser rules you cannot engineer around:
+**[clipboard.md](clipboard.md)**. The shape:
+
+```ts
+type ClipboardEffectRequest = {
+  kind: "Clipboard";
+  correlationId: CorrelationId;
+  operation: "writeText";     // write-only, deliberately
+  text: string;               // never surfaced in a DiagnosticEvent
+};
+
+type ClipboardOutcome =
+  | { kind: "Success" }
+  | { kind: "Failure"; reason: "denied" | "unavailable" | "unknown" };
+```
+
+Three things differ from Http:
+
+1. **Success carries no payload.** The write happened or it did not.
+2. **There is no `OutcomeUnknown`.** A refused write did not occur; there is no
+   "dispatched but uncertain" case to represent.
+3. **`denied` is the only retryable failure.** Browsers grant clipboard access
+   while a user gesture is fresh, so clicking again often works.
+   `unavailable` means no Clipboard API exists here, and never will this
+   session — telling a user to retry it is advice that cannot succeed.
+
+There is no `readText`, on purpose: it would let an engine pull whatever the
+user last copied across the boundary on its own initiative.
+
+---
+
+## Navigation
+
+Full guide, including deep links, base paths and static hosting:
+**[routing.md](routing.md)**. The shape:
+
+```ts
+type NavigationEffectRequest =
+  | { kind: "Navigation"; correlationId; operation: "push";    url: string }
+  | { kind: "Navigation"; correlationId; operation: "replace"; url: string }
+  | { kind: "Navigation"; correlationId; operation: "back" }
+  | { kind: "Navigation"; correlationId; operation: "forward" };
+
+type NavigationOutcome =
+  | { kind: "Success"; location: BrowserLocation }   // push/replace: where the browser ended up
+  | { kind: "Dispatched" }                           // back/forward: asked, not yet moved
+  | { kind: "Failure"; reason: "unavailable" | "not-same-origin" };
+```
+
+Navigation is the one capability that also produces a message **nobody
+requested**:
+
+```ts
+| { kind: "LocationChanged"; location: BrowserLocation }
+```
+
+The browser moved on its own — Back, Forward, or a gesture that does the same
+thing. It is not an `EffectResult`, because no effect was asked for and nothing
+correlates it. An engine that ignores it still compiles and still works; it
+simply will not react to the Back button.
+
+`Initialize` carries the URL the page was loaded at, for the same reason: a
+routing engine should pick its first screen from the address bar rather than
+defaulting and then correcting itself.
+
+Two rules that are easy to get wrong:
+
+- **Never request a navigation in response to `LocationChanged`.** The browser
+  has already moved. Pushing again traps the user on the page.
+- **`back`/`forward` report `Dispatched`, not `Success`.** They only ask. If
+  there is nowhere to go, no `LocationChanged` ever arrives, and that is a
+  correct outcome rather than a lost message.
+
+Cross-origin URLs are refused with `not-same-origin` and the page does not move.
+Leaving the origin ends the application and discards all engine state; an
+ordinary `<a href>` is the right tool for that, and needs no capability.
+
+---
+
+## Correlation IDs: the rules
+
+The kernel treats a `correlationId` as an opaque string and does exactly two
+things with it: it keys the `AbortController` for an in-flight **Http** effect,
+and it copies the value onto the result. Everything else is your convention.
+
+- **Mint a fresh one per in-flight request.** Reusing one across two requests
+  that can overlap makes the stale-result guard unable to tell them apart, which
+  is the bug it exists to prevent.
+- **A constant is fine for an effect that cannot overlap itself** — see the
+  draft-read key in [04-save-data](../examples/04-save-data/README.md).
+- **Uniqueness across capabilities is not required**, because a result carries
+  its kind (`HttpResult`, `ClipboardResult`, …) and an engine branches on that
+  first. Prefixing by purpose (`load-3`, `copy-1`) costs nothing and makes a
+  diagnostics log readable.
+- **The engine compares, the kernel does not.** A result that does not match
+  what the current state is waiting on is not evidence; discard it.
+
+## Cancellation applies to Http, and only Http
+
+`cancellations` aborts an in-flight `fetch`. For the other three it is a
+structural no-op:
+
+| Capability | Cancelling it | Why |
+| --- | --- | --- |
+| Http | aborts the request; the outcome is `Cancelled` | there is something in flight |
+| Storage | nothing | synchronous; it finished before you could name it |
+| Clipboard | nothing | the write is a single call the browser has already accepted or refused |
+| Navigation | nothing | `pushState` is synchronous; `back` has already been asked for |
+
+Naming an id the kernel does not hold is harmless and reports nothing. Do not
+treat that silence as confirmation that anything was cancelled.
+
 ## Requesting effects from `Initialize`
 
 Startup work is an ordinary effect request. The response to `Initialize` may
@@ -332,7 +467,7 @@ Every effect is timed and reported:
 
 ```ts
 type DiagnosticEvent =
-  | { kind: "BridgeError";  phase: "dispatch" | "projection" | "effect"; detail: string }
+  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect"; detail: string }
   | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number };
 ```
 

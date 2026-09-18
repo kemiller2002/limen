@@ -6,8 +6,8 @@ import test from "node:test";
 // builds first, so this is always fresh.
 import { BrowserKernel } from "../dist/kernel/browser-kernel.js";
 import type { DiagnosticEvent, DiagnosticsSink } from "../dist/kernel/diagnostics.js";
-import type { BrowserToEngineMessage, CorrelationId, EffectOutcome, EngineToBrowserMessage, EngineTransport } from "../dist/protocol.js";
-import { withDom, withFetch } from "./dom-helpers.ts";
+import type { BrowserToEngineMessage, CorrelationId, EffectOutcome, EffectRequest, EffectResult, EngineToBrowserMessage, EngineTransport } from "../dist/protocol.js";
+import { withClipboard, withDom, withFetch } from "./dom-helpers.ts";
 
 function respond(overrides: Partial<EngineToBrowserMessage> = {}): EngineToBrowserMessage {
   return { view: {}, effects: [], cancellations: [], ...overrides };
@@ -66,7 +66,20 @@ test("start() dispatches Initialize with the protocol version and applies the in
   await withDom(`<p data-text="statusText"></p>`, async (document) => {
     await new BrowserKernel(transport, document).start();
     assert.equal(transport.calls.length, 1);
-    assert.deepEqual(transport.calls[0], { kind: "Initialize", protocolVersion: 1, capabilities: ["Http", "Storage"] });
+    assert.deepEqual(transport.calls[0], {
+      kind: "Initialize",
+      protocolVersion: 1,
+      // What the kernel implements — not what this browser will permit. jsdom
+      // has no Clipboard API at all, and "Clipboard" is still announced; the
+      // refusal shows up in that effect's outcome instead. See the
+      // clipboard-unavailable test below.
+      capabilities: ["Http", "Storage", "Clipboard", "Navigation"],
+      // Delivered once, so an engine that routes can pick its first state from
+      // the address bar instead of defaulting and then correcting itself.
+      // `origin` rides along so an engine can compose an absolute, shareable
+      // link to the current screen — Navigation and Clipboard used together.
+      location: { origin: "http://localhost", path: "/", query: "", hash: "" },
+    });
     assert.equal(document.querySelector("p")!.textContent, "ready");
   });
 });
@@ -735,4 +748,222 @@ test("a cancellation naming an already-completed Storage effect is a harmless no
       await new Promise((resolve) => { setTimeout(resolve, 50); });
     })());
   });
+});
+
+// ---------------------------------------------------------------------------
+// Clipboard capability
+//
+// Write-only by design (see ClipboardEffectRequest in src/protocol.ts). The
+// three failure reasons exist because an engine answers them differently, so
+// each is provoked here for real rather than asserted as a type.
+// ---------------------------------------------------------------------------
+
+// Requests one effect on Initialize and records every result that comes back.
+function effectRunner(effects: readonly EffectRequest[]): { transport: ScriptedTransport; results: EffectResult[] } {
+  const results: EffectResult[] = [];
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ effects });
+    if (message.kind === "EffectResult") results.push(message.result);
+    return respond();
+  });
+  return { transport, results };
+}
+
+const clipboardEffect = (text: string): EffectRequest => ({
+  kind: "Clipboard",
+  correlationId: "copy-1" as CorrelationId,
+  operation: "writeText",
+  text,
+});
+
+test("a Clipboard effect writes exactly the requested text and reports Success", async () => {
+  const written: string[] = [];
+  const { transport, results } = effectRunner([clipboardEffect("https://limen.example/invoices/42")]);
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await withClipboard(async (text) => { written.push(text); }, async () => {
+      await new BrowserKernel(transport, document).start();
+      await flush();
+    });
+  });
+  assert.deepEqual(written, ["https://limen.example/invoices/42"]);
+  assert.deepEqual(results, [{ kind: "ClipboardResult", correlationId: "copy-1", outcome: { kind: "Success" } }]);
+});
+
+test("a clipboard write the browser refuses is reported as denied, not thrown", async () => {
+  const { transport, results } = effectRunner([clipboardEffect("secret-ish")]);
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await withClipboard(async () => { throw new window.DOMException("write blocked", "NotAllowedError"); }, async () => {
+      await new BrowserKernel(transport, document).start();
+      await flush();
+    });
+  });
+  // "denied" rather than "unknown": the engine can honestly tell the user to
+  // click again, because browsers grant the write while a gesture is fresh.
+  assert.deepEqual(results, [{ kind: "ClipboardResult", correlationId: "copy-1", outcome: { kind: "Failure", reason: "denied" } }]);
+});
+
+test("a browser with no Clipboard API reports unavailable rather than hanging the engine", async () => {
+  // No withClipboard here: jsdom genuinely has no navigator.clipboard, which
+  // is the same situation as a non-secure context in a real browser.
+  const { transport, results } = effectRunner([clipboardEffect("anything")]);
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+  });
+  assert.deepEqual(results, [{ kind: "ClipboardResult", correlationId: "copy-1", outcome: { kind: "Failure", reason: "unavailable" } }]);
+});
+
+test("the copied text never reaches diagnostics", async () => {
+  const { sink, events } = collectDiagnostics();
+  const { transport } = effectRunner([clipboardEffect("correct-horse-battery-staple")]);
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await withClipboard(async () => {}, async () => {
+      await new BrowserKernel(transport, document, sink).start();
+      await flush();
+    });
+  });
+  // Same rule as an Http header: whatever an application copies for its user
+  // is the user's, and a bridge that logged it would make every consumer's
+  // log a place secrets accumulate.
+  assert.ok(events.length > 0, "expected at least the EffectTiming event");
+  assert.ok(!JSON.stringify(events).includes("correct-horse-battery-staple"));
+});
+
+// ---------------------------------------------------------------------------
+// Navigation capability
+// ---------------------------------------------------------------------------
+
+const navigate = (operation: "push" | "replace", url: string): EffectRequest =>
+  ({ kind: "Navigation", correlationId: "nav-1" as CorrelationId, operation, url });
+
+test("a Navigation push changes the URL and reports the resulting location", async () => {
+  const { transport, results } = effectRunner([navigate("push", "/invoices/42?tab=history#totals")]);
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    assert.equal(window.location.pathname, "/invoices/42");
+  });
+  assert.deepEqual(results, [{
+    kind: "NavigationResult",
+    correlationId: "nav-1",
+    // Split mechanically, never interpreted: the kernel does not know that
+    // "/invoices/42" names an invoice.
+    outcome: { kind: "Success", location: { origin: "http://localhost", path: "/invoices/42", query: "?tab=history", hash: "#totals" } },
+  }]);
+});
+
+test("a Navigation replace leaves the history length alone, unlike push", async () => {
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    const before = window.history.length;
+    const { transport } = effectRunner([navigate("replace", "/replaced")]);
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    assert.equal(window.location.pathname, "/replaced");
+    assert.equal(window.history.length, before, "replace must not add a history entry");
+  });
+});
+
+test("Back arrives as LocationChanged, not as the result of the effect that asked for it", async () => {
+  const seen: BrowserToEngineMessage[] = [];
+  const results: EffectResult[] = [];
+  const transport = new ScriptedTransport((message) => {
+    seen.push(message);
+    if (message.kind === "Initialize") return respond({ effects: [navigate("push", "/second")] });
+    if (message.kind === "EffectResult") {
+      results.push(message.result);
+      // Ask to go back only once the push has landed, so there is an entry to
+      // go back to.
+      if (message.result.kind === "NavigationResult" && message.result.outcome.kind === "Success") {
+        return respond({ effects: [{ kind: "Navigation", correlationId: "nav-back" as CorrelationId, operation: "back" }] });
+      }
+    }
+    return respond();
+  });
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    await flush();
+    // back() only *asks*; the move itself is reported separately.
+    assert.deepEqual(results.at(-1), { kind: "NavigationResult", correlationId: "nav-back", outcome: { kind: "Dispatched" } });
+    const changed = seen.filter((message) => message.kind === "LocationChanged");
+    assert.equal(changed.length, 1, "the browser's own move must reach the engine exactly once");
+    assert.deepEqual(changed[0], { kind: "LocationChanged", location: { origin: "http://localhost", path: "/", query: "", hash: "" } });
+  });
+});
+
+test("a cross-origin navigation is refused, and the page does not move", async () => {
+  const { transport, results } = effectRunner([navigate("push", "https://elsewhere.example/steal")]);
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    assert.equal(window.location.origin, "http://localhost");
+  });
+  // Leaving the origin discards every piece of state the engine owns and
+  // cannot be undone by a later transition. That is what <a href> is for.
+  assert.deepEqual(results, [{ kind: "NavigationResult", correlationId: "nav-1", outcome: { kind: "Failure", reason: "not-same-origin" } }]);
+});
+
+test("an effect kind the kernel cannot run is reported, never silently dropped", async () => {
+  const { sink, events } = collectDiagnostics();
+  // Cast deliberately: TypeScript makes this unreachable, and the point of the
+  // test is what happens when a hand-written or cross-language engine sends it
+  // anyway. An effect that vanishes leaves the engine waiting forever, which
+  // is the hardest Limen failure there is to diagnose.
+  const bogus = { kind: "Geolocation", correlationId: "g-1" as CorrelationId } as unknown as EffectRequest;
+  const { transport } = effectRunner([bogus]);
+  await withDom(`<p>no bindings: these tests are about effects</p>`, async (document) => {
+    await new BrowserKernel(transport, document, sink).start();
+    await flush();
+  });
+  const errors = events.filter((event) => event.kind === "BridgeError");
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0]?.kind === "BridgeError" && errors[0].phase, "effect");
+  assert.ok(String(errors[0]?.kind === "BridgeError" && errors[0].detail).includes("Unsupported effect kind"));
+  assert.ok(String(errors[0]?.kind === "BridgeError" && errors[0].detail).includes("Geolocation"));
+});
+
+// ---------------------------------------------------------------------------
+// Checkboxes and radios
+//
+// `readValue()` returns `.value`, never `.checked`. That makes a checkbox and a
+// radio behave differently in a way the recipes doc has to be right about, so
+// both shapes it recommends are pinned here.
+// ---------------------------------------------------------------------------
+
+test("a checkbox reports its value attribute, not its checked state — so model the event as a toggle", async () => {
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ view: { notifyEnabled: false } });
+    return respond({ view: { notifyEnabled: true } });
+  });
+  await withDom(`<input type="checkbox" data-event="toggleNotify" data-bind-checked="notifyEnabled">`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    const box = document.querySelector("input")!;
+    assert.equal(box.checked, false, "the projection drives .checked as a property");
+
+    box.checked = true;
+    box.dispatchEvent(new window.Event("change", { bubbles: true }));
+    const last = transport.calls.at(-1);
+    // "on" either way: the event carries no usable information about the tick,
+    // which is exactly why the documented shape is "flip it", not "set it".
+    assert.deepEqual(last?.kind === "Event" && last.event, { kind: "Event", name: "toggleNotify", value: "on" });
+
+    await flush();
+    assert.equal(box.checked, true, "the engine's answer is what sets it, not the click");
+  });
+});
+
+test("a radio reports its own value, so one event name covers the whole group", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { isDaily: false, isWeekly: true } }));
+  await withDom(
+    `<input type="radio" name="freq" value="daily" data-event="selectFrequency" data-bind-checked="isDaily">
+     <input type="radio" name="freq" value="weekly" data-event="selectFrequency" data-bind-checked="isWeekly">`,
+    async (document) => {
+      await new BrowserKernel(transport, document).start();
+      const weekly = document.querySelectorAll("input")[1]!;
+      weekly.checked = true;
+      weekly.dispatchEvent(new window.Event("change", { bubbles: true }));
+      const last = transport.calls.at(-1);
+      assert.deepEqual(last?.kind === "Event" && last.event, { kind: "Event", name: "selectFrequency", value: "weekly" });
+    },
+  );
 });

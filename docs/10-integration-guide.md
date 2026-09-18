@@ -24,9 +24,13 @@ it pays off in some situations and not others.
 
 - Highly dynamic or generative UI — dashboards that build layout from data,
   canvas/WebGL, rich-text editors.
-- Deep URL routing and history are core requirements. **Not supported today.**
-- You need browser capabilities beyond Http and `localStorage` and cannot afford
-  to extend the protocol.
+- You want a **router** — a route table, path matching, nested layouts, guards.
+  Limen has a `Navigation` capability (push, replace, back, forward, the
+  browser's own moves, and the loaded URL) but no router: `parseRoute` and
+  `routeToUrl` are functions you write. That is a feature if you wanted typed
+  routes, and a cost if you wanted a framework. See [routing.md](routing.md).
+- You need browser capabilities beyond Http, `localStorage`, clipboard *write*
+  and history, and cannot afford to extend the protocol.
 - Large virtualized lists — every projected item becomes a DOM node.
 - The team wants a mainstream ecosystem of components and hiring familiarity.
 

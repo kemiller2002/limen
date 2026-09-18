@@ -20,7 +20,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { BrowserKernel } from "../dist/kernel/browser-kernel.js";
 import type { CorrelationId } from "../dist/protocol.js";
-import { exampleBody, withDom, withFetch } from "./dom-helpers.ts";
+import { exampleBody, withClipboard, withDom, withFetch } from "./dom-helpers.ts";
 
 import { createCounterTransport } from "../examples/01-counter/engine.ts";
 import { createFormTransport, transition as formTransition, initialState as formInitial } from "../examples/02-form/engine.ts";
@@ -33,6 +33,24 @@ import {
   project as entriesProject,
   type Entry,
 } from "../examples/06-time-entries/engine.ts";
+import {
+  createClipboardTransport,
+  transition as copyTransition,
+  project as copyProject,
+  initialState as copyInitial,
+} from "../examples/07-clipboard/engine.ts";
+import {
+  createRoutingTransport,
+  transition as routeTransition,
+  project as routeProject,
+  parseRoute,
+  routeToPath,
+  routeToUrl,
+  shareUrl,
+  invoices as routingInvoices,
+  initialState as routingInitial,
+  type Route,
+} from "../examples/08-routing/engine.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -536,4 +554,232 @@ test("06-time-entries: marking an already-processed entry issues no effect", () 
   const result = entriesTransition(ready, { kind: "MarkProcessed", entryId: "e1", correlationId: cid("entries-7") });
   assert.equal(result.state.kind, "Ready");
   assert.equal(result.effects.length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// 07-clipboard — the Clipboard capability, driven through the real kernel
+// ---------------------------------------------------------------------------
+
+test("07-clipboard: clicking Copy sends the projected URL to the clipboard and says so", async () => {
+  const written: string[] = [];
+  const body = await exampleBody("07-clipboard");
+  await withDom(body, async (document) => {
+    await withClipboard(async (text) => { written.push(text); }, async () => {
+      await new BrowserKernel(createClipboardTransport(), document).start();
+      await flush();
+
+      // The URL copied is the same value the page displays — both come from
+      // the projection, so they cannot drift apart.
+      const shown = text(document, ".list li code");
+      await click(document, ".list li button[data-event='copy']");
+      await flush();
+
+      assert.deepEqual(written, [shown]);
+      assert.equal(text(document, ".status"), "Copied to the clipboard.");
+      assert.equal(present(document, "[data-event='dismiss']"), true);
+    });
+  });
+});
+
+test("07-clipboard: a browser that refuses the write produces advice, not a crash", async () => {
+  const body = await exampleBody("07-clipboard");
+  await withDom(body, async (document) => {
+    await withClipboard(async () => { throw new window.DOMException("blocked", "NotAllowedError"); }, async () => {
+      await new BrowserKernel(createClipboardTransport(), document).start();
+      await flush();
+      await click(document, ".list li button[data-event='copy']");
+      await flush();
+
+      assert.match(text(document, ".status"), /refused the copy/);
+      // A denial is the one failure a retry can fix, so the retry hint is
+      // mounted — and the Copy button is enabled again.
+      assert.equal(isDisabled(document, ".list li button[data-event='copy']"), false);
+    });
+  });
+});
+
+test("07-clipboard: a browser with no Clipboard API is told to copy manually, and offered no retry", async () => {
+  // jsdom has no navigator.clipboard, which is exactly an insecure-context
+  // browser. Nothing is stubbed here on purpose.
+  const body = await exampleBody("07-clipboard");
+  await withDom(body, async (document) => {
+    await new BrowserKernel(createClipboardTransport(), document).start();
+    await flush();
+    await click(document, ".list li button[data-event='copy']");
+    await flush();
+
+    assert.match(text(document, ".status"), /copy it manually/);
+    assert.equal(copyProject({ kind: "CopyFailed", reason: "unavailable" })["canRetry"], false);
+  });
+});
+
+test("07-clipboard: a result from a superseded copy cannot overwrite a newer one", () => {
+  const first = copyTransition(copyInitial, { kind: "Copy", url: "https://a.example", correlationId: cid("copy-1") });
+  const second = copyTransition(first.state, { kind: "Copy", url: "https://b.example", correlationId: cid("copy-2") });
+  // The second copy is refused while the first is in flight — the projection
+  // disables the button, and the transition enforces the same rule.
+  assert.equal(second.accepted, false);
+
+  const stale = copyTransition(first.state, {
+    kind: "RecordCopy",
+    correlationId: cid("copy-99"),
+    outcome: { kind: "Success" },
+  });
+  assert.equal(stale.accepted, false, "evidence that answers a different question is not evidence");
+  assert.equal(stale.state.kind, "Copying");
+});
+
+// ---------------------------------------------------------------------------
+// 08-routing — history as a capability
+// ---------------------------------------------------------------------------
+
+const ALL_ROUTES: readonly Route[] = [
+  { kind: "Home" },
+  { kind: "Invoices" },
+  { kind: "Invoice", id: "1002" },
+  { kind: "NotFound", raw: "/nope" },
+];
+
+test("08-routing: every route round-trips through its URL", () => {
+  for (const route of ALL_ROUTES) {
+    const url = routeToUrl("/examples/08-routing/", route);
+    const query = url.includes("?") ? `?${url.split("?")[1] ?? ""}` : "";
+    assert.deepEqual(parseRoute({ path: "/examples/08-routing/", query, hash: "" }), route,
+      `${routeToPath(route)} did not survive the trip`);
+  }
+});
+
+test("08-routing: an unknown path and a well-formed id that does not exist are both NotFound", () => {
+  assert.deepEqual(parseRoute({ path: "/", query: "?route=%2Fwidgets", hash: "" }), { kind: "NotFound", raw: "/widgets" });
+  assert.deepEqual(parseRoute({ path: "/", query: "?route=%2Finvoices%2F9999", hash: "" }), { kind: "NotFound", raw: "/invoices/9999" });
+  assert.ok(routingInvoices.every((invoice) => invoice.id !== "9999"));
+});
+
+test("08-routing: the first screen comes from the address bar, not from a default", async () => {
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    window.history.replaceState(null, "", "/?route=%2Finvoices%2F1002");
+    await new BrowserKernel(createRoutingTransport(), document).start();
+    await flush();
+    // Home never flashes: Initialize carries the location.
+    assert.equal(present(document, "section h2"), true);
+    assert.equal(text(document, "section h2"), "Invoice 1002");
+    assert.equal(text(document, "section p"), "Harbor Analytics");
+    window.history.replaceState(null, "", "/");
+  });
+});
+
+test("08-routing: clicking a row changes the screen and the URL together", async () => {
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    await new BrowserKernel(createRoutingTransport(), document).start();
+    await flush();
+    await click(document, "[data-event='goInvoices']");
+    assert.equal(text(document, "section h2"), "Invoices");
+
+    await click(document, ".list li button[data-event='openInvoice']");
+    assert.equal(text(document, "section h2"), "Invoice 1001");
+    assert.match(window.location.search, /route=%2Finvoices%2F1001/);
+    window.history.replaceState(null, "", "/");
+  });
+});
+
+test("08-routing: the browser's own Back button moves the screen back", async () => {
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    await new BrowserKernel(createRoutingTransport(), document).start();
+    await flush();
+    await click(document, "[data-event='goInvoices']");
+    assert.equal(text(document, "section h2"), "Invoices");
+
+    // Not the in-app button: the real browser history moving, which reaches
+    // the engine as LocationChanged rather than as any effect's result.
+    window.history.back();
+    await flush();
+    await flush();
+    assert.equal(text(document, "section h2"), "Home");
+    window.history.replaceState(null, "", "/");
+  });
+});
+
+test("08-routing: adopting a browser-originated location requests no navigation", () => {
+  const onInvoices = routeTransition(
+    { ...routingInitial, base: "/" },
+    { kind: "Navigate", route: { kind: "Invoices" }, correlationId: cid("nav-1") },
+  );
+  assert.equal(onInvoices.effects.length, 1, "an application-initiated move asks the browser to catch up");
+
+  const adopted = routeTransition(onInvoices.state, {
+    kind: "AdoptLocation",
+    location: { path: "/", query: "", hash: "" },
+  });
+  // The push-on-popstate bug in one assertion: reacting to the browser's own
+  // move with another push traps the user on the page.
+  assert.equal(adopted.effects.length, 0, "the browser has already moved; asking again is the history trap");
+  assert.deepEqual(adopted.state.route, { kind: "Home" });
+});
+
+test("08-routing: navigating to where you already are is refused, so Back never stalls", () => {
+  const onHome = { ...routingInitial, base: "/" };
+  const again = routeTransition(onHome, { kind: "Navigate", route: { kind: "Home" }, correlationId: cid("nav-2") });
+  assert.equal(again.accepted, false);
+  assert.equal(again.effects.length, 0, "a duplicate history entry makes Back look broken");
+});
+
+test("08-routing: Copy link puts the ABSOLUTE url of the current screen on the clipboard", async () => {
+  const written: string[] = [];
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    await withClipboard(async (copied) => { written.push(copied); }, async () => {
+      await new BrowserKernel(createRoutingTransport(), document).start();
+      await flush();
+      await click(document, "[data-event='goInvoices']");
+      const shown = text(document, "code[data-text='currentUrl']");
+      await click(document, "[data-event='copyLink']");
+      await flush();
+
+      // The displayed link and the copied link are the same value, and it is
+      // absolute — a relative path is not something anyone can share. The
+      // origin is only available because Initialize.location carries it.
+      assert.deepEqual(written, [shown]);
+      assert.match(shown, /^http:\/\/localhost\/\?route=/);
+      assert.equal(text(document, ".status"), "Link copied.");
+      window.history.replaceState(null, "", "/");
+    });
+  });
+});
+
+test("08-routing: a clipboard the browser refuses is admitted; the link stays on screen", async () => {
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    // jsdom has no Clipboard API at all, which is exactly an insecure context.
+    await new BrowserKernel(createRoutingTransport(), document).start();
+    await flush();
+    await click(document, "[data-event='copyLink']");
+    await flush();
+    assert.match(text(document, ".status"), /copy the link above manually/i);
+    assert.match(text(document, "code[data-text='currentUrl']"), /^http:\/\/localhost\//);
+  });
+});
+
+test("08-routing: shareUrl composes an absolute link from the origin, the base and the route", () => {
+  assert.equal(
+    shareUrl("https://example.com", "/app/", { kind: "Invoice", id: "1002" }),
+    "https://example.com/app/?route=%2Finvoices%2F1002",
+  );
+  // Served from a subdirectory, which is how GitHub Pages serves everything.
+  assert.equal(shareUrl("https://example.com", "/app/", { kind: "Home" }), "https://example.com/app/");
+});
+
+test("08-routing: a navigation the kernel could not perform is admitted, not hidden", () => {
+  const moved = routeTransition(
+    { ...routingInitial, base: "/" },
+    { kind: "Navigate", route: { kind: "Invoices" }, correlationId: cid("nav-3") },
+  );
+  const failed = routeTransition(moved.state, { kind: "RecordNavigation", failed: true });
+  // The screen is still right — the engine's route is authoritative — but the
+  // URL now disagrees, and the projection says so rather than pretending.
+  assert.deepEqual(failed.state.route, { kind: "Invoices" });
+  assert.equal(routeProject(failed.state)["urlOutOfSync"], true);
+  assert.equal(routeProject(failed.state)["onInvoices"], true);
 });

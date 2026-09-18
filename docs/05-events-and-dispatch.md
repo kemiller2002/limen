@@ -229,13 +229,19 @@ because they *are* the same intent.
 | DOM change (blur) | `<input data-event="x">` | `Event { name, value }` | committed field |
 | Form submit | `<form data-event="submit">` | pending flushes, then `Event { name }` | validate and act |
 | List item | `data-event` inside `data-each` | `Event { name, key }` | act on that item |
-| Kernel startup | — | `Initialize { protocolVersion, capabilities }` | project initial view, maybe load |
+| Kernel startup | — | `Initialize { protocolVersion, capabilities, location }` | project initial view, maybe load |
 | Http completion | engine requested it earlier | `EffectResult { HttpResult }` | record evidence |
 | Storage completion | engine requested it earlier | `EffectResult { StorageResult }` | record evidence |
-| Browser history | **not supported** | — | see [08-multi-screen-applications.md](08-multi-screen-applications.md) |
+| Clipboard completion | engine requested it earlier | `EffectResult { ClipboardResult }` | record evidence |
+| Navigation completion | engine requested it earlier | `EffectResult { NavigationResult }` | acknowledge, or record a failure |
+| Browser history | user pressed Back or Forward | `LocationChanged { location }` | adopt the new route — and request **nothing** |
 | Timers | **not supported** | — | ROADMAP item 16 |
 
-The bottom two rows are honest gaps, not omissions from this table.
+`LocationChanged` is the only message nobody asked for. Every other row is
+either a user action or the answer to a question the engine posed. It is not an
+`EffectResult` because nothing correlates it — see [routing.md](routing.md).
+
+The timers row is an honest gap, not an omission from this table.
 
 ---
 

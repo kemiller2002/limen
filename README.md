@@ -11,60 +11,47 @@ crosses except plain, serializable data.
 npm install @echelon-foundry/typescript-wasm-kernel
 ```
 
-> **Package name:** Limen is the product name; the published package is still
-> `@echelon-foundry/typescript-wasm-kernel`. Nothing was renamed — no
-> deprecation, no shim, no migration. See
-> [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md).
-
-> **Where is the WebAssembly?** There isn't any — not yet. The name described a
-> *boundary shape* that a WASM module could later be driven through. Today the
-> application side is TypeScript. This is answered in full in
-> [docs/17-wasm-migration.md](docs/17-wasm-migration.md), and it is the first
-> thing most newcomers ask.
+| | |
+| --- | --- |
+| **Five-minute start** | [docs/quick-start.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/quick-start.md) |
+| **Who owns what** | [docs/mental-model.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/mental-model.md) |
+| **Where does my change go?** | [docs/where-code-goes.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/where-code-goes.md) |
+| **I am an AI coding agent** | [AGENTS.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/AGENTS.md) |
 
 ---
 
-## The core idea
+## What it is
 
-```text
-HTML          owns document structure.
-CSS           owns presentation.
-The browser   owns layout, rendering, and native input behavior.
-Limen         is the threshold: it carries events in and effects out.
-The engine    owns state, transitions, validation, and what to show.
-```
+A dependency-free browser library that splits a web application in two:
 
-The Limen kernel understands **six HTML attributes** and no application
-vocabulary at all. It does not know what `"checkAvailability"` means or what a
-`"customers"` list is. It moves opaque strings and plain data across a
-boundary — which is precisely what stops application logic from accumulating
-in the browser layer.
+- **The kernel** runs in the browser and does browser things — DOM bindings,
+  `fetch`, `localStorage`, the clipboard, history. It understands six HTML
+  attributes and **no application vocabulary at all**.
+- **The engine** owns everything that means something — state, transitions,
+  validation, what the user is allowed to do, what to show.
 
-## Thirty-second architecture
+They communicate only through plain JSON-serializable data. The engine never
+touches a browser API; the kernel never learns what your data means.
 
-```mermaid
-flowchart LR
-    subgraph browser["Browser — capability"]
-        DOM["HTML + CSS<br/>data-* bindings"]
-        K["Limen kernel<br/><i>src/kernel/</i>"]
-    end
-    subgraph app["Application — authority"]
-        E["Engine<br/><i>src/engine/</i><br/>state · transitions · projection"]
-    end
+The same npm package also ships a **lifecycle CLI** — `init`, `status`,
+`verify`, `upgrade`, `doctor` — which installs that boundary into a repository
+and keeps it honest.
 
-    DOM -- "DOM event" --> K
-    K -- "SemanticEvent" --> E
-    E -- "ViewState" --> K
-    K -- "textContent, attributes, mount/unmount" --> DOM
-    E -- "EffectRequest" --> K
-    K -- "fetch / localStorage" --> X(("Network<br/>Storage"))
-    X -- "EffectResult" --> K
-    K -- "EffectResult" --> E
-```
+### Three things newcomers ask first
 
-The two arrows crossing the middle are the entire contract. They are defined in
-[`src/protocol.ts`](src/protocol.ts) — about 80 lines, and the single most
-useful file to read.
+1. **Where is the WebAssembly?** There is none — not yet. The name describes a
+   *boundary shape* that is narrow and serializable, and therefore WASM-ready.
+   Full answer: [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+2. **Is the application written in F#?** Not today. **The engine is
+   TypeScript** (`src/engine/`), and the F# in this repository is the lifecycle
+   CLI (`cli/`), not the application side. A WASM engine in F#, C#, Rust or
+   Kotlin is the design target — the boundary exists so the engine can be
+   replaced without changing the browser side — but it is not implemented, and
+   nothing here should be read as though it were.
+3. **Why is the package named `typescript-wasm-kernel`?** History. Limen is the
+   product name; **no exported symbol, file path, or protocol type was
+   renamed**, and nothing was deprecated. See
+   [docs/18-naming-and-compatibility.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md).
 
 ## Why it exists
 
@@ -81,22 +68,91 @@ and it is not the browser.**
 | One source of truth | Application state exists only in the engine. The DOM is output, never input. |
 | Illegal states are unrepresentable | State is a discriminated union, so "saving *and* already saved" cannot be written down. |
 | Deterministic transitions | `(state, command) → state` is pure, and testable without a browser. |
-| Honest failure | Every effect reports `Success`, `Failure`, `Cancelled`, or `OutcomeUnknown`. "We don't know" is a real, handled outcome. |
+| Honest failure | Every effect reports a closed set of outcomes. "We don't know" is a real, handled case. |
 | Portable logic | The engine touches no browser API, so it can move to another language without rewriting behavior. |
 | Less to audit | Browser access lives in one file, and a build check fails if it leaks. |
 | Easier for agents | There is one correct place for any given change, and it can be stated as a rule. |
 
-These are consequences of the boundary, not aspirations. The mechanically
-enforced one is the second-to-last:
-[`scripts/check-architecture.ts`](scripts/check-architecture.ts) fails the build
-if `src/engine/**` so much as mentions `document`, `window`, `fetch(`,
-`localStorage`, or `sessionStorage`.
+These are consequences of the boundary, not measured outcomes — see
+[Evidence](#evidence). The mechanically enforced one is the second-to-last:
+[`scripts/check-architecture.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/scripts/check-architecture.ts)
+fails the build if `src/engine/**` so much as mentions `document`, `window`,
+`fetch(`, `localStorage`, or `sessionStorage`.
 
-**Tradeoffs are real**, and documented rather than hidden: no routing or
-history, no browser capabilities beyond HTTP and `localStorage`, no focus
-management, no list virtualization, more ceremony than a small component
-framework for a genuinely simple page. See
-[docs/01-architecture.md § Honest limits](docs/01-architecture.md#6-honest-limits).
+## Core architecture
+
+```text
+HTML / CSS / browser APIs
+          │
+          ▼
+        Limen            ← the threshold: carries data, decides nothing
+          │
+          ▼
+  Application engine
+  state · transitions · decisions
+```
+
+In more detail:
+
+```mermaid
+flowchart LR
+    subgraph browser["Browser — capability"]
+        DOM["HTML + CSS<br/>data-* bindings"]
+        K["Limen kernel<br/><i>src/kernel/</i>"]
+    end
+    subgraph app["Application — authority"]
+        E["Engine<br/><i>src/engine/</i><br/>state · transitions · projection"]
+    end
+
+    DOM -- "DOM event" --> K
+    K -- "SemanticEvent" --> E
+    E -- "ViewState" --> K
+    K -- "textContent, attributes, mount/unmount" --> DOM
+    E -- "EffectRequest" --> K
+    K -- "fetch / localStorage / clipboard / history" --> X(("Browser<br/>capabilities"))
+    X -- "EffectResult" --> K
+    K -- "EffectResult" --> E
+```
+
+One full interaction, step by step:
+
+```text
+DOM event  →  Limen  →  SemanticEvent  →  transition()  →  new state
+                                                            │
+                                      effect needed? ───────┤
+                                                            ▼
+                                                    EffectRequest
+                                                            │
+                                                          Limen
+                                                            │
+                                                   browser capability
+                                                            │
+                                                       EffectResult
+                                                            │
+                                                       transition()
+                                                            ▼
+                                                     project() → ViewState
+                                                            │
+                                                          Limen
+                                                            ▼
+                                                        the DOM
+```
+
+The two arrows crossing the middle are the entire contract. They are defined in
+[`src/protocol.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/protocol.ts) —
+about 160 lines, and the single most useful file to read.
+
+Three complete interactions traced through every file they touch:
+[docs/traces.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md).
+
+## Install
+
+```sh
+npm install @echelon-foundry/typescript-wasm-kernel
+```
+
+No runtime dependencies. Node ≥ 22 to build or test; any browser with ES2022
+modules, `fetch` and `AbortController` to run.
 
 ## The smallest working example
 
@@ -166,7 +222,163 @@ capabilities, don't reconstruct them** — is most of what using Limen well
 consists of.
 
 This example is real, and the test suite executes it on every run:
-[`examples/01-counter/`](examples/01-counter/).
+[`examples/01-counter/`](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter).
+A no-build-step JavaScript copy ships **inside the npm package** at
+`examples/minimal/`.
+
+## How state works
+
+- **One place owns it**: your engine. Not the DOM, not a store, not a module
+  variable.
+- **It is a discriminated union**, so combinations that make no sense cannot be
+  written down.
+- **Transitions are pure**: `(state, command) → { state, effects, accepted }`.
+  An illegal command is *refused explicitly* and says so, rather than throwing
+  or quietly working.
+- **The view is a projection**, `project(state) → ViewState`: plain named
+  values and lists. It includes what the UI is *allowed* to do, so the DOM never
+  works that out for itself.
+- **Nothing persists by itself.** A reload starts from your initial state
+  unless your engine asked for a `Storage` effect.
+
+Detail: [docs/04-state-model.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/04-state-model.md).
+
+## How browser capabilities work
+
+The engine never performs an effect. It **describes** one; the kernel performs
+it and reports a typed outcome, which the engine then treats as evidence.
+
+| Capability | Operations | Outcomes |
+| --- | --- | --- |
+| `Http` | any method, your headers and body, a required timeout | `Success` · `Failure` · `Cancelled` · `OutcomeUnknown` |
+| `Storage` | `get` / `set` / `remove` on `localStorage` | `Success` · `Failure` |
+| `Clipboard` | `writeText` (read is deliberately absent) | `Success` · `Failure{denied, unavailable, unknown}` |
+| `Navigation` | `push` / `replace` / `back` / `forward` | `Success{location}` · `Dispatched` · `Failure` |
+
+**`Clipboard` and `Navigation` are new in 0.6.1.** On an earlier version they do
+not exist, and requesting one produces a `BridgeError` with `phase: "effect"`
+and no result. Check with `npm ls @echelon-foundry/typescript-wasm-kernel`; the
+per-version record is [CHANGELOG.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/CHANGELOG.md).
+
+Plus one message nobody requested: **`LocationChanged`**, when the user presses
+Back or Forward. It is not an effect result, because no effect was asked for.
+
+`OutcomeUnknown` is the one people skip, and the reason the set is worth having:
+a timed-out request **may already have reached the server**. A POST that times
+out must not be retried automatically, and no type that collapses that into
+"failed" can tell you so.
+
+Not implemented: files, timers, focus control, geolocation, `IndexedDB`,
+clipboard read. Adding one is a deliberate protocol change —
+[docs/15-recipes.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md).
+
+Detail: [effects and browser interop](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/07-effects-and-browser-interop.md) ·
+[routing](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md) ·
+[clipboard](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md).
+
+## F# and this repository
+
+Being precise, because this is the most common misunderstanding:
+
+| Part | Language | Status |
+| --- | --- | --- |
+| The browser kernel (`src/kernel/`) | TypeScript | shipped |
+| The application engine (`src/engine/`, and yours) | TypeScript | shipped |
+| The lifecycle CLI (`cli/Limen.Core/`, `cli/Limen.Cli/`) | **F#** | shipped, as platform binaries |
+| A WASM engine in F# / C# / Rust / Kotlin | — | **not implemented** |
+
+The F# in this repository is the CLI, and it is a good demonstration of the same
+layering rule — inspect → plan → validate → execute → verify, with planning pure
+and one module allowed to write. It is **not** the application engine, and there
+is no F#-to-browser binding here.
+
+The boundary is designed so an engine in another language could replace the
+TypeScript one without the browser side changing: everything crossing it is
+plain data. What that migration would actually take, honestly assessed:
+[docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+
+## Examples
+
+Each is executed by
+[`test/examples.test.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/test/examples.test.ts)
+against its own real `index.html`, so none can silently rot. Every one has a
+README covering its state model, event and effect flow, exercises, and the
+mistakes people actually make with it.
+
+| Example | Demonstrates |
+| --- | --- |
+| [01-counter](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter) | the minimum: event → transition → projection → DOM |
+| [02-form](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/02-form) | validation, capability projection, rejected illegal transitions |
+| [03-fetch-data](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/03-fetch-data) | HTTP effect, lists, all four outcomes, stale-result rejection |
+| [04-save-data](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/04-save-data) | full save lifecycle, storage effect, non-idempotent write safety |
+| [05-multi-screen](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/05-multi-screen) | screens as state, shared vs. screen-local lifetimes, no URLs |
+| [06-time-entries](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/06-time-entries) | a realistic feature: load, validate, add, mutate, refresh |
+| [07-clipboard](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/07-clipboard) | copying text; three failure reasons, only one worth retrying |
+| [08-routing](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/08-routing) | typed routes, deep links, Back and Forward, static hosting |
+| [minimal](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/minimal) | the copy shipped inside the npm package — four files, no build step |
+| [kitchen-sink](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/kitchen-sink.html) | every primitive and every outcome, interactively |
+
+## Documentation
+
+| You are… | Start here |
+| --- | --- |
+| Getting something working now | [quick-start](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/quick-start.md) |
+| Trying to understand the model | [mental model](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/mental-model.md) |
+| Deciding where a change belongs | [where does code go?](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/where-code-goes.md) |
+| Following one interaction end to end | [three traces](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md) |
+| Looking for an API | [API reference](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/11-api-reference.md) |
+| Doing one specific task | [recipes](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md) |
+| Debugging | [troubleshooting](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/16-troubleshooting.md) |
+| Adding URLs | [routing](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md) |
+| Copying text | [clipboard](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md) |
+| About to do it wrong | [anti-patterns](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md) |
+| Adopting Limen elsewhere | [integration guide](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/10-integration-guide.md) |
+| Using the CLI | [lifecycle CLI](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/20-lifecycle-cli.md) |
+
+Full index:
+**[docs/README.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/README.md)**.
+Live site: **<https://kemiller2002.github.io/typescript-wasm-kernel/>**.
+
+## For agents
+
+Start at
+**[AGENTS.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/AGENTS.md)**.
+It opens with the non-negotiable rules, then gives a deterministic reading
+order, repository landmarks with real paths, a placement decision tree, and a
+list of mistakes agents actually make here.
+
+The three documents that answer most placement questions on their own:
+[mental model](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/mental-model.md),
+[where does code go?](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/where-code-goes.md),
+[three traces](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md).
+
+Deeper guidance:
+[agent guide](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/14-agent-guide.md).
+
+## The npm package
+
+```sh
+npm install @echelon-foundry/typescript-wasm-kernel
+```
+
+What you receive:
+
+| | |
+| --- | --- |
+| Entry points | `.` (kernel + types), `./protocol`, `./kernel`, `./reference-engine` |
+| Types | `.d.ts` for everything, with source maps |
+| Executables | `limen` (and `typescript-wasm-kernel`) — the lifecycle CLI |
+| Documentation | `README.md`, `CHANGELOG.md`, `LICENSE`, and `docs/`: quick start, mental model, where-code-goes, API reference, troubleshooting, glossary |
+| A complete example | `examples/minimal/` — four files, no build step |
+| Runtime dependencies | **none** |
+
+The packaged docs describe **the version you installed**. The copies on GitHub
+describe `main`, which may be ahead.
+
+The tarball's contents are verified on every run of `npm run check` against an
+expected manifest, and a clean-room job installs the packed tarball into an
+empty project and builds the minimal example from it — so "it works in the
+repository" is never mistaken for "it works when installed".
 
 ## The lifecycle CLI
 
@@ -194,30 +406,44 @@ there before it arrived. Running it twice makes no second round of changes.
 name `document`, `window`, `fetch(`, `localStorage` or `sessionStorage`, and
 neither side may use `eval`. It is a lexical check — a guard rail, not a proof.
 
-For CI and agents, every command takes `--json` (a single document on stdout,
-messages on stderr) and branches on stable exit codes; `init` and `upgrade` take
-`--dry-run` and `--check`. Nothing prompts, so nothing hangs.
+For CI and agents, every command takes `--json` and branches on stable exit
+codes; `init` and `upgrade` take `--dry-run` and `--check`. Nothing prompts, so
+nothing hangs.
 
-```sh
-npx @echelon-foundry/typescript-wasm-kernel verify --strict     # 0 valid, 3 invalid
-npx @echelon-foundry/typescript-wasm-kernel init --dry-run --json
-```
-
-Full reference: **[docs/20-lifecycle-cli.md](docs/20-lifecycle-cli.md)**. What it
-writes, who owns which file, and what an upgrade may change:
-**[docs/21-installation-and-upgrade.md](docs/21-installation-and-upgrade.md)**.
+Full reference:
+**[docs/20-lifecycle-cli.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/20-lifecycle-cli.md)**.
+What it writes and what an upgrade may change:
+**[docs/21-installation-and-upgrade.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/21-installation-and-upgrade.md)**.
 
 The CLI is implemented in F# (`cli/Limen.Core/`, `cli/Limen.Cli/`); the Node
 side is a launcher that selects a binary and forwards arguments, and contains no
 lifecycle logic.
 
+## Compatibility
+
+- **Node** ≥ 22 to build and test (the published package is browser code)
+- **TypeScript** ≥ 5.9 if you consume the types
+- **Browsers**: any with ES2022 modules, `fetch`, and `AbortController`.
+  The clipboard capability additionally requires a **secure context**
+  (`https://` or `localhost`)
+- **Runtime dependencies**: none — the kernel imports nothing at runtime
+- **The CLI**: needs no .NET runtime; a self-contained binary ships for Linux
+  x64/arm64, Windows x64, and macOS x64/arm64. Any other platform exits `7`
+  saying so. Building it from source needs the **.NET SDK 8** and **F# 8**.
+- **WASM**: none is used, and none is required. See
+  [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+- **Versioning**: semver, currently `0.x` — the protocol may still change in a
+  minor release. See
+  [stability and compatibility](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/11-api-reference.md#stability-and-compatibility).
+
 ## The site
 
 Limen's own website is built **with** Limen — its interactive sections are a
 real Limen application driven by the same package you would install, and its
-prose is ordinary static HTML. Source in [`site/`](site/), assembled by
-[`scripts/build-site.ts`](scripts/build-site.ts), deployed by
-[`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+prose is ordinary static HTML. Source in
+[`site/`](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/site),
+deployed by
+[`.github/workflows/pages.yml`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/.github/workflows/pages.yml).
 
 ```sh
 npm run serve:site   # build and serve on http://localhost:4174
@@ -226,56 +452,60 @@ npm run serve:site   # build and serve on http://localhost:4174
 The demos page performs genuinely real requests to show all four effect
 outcomes — nothing is stubbed or animated.
 
-## Run it
+## Development
 
 ```sh
 npm install
-npm run check        # build + architecture, docs and site checks + 88 tests
-npm run build
-npm run build:examples
+npm run check              # the gate: build, checks, and all tests
+npm run build              # tsc → dist/
+npm run build:examples     # tsc → examples/**/*.js
+npm run check:architecture # boundary enforcement
+npm run check:docs         # links, paths, orphans
+npm run check:package      # the npm tarball's contents and its links
+npm run check:clean-room   # pack, install into an empty project, build the minimal example
+npm run smoke:browser      # exercise the DOM behavior in a real Chromium (needs Playwright)
+```
+
+Then, to see it:
+
+```sh
 python3 -m http.server 4173
 ```
 
 | | |
 | --- | --- |
 | Reference feature | <http://localhost:4173/> |
-| Examples | `/examples/01-counter/` … `/examples/06-time-entries/` |
+| Examples | `/examples/01-counter/` … `/examples/08-routing/` |
 | Every primitive, interactively | `/examples/kitchen-sink.html` |
 
 The network-backed examples call endpoints that do not exist without a backend.
 That is deliberate — they demonstrate the typed failure states.
 
-## Examples
+`npm run smoke:browser` drives the counter, clipboard and routing examples in a
+real Chromium — including reading the clipboard back and pressing the browser's
+own Back and Forward buttons, neither of which jsdom can settle. Playwright is
+**not** a dependency; install it yourself (`npm i -g playwright && playwright
+install chromium`) and the script runs, or skips with a message and exits 0 if
+it is absent.
 
-Each is executed by [`test/examples.test.ts`](test/examples.test.ts) against its
-own real `index.html`, so none can silently rot.
+Working on the lifecycle CLI additionally needs the **.NET SDK 8**:
 
-| Example | Demonstrates |
-| --- | --- |
-| [01-counter](examples/01-counter/) | the minimum: event → transition → projection → DOM |
-| [02-form](examples/02-form/) | validation, capability projection, rejected illegal transitions |
-| [03-fetch-data](examples/03-fetch-data/) | HTTP effect, lists, all four outcomes, stale-result rejection |
-| [04-save-data](examples/04-save-data/) | full save lifecycle, storage effect, non-idempotent write safety |
-| [05-multi-screen](examples/05-multi-screen/) | screens as state, shared vs. screen-local lifetimes |
-| [06-time-entries](examples/06-time-entries/) | a realistic feature: load, validate, add, mutate, refresh |
+```sh
+npm run test:cli           # dotnet test — the F# lifecycle core
+npm run build:cli          # publish the binary for this platform
+npm run build:cli:all      # publish all five platform binaries (what npm pack ships)
+```
 
-## Documentation
+`npm run check` runs without the .NET SDK; the CLI tests report as **skipped**
+rather than passing when no binary has been built.
 
-| You are… | Start here |
-| --- | --- |
-| New to Limen | [docs/01-architecture.md](docs/01-architecture.md) |
-| Building your first app | [docs/02-getting-started.md](docs/02-getting-started.md) |
-| **An AI coding agent** | [AGENTS.md](AGENTS.md), then [docs/14-agent-guide.md](docs/14-agent-guide.md) |
-| Looking for an API | [docs/11-api-reference.md](docs/11-api-reference.md) |
-| Doing one specific task | [docs/15-recipes.md](docs/15-recipes.md) |
-| Debugging | [docs/16-troubleshooting.md](docs/16-troubleshooting.md) |
-| Adopting Limen elsewhere | [docs/10-integration-guide.md](docs/10-integration-guide.md) |
-| Using the CLI | [docs/20-lifecycle-cli.md](docs/20-lifecycle-cli.md) |
-| Asking what `init` will change | [docs/21-installation-and-upgrade.md](docs/21-installation-and-upgrade.md) |
-| Asking about WASM | [docs/17-wasm-migration.md](docs/17-wasm-migration.md) |
-| Asking about the name | [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) |
+Contributing — including AI agents — starts with
+[AGENTS.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/AGENTS.md)
+and [docs/12-design-rules.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/12-design-rules.md).
 
-Full index: **[docs/README.md](docs/README.md)**.
+This repository follows [SDE](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/.sde/README.md)
+and the ROS work protocol: identify a work item and run `./ros work start WI-####`
+**before** meaningful changes, or CI's `validate` job will reject the branch.
 
 ## Evidence
 
@@ -289,51 +519,22 @@ not conflated, and no quantitative claim about Limen appears anywhere in this
 documentation.
 
 Full accounting, including what a Limen trial would have to measure and why one
-has not been run: **[docs/19-evidence.md](docs/19-evidence.md)**.
+has not been run:
+**[docs/19-evidence.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/19-evidence.md)**.
 
 Known gaps, deferred work, and the reasoning behind both are tracked in
-[docs/ROADMAP.md](docs/ROADMAP.md) and
-[docs/DOCUMENTATION-AUDIT.md](docs/DOCUMENTATION-AUDIT.md).
+[docs/ROADMAP.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/ROADMAP.md)
+and
+[docs/DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
 
-## Requirements
+## Tradeoffs
 
-- **Node** ≥ 22 to build and test (the published package is browser code)
-- **TypeScript** ≥ 5.9 if you consume the types
-- **Browsers**: any with ES2022 modules, `fetch`, and `AbortController`
-- **Runtime dependencies**: none — the kernel imports nothing at runtime
-- **The CLI**: needs no .NET runtime; a self-contained binary ships for Linux
-  x64/arm64, Windows x64, and macOS x64/arm64. Any other platform exits `7`
-  saying so. Building it from source needs the .NET SDK 8.
-- **Versioning**: semver, currently `0.x` — the protocol may still change in a
-  minor release. See [docs/11-api-reference.md](docs/11-api-reference.md#stability-and-compatibility).
-
-## Development
-
-```sh
-npm run check              # the gate: build, checks, and all tests
-npm run build              # tsc → dist/
-npm run build:examples     # tsc → examples/**/*.js
-npm run check:architecture # boundary enforcement
-npm run check:docs         # links, paths, orphans
-```
-
-Working on the lifecycle CLI additionally needs the **.NET SDK 8**:
-
-```sh
-npm run test:cli           # dotnet test — the F# lifecycle core
-npm run build:cli          # publish the binary for this platform
-npm run build:cli:all      # publish all five platform binaries (what npm pack ships)
-```
-
-`npm run check` runs without the .NET SDK; the CLI tests in `test/cli.test.ts`
-report as **skipped** rather than passing when no binary has been built.
-
-Contributing — including AI agents — starts with [AGENTS.md](AGENTS.md) and
-[docs/12-design-rules.md](docs/12-design-rules.md).
-
-This repository follows [SDE](.sde/README.md) and the ROS work protocol:
-identify a work item and run `./ros work begin ID` **before** meaningful
-changes, or CI's `validate` job will reject the branch.
+Real, and documented rather than hidden: no route table or path matching (the
+`Navigation` capability is the mechanism, not a router), no capabilities beyond
+the four above, no focus management, no list virtualization, no scheduling
+primitives, and more ceremony than a small component framework for a genuinely
+simple page. See
+[docs/01-architecture.md § Honest limits](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/01-architecture.md#6-honest-limits).
 
 ## Release
 
@@ -345,12 +546,13 @@ Trusted Publishing over GitHub OIDC — no npm token is stored in GitHub.
 2. `git push --follow-tags`
 
 The publish workflow rejects a tag whose version does not match `package.json`,
-then runs all checks before publishing. Version `0.2.1` releases as tag
-`v0.2.1`.
+then runs all checks before publishing.
+
+Changes by version: [CHANGELOG.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/CHANGELOG.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/LICENSE).
 
 ---
 

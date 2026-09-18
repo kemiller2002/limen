@@ -1,7 +1,7 @@
 {
   "name": "@echelon-foundry/typescript-wasm-kernel",
-  "version": "0.5.1",
-  "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority — a dependency-free browser kernel library, plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
+  "version": "0.6.1",
+  "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority. A dependency-free browser kernel — HTTP, storage, clipboard and history as typed effects, with application state, transitions and decisions kept out of the browser entirely — plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,8 +34,16 @@
     "bin",
     "runtimes",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE",
-    "architecture.yaml"
+    "architecture.yaml",
+    "docs/quick-start.md",
+    "docs/mental-model.md",
+    "docs/where-code-goes.md",
+    "docs/11-api-reference.md",
+    "docs/16-troubleshooting.md",
+    "docs/glossary.md",
+    "examples/minimal"
   ],
   "sideEffects": false,
   "repository": {
@@ -47,12 +55,17 @@
   },
   "homepage": "https://github.com/kemiller2002/typescript-wasm-kernel#readme",
   "keywords": [
+    "limen",
     "browser-kernel",
     "typescript",
+    "architecture",
+    "state-management",
+    "functional-core",
+    "boundary",
+    "interop",
+    "effects",
     "webassembly",
     "wasm",
-    "functional-core",
-    "limen",
     "echelon-foundry",
     "cli",
     "repository-tooling",
@@ -77,17 +90,18 @@
     "build:cli:all": "node --experimental-strip-types scripts/build-cli.ts",
     "test:cli": "dotnet test cli/tests/Limen.Core.Tests/Limen.Core.Tests.fsproj --nologo -v q",
     "pretest": "npm run build && npm run build:examples && npm run build:site",
-    "test": "npm run check:architecture && npm run check:docs && npm run check:site && node --experimental-strip-types --test test/*.test.ts",
+    "test": "npm run check:architecture && npm run check:docs && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
     "prepack": "npm run clean && npm run check && npm run build:cli:all",
-    "check:site": "node --experimental-strip-types scripts/check-site.ts"
+    "check:site": "node --experimental-strip-types scripts/check-site.ts",
+    "check:package": "node --experimental-strip-types scripts/check-package.ts",
+    "check:clean-room": "node --experimental-strip-types scripts/clean-room.ts",
+    "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.ts"
   },
   "devDependencies": {
+    "@echelon-foundry/repository-operating-system": "^1.2.1",
     "@types/jsdom": "^30.0.0",
     "jsdom": "^29.1.1",
     "typescript": "^5.9.2"
-  },
-  "dependencies": {
-    "@echelon-foundry/repository-operating-system": "^1.2.1"
   }
 }

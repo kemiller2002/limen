@@ -3,10 +3,10 @@
 **What this answers:** exact signatures, semantics, and failure modes of
 everything a consumer uses.
 
-Source of truth: [`src/protocol.ts`](../src/protocol.ts),
-[`src/kernel/browser-kernel.ts`](../src/kernel/browser-kernel.ts),
-[`src/kernel/diagnostics.ts`](../src/kernel/diagnostics.ts),
-[`src/index.ts`](../src/index.ts).
+Source of truth: [`src/protocol.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/protocol.ts),
+[`src/kernel/browser-kernel.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/kernel/browser-kernel.ts),
+[`src/kernel/diagnostics.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/kernel/diagnostics.ts),
+[`src/index.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/index.ts).
 
 ---
 
@@ -16,7 +16,7 @@ Know what you are allowed to depend on.
 
 | Tier | What | Examples |
 | --- | --- | --- |
-| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `PROTOCOL_VERSION`, the six `data-*` attributes |
+| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
 | **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport` (write your own), `DiagnosticsSink` (supply your own) |
 | **Reference implementation** | Ships, but is this repo's demo. Do **not** build on it. | `DirectTypeScriptTransport`, `ReferenceEngine`, `project`, `State`, `Command`, `TransitionResult`, `EmailAddress` |
 | **Internal** | Private; may change without notice. | every `#`-prefixed member of `BrowserKernel`, `Scope`/binding types, `TRIGGER_BY_TAG`, `BOOLEAN_PROPS` |
@@ -28,10 +28,20 @@ Know what you are allowed to depend on.
 - **Versioning**: semver. Currently `0.x`, so the protocol **may change in a
   minor release**. Pin an exact version if that matters to you.
 - **`PROTOCOL_VERSION`** is `1`. The kernel sends it in `Initialize`; an engine
-  should reject a version it does not understand, as `ReferenceEngine` does.
+  should reject a version it does not understand. It is two lines, and worth
+  writing so a future kernel cannot silently drive an engine that predates it:
+
+  ```ts
+  case "Initialize":
+    if (message.protocolVersion !== PROTOCOL_VERSION) throw new Error("Unsupported protocol version");
+    // …
+  ```
+
+  The throw surfaces as `BridgeError { phase: "dispatch" }` rather than
+  crashing the page.
 - **No written breaking-change policy exists** for `0.x` beyond semver itself.
   That is a genuine gap, not an implied guarantee — see
-  [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
+  [DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
 - **Browsers**: ES2022 modules, `fetch`, `AbortController`, `AbortSignal.reason`,
   `<template>`. Chrome/Edge 98+, Firefox 97+, Safari 15.4+.
 - **Node** ≥ 22 to build and test. **TypeScript** ≥ 5.9 for the types.
@@ -48,7 +58,7 @@ import type { ViewState } from "@echelon-foundry/typescript-wasm-kernel/protocol
 
 | Specifier | Contents |
 | --- | --- |
-| `@echelon-foundry/typescript-wasm-kernel` | everything in [`src/index.ts`](../src/index.ts) |
+| `@echelon-foundry/typescript-wasm-kernel` | everything in [`src/index.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/index.ts) |
 | `…/protocol` | the protocol types |
 | `…/kernel` | `BrowserKernel` alone |
 | `…/reference-engine` | `DirectTypeScriptTransport` — reference only |
@@ -92,7 +102,10 @@ Performs, in order:
    non-`<template>` element, a template with more than one root — it reports
    `BridgeError { phase: "binding" }` and returns without dispatching
    `Initialize`.
-3. Dispatches `Initialize { protocolVersion: 1, capabilities: ["Http", "Storage"] }`.
+3. Registers one `popstate` listener on `window`, which sends
+   `LocationChanged` whenever the browser moves through history on its own.
+4. Dispatches `Initialize { protocolVersion: 1, capabilities: [...], location }`,
+   where `location` is the URL the page was loaded at.
 
 **Never rejects.** All failures go to diagnostics. The page stays at its
 placeholder content, which is the visible symptom of a failure in step 1 or 2.
@@ -169,11 +182,26 @@ performing effects yourself instead of requesting them; forgetting that
 ### `BrowserToEngineMessage`
 
 ```ts
+type Capability = "Http" | "Storage" | "Clipboard" | "Navigation";
+
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly ["Http", "Storage"] }
-  | { kind: "Event";        event:  SemanticEvent }
-  | { kind: "EffectResult"; result: EffectResult };
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation }
+  | { kind: "Event";           event:    SemanticEvent }
+  | { kind: "EffectResult";    result:   EffectResult }
+  | { kind: "LocationChanged"; location: BrowserLocation };
 ```
+
+`capabilities` lists what the **kernel implements** — not what this browser will
+permit. Availability and permission are reported per effect, in that effect's
+own outcome. Do not use this list to pre-disable a control.
+
+`LocationChanged` is the one message nobody requested: the browser moved on its
+own (Back, Forward, a gesture). It is not an `EffectResult` because nothing
+correlates it. An engine may ignore it; it simply will not react to Back.
+
+**Failure behavior**: an engine whose `dispatch` throws on an unrecognised
+message kind will break on a `LocationChanged` it did not expect. Handle it, or
+return the current projection unchanged.
 
 ### `EngineToBrowserMessage`
 
@@ -308,13 +336,96 @@ type StorageOutcome =
 `null`/unused for `set`/`remove`. No `OutcomeUnknown` — a single `localStorage`
 call is atomic.
 
+### `ClipboardEffectRequest`
+
+*Available since 0.6.1.*
+
+```ts
+type ClipboardEffectRequest = {
+  kind: "Clipboard";
+  correlationId: CorrelationId;
+  operation: "writeText";   // write-only; there is no readText
+  text: string;             // never surfaced in a DiagnosticEvent
+};
+```
+
+**Failure behavior**: `denied` (the browser refused this attempt — usually a
+stale user gesture; a retry often works), `unavailable` (no Clipboard API in
+this browser or context — a retry never works), `unknown`.
+
+**Common mistake**: offering a retry for `unavailable`. Full guide:
+[clipboard.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md).
+
+### `ClipboardOutcome`
+
+```ts
+type ClipboardOutcome =
+  | { kind: "Success" }
+  | { kind: "Failure"; reason: "denied" | "unavailable" | "unknown" };
+```
+
+No payload on success, and no `OutcomeUnknown`: a refused write did not happen.
+
+### `NavigationEffectRequest`
+
+*Available since 0.6.1.*
+
+```ts
+type NavigationEffectRequest =
+  | { kind: "Navigation"; correlationId; operation: "push";    url: string }
+  | { kind: "Navigation"; correlationId; operation: "replace"; url: string }
+  | { kind: "Navigation"; correlationId; operation: "back" }
+  | { kind: "Navigation"; correlationId; operation: "forward" };
+```
+
+`url` must be same-origin; anything else is refused with `not-same-origin` and
+the page does not move. No history state object is stored — the engine already
+owns the state a URL stands for.
+
+**Common mistake**: requesting a navigation in response to `LocationChanged`.
+The browser has already moved; pushing again traps the user. Full guide:
+[routing.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md).
+
+### `NavigationOutcome`
+
+```ts
+type NavigationOutcome =
+  | { kind: "Success"; location: BrowserLocation }   // push/replace
+  | { kind: "Dispatched" }                           // back/forward: asked, not moved
+  | { kind: "Failure"; reason: "unavailable" | "not-same-origin" };
+```
+
+`Dispatched` is not a weaker `Success`. `back`/`forward` only ask; the move
+arrives later as `LocationChanged`, or never, if there was nowhere to go.
+
+### `BrowserLocation`
+
+*Available since 0.6.1.*
+
+```ts
+type BrowserLocation = {
+  path:  string;   // "/invoices/42"       — always begins with "/"
+  query: string;   // "?tab=history" or "" — leading "?" included
+  hash:  string;   // "#totals" or ""      — leading "#" included
+};
+```
+
+Split mechanically by the kernel and not interpreted further. The origin is
+deliberately absent.
+
 ### `EffectResult`
 
 ```ts
 type EffectResult =
-  | { kind: "HttpResult";    correlationId: CorrelationId; outcome: EffectOutcome }
-  | { kind: "StorageResult"; correlationId: CorrelationId; outcome: StorageOutcome };
+  | { kind: "HttpResult";       correlationId: CorrelationId; outcome: EffectOutcome }
+  | { kind: "StorageResult";    correlationId: CorrelationId; outcome: StorageOutcome }
+  | { kind: "ClipboardResult";  correlationId: CorrelationId; outcome: ClipboardOutcome }
+  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome };
 ```
+
+An effect kind the kernel does not implement produces **no result at all** — it
+is reported as `BridgeError { phase: "effect" }`. An engine waiting on that
+correlation id waits forever, which is why it is reported loudly.
 
 ---
 
@@ -347,7 +458,7 @@ function project(state: State): ViewState;
 (email availability). It understands exactly two event names — `emailChanged`
 and `checkAvailability` — and throws on anything else. It is not a base class
 and not a starting point. Write your own `EngineTransport`; it is about eight
-lines ([02-getting-started.md](02-getting-started.md)).
+lines ([02-getting-started.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/02-getting-started.md)).
 
 `ReferenceEngine.handle()` also throws on a `StorageResult`, because its domain
 never requests a Storage effect.
@@ -379,7 +490,7 @@ unchanged; everything else uses `setAttribute`.
 
 ## Related
 
-- [05-events-and-dispatch.md](05-events-and-dispatch.md) — the inbound half
-- [06-rendering.md](06-rendering.md) — the outbound half
-- [07-effects-and-browser-interop.md](07-effects-and-browser-interop.md) — effects
+- [05-events-and-dispatch.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/05-events-and-dispatch.md) — the inbound half
+- [06-rendering.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/06-rendering.md) — the outbound half
+- [07-effects-and-browser-interop.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/07-effects-and-browser-interop.md) — effects
 - [glossary.md](glossary.md) — terminology

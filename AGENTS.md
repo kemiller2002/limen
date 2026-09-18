@@ -89,17 +89,31 @@ src/protocol.ts the threshold itself: plain, JSON-serializable data only
 src/engine/     application meaning ONLY — state, transitions, validation
 ```
 
-Two message types cross the boundary, and nothing else does:
+Four message types cross the boundary, and nothing else does:
 
 ```ts
 // Browser → Engine
-{ kind: "Initialize"; protocolVersion; capabilities }
-{ kind: "Event";        event:  SemanticEvent }   // { name, key?, value? }
-{ kind: "EffectResult"; result: EffectResult }
+{ kind: "Initialize";      protocolVersion; capabilities; location }
+{ kind: "Event";           event:    SemanticEvent }   // { name, key?, value? }
+{ kind: "EffectResult";    result:   EffectResult }
+{ kind: "LocationChanged"; location: BrowserLocation } // the browser moved on its own
 
 // Engine → Browser
 { view: ViewState; effects: EffectRequest[]; cancellations: CorrelationId[] }
 ```
+
+The kernel implements four capabilities, announced in `Initialize`:
+
+| Capability | Operations | Outcomes |
+| --- | --- | --- |
+| `Http` | any method, caller headers and body | `Success` / `Failure` / `Cancelled` / `OutcomeUnknown` |
+| `Storage` | `get` / `set` / `remove` (`localStorage`) | `Success` / `Failure` |
+| `Clipboard` | `writeText` (**no read**) | `Success` / `Failure{denied,unavailable,unknown}` |
+| `Navigation` | `push` / `replace` / `back` / `forward` | `Success{location}` / `Dispatched` / `Failure` |
+
+`capabilities` says what the **kernel implements**, never what the browser will
+permit. Availability and permission are reported per effect, in that effect's
+own outcome.
 
 The kernel understands exactly six HTML attributes and interprets none of them:
 
@@ -131,10 +145,15 @@ These are MUST-level. Violating one is a defect regardless of whether tests pass
 5. **External effects MUST be requested, never performed, by the engine.** The
    engine returns an `EffectRequest`; the kernel performs it and returns an
    `EffectResult`.
-6. **All four `EffectOutcome` cases MUST be represented** for Http:
-   `Success`, `Failure`, `Cancelled`, `OutcomeUnknown`. Storage has two:
-   `Success`, `Failure`. Do not collapse `OutcomeUnknown` into `Failure` — they
-   mean different things and often demand different recovery.
+6. **Every outcome variant MUST be represented.** Http has four —
+   `Success`, `Failure`, `Cancelled`, `OutcomeUnknown`. Storage has two.
+   Clipboard has two, with three distinct failure reasons. Navigation has
+   three. Do not collapse `OutcomeUnknown` into `Failure`, and do not collapse
+   a clipboard `denied` (retry works) into `unavailable` (retry can never
+   work) — each split exists because the recovery differs.
+6a. **A browser-originated move is not an effect result.** Never request a
+   navigation in response to `LocationChanged`: the browser has already moved,
+   and pushing again traps the user on the page.
 7. **Do not add a dependency.** The package has zero runtime dependencies. If
    one is genuinely required, justify it against
    `prompts/dependency-minimal-browser-kernel-architecture-policy.md` §8 and
@@ -150,9 +169,12 @@ Is it document structure?                      → HTML. Stop.
 Does it decide, validate, or remember anything
 about the application?                         → src/engine/. Stop.
 Does it need a browser API the kernel already
-has (Http, localStorage)?                      → engine requests an EffectRequest.
+has (Http, localStorage, clipboard write,
+history push/replace/back/forward)?            → engine requests an EffectRequest.
+Is it what a URL MEANS?                        → src/engine/ (parseRoute). Stop.
+Is it how a URL is pushed or popped?           → already in the kernel. Stop.
 Does it need a browser API the kernel does NOT
-have (clipboard, history, files, timers)?      → extend the protocol + kernel
+have (files, timers, focus, clipboard read)?   → extend the protocol + kernel
                                                  (see docs/15-recipes.md), then
                                                  the engine requests it.
 Is it a new generic DOM binding primitive?     → src/kernel/ — rare, needs review.
@@ -169,12 +191,21 @@ JavaScript outside the engine?                 → STOP. That is rule 1.
 | Initialization and the round-trip chokepoint | `BrowserKernel.start()` and `#send()` in the same file |
 | DOM binding and projection | `#bindElement`, `#applyScope`, `#applyIf`, `#applyEach` |
 | Http and Storage execution | `#runHttp`, `#classifyAbort`, `runStorage` |
+| Clipboard execution and failure classification | `writeClipboardText`, `classifyClipboardError` |
+| Navigation, same-origin refusal, `popstate` | `runNavigation`, `resolveSameOrigin`, `readLocation` |
+| Effect routing (exhaustive — a missing branch will not compile) | `#runEffect` |
 | A real state machine + transitions | [`src/engine/domain.ts`](src/engine/domain.ts) |
 | State → view projection | `project()` in [`src/engine/engine.ts`](src/engine/engine.ts) |
 | Today's in-process transport | [`src/engine/transport.ts`](src/engine/transport.ts) |
 | Diagnostics | [`src/kernel/diagnostics.ts`](src/kernel/diagnostics.ts) |
 | The smallest complete app | [`examples/01-counter/`](examples/01-counter/) |
+| The copy shipped to npm consumers (no build step) | [`examples/minimal/`](examples/minimal/) |
+| Clipboard, end to end | [`examples/07-clipboard/`](examples/07-clipboard/) |
+| Routing, Back/Forward, deep links | [`examples/08-routing/`](examples/08-routing/) |
 | A production-shaped app | [`examples/06-time-entries/`](examples/06-time-entries/) |
+| One interaction traced through every file it touches | [`docs/traces.md`](docs/traces.md) |
+| Who owns state, the DOM, routing, decisions | [`docs/mental-model.md`](docs/mental-model.md) |
+| Which layer a given change belongs in | [`docs/where-code-goes.md`](docs/where-code-goes.md) |
 | Every primitive, interactively | [`examples/kitchen-sink.html`](examples/kitchen-sink.html) |
 | Engine-level test style | [`test/domain.test.ts`](test/domain.test.ts) |
 | Bridge-level test style (jsdom, timing rules) | [`test/kernel.test.ts`](test/kernel.test.ts) |
@@ -186,20 +217,49 @@ JavaScript outside the engine?                 → STOP. That is rule 1.
 
 ## Required reading order
 
+Read these in order. Do not go source-diving first — every one of these exists
+because an agent needed it and had to reconstruct it from the implementation.
+
 1. This file, Part 1 — **including the work-item step above**
-2. [README.md](README.md)
-3. [docs/01-architecture.md](docs/01-architecture.md)
-4. [`src/protocol.ts`](src/protocol.ts) — the actual contract
+2. [docs/mental-model.md](docs/mental-model.md) — who owns what, and why
+3. [docs/where-code-goes.md](docs/where-code-goes.md) — the placement table and decision tree
+4. [`src/protocol.ts`](src/protocol.ts) — the actual contract, ~160 lines
 5. [`examples/01-counter/`](examples/01-counter/) — the smallest whole app
-6. [docs/04-state-model.md](docs/04-state-model.md)
-7. [docs/05-events-and-dispatch.md](docs/05-events-and-dispatch.md)
-8. [docs/07-effects-and-browser-interop.md](docs/07-effects-and-browser-interop.md)
-9. [`examples/06-time-entries/`](examples/06-time-entries/) — realistic
-10. [docs/11-api-reference.md](docs/11-api-reference.md)
+6. [docs/traces.md](docs/traces.md) — three interactions, file by file
+7. [docs/04-state-model.md](docs/04-state-model.md)
+8. [docs/05-events-and-dispatch.md](docs/05-events-and-dispatch.md)
+9. [docs/07-effects-and-browser-interop.md](docs/07-effects-and-browser-interop.md)
+10. [`examples/03-fetch-data/`](examples/03-fetch-data/) — the first effect
+11. [docs/routing.md](docs/routing.md) + [`examples/08-routing/`](examples/08-routing/)
+12. [docs/clipboard.md](docs/clipboard.md) + [`examples/07-clipboard/`](examples/07-clipboard/)
+13. [`examples/06-time-entries/`](examples/06-time-entries/) — realistic
+14. [docs/11-api-reference.md](docs/11-api-reference.md)
+
+**Short on context?** Items 2, 3 and 4 alone are enough to place almost any
+change correctly.
 
 Deeper agent-specific guidance, including worked task-placement examples:
 [docs/14-agent-guide.md](docs/14-agent-guide.md). What *not* to do, with
 wrong/right pairs: [docs/13-anti-patterns.md](docs/13-anti-patterns.md).
+
+## Common agent mistakes
+
+Observed, not hypothetical. Each one is cheap to avoid and expensive to debug.
+
+| Mistake | Why it happens | What to do instead |
+| --- | --- | --- |
+| Keeping application state in a JS variable or on the DOM element | it works for one screen | put it in `State`; the DOM is output |
+| Calling a browser API from engine code | it is one line | request an effect; the architecture check fails the build anyway |
+| Assuming Limen is a virtual-DOM framework | the `data-*` attributes look like a template language | there is no expression language and no diffing of HTML you did not write |
+| Binding a top-level view key inside a `data-each` row | the key exists in the projection | bindings in a row resolve against the **item**; project it per item |
+| Pushing a URL in response to `LocationChanged` | the two directions look symmetrical | a browser-initiated move requests nothing |
+| Using `Initialize.capabilities` as a permission check | it reads like feature detection | try the effect; the outcome tells the truth |
+| Collapsing `OutcomeUnknown` into `Failure` | "it didn't work" feels simpler | a timed-out POST may already have been applied |
+| Retrying a clipboard `unavailable` | all failures look alike | only `denied` is retryable |
+| Building on `DirectTypeScriptTransport` | it is exported and looks like a base class | it is this repo's demo; write your own — two methods |
+| Calling `kernel.start()` twice to re-render | it seems idempotent | it re-binds and double-registers; trigger a real event |
+| Editing an emitted `examples/**/*.js` | it is the file the browser loads | it is build output; edit the `.ts` |
+| Adding a helper shared between examples | the repetition looks wrong | the repetition is the lesson; a shared helper is the second framework |
 
 ## Commands
 

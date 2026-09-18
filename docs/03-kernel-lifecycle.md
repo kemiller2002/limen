@@ -78,25 +78,44 @@ Two consequences worth knowing:
 - **`<template>` elements are removed from the document** and replaced by
   comment anchors. Their content is inert until mounted.
 
-### 6. `Initialize` is dispatched
+### 6. A `popstate` listener is registered
+
+```ts
+window.addEventListener("popstate", () => {
+  void this.#send({ kind: "LocationChanged", location: readLocation() });
+});
+```
+
+From here on, a Back or Forward the user performs reaches the engine as
+`LocationChanged`. It is registered before `Initialize` so no move can be
+missed. An engine that does not route simply never reacts to it.
+
+### 7. `Initialize` is dispatched
 
 ```ts
 await this.#send({
   kind: "Initialize",
   protocolVersion: PROTOCOL_VERSION,   // 1
-  capabilities: ["Http", "Storage"],
+  capabilities: ["Http", "Storage", "Clipboard", "Navigation"],
+  location: readLocation(),            // the URL the page was loaded at
 });
 ```
 
 `capabilities` tells the engine which effect kinds this kernel can actually
-perform. An engine should refuse to request anything not listed.
+perform. An engine should refuse to request anything not listed. It is **not** a
+permission check: a clipboard write can still be denied and `localStorage` can
+still be unavailable, and those are reported in the effect's own outcome.
+
+`location` is delivered once, here, so a routing engine can choose its first
+state from the address bar instead of rendering a default and then correcting
+itself — visible as a flash, and wrong if the default screen starts a fetch.
 
 The engine's reply is an ordinary `EngineToBrowserMessage`, so the first paint
 follows the same path as every later one — and **it may carry effects**.
 [`examples/06-time-entries/`](../examples/06-time-entries/) issues its initial
 `GET` right here, which is why the list loads with no user interaction.
 
-### 7. The first projection is applied
+### 8. The first projection is applied
 
 The DOM now matches the engine's initial state. Startup is complete.
 
