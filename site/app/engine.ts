@@ -487,13 +487,17 @@ export function createSiteTransport(): EngineTransport {
         }
         case "EffectResult": {
           if (message.result.kind !== "HttpResult") {
-            throw new Error("This engine never requests a Storage effect.");
+            throw new Error(`Unexpected ${message.result.kind}: this engine requests only Http effects.`);
           }
           return apply(
             transition(state, { kind: "RecordLoad", correlationId: message.result.correlationId, outcome: message.result.outcome }),
             "EffectResult",
           );
         }
+        // The site's interactive sections are not URL-driven; Back and Forward
+        // move between static pages, which is the browser's own job.
+        case "LocationChanged":
+          return { view: project(state), effects: [], cancellations: [] };
       }
     },
   };

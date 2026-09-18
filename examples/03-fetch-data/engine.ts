@@ -193,7 +193,7 @@ export function createFetchTransport(): EngineTransport {
           return respond(transition(state, eventToCommand(message.event, nextCorrelationId())));
         case "EffectResult": {
           if (message.result.kind !== "HttpResult") {
-            throw new Error("This engine never requests a Storage effect.");
+            throw new Error(`Unexpected ${message.result.kind}: this engine requests only Http effects.`);
           }
           return respond(transition(state, {
             kind: "RecordLoad",
@@ -201,6 +201,13 @@ export function createFetchTransport(): EngineTransport {
             outcome: message.result.outcome,
           }));
         }
+        // This engine has no URL-driven state, so a Back or Forward move is
+        // not evidence about anything it owns. Re-projecting unchanged is what
+        // "nothing happened here" looks like — ignoring LocationChanged is a
+        // legitimate, common choice. examples/08-routing is the one that
+        // reacts to it.
+        case "LocationChanged":
+          return { view: project(state), effects: [], cancellations: [] };
       }
     },
   };

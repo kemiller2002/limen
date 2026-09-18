@@ -28,16 +28,23 @@ export class ReferenceEngine {
       if (message.protocolVersion !== PROTOCOL_VERSION) throw new Error("Unsupported protocol version");
       return { view: project(this.#state), effects: [], cancellations: [] };
     }
+    // This domain has no URL-driven state, so a browser-originated navigation
+    // is not evidence about anything it owns. Re-projecting unchanged is what
+    // "nothing happened here" looks like — an engine is free to ignore
+    // LocationChanged, and most single-screen ones should.
+    if (message.kind === "LocationChanged") {
+      return { view: project(this.#state), effects: [], cancellations: [] };
+    }
     let command: Command;
     if (message.kind === "Event") {
       command = eventToCommand(message.event, this.#nextCorrelationId());
     } else if (message.result.kind === "HttpResult") {
       command = { kind: "RecordAvailability", correlationId: message.result.correlationId, outcome: message.result.outcome };
     } else {
-      // This reference domain never requests a Storage effect; a
-      // StorageResult reaching it would be a protocol contract violation,
-      // not a domain outcome to represent as state.
-      throw new Error("Unexpected StorageResult: this domain never requests a Storage effect");
+      // This reference domain requests nothing but Http. Any other result
+      // reaching it is a protocol contract violation — a result with no
+      // request behind it — not a domain outcome to represent as state.
+      throw new Error(`Unexpected ${message.result.kind}: this domain only requests Http effects`);
     }
     const result = transition(this.#state, command);
     this.#state = result.state;

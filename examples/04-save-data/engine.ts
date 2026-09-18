@@ -242,6 +242,9 @@ export function createSaveTransport(): EngineTransport {
               outcome: message.result.outcome,
             }));
           }
+          if (message.result.kind !== "StorageResult") {
+            throw new Error(`Unexpected ${message.result.kind}: this engine requests only Http and Storage effects.`);
+          }
           if (message.result.correlationId === DRAFT_GET) {
             return respond(transition(state, { kind: "RestoreDraft", outcome: message.result.outcome }));
           }
@@ -250,6 +253,13 @@ export function createSaveTransport(): EngineTransport {
           // what the user can do. Acknowledged by re-projecting unchanged.
           return { view: project(state), effects: [], cancellations: [] };
         }
+        // This engine has no URL-driven state, so a Back or Forward move is
+        // not evidence about anything it owns. Re-projecting unchanged is what
+        // "nothing happened here" looks like — ignoring LocationChanged is a
+        // legitimate, common choice. examples/08-routing is the one that
+        // reacts to it.
+        case "LocationChanged":
+          return { view: project(state), effects: [], cancellations: [] };
       }
     },
   };

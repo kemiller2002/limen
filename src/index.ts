@@ -4,7 +4,11 @@ export { ReferenceEngine, project } from "./engine/engine.js";
 export { PROTOCOL_VERSION } from "./protocol.js";
 
 export type {
+  BrowserLocation,
   BrowserToEngineMessage,
+  Capability,
+  ClipboardEffectRequest,
+  ClipboardOutcome,
   CorrelationId,
   EffectOutcome,
   EffectRequest,
@@ -13,6 +17,8 @@ export type {
   EngineTransport,
   HttpEffectRequest,
   HttpMethod,
+  NavigationEffectRequest,
+  NavigationOutcome,
   SemanticEvent,
   StorageEffectRequest,
   StorageOutcome,

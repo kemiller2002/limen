@@ -58,3 +58,20 @@ export async function withFetch<T>(impl: typeof fetch, run: () => Promise<T>): P
     globals.fetch = saved;
   }
 }
+
+// jsdom implements no Clipboard API at all, so a test that installs nothing
+// exercises the kernel's "unavailable" path for free. Installing a stub is how
+// the granted and denied paths are reached; the kernel reads
+// `window.navigator.clipboard` at call time, so this must wrap the call, not
+// the kernel's construction.
+export async function withClipboard<T>(writeText: (text: string) => Promise<void>, run: () => Promise<T>): Promise<T> {
+  const navigator = (globalThis as unknown as { window: Window }).window.navigator;
+  const saved = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  try {
+    return await run();
+  } finally {
+    if (saved) Object.defineProperty(navigator, "clipboard", saved);
+    else Reflect.deleteProperty(navigator, "clipboard");
+  }
+}

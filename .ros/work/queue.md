@@ -15,4 +15,5 @@
 | WI-0010 | Release 0.5.0: first release carrying the Limen lifecycle CLI | complete | release | high |
 | WI-0011 | Record the hosted-sandbox git and toolchain limits in CLAUDE.md | complete | documentation | medium |
 | WI-0012 | Fix the release workflow: npm pack --pack-destination needs the directory to exist | complete | tooling | high |
-| WI-0013 | Release 0.5.1: republish after the v0.5.0 pack failure | ready | release | high |
+| WI-0013 | Release 0.5.1: republish after the v0.5.0 pack failure | complete | release | high |
+| WI-0014 | Add Clipboard and Navigation browser capabilities to the Limen protocol and kernel | ready | capability, protocol | medium |

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 14,
+  "nextSeq": 15,
   "items": [
     {
       "id": "WI-0001",
@@ -216,6 +216,23 @@
       "attachments": [],
       "createdAt": "2026-09-16T13:31:33.636Z",
       "updatedAt": "2026-09-16T13:31:33.721Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0014",
+      "title": "Add Clipboard and Navigation browser capabilities to the Limen protocol and kernel",
+      "description": null,
+      "tags": [
+        "capability",
+        "protocol"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:09:16.438Z",
+      "updatedAt": "2026-09-18T06:09:22.625Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
