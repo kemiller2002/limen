@@ -17,8 +17,9 @@
 | WI-0012 | Fix the release workflow: npm pack --pack-destination needs the directory to exist | complete | tooling | high |
 | WI-0013 | Release 0.5.1: republish after the v0.5.0 pack failure | complete | release | high |
 | WI-0014 | Add Clipboard and Navigation browser capabilities to the Limen protocol and kernel | complete | capability, protocol | medium |
-| WI-0015 | Add clipboard, routing and npm-minimal examples with per-example READMEs | active | examples, documentation | medium |
-| WI-0016 | Documentation: mental model, where-code-goes, quick start, traces, routing and clipboard guides | active | documentation | medium |
-| WI-0017 | npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check | active | packaging | medium |
-| WI-0018 | Surface the new capabilities and documents on the Limen site, and record the usability report | active | documentation, site | medium |
-| WI-0019 | Sweep the documents the new capabilities made stale, add BrowserLocation.origin, and guard against the recurrence | ready | documentation, protocol | medium |
+| WI-0015 | Add clipboard, routing and npm-minimal examples with per-example READMEs | complete | examples, documentation | medium |
+| WI-0016 | Documentation: mental model, where-code-goes, quick start, traces, routing and clipboard guides | complete | documentation | medium |
+| WI-0017 | npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check | complete | packaging | medium |
+| WI-0018 | Surface the new capabilities and documents on the Limen site, and record the usability report | complete | documentation, site | medium |
+| WI-0019 | Sweep the documents the new capabilities made stale, add BrowserLocation.origin, and guard against the recurrence | complete | documentation, protocol | medium |
+| WI-0020 | Record the decision to defer Playwright adoption rather than leave it an open question | ready | documentation | medium |

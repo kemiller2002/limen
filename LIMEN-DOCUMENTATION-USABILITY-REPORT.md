@@ -480,10 +480,15 @@ Against the baseline: 89 → 115 tests, 88 → 114 passing.
 1. **The CLI tests were not run here.** `npm run test:cli` needs the .NET SDK 8.
    Nothing in this work touches `cli/`, and CI runs them on every push, but this
    session did not.
-2. **The browser smoke test is not automated.** It runs on demand and is not in
-   CI, because Playwright is not a dependency. Making it automatic is a real
-   decision about dependency policy, and should be made deliberately rather than
-   as a side effect of this work.
+2. **The browser smoke test is not automated, by decision.** It runs on demand
+   and is not in CI. Automating it would mean taking on Playwright as a
+   dependency, which was put to the repository owner as an open question and
+   **declined for now**. So this is a standing choice rather than an outstanding
+   task: `test/kernel.test.ts` and `test/examples.test.ts` remain the gate,
+   `npm run smoke:browser` stays opt-in and exits 0 when Playwright is absent,
+   and the repository's "exercised in a real browser" rule is satisfied by
+   running it deliberately before calling a DOM-affecting change done. Revisit
+   only if that manual step starts being skipped.
 3. **Residual "Typescript Wasm Kernel" naming** in `HANDOFF.md`,
    `PROJECT-CHARTER.md`, `docs/PILOT-MEASUREMENT-PLAN.md`,
    `docs/architecture/README.md` and `docs/decisions/README.md`. These are ROS
