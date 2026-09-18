@@ -111,5 +111,13 @@ jobs:
           npx limen verify --strict
           npx limen doctor
 
+      # The library half of the same gate: install the real archive into an
+      # empty project and build the documented minimal example against it. The
+      # step above proves the CLI works when installed; this proves the package
+      # a JavaScript consumer imports does.
+      - name: Exercise the packed archive as a library consumer would
+        shell: bash
+        run: npm run check:clean-room -- --tarball "$(ls ./release/*.tgz)"
+
       - name: Publish to npm
         run: npm publish --access public ./release/*.tgz

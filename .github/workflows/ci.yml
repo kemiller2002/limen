@@ -56,6 +56,14 @@ jobs:
       - name: Verify package contents
         run: npm pack --dry-run
 
+      # The strongest protection against publishing a package that cannot be
+      # used: pack it, install it into an empty project, and build the
+      # documented minimal example against the INSTALLED copy. Everything above
+      # this line tests the source tree, which resolves imports a consumer
+      # cannot.
+      - name: Clean-room install of the packed tarball
+        run: npm run check:clean-room
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.

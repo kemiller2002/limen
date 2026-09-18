@@ -30,7 +30,7 @@ definite answer nearly every time.
 | Reading/writing `localStorage` | **kernel** | already implemented — request a `Storage` effect |
 | Writing to the clipboard | **kernel** | already implemented — request a `Clipboard` effect |
 | `history.pushState` / `popstate` | **kernel** | already implemented — request a `Navigation` effect |
-| A browser API Limen does not expose | **kernel**, as a new capability | protocol change + kernel branch + tests; see [recipes](15-recipes.md) |
+| A browser API Limen does not expose | **kernel**, as a new capability | protocol change + kernel branch + tests; see [recipes](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md) |
 | Application logic in JavaScript outside the engine | **nowhere** | this is the mistake the whole architecture exists to prevent |
 
 ## The decision tree
@@ -188,6 +188,6 @@ this checklist first:
 ## Related
 
 - [mental-model.md](mental-model.md) — who owns what, and why
-- [13-anti-patterns.md](13-anti-patterns.md) — more wrong/right pairs
-- [12-design-rules.md](12-design-rules.md) — MUST/SHOULD/MAY, and how each is enforced
-- [14-agent-guide.md](14-agent-guide.md) — the same question, written for agents
+- [13-anti-patterns.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md) — more wrong/right pairs
+- [12-design-rules.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/12-design-rules.md) — MUST/SHOULD/MAY, and how each is enforced
+- [14-agent-guide.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/14-agent-guide.md) — the same question, written for agents

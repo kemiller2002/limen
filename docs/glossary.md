@@ -9,7 +9,7 @@ for a concept, the canonical choice is marked and the aliases listed.
 
 The one copy of application state that is correct by definition. Lives in the
 engine. If anything else disagrees with it, the other thing is wrong.
-See [04-state-model.md](04-state-model.md).
+See [04-state-model.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/04-state-model.md).
 
 ### Binding
 
@@ -35,7 +35,7 @@ in `Initialize.capabilities`.
 
 > ⚠️ **These two senses are genuinely distinct** and the codebase uses both.
 > Context disambiguates, but be aware of it. Recorded as finding **N-1** in
-> [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
+> [DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
 
 ### Command
 
@@ -79,7 +79,7 @@ transitions, validation, projection. Lives in `src/engine/`. TypeScript today.
 > Aliases seen in older text: "WASM kernel", "the WASM side", "application
 > layer". **Prefer "engine"** — the component is not WebAssembly today, and
 > calling it that is the confusion this audit set out to fix. See
-> [17-wasm-migration.md](17-wasm-migration.md).
+> [17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
 
 ### Evidence
 
@@ -123,13 +123,13 @@ works; it simply will not react to Back.
 
 An engine-defined type describing what a URL means — `Home`, `Invoice(id)`,
 `NotFound(raw)`. Limen has no route table and no path matching: `parseRoute`
-and `routeToUrl` are functions you write. See [routing.md](routing.md).
+and `routeToUrl` are functions you write. See [routing.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md).
 
 ### Interop
 
 Reaching a browser facility from the engine. Always through an `EffectRequest`;
 never directly. See
-[07-effects-and-browser-interop.md](07-effects-and-browser-interop.md).
+[07-effects-and-browser-interop.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/07-effects-and-browser-interop.md).
 
 ### Kernel
 
@@ -142,7 +142,7 @@ Say **"the Limen kernel"** where the bridge could be confused with the product.
 > ⚠️ Note the collision: "kernel" here means the **browser-side bridge**, but
 > the package is named `typescript-wasm-kernel` and `ROADMAP.md`'s mental-model
 > diagram once labelled the *engine* as "WASM Kernel". Recorded as finding
-> **N-1**; the product is now named [Limen](18-naming-and-compatibility.md),
+> **N-1**; the product is now named [Limen](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md),
 > which resolves the product-level half of the collision.
 
 ### Limen
@@ -156,11 +156,11 @@ implements the browser side, and the rules governing what may live where. It is
 **not** a synonym for the kernel alone, and not a synonym for the engine.
 
 The npm package is still `@echelon-foundry/typescript-wasm-kernel`; nothing was
-renamed. See [18-naming-and-compatibility.md](18-naming-and-compatibility.md).
+renamed. See [18-naming-and-compatibility.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md).
 
 > Discouraged aliases: "the WASM kernel", "the TypeScript WASM kernel". The
 > first is actively misleading — there is no WebAssembly
-> ([17-wasm-migration.md](17-wasm-migration.md)).
+> ([17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)).
 
 ### `OutcomeUnknown`
 
@@ -180,7 +180,7 @@ lists.
 
 ### Protocol
 
-The contract in [`src/protocol.ts`](../src/protocol.ts): message types, effect
+The contract in [`src/protocol.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/protocol.ts): message types, effect
 types, `EngineTransport`. Plain, JSON-serializable data.
 
 ### Reference engine / reference feature

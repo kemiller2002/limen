@@ -56,6 +56,20 @@ const ROS_MANAGED = new Set([
 
 const exists = async (path: string): Promise<boolean> => stat(path).then(() => true, () => false);
 
+// Documentation that ships inside the npm tarball links back into the
+// repository with absolute URLs, because a relative link is dead once the file
+// is sitting in node_modules (and npmjs.com renders the README with no
+// repository around it). Those links are still repository paths, so they are
+// checked for existence and they still count against the orphan rule below —
+// otherwise adopting absolute links would quietly disable both checks.
+const REPO_URL = "https://github.com/kemiller2002/typescript-wasm-kernel/";
+
+const repositoryPath = (target: string): string | null => {
+  if (!target.startsWith(REPO_URL)) return null;
+  const rest = target.slice(REPO_URL.length).replace(/^(blob|tree)\/main\//, "").split("#")[0] ?? "";
+  return rest === "" ? null : decodeURIComponent(rest.replace(/\/$/, ""));
+};
+
 // Strips fenced code blocks so a link-shaped string inside a sample doesn't
 // get treated as a real link.
 const withoutCodeFences = (source: string): string => source.replace(/```[\s\S]*?```/g, "");
@@ -77,6 +91,11 @@ for (const file of files) {
 
   for (const [, target] of body.matchAll(LINK)) {
     if (!target) continue;
+    const repoTarget = repositoryPath(target);
+    if (repoTarget !== null && !await exists(resolve(ROOT, repoTarget))) {
+      violations.push(`${relative(ROOT, file)}: repository link points at a path that does not exist -> ${target}`);
+      continue;
+    }
     // External links, anchors, and mailto: are out of scope.
     if (/^(https?:|mailto:|#)/.test(target)) continue;
     const path = resolve(here, target.split("#")[0] ?? "");
@@ -103,7 +122,10 @@ for (const entry of ["README.md", "docs/README.md", "AGENTS.md", "CLAUDE.md"]) {
   if (!await exists(path)) continue;
   const source = withoutCodeFences(await readFile(path, "utf8"));
   for (const [, target] of source.matchAll(LINK)) {
-    if (!target || /^(https?:|mailto:|#)/.test(target)) continue;
+    if (!target || /^(mailto:|#)/.test(target)) continue;
+    const repoTarget = repositoryPath(target);
+    if (repoTarget !== null) { linkedFromReadmes.add(normalize(resolve(ROOT, repoTarget))); continue; }
+    if (/^https?:/.test(target)) continue;
     linkedFromReadmes.add(normalize(resolve(dirname(path), target.split("#")[0] ?? "")));
   }
 }

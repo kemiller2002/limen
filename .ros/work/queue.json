@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 17,
+  "nextSeq": 18,
   "items": [
     {
       "id": "WI-0001",
@@ -266,6 +266,22 @@
       "attachments": [],
       "createdAt": "2026-09-18T06:36:27.660Z",
       "updatedAt": "2026-09-18T06:36:27.714Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0017",
+      "title": "npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check",
+      "description": null,
+      "tags": [
+        "packaging"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:42:52.672Z",
+      "updatedAt": "2026-09-18T06:42:52.726Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

@@ -1,16 +1,21 @@
 # Examples
 
+> **Reading this inside `node_modules`?** Only
+> [`minimal/`](minimal/README.md) ships in the npm package — it is a complete
+> four-file application with no build step. Every other example below lives
+> online, and the links go there.
+
 Eight progressive examples, a copy-and-run minimal application, and an
 interactive primitives showcase. Every numbered example is executed by the test
-suite ([`test/examples.test.ts`](../test/examples.test.ts)) against its **own
+suite ([`test/examples.test.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/test/examples.test.ts)) against its **own
 real `index.html`**, so none of them can silently stop working.
 
 Every example has its own README explaining what it demonstrates, its state
 model, its event and effect flow, what to change as an exercise, and the
 mistakes people actually make with it.
 
-**Start at [01-counter](01-counter/).** If you only have five minutes, read
-[docs/quick-start.md](../docs/quick-start.md) instead.
+**Start at [01-counter](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter).** If you only have five minutes, read
+[docs/quick-start.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/quick-start.md) instead.
 
 ## Running them
 
@@ -53,7 +58,7 @@ Every numbered example has the same three files, and nothing else:
 | `engine.ts` | state, transitions, validation, projection, transport | **never** |
 | `main.ts` | construct the kernel and start it | yes — the entry point |
 
-Shared presentation lives in [`examples.css`](examples.css). Nothing in it is
+Shared presentation lives in [`examples.css`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/examples.css). Nothing in it is
 known to the kernel or the engine — that is the point.
 
 Each `engine.ts` imports from the kernel **type-only**, so it has no runtime
@@ -81,24 +86,24 @@ These examples show no clever abstraction, no shared base class, and no helper
 library. Each is self-contained, and the repetition between them is the lesson:
 every one shows the real protocol in full. If a shared helper appeared here, it
 would be the beginning of the second framework
-[13-anti-patterns.md](../docs/13-anti-patterns.md) warns about.
+[13-anti-patterns.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md) warns about.
 
 ## Per-example guides
 
 | Example | README |
 | --- | --- |
-| 01 | [Counter](01-counter/README.md) |
-| 02 | [Input and form](02-form/README.md) |
-| 03 | [Fetch data](03-fetch-data/README.md) |
-| 04 | [Save data](04-save-data/README.md) |
-| 05 | [Multi-screen](05-multi-screen/README.md) |
-| 06 | [Time entries](06-time-entries/README.md) |
-| 07 | [Clipboard](07-clipboard/README.md) |
-| 08 | [Routing](08-routing/README.md) |
+| 01 | [Counter](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/01-counter/README.md) |
+| 02 | [Input and form](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/02-form/README.md) |
+| 03 | [Fetch data](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/03-fetch-data/README.md) |
+| 04 | [Save data](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/04-save-data/README.md) |
+| 05 | [Multi-screen](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/05-multi-screen/README.md) |
+| 06 | [Time entries](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/06-time-entries/README.md) |
+| 07 | [Clipboard](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/07-clipboard/README.md) |
+| 08 | [Routing](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/08-routing/README.md) |
 | — | [Minimal (npm)](minimal/README.md) |
 
 ## Related
 
-- [Documentation index](../docs/README.md)
-- [Getting started](../docs/02-getting-started.md) — build one from scratch
-- [Recipes](../docs/15-recipes.md) — task-by-task instructions
+- [Documentation index](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/README.md)
+- [Getting started](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/02-getting-started.md) — build one from scratch
+- [Recipes](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md) — task-by-task instructions

@@ -97,7 +97,7 @@ row; project it onto every item.
 
 **4. Are you asserting too early in a test?** Applying the response happens
 after a microtask boundary. See
-[09-testing-and-debugging.md](09-testing-and-debugging.md).
+[09-testing-and-debugging.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/09-testing-and-debugging.md).
 
 ---
 
@@ -182,7 +182,7 @@ Options:
 2. **Drop `data-bind-value`** if the engine never needs to overwrite the field.
 3. **Canonicalize on `change`** (blur), not `input`.
 
-This is a known limitation, recorded in [USAGE.md](USAGE.md)'s "Known gaps".
+This is a known limitation, recorded in [USAGE.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/USAGE.md)'s "Known gaps".
 
 ---
 
@@ -198,8 +198,8 @@ Workarounds:
   the new value".
 - Use two radio inputs with different `value`s.
 
-Recorded in [USAGE.md](USAGE.md)'s "Known gaps" and
-[DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
+Recorded in [USAGE.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/USAGE.md)'s "Known gaps" and
+[DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
 
 ---
 
@@ -270,7 +270,7 @@ file is served, the path is right, and the MIME type is `application/wasm`.
 > string literals too, so a comment reading "any of these" fails the build —
 > rephrase it. It is case-sensitive and respects word boundaries, so `Any` and
 > `company` are fine. Recorded as finding **N-2** in
-> [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
+> [DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
 
 ---
 
@@ -309,7 +309,7 @@ understands only `emailChanged` and `checkAvailability`. It is a reference, not
 a base class.
 
 Write your own `EngineTransport` — about eight lines,
-[02-getting-started.md](02-getting-started.md).
+[02-getting-started.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/02-getting-started.md).
 
 ---
 
@@ -353,7 +353,7 @@ occasionally a bug in the correlation id.
 
 `jsdom` has no Clipboard API, so tests hit `unavailable` unless they stub
 `window.navigator.clipboard` — which is the intended way to reach the other
-paths. See [clipboard.md](clipboard.md#testing-it).
+paths. See [clipboard.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md#testing-it).
 
 ## The Back button changes the URL but not the screen
 
@@ -374,14 +374,14 @@ You are requesting a navigation in response to `LocationChanged`. Back fires
 
 A browser-initiated move needs **no effect**: the address bar is already
 correct. Only an application-initiated move pushes. See
-[routing.md](routing.md#the-asymmetry-that-matters).
+[routing.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md#the-asymmetry-that-matters).
 
 ## A route works locally but 404s on GitHub Pages
 
 1. **Are you using path routing?** A direct load of `/invoices/42` asks the host
    for a file that does not exist. Query routing (`?route=/invoices/42`) has no
    such problem, which is why
-   [examples/08-routing](../examples/08-routing/README.md) uses it.
+   [examples/08-routing](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/08-routing/README.md) uses it.
 2. **Did you capture the base path?** An app served from `/my-app/` must build
    URLs from `Initialize.location.path`, not from `/`. Forgetting this is the
    single most common cause.
@@ -412,10 +412,10 @@ python3 -m http.server 4173
 ## Still stuck
 
 1. Trace the round trip — wrap the transport and log both directions
-   ([09-testing-and-debugging.md](09-testing-and-debugging.md)).
+   ([09-testing-and-debugging.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/09-testing-and-debugging.md)).
 2. Compare against the closest example; they are all verified by the test suite.
-3. Open [`examples/kitchen-sink.html`](../examples/kitchen-sink.html) — it has
+3. Open [`examples/kitchen-sink.html`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/examples/kitchen-sink.html) — it has
    deliberate buttons for a malformed projection and a thrown transport, so you
    can see what those failures look like.
 4. Reduce to the smallest reproduction and check it against
-   [13-anti-patterns.md](13-anti-patterns.md).
+   [13-anti-patterns.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md).

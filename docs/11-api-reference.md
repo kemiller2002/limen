@@ -3,10 +3,10 @@
 **What this answers:** exact signatures, semantics, and failure modes of
 everything a consumer uses.
 
-Source of truth: [`src/protocol.ts`](../src/protocol.ts),
-[`src/kernel/browser-kernel.ts`](../src/kernel/browser-kernel.ts),
-[`src/kernel/diagnostics.ts`](../src/kernel/diagnostics.ts),
-[`src/index.ts`](../src/index.ts).
+Source of truth: [`src/protocol.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/protocol.ts),
+[`src/kernel/browser-kernel.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/kernel/browser-kernel.ts),
+[`src/kernel/diagnostics.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/kernel/diagnostics.ts),
+[`src/index.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/index.ts).
 
 ---
 
@@ -31,7 +31,7 @@ Know what you are allowed to depend on.
   should reject a version it does not understand, as `ReferenceEngine` does.
 - **No written breaking-change policy exists** for `0.x` beyond semver itself.
   That is a genuine gap, not an implied guarantee — see
-  [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
+  [DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
 - **Browsers**: ES2022 modules, `fetch`, `AbortController`, `AbortSignal.reason`,
   `<template>`. Chrome/Edge 98+, Firefox 97+, Safari 15.4+.
 - **Node** ≥ 22 to build and test. **TypeScript** ≥ 5.9 for the types.
@@ -48,7 +48,7 @@ import type { ViewState } from "@echelon-foundry/typescript-wasm-kernel/protocol
 
 | Specifier | Contents |
 | --- | --- |
-| `@echelon-foundry/typescript-wasm-kernel` | everything in [`src/index.ts`](../src/index.ts) |
+| `@echelon-foundry/typescript-wasm-kernel` | everything in [`src/index.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/index.ts) |
 | `…/protocol` | the protocol types |
 | `…/kernel` | `BrowserKernel` alone |
 | `…/reference-engine` | `DirectTypeScriptTransport` — reference only |
@@ -342,7 +342,7 @@ stale user gesture; a retry often works), `unavailable` (no Clipboard API in
 this browser or context — a retry never works), `unknown`.
 
 **Common mistake**: offering a retry for `unavailable`. Full guide:
-[clipboard.md](clipboard.md).
+[clipboard.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md).
 
 ### `ClipboardOutcome`
 
@@ -370,7 +370,7 @@ owns the state a URL stands for.
 
 **Common mistake**: requesting a navigation in response to `LocationChanged`.
 The browser has already moved; pushing again traps the user. Full guide:
-[routing.md](routing.md).
+[routing.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md).
 
 ### `NavigationOutcome`
 
@@ -442,7 +442,7 @@ function project(state: State): ViewState;
 (email availability). It understands exactly two event names — `emailChanged`
 and `checkAvailability` — and throws on anything else. It is not a base class
 and not a starting point. Write your own `EngineTransport`; it is about eight
-lines ([02-getting-started.md](02-getting-started.md)).
+lines ([02-getting-started.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/02-getting-started.md)).
 
 `ReferenceEngine.handle()` also throws on a `StorageResult`, because its domain
 never requests a Storage effect.
@@ -474,7 +474,7 @@ unchanged; everything else uses `setAttribute`.
 
 ## Related
 
-- [05-events-and-dispatch.md](05-events-and-dispatch.md) — the inbound half
-- [06-rendering.md](06-rendering.md) — the outbound half
-- [07-effects-and-browser-interop.md](07-effects-and-browser-interop.md) — effects
+- [05-events-and-dispatch.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/05-events-and-dispatch.md) — the inbound half
+- [06-rendering.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/06-rendering.md) — the outbound half
+- [07-effects-and-browser-interop.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/07-effects-and-browser-interop.md) — effects
 - [glossary.md](glossary.md) — terminology
