@@ -338,7 +338,7 @@ call is atomic.
 
 ### `ClipboardEffectRequest`
 
-*Available since 0.6.0.*
+*Available since 0.6.1.*
 
 ```ts
 type ClipboardEffectRequest = {
@@ -368,7 +368,7 @@ No payload on success, and no `OutcomeUnknown`: a refused write did not happen.
 
 ### `NavigationEffectRequest`
 
-*Available since 0.6.0.*
+*Available since 0.6.1.*
 
 ```ts
 type NavigationEffectRequest =
@@ -400,7 +400,7 @@ arrives later as `LocationChanged`, or never, if there was nowhere to go.
 
 ### `BrowserLocation`
 
-*Available since 0.6.0.*
+*Available since 0.6.1.*
 
 ```ts
 type BrowserLocation = {

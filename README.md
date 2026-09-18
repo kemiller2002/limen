@@ -255,7 +255,7 @@ it and reports a typed outcome, which the engine then treats as evidence.
 | `Clipboard` | `writeText` (read is deliberately absent) | `Success` · `Failure{denied, unavailable, unknown}` |
 | `Navigation` | `push` / `replace` / `back` / `forward` | `Success{location}` · `Dispatched` · `Failure` |
 
-**`Clipboard` and `Navigation` are new in 0.6.0.** On an earlier version they do
+**`Clipboard` and `Navigation` are new in 0.6.1.** On an earlier version they do
 not exist, and requesting one produces a `BridgeError` with `phase: "effect"`
 and no result. Check with `npm ls @echelon-foundry/typescript-wasm-kernel`; the
 per-version record is [CHANGELOG.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/CHANGELOG.md).

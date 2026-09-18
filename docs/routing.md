@@ -11,7 +11,7 @@ decision.
 
 Worked example: [`examples/08-routing/`](../examples/08-routing/README.md).
 
-> **Available since 0.6.0.** If you installed an earlier version, this
+> **Available since 0.6.1.** If you installed an earlier version, this
 > capability does not exist in your copy: requesting the effect produces a
 > `BridgeError` with `phase: "effect"` and **no result**, and an engine waiting
 > on that correlation id waits forever. Check your installed version with

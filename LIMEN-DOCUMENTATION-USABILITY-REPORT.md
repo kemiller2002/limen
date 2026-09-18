@@ -7,7 +7,7 @@ as a coding agent with no institutional knowledge.
 
 **Branch:** `claude/limen-docs-usability-hh5tvh` ·
 **Work items:** WI-0014 – WI-0019 ·
-**Version:** `0.5.1` → `0.6.0`
+**Version:** `0.5.1` → `0.6.1` (`0.6.0` was burned; see §10)
 
 ---
 
@@ -515,16 +515,41 @@ Against the baseline: 89 → 115 tests, 88 → 114 passing.
    two indexes; the traces, routing and clipboard guides stay online. If package
    size is later found to matter less than offline completeness, the set can
    grow — `scripts/check-package.ts` is the single place that decides.
-8. **No release was cut.** This sandbox cannot push tags (`CLAUDE.md` records
-   why). `package.json` is prepared at `0.6.0`; tagging remains a human step:
+8. **No release was cut, and `0.6.0` is burned.** This sandbox cannot push tags
+   (`CLAUDE.md` records why), so tagging is a human step. A `v0.6.0` tag *was*
+   pushed while this branch was still unmerged, landing on `5fcaf7e` — the tip
+   of `main`, whose `package.json` read `0.5.1`. The publish workflow's version
+   guard rejected it:
 
-   ```sh
-   git fetch origin main && git tag -a v0.6.0 <sha> -m "Limen 0.6.0" && git push origin v0.6.0
+   ```text
+   package.json version 0.5.1 does not match tag v0.6.0
    ```
 
-   Until that tag exists, the `0.6.0` changelog entry says so, and the
-   "available since 0.6.0" banners tell a reader on `0.5.1` exactly what symptom
+   It stopped before packing, so **nothing was published**; npm is still on
+   `0.5.1`. That is the guard working, and it is the second time the pattern has
+   occurred — `v0.5.0` failed at the pack step and could not be re-pointed
+   either, because a repository ruleset blocks deleting or moving a tag.
+
+   So `package.json` is prepared at **`0.6.1`**, and the release step is:
+
+   ```sh
+   git fetch origin main && git tag -a v0.6.1 <sha> -m "Limen 0.6.1" && git push origin v0.6.1
+   ```
+
+   Until that tag exists, the `0.6.1` changelog entry says so, and the
+   "available since 0.6.1" banners tell a reader on `0.5.1` exactly what symptom
    to expect.
+
+   **Worth fixing at some point:** this failure mode is now 2-for-3 on releases.
+   A tag can be pushed before the version it names exists on `main`, and the
+   only thing standing between that and a bad publish is one `if` in the
+   workflow. The guard is doing its job, but the ordering it defends — merge,
+   then tag — is nowhere enforced and nowhere written down outside this
+   paragraph. A release checklist in `CONTRIBUTING`, or a guard that also
+   asserts the tagged commit is an ancestor of `main`, would turn a recurring
+   accident into an impossibility. Also worth a look: `V0.5.1` exists alongside
+   `v0.5.1` with a capital V, and `v*.*.*` is case-sensitive, so that tag
+   triggered nothing.
 9. **The clean-room comprehension pass was run once, at n = 2.** The gaps it
    found are closed, but a third run against the *current* documentation has not
    been done, so there is no evidence that nothing remains. §12 says what that
@@ -660,7 +685,7 @@ version you installed". As the first agent put it: install today, follow
 kernel cannot run.
 
 Fixed by making the version real rather than the documentation vaguer: the
-package is `0.6.0`, the changelog entry says plainly that none of it is in
+package is `0.6.1`, the changelog entry says plainly that none of it is in
 `0.5.1`, `routing.md` and `clipboard.md` open with an "available since" banner
 naming the exact symptom on an older version, and the API reference marks each
 new type.

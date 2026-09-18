@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 21,
+  "nextSeq": 22,
   "items": [
     {
       "id": "WI-0001",
@@ -332,6 +332,22 @@
       "attachments": [],
       "createdAt": "2026-09-18T10:32:32.041Z",
       "updatedAt": "2026-09-18T10:32:42.208Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0021",
+      "title": "Release as 0.6.1: the v0.6.0 tag was pushed at the pre-merge commit and cannot be re-pointed",
+      "description": null,
+      "tags": [
+        "release"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T10:40:15.438Z",
+      "updatedAt": "2026-09-18T10:40:23.690Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

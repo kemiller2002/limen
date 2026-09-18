@@ -10,7 +10,7 @@ and this project uses [semantic versioning](https://semver.org/spec/v2.0.0.html)
 > version if that matters to you. See
 > [docs/11-api-reference.md](docs/11-api-reference.md#stability-and-compatibility).
 
-This file was introduced during the `0.6.0` work; entries for earlier versions
+This file was introduced during the `0.6.1` work; entries for earlier versions
 were reconstructed from the repository's history and are summaries rather than
 exhaustive lists.
 
@@ -18,11 +18,11 @@ exhaustive lists.
 
 Nothing yet.
 
-## [0.6.0] — unreleased at the time of writing
+## [0.6.1] — unreleased at the time of writing
 
 > **Availability.** Everything in this entry is on `main` and is **not in
 > `0.5.1`**, the newest published version. If you installed from npm before
-> `0.6.0` is tagged, the `Clipboard` and `Navigation` capabilities do not exist
+> `0.6.1` is tagged, the `Clipboard` and `Navigation` capabilities do not exist
 > in your copy, and requesting one produces a `BridgeError` with
 > `phase: "effect"` and no result. The documents shipped inside the tarball
 > describe the version you installed; the copies on GitHub describe `main`.
@@ -120,6 +120,19 @@ Nothing yet.
   Every consumer of Limen was installing it transitively, which also contradicted
   the README's "no runtime dependencies" claim.
 
+## [0.6.0] — never published
+
+Skipped. The `v0.6.0` tag was pushed at `5fcaf7e`, the tip of `main` at the
+time, whose `package.json` still read `0.5.1` — the work above had not merged
+yet. The publish workflow's version guard rejected the mismatch and stopped
+before packing, so **nothing was published under this version** and npm went
+straight from `0.5.1` to `0.6.1`.
+
+A repository ruleset prevents deleting or re-pointing a tag, so `v0.6.0` cannot
+be moved to the right commit; the same thing happened to `v0.5.0`. The version
+number is burned rather than reused, because a tag that exists and points at
+the wrong tree is worse than a gap in the sequence.
+
 ## [0.5.1] — 2026-09-14
 
 ### Fixed
@@ -153,7 +166,7 @@ Pre-release development, beginning at `0.2.1`: the protocol, the browser kernel,
 the reference engine, the six original examples, the documentation set, and the
 architecture and documentation checks. See the repository history.
 
-[Unreleased]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.1...HEAD
 [0.5.1]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kemiller2002/typescript-wasm-kernel/releases/tag/v0.5.0

@@ -84,7 +84,7 @@ is.
   "schemaVersion": 1,
   "tool": "limen",
   "package": "@echelon-foundry/typescript-wasm-kernel",
-  "installedVersion": "0.6.0",
+  "installedVersion": "0.6.1",
   "configurationVersion": 1,
   "managedArtifacts": [
     {

@@ -22,4 +22,5 @@
 | WI-0017 | npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check | complete | packaging | medium |
 | WI-0018 | Surface the new capabilities and documents on the Limen site, and record the usability report | complete | documentation, site | medium |
 | WI-0019 | Sweep the documents the new capabilities made stale, add BrowserLocation.origin, and guard against the recurrence | complete | documentation, protocol | medium |
-| WI-0020 | Record the decision to defer Playwright adoption rather than leave it an open question | ready | documentation | medium |
+| WI-0020 | Record the decision to defer Playwright adoption rather than leave it an open question | complete | documentation | medium |
+| WI-0021 | Release as 0.6.1: the v0.6.0 tag was pushed at the pre-merge commit and cannot be re-pointed | ready | release | medium |

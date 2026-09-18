@@ -83,10 +83,10 @@ limen status [--json] [--verbose] [--root PATH]
 ```text
 Limen (@echelon-foundry/typescript-wasm-kernel)
 
-  CLI version:           0.6.0
-  Installed version:     0.6.0
+  CLI version:           0.6.1
+  Installed version:     0.6.1
   Configuration:         version 1
-  Installation:          installed (0.6.0)
+  Installation:          installed (0.6.1)
   Managed artifacts:     2
   Verification:          passed
   Upgrade:               up to date
@@ -221,9 +221,9 @@ Every document carries `schemaVersion` (currently `1`) and `command`.
   "command": "status",
   "tool": "limen",
   "package": "@echelon-foundry/typescript-wasm-kernel",
-  "cliVersion": "0.6.0",
+  "cliVersion": "0.6.1",
   "state": "installed",
-  "installedVersion": "0.6.0",
+  "installedVersion": "0.6.1",
   "availableVersion": null,
   "configurationVersion": 1,
   "managedArtifacts": 2,
