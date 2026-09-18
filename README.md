@@ -458,6 +458,7 @@ npm run check:architecture # boundary enforcement
 npm run check:docs         # links, paths, orphans
 npm run check:package      # the npm tarball's contents and its links
 npm run check:clean-room   # pack, install into an empty project, build the minimal example
+npm run smoke:browser      # exercise the DOM behavior in a real Chromium (needs Playwright)
 ```
 
 Then, to see it:
@@ -474,6 +475,13 @@ python3 -m http.server 4173
 
 The network-backed examples call endpoints that do not exist without a backend.
 That is deliberate — they demonstrate the typed failure states.
+
+`npm run smoke:browser` drives the counter, clipboard and routing examples in a
+real Chromium — including reading the clipboard back and pressing the browser's
+own Back and Forward buttons, neither of which jsdom can settle. Playwright is
+**not** a dependency; install it yourself (`npm i -g playwright && playwright
+install chromium`) and the script runs, or skips with a message and exits 0 if
+it is absent.
 
 Working on the lifecycle CLI additionally needs the **.NET SDK 8**:
 

@@ -95,7 +95,8 @@
     "prepack": "npm run clean && npm run check && npm run build:cli:all",
     "check:site": "node --experimental-strip-types scripts/check-site.ts",
     "check:package": "node --experimental-strip-types scripts/check-package.ts",
-    "check:clean-room": "node --experimental-strip-types scripts/clean-room.ts"
+    "check:clean-room": "node --experimental-strip-types scripts/clean-room.ts",
+    "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.ts"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",
