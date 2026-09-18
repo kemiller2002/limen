@@ -22,13 +22,24 @@ export type SemanticEvent = {
 
 // The browser's current URL, split mechanically by the kernel. Splitting is
 // browser mechanism; deciding that `/invoices/42` names an invoice screen is
-// application meaning, so the kernel never parses further than this. The
-// origin is deliberately absent: an engine that could read it would be
-// tempted to branch on it, and same-origin is enforced by the kernel anyway.
+// application meaning, so the kernel never parses further than this.
+//
+// `origin` was left out at first, on the reasoning that an engine able to read
+// it would be tempted to branch on it. That reasoning did not survive contact
+// with the obvious use case: composing a shareable link to the current screen —
+// which is Navigation and Clipboard used together, and the main reason both
+// capabilities exist. Without the origin an engine can only build a relative
+// path, and a relative path is not a link anyone can share. The alternative,
+// reading `window.location.origin` in the composition root and handing it to
+// the engine, smuggles a browser value across the boundary through a side
+// channel, which is strictly worse. Branching on the origin remains a bad idea;
+// it is not one the protocol needs to prevent, and the kernel enforces
+// same-origin navigation regardless of what the engine believes.
 export type BrowserLocation = {
-  readonly path: string;  // "/invoices/42"       — always begins with "/"
-  readonly query: string; // "?tab=history" or "" — leading "?" included
-  readonly hash: string;  // "#totals" or ""      — leading "#" included
+  readonly origin: string; // "https://example.com" — scheme, host and port, no trailing slash
+  readonly path: string;   // "/invoices/42"        — always begins with "/"
+  readonly query: string;  // "?tab=history" or ""  — leading "?" included
+  readonly hash: string;   // "#totals" or ""       — leading "#" included
 };
 
 // The outcome shape for Http effects specifically — Storage, Clipboard and

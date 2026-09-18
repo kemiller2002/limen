@@ -46,6 +46,7 @@ import {
   parseRoute,
   routeToPath,
   routeToUrl,
+  shareUrl,
   invoices as routingInvoices,
   initialState as routingInitial,
   type Route,
@@ -723,6 +724,51 @@ test("08-routing: navigating to where you already are is refused, so Back never 
   const again = routeTransition(onHome, { kind: "Navigate", route: { kind: "Home" }, correlationId: cid("nav-2") });
   assert.equal(again.accepted, false);
   assert.equal(again.effects.length, 0, "a duplicate history entry makes Back look broken");
+});
+
+test("08-routing: Copy link puts the ABSOLUTE url of the current screen on the clipboard", async () => {
+  const written: string[] = [];
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    await withClipboard(async (copied) => { written.push(copied); }, async () => {
+      await new BrowserKernel(createRoutingTransport(), document).start();
+      await flush();
+      await click(document, "[data-event='goInvoices']");
+      const shown = text(document, "code[data-text='currentUrl']");
+      await click(document, "[data-event='copyLink']");
+      await flush();
+
+      // The displayed link and the copied link are the same value, and it is
+      // absolute — a relative path is not something anyone can share. The
+      // origin is only available because Initialize.location carries it.
+      assert.deepEqual(written, [shown]);
+      assert.match(shown, /^http:\/\/localhost\/\?route=/);
+      assert.equal(text(document, ".status"), "Link copied.");
+      window.history.replaceState(null, "", "/");
+    });
+  });
+});
+
+test("08-routing: a clipboard the browser refuses is admitted; the link stays on screen", async () => {
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    // jsdom has no Clipboard API at all, which is exactly an insecure context.
+    await new BrowserKernel(createRoutingTransport(), document).start();
+    await flush();
+    await click(document, "[data-event='copyLink']");
+    await flush();
+    assert.match(text(document, ".status"), /copy the link above manually/i);
+    assert.match(text(document, "code[data-text='currentUrl']"), /^http:\/\/localhost\//);
+  });
+});
+
+test("08-routing: shareUrl composes an absolute link from the origin, the base and the route", () => {
+  assert.equal(
+    shareUrl("https://example.com", "/app/", { kind: "Invoice", id: "1002" }),
+    "https://example.com/app/?route=%2Finvoices%2F1002",
+  );
+  // Served from a subdirectory, which is how GitHub Pages serves everything.
+  assert.equal(shareUrl("https://example.com", "/app/", { kind: "Home" }), "https://example.com/app/");
 });
 
 test("08-routing: a navigation the kernel could not perform is admitted, not hidden", () => {

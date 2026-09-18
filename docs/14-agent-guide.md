@@ -50,11 +50,19 @@ I need to add behavior.
 │  application?
 │  └─ YES → src/engine/. Add a state, a command, a transition, a projection key.
 │
-├─ Does it need Http or localStorage?
-│  └─ YES → the engine returns an EffectRequest. It does NOT call fetch.
+├─ Does it need Http, localStorage, the clipboard, or the browser's history?
+│  └─ YES → the engine returns an EffectRequest. It does NOT call fetch,
+│           navigator.clipboard or history.pushState.
+│
+├─ Is it what a URL MEANS?
+│  └─ YES → src/engine/ (parseRoute). The kernel splits a URL into
+│           path/query/hash and stops.
+│
+├─ Did the browser move on its own (Back, Forward)?
+│  └─ YES → adopt the location. Request NOTHING — pushing again traps the user.
 │
 ├─ Does it need a browser capability that does not exist yet
-│  (clipboard, history, files, timers, focus)?
+│  (files, timers, focus, clipboard read)?
 │  └─ YES → protocol extension. See 15-recipes.md. This is a bigger change:
 │           propose it, don't slip it in.
 │
@@ -112,8 +120,11 @@ Answer 1–8 before writing code; confirm 9–13 before finishing.
 2. **What event causes it?** Name the `data-event` value and its origin element.
 3. **Is the transition legal from every state it can be requested in?** What
    happens when it is not?
-4. **Is an external effect required?** Which kind — Http or Storage? If neither
-   exists for it, this is a protocol change.
+4. **Is an external effect required?** Which kind — `Http`, `Storage`,
+   `Clipboard` or `Navigation`? If none of the four covers it, this is a
+   protocol change, not a slip-in.
+4a. **Did the browser act on its own?** A `LocationChanged` is adopted, never
+   answered with another navigation.
 5. **Who performs it?** The answer must be: the kernel.
 6. **How does the result return, and how is a stale one rejected?** Which state
    holds the `correlationId`?
@@ -189,10 +200,27 @@ UX courtesy; the engine's check is the guarantee. Pattern:
 | Projection | `onNewScreen: state.screen === "newScreen"`, plus that screen's keys |
 | HTML | one more `<template data-if="onNewScreen">` |
 
-⚠️ **URL and history are not supported.** Back/forward will not work. Do not
-call `history.pushState` from page JavaScript — that puts navigation state
-outside the engine. Pattern:
+That is the **no-URL** case, which is the right one more often than people
+expect: a tab strip, a wizard step, a detail pane. Pattern:
 [`examples/05-multi-screen/`](../examples/05-multi-screen/).
+
+If the screen should be **linkable, shareable, or survive a reload**, it is a
+route, and the `Navigation` capability covers it — push, replace, back, forward,
+the browser's own moves, and the URL the page was loaded at. Two commands, not
+one, and they are not symmetrical:
+
+| Layer | Change |
+| --- | --- |
+| Engine | extend the `Route` union; extend `parseRoute` **and** `routeToUrl`; a `Navigate` command that changes the route *and* returns a `Navigation push`; an `AdoptLocation` command that changes the route and returns **nothing** |
+| Transport | a `LocationChanged` branch calling `AdoptLocation`; take the first route from `Initialize.location` |
+| Projection | `onNewScreen`, plus that screen's keys |
+| HTML | one more `<template data-if="onNewScreen">` |
+
+Requesting a navigation in response to `LocationChanged` is the classic trap:
+the browser has already moved, so pushing again means Back can never unwind.
+Never call `history.pushState` from page JavaScript either — that puts
+navigation state outside the engine. Guide: [routing.md](routing.md). Pattern:
+[`examples/08-routing/`](../examples/08-routing/).
 
 ### "Add a timer" (e.g. auto-refresh every 30s)
 
@@ -211,12 +239,34 @@ Do not work around it.
 
 ### "Add a clipboard-copy command"
 
-⚠️ **Not supported.** No clipboard capability exists.
+**Supported.** The engine requests it; the kernel performs it. Never put
+`navigator.clipboard.writeText` in application code — the architecture check
+fails the build on it, and the behavior becomes untestable.
 
-The only architecturally correct route is a protocol extension: a
-`ClipboardEffectRequest`, kernel execution via `navigator.clipboard`, and a
-`ClipboardOutcome` covering the permission-denied case. Propose it; do not add
-`navigator.clipboard.writeText` to page JavaScript.
+| Layer | Change |
+| --- | --- |
+| Engine | a `Copying{correlationId}` state — the write is async and can be refused, so waiting is real; a transition returning `{ kind: "Clipboard", correlationId, operation: "writeText", text }`; a `RecordCopy` that checks the correlation id and branches on `Success` vs. `Failure{denied\|unavailable\|unknown}` |
+| Projection | `copyDisabled`, a status line per reason, and `canRetry` **only** for `denied` |
+| HTML | one button with `data-event` |
+
+Two rules that are easy to get wrong: copy from **state**, never by reading the
+text back out of the DOM; and keep the round trip inside the click, because a
+copy that first awaits a fetch has usually lost the user gesture and comes back
+`denied`. Offering a retry for `unavailable` is advice that can never work.
+
+Guide: [clipboard.md](clipboard.md). Pattern:
+[`examples/07-clipboard/`](../examples/07-clipboard/).
+
+### "Copy a shareable link to the current screen"
+
+**Supported**, and it is the one task that uses two capabilities at once.
+`Initialize.location.origin` is what makes it possible: the engine composes
+`origin + base + routeToUrl(route)` from state it already owns, then asks for a
+`Clipboard` effect. A relative path is not a link anyone can share, and reading
+`window.location` from application code is not an option.
+
+Pattern: the `copyLink` command in
+[`examples/08-routing/`](../examples/08-routing/).
 
 ---
 

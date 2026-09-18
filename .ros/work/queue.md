@@ -20,4 +20,5 @@
 | WI-0015 | Add clipboard, routing and npm-minimal examples with per-example READMEs | active | examples, documentation | medium |
 | WI-0016 | Documentation: mental model, where-code-goes, quick start, traces, routing and clipboard guides | active | documentation | medium |
 | WI-0017 | npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check | active | packaging | medium |
-| WI-0018 | Surface the new capabilities and documents on the Limen site, and record the usability report | ready | documentation, site | medium |
+| WI-0018 | Surface the new capabilities and documents on the Limen site, and record the usability report | active | documentation, site | medium |
+| WI-0019 | Sweep the documents the new capabilities made stale, add BrowserLocation.origin, and guard against the recurrence | ready | documentation, protocol | medium |

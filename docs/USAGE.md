@@ -264,6 +264,8 @@ already sent — naming it there is a harmless no-op, not an error.
 - Checkbox/radio state is read/written as `.value`, not `.checked`; binding a
   boolean control's checked state requires `data-bind-checked` explicitly and
   reading it back isn't wired into `data-event` yet.
-- Browser capability commands beyond Http/Storage (focus, clipboard,
-  navigation, files) aren't implemented. See [ROADMAP.md](ROADMAP.md) for
+- Clipboard (write) and Navigation were added after this document was written;
+  see [clipboard.md](clipboard.md) and [routing.md](routing.md). Browser
+  capability commands beyond those four (focus, clipboard *read*, files,
+  timers) aren't implemented. See [ROADMAP.md](ROADMAP.md) for
   what's built, what's planned, and what's deliberately deferred.

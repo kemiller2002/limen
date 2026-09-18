@@ -33,6 +33,23 @@ They are the same binary. There is no difference in behavior.
 Brings the repository into a valid installed state. It is **idempotent**: running
 it twice makes no second round of changes.
 
+> **`init` does not scaffold an application.** It installs the *boundary* — a
+> config file, a CI workflow and a manifest — into a repository that already
+> exists. It writes no HTML, no engine, and no entry point. To create an
+> application, follow [quick-start.md](quick-start.md) or copy
+> [`examples/minimal/`](../examples/minimal/README.md); `init` is what you run
+> afterwards to keep the boundary enforced.
+>
+> **Its default config expects directories, not files.** `limen.config.json`
+> defaults to `{"engine": ["src/engine"], "kernel": ["src/kernel"]}`. An
+> application built exactly as the quick start describes has an `engine.ts` and a
+> `main.ts` directly under `src/` — no such directories, and no kernel of its own, because the
+> kernel comes from `node_modules`. Edit the config to match your layout
+> (`{"engine": ["src"], "kernel": []}` is a reasonable start for a
+> single-file engine) rather than reshaping your application to match the
+> default. `verify` reports a configured directory that does not exist as
+> `LIMEN010`.
+
 ```sh
 limen init [--dry-run] [--check] [--json] [--verbose] [--root PATH]
 ```
@@ -66,10 +83,10 @@ limen status [--json] [--verbose] [--root PATH]
 ```text
 Limen (@echelon-foundry/typescript-wasm-kernel)
 
-  CLI version:           0.4.1
-  Installed version:     0.4.1
+  CLI version:           0.6.0
+  Installed version:     0.6.0
   Configuration:         version 1
-  Installation:          installed (0.4.1)
+  Installation:          installed (0.6.0)
   Managed artifacts:     2
   Verification:          passed
   Upgrade:               up to date
@@ -204,9 +221,9 @@ Every document carries `schemaVersion` (currently `1`) and `command`.
   "command": "status",
   "tool": "limen",
   "package": "@echelon-foundry/typescript-wasm-kernel",
-  "cliVersion": "0.4.1",
+  "cliVersion": "0.6.0",
   "state": "installed",
-  "installedVersion": "0.4.1",
+  "installedVersion": "0.6.0",
   "availableVersion": null,
   "configurationVersion": 1,
   "managedArtifacts": 2,

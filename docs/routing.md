@@ -11,6 +11,12 @@ decision.
 
 Worked example: [`examples/08-routing/`](../examples/08-routing/README.md).
 
+> **Available since 0.6.0.** If you installed an earlier version, this
+> capability does not exist in your copy: requesting the effect produces a
+> `BridgeError` with `phase: "effect"` and **no result**, and an engine waiting
+> on that correlation id waits forever. Check your installed version with
+> `npm ls @echelon-foundry/typescript-wasm-kernel`.
+
 ---
 
 ## The shape of it
@@ -84,6 +90,55 @@ test("every route round-trips through its URL", () => {
 });
 ```
 
+## Composing a link someone can actually use
+
+`Initialize.location` carries the **origin**, and that is the only reason an
+engine can build an absolute URL at all:
+
+```ts
+export const shareUrl = (origin: string, base: string, route: Route): string =>
+  `${origin}${routeToUrl(base, route)}`;
+// → "https://example.com/app/?route=%2Finvoices%2F1002"
+```
+
+Capture the origin at `Initialize`, next to the base, and compose from state.
+This is what makes "Copy link" possible — the combination of Navigation and
+Clipboard, which is the main reason either capability exists. Worked example:
+the `copyLink` command in
+[examples/08-routing](../examples/08-routing/README.md).
+
+Do **not** reach for `window.location` in the composition root and hand it to
+the engine: it works, and it smuggles a browser value across the boundary
+through a side channel nothing checks. The protocol carries it for you.
+
+## When the URL names data you have not loaded yet
+
+The advice above — an id that names nothing is `NotFound` — assumes
+`parseRoute` can see the data. Often it cannot: the record arrives over HTTP
+*after* the route is parsed. Deep-linking into fetched data is the common case,
+and resolving it inside `parseRoute` is impossible.
+
+Split the two questions:
+
+```ts
+// Syntactic only. Does this URL have the SHAPE of a customer route?
+export function parseRoute(location: BrowserLocation): Route { /* … */ }
+
+// Semantic, and derived from state — not from the URL.
+export type Resolution =
+  | { kind: "Pending" }                       // the fetch has not landed yet
+  | { kind: "Found"; customer: Customer }
+  | { kind: "Missing" }                       // loaded, and no such id
+  | { kind: "Unavailable"; reason: string };  // the load failed; we cannot say
+```
+
+`NotFound` then means "this URL is malformed", and `Missing` means "this URL is
+well-formed and names nothing". They read differently to a user and they recover
+differently: the first is never going to work, the second might after a retry.
+
+Projecting `Pending` honestly also stops the screen claiming a record is missing
+during the second before it arrives.
+
 ## The asymmetry that matters
 
 | Who moved first | Engine does | Effect requested |
@@ -144,6 +199,17 @@ that is not a decision a projection should be able to make by accident.
 
 To genuinely leave the site, use an ordinary `<a href>`. It needs no capability
 at all.
+
+## Two failures that are not the same failure
+
+`Failure { reason: "unavailable" }` means the browser has no usable `history`.
+`Failure { reason: "not-same-origin" }` means the engine asked to leave the
+site. The first is an environment problem; the second is a **bug in your
+engine**, because nothing should be composing an off-origin URL to push.
+
+Projecting one "the URL could not be updated" message for both is convenient and
+hides a real defect. If you only handle one, handle them separately in a
+`switch` so the compiler tells you when a third appears.
 
 ## When a navigation fails
 

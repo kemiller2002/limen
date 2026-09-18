@@ -6,6 +6,12 @@ state like any other evidence.
 
 Worked example: [`examples/07-clipboard/`](../examples/07-clipboard/README.md).
 
+> **Available since 0.6.0.** If you installed an earlier version, this
+> capability does not exist in your copy: requesting the effect produces a
+> `BridgeError` with `phase: "effect"` and **no result**, and an engine waiting
+> on that correlation id waits forever. Check your installed version with
+> `npm ls @echelon-foundry/typescript-wasm-kernel`.
+
 ---
 
 ## The shape of it
@@ -82,6 +88,26 @@ The practical consequence for a Limen application: **keep the round-trip
 short.** A copy that waits on a fetch before writing has usually lost the
 gesture by the time it runs. Copy what you already have, or fetch first and
 copy on the next click.
+
+## Copying a link to the current screen
+
+The most common reason to want the clipboard, and it needs the other capability:
+
+```ts
+// The origin arrives in Initialize.location. Without it an engine can only
+// build "/app/?route=/invoices/42", which is not a link anyone can share.
+const url = `${state.origin}${routeToUrl(state.base, state.route)}`;
+
+return go(
+  { ...state, copy: { kind: "Copying", correlationId } },
+  [{ kind: "Clipboard", correlationId, operation: "writeText", text: url }],
+);
+```
+
+Compose it from state and project the same value to the screen; then the link a
+user sees and the link on their clipboard are the same string by construction.
+Worked example: the `copyLink` command in
+[examples/08-routing](../examples/08-routing/README.md).
 
 ## Waiting is a state
 

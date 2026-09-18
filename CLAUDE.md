@@ -102,7 +102,13 @@ Read the proxy's own state instead — `curl -sS "$HTTPS_PROXY/__agentproxy/stat
   ambiguities, and open questions
 - [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) —
   what Limen renamed and what it deliberately did not
-- [examples/README.md](examples/README.md) — six verified example applications
+- [docs/mental-model.md](docs/mental-model.md) — who owns state, the DOM,
+  routing, decisions
+- [docs/where-code-goes.md](docs/where-code-goes.md) — which layer a change
+  belongs in
+- [docs/traces.md](docs/traces.md) — three interactions, file by file
+- [examples/README.md](examples/README.md) — eight verified example
+  applications, each with its own README
 
 ## What this is
 
@@ -151,7 +157,7 @@ Invariants:                 (what must always remain true?)
 Capabilities:                (what can the UI do in each state — projected, not reconstructed by the DOM)
 Inputs:                     (SemanticEvent shape — name/key/value)
 Outputs/projections:        (ViewState keys the engine will produce)
-External effects:           (EffectRequest — Http: all four EffectOutcome variants, Success/Failure/Cancelled/OutcomeUnknown; Storage: StorageOutcome's two, Success/Failure — no OutcomeUnknown, a single localStorage call is atomic)
+External effects:           (EffectRequest — Http: all four EffectOutcome variants, Success/Failure/Cancelled/OutcomeUnknown; Storage: StorageOutcome's two, Success/Failure — no OutcomeUnknown, a single localStorage call is atomic; Clipboard: Success/Failure with three distinct reasons, only "denied" retryable; Navigation: Success{location}/Dispatched/Failure — plus the LocationChanged message, which is adopted and never answered with another push)
 Browser responsibilities:   (what's genuinely new data-* wiring vs. reuse of existing primitives)
 Kernel responsibilities:    (should almost always be "none — existing primitives cover it")
 Engine responsibilities:    (state, transition, projection)
@@ -170,10 +176,14 @@ code, not after.
   `EngineTransport`. Read this file first; everything else is built on it.
 - `src/kernel/browser-kernel.ts` — the generic declarative bridge. Binds
   `data-event`/`data-text`/`data-bind-<attr>`/`data-if`/`data-each`, executes
-  Http effects (any method, caller headers/body) and Storage effects
-  (`localStorage` get/set/remove), funnels every engine round-trip through
-  one error-boundary chokepoint (`#send`). It does not know what any event
-  name or view key means.
+  Http effects (any method, caller headers/body), Storage effects
+  (`localStorage` get/set/remove), Clipboard writes (`writeText` only) and
+  Navigation (`pushState`/`replaceState`/`back`/`forward`, plus a `popstate`
+  listener that sends `LocationChanged`). It funnels every engine round-trip
+  through one error-boundary chokepoint (`#send`), and routes effects through
+  one exhaustive `switch` (`#runEffect`) so an unhandled effect kind is a
+  compile error rather than an effect that silently vanishes. It does not know
+  what any event name or view key means — including what a URL means.
 - `src/kernel/diagnostics.ts` — injectable `DiagnosticsSink`, bridge-only
   concern (never engine/view state).
 - `src/engine/domain.ts` — the one reference feature's authoritative state,
@@ -187,9 +197,15 @@ code, not after.
   interactive reference for every bridge primitive and every
   `EffectOutcome`, driven by a throwaway demo engine (not part of the
   published package).
-- `examples/01-counter/` … `examples/06-time-entries/` — six progressive
-  example applications, each driven by `test/examples.test.ts` against its own
-  real `index.html`, so none can silently rot. Start at `01-counter`.
+- `examples/01-counter/` … `examples/08-routing/` — eight progressive example
+  applications, each driven by `test/examples.test.ts` against its own real
+  `index.html`, so none can silently rot, and each with its own README. Start
+  at `01-counter`. `07-clipboard` and `08-routing` cover the two newest
+  capabilities; `08-routing` is also the one place two capabilities are used
+  together (composing a shareable link and copying it).
+- `examples/minimal/` — the copy shipped **inside the npm package**: four
+  files, plain JavaScript, no build step, imported by published package name.
+  Excluded from `tsconfig.examples.json` for that reason.
 - `docs/ROADMAP.md` — status of every bridge responsibility against what's
   actually implemented and tested. Read this before assuming something is
   missing or done.
@@ -212,7 +228,11 @@ code, not after.
 npm run build              # tsc → dist/
 npm run build:examples     # tsc → examples/**/*.js, emitted in place
 npm run check:architecture # scripts/check-architecture.ts
-npm run check:docs         # scripts/check-docs.ts — links, paths, orphans
+npm run check:docs         # scripts/check-docs.ts — links, paths, orphans,
+                           #   and that no document denies a shipped capability
+npm run check:package      # scripts/check-package.ts — the npm tarball
+npm run check:clean-room   # pack → install into an empty project → build
+npm run smoke:browser      # real Chromium (needs Playwright; skips without it)
 npm test                   # pretest (build + build:examples) → architecture
                            #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)

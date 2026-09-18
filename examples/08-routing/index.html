@@ -23,6 +23,14 @@
 
       <p>URL: <code data-text="currentUrl"></code></p>
 
+      <!-- Two capabilities at once, which is the point: the engine composes an
+           absolute link from the route it owns plus the origin it was given at
+           startup, and asks the kernel to put it on the clipboard. -->
+      <button data-event="copyLink" data-bind-disabled="copyDisabled">Copy link</button>
+      <template data-if="showCopyStatus">
+        <p class="status" role="status" data-text="copyStatus"></p>
+      </template>
+
       <!-- Shown only when the kernel could not perform a navigation the engine
            asked for. The screen is right; the address bar is not. -->
       <template data-if="urlOutOfSync">

@@ -12,6 +12,7 @@
 import type {
   BrowserLocation,
   BrowserToEngineMessage,
+  ClipboardOutcome,
   CorrelationId,
   EffectRequest,
   EngineToBrowserMessage,
@@ -85,12 +86,31 @@ export function routeToPath(route: Route): string {
 export const routeToUrl = (base: string, route: Route): string =>
   route.kind === "Home" ? base : `${base}?${ROUTE_PARAM}${encodeURIComponent(routeToPath(route))}`;
 
+// The absolute link to a screen. `origin` comes from Initialize.location, which
+// is the only reason an engine can build one at all — see BrowserLocation in
+// ../../src/protocol.ts. A relative path is not something anyone can share.
+export const shareUrl = (origin: string, base: string, route: Route): string =>
+  `${origin}${routeToUrl(base, route)}`;
+
 // ---------------------------------------------------------------------------
 // Authoritative state
 // ---------------------------------------------------------------------------
 
+// Copying the link to the current screen is the one place this example uses two
+// capabilities at once, and it is here deliberately: composing a shareable URL
+// (Navigation) and putting it on the clipboard (Clipboard) is the main reason
+// either capability exists, and demonstrating them only separately leaves the
+// combination — including where the origin comes from — to guesswork.
+export type CopyState =
+  | { readonly kind: "Idle" }
+  | { readonly kind: "Copying"; readonly correlationId: CorrelationId }
+  | { readonly kind: "Copied" }
+  | { readonly kind: "CopyFailed"; readonly reason: "denied" | "unavailable" | "unknown" };
+
 export type State = {
   readonly route: Route;
+  readonly origin: string;
+  readonly copy: CopyState;
   readonly base: string;
   // Set when the kernel could not perform a navigation the engine asked for.
   // The screen still changed — the engine's route is authoritative — but the
@@ -99,7 +119,13 @@ export type State = {
   readonly urlOutOfSync: boolean;
 };
 
-export const initialState: State = { route: { kind: "Home" }, base: "/", urlOutOfSync: false };
+export const initialState: State = {
+  route: { kind: "Home" },
+  origin: "",
+  base: "/",
+  copy: { kind: "Idle" },
+  urlOutOfSync: false,
+};
 
 // ---------------------------------------------------------------------------
 // Commands
@@ -113,7 +139,9 @@ export type Command =
   // The browser went somewhere on its own (Back, Forward). Changes state and
   // asks for nothing: the address bar is already correct.
   | { readonly kind: "AdoptLocation"; readonly location: BrowserLocation }
-  | { readonly kind: "RecordNavigation"; readonly failed: boolean };
+  | { readonly kind: "RecordNavigation"; readonly failed: boolean }
+  | { readonly kind: "CopyLink"; readonly correlationId: CorrelationId }
+  | { readonly kind: "RecordCopy"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome };
 
 export function eventToCommand(event: SemanticEvent, correlationId: CorrelationId): Command {
   switch (event.name) {
@@ -125,6 +153,7 @@ export function eventToCommand(event: SemanticEvent, correlationId: CorrelationI
       if (event.key === undefined) throw new Error("openInvoice requires an item key");
       return { kind: "Navigate", route: { kind: "Invoice", id: event.key }, correlationId };
     case "goBack": return { kind: "GoBack", correlationId };
+    case "copyLink": return { kind: "CopyLink", correlationId };
     default: throw new Error(`Unrecognized event: ${event.name}`);
   }
 }
@@ -178,6 +207,24 @@ export function transition(state: State, command: Command): TransitionResult {
 
     case "RecordNavigation":
       return command.failed ? go({ ...state, urlOutOfSync: true }) : stay(state);
+
+    case "CopyLink": {
+      if (state.copy.kind === "Copying") return stay(state);
+      // Copied from state, never read back out of the DOM: the link on screen
+      // and the link on the clipboard are then the same value by construction.
+      const url = shareUrl(state.origin, state.base, state.route);
+      return go(
+        { ...state, copy: { kind: "Copying", correlationId: command.correlationId } },
+        [{ kind: "Clipboard", correlationId: command.correlationId, operation: "writeText", text: url }],
+      );
+    }
+
+    case "RecordCopy": {
+      if (state.copy.kind !== "Copying" || state.copy.correlationId !== command.correlationId) return stay(state);
+      return command.outcome.kind === "Success"
+        ? go({ ...state, copy: { kind: "Copied" } })
+        : go({ ...state, copy: { kind: "CopyFailed", reason: command.outcome.reason } });
+    }
   }
 }
 
@@ -191,6 +238,23 @@ function invoiceOf(state: State): Invoice | undefined {
   return invoices.find((candidate) => candidate.id === route.id);
 }
 
+// Only "denied" is worth advising a retry for: browsers grant the clipboard
+// while a user gesture is fresh. "unavailable" means there is no Clipboard API
+// in this context, and a retry can never succeed.
+const copyStatusOf = (copy: CopyState): string => {
+  switch (copy.kind) {
+    case "Idle": return "";
+    case "Copying": return "Copying…";
+    case "Copied": return "Link copied.";
+    case "CopyFailed":
+      switch (copy.reason) {
+        case "denied": return "The browser refused the copy. Click Copy link again.";
+        case "unavailable": return "This browser will not give the page clipboard access. Copy the link above manually.";
+        case "unknown": return "The copy did not complete.";
+      }
+  }
+};
+
 export function project(state: State): ViewState {
   const current = invoiceOf(state);
   return {
@@ -200,7 +264,11 @@ export function project(state: State): ViewState {
     onNotFound: state.route.kind === "NotFound",
     // The address bar as the engine believes it should read. Projected so the
     // example can show it; a real application would not need to.
-    currentUrl: routeToUrl(state.base, state.route),
+    // The absolute link, which is what a person can actually paste somewhere.
+    currentUrl: shareUrl(state.origin, state.base, state.route),
+    copyDisabled: state.copy.kind === "Copying",
+    showCopyStatus: state.copy.kind !== "Idle",
+    copyStatus: copyStatusOf(state.copy),
     unknownPath: state.route.kind === "NotFound" ? state.route.raw : "",
     invoiceId: current?.id ?? "",
     invoiceCustomer: current?.customer ?? "",
@@ -232,7 +300,11 @@ export function createRoutingTransport(): EngineTransport {
           // ?route=/invoices/1002 never sees Home flash first.
           state = {
             route: parseRoute(message.location),
+            // The origin is the one part of the URL an engine cannot derive and
+            // cannot read for itself. It arrives here, once.
+            origin: message.location.origin,
             base: message.location.path,
+            copy: { kind: "Idle" },
             urlOutOfSync: false,
           };
           return { view: project(state), effects: [], cancellations: [] };
@@ -245,8 +317,15 @@ export function createRoutingTransport(): EngineTransport {
           return respond(transition(state, { kind: "AdoptLocation", location: message.location }));
 
         case "EffectResult": {
+          if (message.result.kind === "ClipboardResult") {
+            return respond(transition(state, {
+              kind: "RecordCopy",
+              correlationId: message.result.correlationId,
+              outcome: message.result.outcome,
+            }));
+          }
           if (message.result.kind !== "NavigationResult") {
-            throw new Error(`Unexpected ${message.result.kind}: this engine requests only Navigation effects.`);
+            throw new Error(`Unexpected ${message.result.kind}: this engine requests only Navigation and Clipboard effects.`);
           }
           // "Dispatched" is back/forward having been *asked for*; there is
           // nothing to record until the browser actually moves and sends

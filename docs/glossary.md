@@ -30,7 +30,8 @@ A projected value answering "may the user do this right now?" — `saveDisabled`
 
 ### Capability (2) — a browser facility
 
-An effect kind the kernel can perform. Currently `Http` and `Storage`, announced
+An effect kind the kernel can perform. Currently `Http`, `Storage`, `Clipboard`
+(write only) and `Navigation`, announced
 in `Initialize.capabilities`.
 
 > ⚠️ **These two senses are genuinely distinct** and the codebase uses both.
@@ -67,9 +68,16 @@ performed by the kernel, reported back as an `EffectResult`.
 
 ### Effect outcome
 
-How an effect turned out, as a discriminated union. Http has four variants
-(`Success`, `Failure`, `Cancelled`, `OutcomeUnknown`); Storage has two
-(`Success`, `Failure`).
+How an effect turned out, as a discriminated union. **Each capability has its
+own**, because their failure modes genuinely differ — a shared type would force
+every caller to handle variants that cannot occur.
+
+| Capability | Variants |
+| --- | --- |
+| Http | `Success` · `Failure{network\|aborted\|invalid-response}` · `Cancelled` · `OutcomeUnknown{timeout-after-dispatch}` |
+| Storage | `Success{value}` · `Failure{unavailable\|quota-exceeded}` |
+| Clipboard | `Success` · `Failure{denied\|unavailable\|unknown}` |
+| Navigation | `Success{location}` · `Dispatched` · `Failure{unavailable\|not-same-origin}` |
 
 ### Engine
 
@@ -233,7 +241,7 @@ design has drifted.
 | Virtual DOM / reconciler | No VDOM. Only keyed list reconciliation. |
 | Store / reducer / action creator | The engine is not a Redux-style store. Commands are not actions. |
 | Hook / subscription | No subscription API. The kernel applies whole projections. |
-| Router | Not implemented. No URL or history integration. |
+| Router | Not implemented — and not planned. There is a `Navigation` **capability** (push, replace, back, forward, and the browser's own moves), but no route table and no path matching. What a URL means is the engine's decision, which is the point. See [routing.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md). |
 | Middleware | Nothing intercepts the round trip except the error boundary. |
 | Selector | Projections are computed wholesale, not selected or memoized. |
 | Two-way binding | `data-bind-value` writes *to* the DOM; reads come back only as events. |

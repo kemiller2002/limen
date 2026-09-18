@@ -16,7 +16,7 @@ Know what you are allowed to depend on.
 
 | Tier | What | Examples |
 | --- | --- | --- |
-| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, the six `data-*` attributes |
+| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
 | **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport` (write your own), `DiagnosticsSink` (supply your own) |
 | **Reference implementation** | Ships, but is this repo's demo. Do **not** build on it. | `DirectTypeScriptTransport`, `ReferenceEngine`, `project`, `State`, `Command`, `TransitionResult`, `EmailAddress` |
 | **Internal** | Private; may change without notice. | every `#`-prefixed member of `BrowserKernel`, `Scope`/binding types, `TRIGGER_BY_TAG`, `BOOLEAN_PROPS` |
@@ -28,7 +28,17 @@ Know what you are allowed to depend on.
 - **Versioning**: semver. Currently `0.x`, so the protocol **may change in a
   minor release**. Pin an exact version if that matters to you.
 - **`PROTOCOL_VERSION`** is `1`. The kernel sends it in `Initialize`; an engine
-  should reject a version it does not understand, as `ReferenceEngine` does.
+  should reject a version it does not understand. It is two lines, and worth
+  writing so a future kernel cannot silently drive an engine that predates it:
+
+  ```ts
+  case "Initialize":
+    if (message.protocolVersion !== PROTOCOL_VERSION) throw new Error("Unsupported protocol version");
+    // …
+  ```
+
+  The throw surfaces as `BridgeError { phase: "dispatch" }` rather than
+  crashing the page.
 - **No written breaking-change policy exists** for `0.x` beyond semver itself.
   That is a genuine gap, not an implied guarantee — see
   [DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
@@ -328,6 +338,8 @@ call is atomic.
 
 ### `ClipboardEffectRequest`
 
+*Available since 0.6.0.*
+
 ```ts
 type ClipboardEffectRequest = {
   kind: "Clipboard";
@@ -355,6 +367,8 @@ type ClipboardOutcome =
 No payload on success, and no `OutcomeUnknown`: a refused write did not happen.
 
 ### `NavigationEffectRequest`
+
+*Available since 0.6.0.*
 
 ```ts
 type NavigationEffectRequest =
@@ -385,6 +399,8 @@ type NavigationOutcome =
 arrives later as `LocationChanged`, or never, if there was nowhere to go.
 
 ### `BrowserLocation`
+
+*Available since 0.6.0.*
 
 ```ts
 type BrowserLocation = {

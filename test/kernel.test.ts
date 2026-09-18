@@ -76,7 +76,9 @@ test("start() dispatches Initialize with the protocol version and applies the in
       capabilities: ["Http", "Storage", "Clipboard", "Navigation"],
       // Delivered once, so an engine that routes can pick its first state from
       // the address bar instead of defaulting and then correcting itself.
-      location: { path: "/", query: "", hash: "" },
+      // `origin` rides along so an engine can compose an absolute, shareable
+      // link to the current screen — Navigation and Clipboard used together.
+      location: { origin: "http://localhost", path: "/", query: "", hash: "" },
     });
     assert.equal(document.querySelector("p")!.textContent, "ready");
   });
@@ -846,7 +848,7 @@ test("a Navigation push changes the URL and reports the resulting location", asy
     correlationId: "nav-1",
     // Split mechanically, never interpreted: the kernel does not know that
     // "/invoices/42" names an invoice.
-    outcome: { kind: "Success", location: { path: "/invoices/42", query: "?tab=history", hash: "#totals" } },
+    outcome: { kind: "Success", location: { origin: "http://localhost", path: "/invoices/42", query: "?tab=history", hash: "#totals" } },
   }]);
 });
 
@@ -885,7 +887,7 @@ test("Back arrives as LocationChanged, not as the result of the effect that aske
     assert.deepEqual(results.at(-1), { kind: "NavigationResult", correlationId: "nav-back", outcome: { kind: "Dispatched" } });
     const changed = seen.filter((message) => message.kind === "LocationChanged");
     assert.equal(changed.length, 1, "the browser's own move must reach the engine exactly once");
-    assert.deepEqual(changed[0], { kind: "LocationChanged", location: { path: "/", query: "", hash: "" } });
+    assert.deepEqual(changed[0], { kind: "LocationChanged", location: { origin: "http://localhost", path: "/", query: "", hash: "" } });
   });
 });
 
@@ -918,4 +920,50 @@ test("an effect kind the kernel cannot run is reported, never silently dropped",
   assert.equal(errors[0]?.kind === "BridgeError" && errors[0].phase, "effect");
   assert.ok(String(errors[0]?.kind === "BridgeError" && errors[0].detail).includes("Unsupported effect kind"));
   assert.ok(String(errors[0]?.kind === "BridgeError" && errors[0].detail).includes("Geolocation"));
+});
+
+// ---------------------------------------------------------------------------
+// Checkboxes and radios
+//
+// `readValue()` returns `.value`, never `.checked`. That makes a checkbox and a
+// radio behave differently in a way the recipes doc has to be right about, so
+// both shapes it recommends are pinned here.
+// ---------------------------------------------------------------------------
+
+test("a checkbox reports its value attribute, not its checked state — so model the event as a toggle", async () => {
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") return respond({ view: { notifyEnabled: false } });
+    return respond({ view: { notifyEnabled: true } });
+  });
+  await withDom(`<input type="checkbox" data-event="toggleNotify" data-bind-checked="notifyEnabled">`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    const box = document.querySelector("input")!;
+    assert.equal(box.checked, false, "the projection drives .checked as a property");
+
+    box.checked = true;
+    box.dispatchEvent(new window.Event("change", { bubbles: true }));
+    const last = transport.calls.at(-1);
+    // "on" either way: the event carries no usable information about the tick,
+    // which is exactly why the documented shape is "flip it", not "set it".
+    assert.deepEqual(last?.kind === "Event" && last.event, { kind: "Event", name: "toggleNotify", value: "on" });
+
+    await flush();
+    assert.equal(box.checked, true, "the engine's answer is what sets it, not the click");
+  });
+});
+
+test("a radio reports its own value, so one event name covers the whole group", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { isDaily: false, isWeekly: true } }));
+  await withDom(
+    `<input type="radio" name="freq" value="daily" data-event="selectFrequency" data-bind-checked="isDaily">
+     <input type="radio" name="freq" value="weekly" data-event="selectFrequency" data-bind-checked="isWeekly">`,
+    async (document) => {
+      await new BrowserKernel(transport, document).start();
+      const weekly = document.querySelectorAll("input")[1]!;
+      weekly.checked = true;
+      weekly.dispatchEvent(new window.Event("change", { bubbles: true }));
+      const last = transport.calls.at(-1);
+      assert.deepEqual(last?.kind === "Event" && last.event, { kind: "Event", name: "selectFrequency", value: "weekly" });
+    },
+  );
 });

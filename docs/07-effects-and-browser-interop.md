@@ -396,6 +396,39 @@ ordinary `<a href>` is the right tool for that, and needs no capability.
 
 ---
 
+## Correlation IDs: the rules
+
+The kernel treats a `correlationId` as an opaque string and does exactly two
+things with it: it keys the `AbortController` for an in-flight **Http** effect,
+and it copies the value onto the result. Everything else is your convention.
+
+- **Mint a fresh one per in-flight request.** Reusing one across two requests
+  that can overlap makes the stale-result guard unable to tell them apart, which
+  is the bug it exists to prevent.
+- **A constant is fine for an effect that cannot overlap itself** — see the
+  draft-read key in [04-save-data](../examples/04-save-data/README.md).
+- **Uniqueness across capabilities is not required**, because a result carries
+  its kind (`HttpResult`, `ClipboardResult`, …) and an engine branches on that
+  first. Prefixing by purpose (`load-3`, `copy-1`) costs nothing and makes a
+  diagnostics log readable.
+- **The engine compares, the kernel does not.** A result that does not match
+  what the current state is waiting on is not evidence; discard it.
+
+## Cancellation applies to Http, and only Http
+
+`cancellations` aborts an in-flight `fetch`. For the other three it is a
+structural no-op:
+
+| Capability | Cancelling it | Why |
+| --- | --- | --- |
+| Http | aborts the request; the outcome is `Cancelled` | there is something in flight |
+| Storage | nothing | synchronous; it finished before you could name it |
+| Clipboard | nothing | the write is a single call the browser has already accepted or refused |
+| Navigation | nothing | `pushState` is synchronous; `back` has already been asked for |
+
+Naming an id the kernel does not hold is harmless and reports nothing. Do not
+treat that silence as confirmation that anything was cancelled.
+
 ## Requesting effects from `Initialize`
 
 Startup work is an ordinary effect request. The response to `Initialize` may
@@ -434,7 +467,7 @@ Every effect is timed and reported:
 
 ```ts
 type DiagnosticEvent =
-  | { kind: "BridgeError";  phase: "dispatch" | "projection" | "effect"; detail: string }
+  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect"; detail: string }
   | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number };
 ```
 

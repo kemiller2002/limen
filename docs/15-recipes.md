@@ -294,7 +294,10 @@ case "navigate": {
 }
 ```
 
-⚠️ **URL and history are not supported.** See
+This is the **no-URL** case — screens that are not meant to be bookmarked. When
+a screen should be linkable, shareable, or survive a reload, use the
+`Navigation` capability instead: [routing.md](routing.md), and the
+"Handle the browser's Back and Forward buttons" recipe below. See
 [08-multi-screen-applications.md](08-multi-screen-applications.md).
 
 ---
@@ -366,13 +369,18 @@ need when the browser can act without being asked.
 export type ClipboardEffectRequest = {
   readonly kind: "Clipboard";
   readonly correlationId: CorrelationId;
-  readonly operation: "write";
+  readonly operation: "writeText";
   readonly text: string;
 };
 
+// Three reasons, not two. They are split because an engine answers them
+// differently: "denied" is usually a stale user gesture and a retry works,
+// "unavailable" means no Clipboard API exists here and a retry never will.
+// Deciding that split is the hardest part of adding a capability, and the part
+// you cannot revise later without a breaking change.
 export type ClipboardOutcome =
   | { readonly kind: "Success" }
-  | { readonly kind: "Failure"; readonly reason: "denied" | "unavailable" };
+  | { readonly kind: "Failure"; readonly reason: "denied" | "unavailable" | "unknown" };
 
 export type EffectRequest = HttpEffectRequest | StorageEffectRequest | ClipboardEffectRequest;
 
@@ -497,6 +505,54 @@ example: [examples/08-routing](../examples/08-routing/README.md).
 
 ---
 
+## Add a checkbox or a radio button
+
+**Layers:** HTML + engine. **Kernel:** none.
+
+A checkbox needs a different shape from a text field, and the reason is a real
+limitation: `SemanticEvent.value` comes from the element's `.value`, **not its
+`.checked`**. A checkbox's `.value` is `"on"` whether it is ticked or not, so an
+event carrying it tells the engine nothing.
+
+Model the event as *"the user toggled this"* rather than *"here is the new
+value"*:
+
+```html
+<!-- No data-bind-value: the checkbox's value never changes, its checked does. -->
+<input type="checkbox" id="notify"
+       data-event="toggleNotify"
+       data-bind-checked="notifyEnabled">
+<label for="notify">Email me about changes</label>
+```
+
+```ts
+// The engine flips its own state. It does not read the checkbox.
+case "ToggleNotify":
+  return go({ ...state, notifyEnabled: !state.notifyEnabled });
+
+// Projected back, so the DOM reflects the engine rather than the click.
+const project = (state: State): ViewState => ({ notifyEnabled: state.notifyEnabled });
+```
+
+`checked` is one of the attributes the kernel reflects as a DOM **property**, so
+`data-bind-checked` works as you would expect.
+
+**Radio buttons are the easy case**, because a radio's `.value` *is*
+meaningful — so the ordinary text-field shape works unchanged:
+
+```html
+<input type="radio" name="freq" value="daily"  data-event="selectFrequency" data-bind-checked="isDaily">
+<input type="radio" name="freq" value="weekly" data-event="selectFrequency" data-bind-checked="isWeekly">
+```
+
+Each selection dispatches `{ name: "selectFrequency", value: "daily" }`. One
+event name, one transition, and the engine projects one `is…` flag per option.
+
+**Common mistake:** binding `data-bind-value` to a checkbox and wondering why
+nothing toggles. The state you want is `checked`.
+
+---
+
 ## Validate a form
 
 **Layers:** engine. **Kernel:** none.
@@ -537,9 +593,12 @@ where the rule lives. Running example:
 A button does nothing. Work down this list; each step eliminates one layer.
 
 1. **Is the kernel bound?** Install a `DiagnosticsSink`
-   ([16-troubleshooting.md](16-troubleshooting.md)). A `BridgeError` with
-   `phase: "binding"` means `start()` bailed out and **nothing** on the page is
-   wired.
+   ([16-troubleshooting.md](16-troubleshooting.md)). Two different phases mean
+   `start()` bailed out and **nothing** on the page is wired, and they have
+   different causes: `phase: "binding"` is malformed markup (a `data-each`
+   without `data-key`, a `data-if` on a non-`<template>`, a template with more
+   than one root element); `phase: "dispatch"` at startup is the transport's own
+   `start()` having rejected. Read the `detail` — it names which.
 2. **Is the attribute spelled right?** `data-event`, not `data-events`. An
    unrecognised `data-*` attribute is silently ignored — it is just an
    attribute.

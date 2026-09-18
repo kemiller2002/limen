@@ -139,9 +139,80 @@ for (const file of files) {
   }
 }
 
+// --- 4: documented type literals agree with the source ---------------------
+//
+// The failure this exists to prevent, observed: two capabilities were added to
+// the protocol and roughly six documents were never swept, including the one
+// written for agents and one that ships to npm consumers. Prose rot is hard to
+// detect mechanically; a quoted *type declaration* is not.
+//
+// For each type below, the set of string literals a document declares must
+// equal the set in the source. A document showing an abbreviated declaration
+// must mark it with an ellipsis (…) — then it is treated as an excerpt and
+// skipped, which is an honest label rather than a silent exception.
+const CHECKED_TYPES: readonly { readonly name: string; readonly source: string }[] = [
+  { name: "Capability", source: "src/protocol.ts" },
+  { name: "ClipboardOutcome", source: "src/protocol.ts" },
+  { name: "NavigationOutcome", source: "src/protocol.ts" },
+  { name: "StorageOutcome", source: "src/protocol.ts" },
+  { name: "EffectOutcome", source: "src/protocol.ts" },
+  { name: "EffectResult", source: "src/protocol.ts" },
+  { name: "BrowserToEngineMessage", source: "src/protocol.ts" },
+  { name: "DiagnosticEvent", source: "src/kernel/diagnostics.ts" },
+];
+
+// Comments are stripped first: a literal quoted in prose inside a declaration
+// would otherwise count as part of the type.
+const withoutComments = (source: string): string =>
+  source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+
+const declarationOf = (source: string, name: string): string | null => {
+  const match = new RegExp(`type ${name}\\b[^=]*=([\\s\\S]*?);\\s*\\n`).exec(source);
+  return match?.[1] ?? null;
+};
+
+const literalsOf = (declaration: string): Set<string> =>
+  new Set(Array.from(withoutComments(declaration).matchAll(/"([^"]+)"/g), (match) => match[1] ?? ""));
+
+const sorted = (values: Set<string>): string => Array.from(values).sort().join(", ");
+
+const expected = new Map<string, Set<string>>();
+for (const { name, source } of CHECKED_TYPES) {
+  const declaration = declarationOf(await readFile(join(ROOT, source), "utf8"), name);
+  if (declaration === null) {
+    violations.push(`scripts/check-docs.ts: cannot find "type ${name}" in ${source} — this check is now blind to it`);
+    continue;
+  }
+  expected.set(name, literalsOf(declaration));
+}
+
+const FENCE = /```(?:ts|typescript)\n([\s\S]*?)```/g;
+
+for (const file of files) {
+  if (ROS_MANAGED.has(relative(ROOT, file))) continue;
+  const source = await readFile(file, "utf8");
+  for (const [, fence] of source.matchAll(FENCE)) {
+    if (!fence) continue;
+    for (const [name, want] of expected) {
+      const declaration = declarationOf(fence, name);
+      if (declaration === null) continue;
+      // An excerpt says so. "…" or "..." marks a deliberately partial listing.
+      if (/…|\.\.\./.test(declaration)) continue;
+      const got = literalsOf(declaration);
+      if (sorted(got) !== sorted(want)) {
+        violations.push(
+          `${relative(ROOT, file)}: the documented "${name}" disagrees with the source\n` +
+          `    documented: ${sorted(got) || "(none)"}\n` +
+          `    source:     ${sorted(want)}`,
+        );
+      }
+    }
+  }
+}
+
 if (violations.length > 0) {
   console.error(violations.join("\n"));
   process.exitCode = 1;
 } else {
-  console.log(`Documentation checks passed (${files.length} files).`);
+  console.log(`Documentation checks passed (${files.length} files, ${expected.size} protocol types cross-checked).`);
 }

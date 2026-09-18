@@ -144,6 +144,15 @@ try {
   await page.goto(`${BASE}/examples/08-routing/?route=%2Finvoices%2F9999`);
   check("08 routing: an unknown id is the Not found screen", await trimmed(page, "section h2") === "Not found");
 
+  // --- both capabilities at once: compose a shareable link, then copy it ---
+  await page.goto(`${BASE}/examples/08-routing/`);
+  await page.click("button[data-event='goInvoices']");
+  const link = await trimmed(page, "code[data-text='currentUrl']");
+  await page.click("button[data-event='copyLink']");
+  await page.waitForSelector(".status");
+  const copiedLink = await page.evaluate(() => navigator.clipboard.readText());
+  check("08 routing: Copy link copies the absolute URL of the current screen", copiedLink === link && link === page.url(), `clipboard=${copiedLink}`);
+
   // --- the pages that were already shipping still bind ---------------------
   await page.goto(`${BASE}/`);
   check("the reference feature binds", await page.$("[data-text='statusText']") !== null);

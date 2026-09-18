@@ -443,8 +443,8 @@ function classifyClipboardError(error: unknown): "denied" | "unavailable" | "unk
 // --- Navigation ------------------------------------------------------------
 
 function readLocation(): BrowserLocation {
-  const { pathname, search, hash } = window.location;
-  return { path: pathname, query: search, hash };
+  const { origin, pathname, search, hash } = window.location;
+  return { origin, path: pathname, query: search, hash };
 }
 
 // No history state is written. The engine already holds the state this URL

@@ -6,7 +6,10 @@ this repository's test suite.
 
 > **Which version is this?** This file ships **inside the npm package**, so it
 > describes exactly the version you installed. The copy on GitHub describes
-> `main`, which may be ahead of the latest release.
+> `main`, which may be ahead of the latest release. Capabilities added recently
+> carry an *"available since"* line in
+> [11-api-reference.md](11-api-reference.md); the per-version record is
+> [CHANGELOG.md](../CHANGELOG.md).
 
 ---
 
@@ -125,6 +128,14 @@ Using no bundler and no TypeScript? A complete JavaScript copy of this exact
 application ships in this package at
 [`examples/minimal/`](../examples/minimal/README.md), including the import map
 a browser needs to resolve a bare package name.
+
+> **One simplification to know about.** This `transition` switches on the raw
+> event name. Real engines add a small `eventToCommand(event) → Command` step
+> first, turning an open vocabulary of strings from the HTML into a closed union
+> the compiler can check — that is what every example past
+> [01-counter](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter) does, and what the recipes and
+> traces assume. It is one function, and it is worth adding as soon as you have
+> a second event that carries data.
 
 ## What just happened
 

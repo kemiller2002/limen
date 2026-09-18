@@ -84,15 +84,16 @@ needed. It has no access to the browser — enforced mechanically, see §4.
 
 ## 2. The contract
 
-Exactly two message shapes cross the boundary.
+Two message shapes cross the boundary — one in each direction.
 
 **Browser → Engine** ([`protocol.ts`](../src/protocol.ts)):
 
 ```ts
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: ["Http", "Storage"] }
-  | { kind: "Event";        event:  SemanticEvent }
-  | { kind: "EffectResult"; result: EffectResult };
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation }
+  | { kind: "Event";           event:    SemanticEvent }
+  | { kind: "EffectResult";    result:   EffectResult }
+  | { kind: "LocationChanged"; location: BrowserLocation };
 
 type SemanticEvent = {
   kind: "Event";

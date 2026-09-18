@@ -16,6 +16,17 @@ exhaustive lists.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.6.0] — unreleased at the time of writing
+
+> **Availability.** Everything in this entry is on `main` and is **not in
+> `0.5.1`**, the newest published version. If you installed from npm before
+> `0.6.0` is tagged, the `Clipboard` and `Navigation` capabilities do not exist
+> in your copy, and requesting one produces a `BridgeError` with
+> `phase: "effect"` and no result. The documents shipped inside the tarball
+> describe the version you installed; the copies on GitHub describe `main`.
+
 ### Added
 
 - **`Clipboard` capability.** `Clipboard { operation: "writeText", text }`, with
@@ -39,7 +50,15 @@ exhaustive lists.
   routing engine can pick its first state from the address bar instead of
   rendering a default and then correcting itself.
 - **`BrowserLocation` and `Capability` types**, exported from the package root
-  and from `./protocol`.
+  and from `./protocol`. `BrowserLocation` carries `origin` as well as `path`,
+  `query` and `hash`, which is what lets an engine compose an absolute,
+  shareable link to the current screen — Navigation and Clipboard used together,
+  and the main reason either capability exists. (The origin was omitted in the
+  first draft of this protocol on the reasoning that an engine could be tempted
+  to branch on it. That reasoning did not survive the use case: without it an
+  engine can only build a relative path, and the alternative — reading
+  `window.location` in the composition root and handing it in — smuggles a
+  browser value across the boundary through a side channel nothing checks.)
 - **Documentation**: `docs/quick-start.md`, `docs/mental-model.md`,
   `docs/where-code-goes.md`, `docs/traces.md`, `docs/routing.md`,
   `docs/clipboard.md`. Three new anti-patterns, four new recipes, and a README
@@ -58,6 +77,15 @@ exhaustive lists.
 - **`npm run check:clean-room`** — packs the tarball, installs it into an empty
   project, and builds and smoke-tests the minimal example against the
   *installed* package rather than the repository.
+- **`npm run smoke:browser`** — drives the counter, clipboard and routing
+  examples in real Chromium, including reading the clipboard back and pressing
+  the browser's own Back and Forward buttons. Playwright is not a dependency;
+  the script skips and exits 0 without it.
+- **A source-versus-documentation check.** `check-docs.ts` now extracts the
+  string literals of eight protocol types from `src/` and fails when a
+  documented declaration of the same type disagrees. A deliberately abbreviated
+  declaration marks itself with an ellipsis. This exists because the capability
+  work above made roughly eight documents stale and nothing noticed.
 
 ### Changed
 
@@ -74,6 +102,13 @@ exhaustive lists.
 
 ### Fixed
 
+- **Eight documents that denied a capability Limen had just gained.** The agent
+  guide said no clipboard capability existed, the glossary said the router was
+  "not implemented. No URL or history integration", the recipes carried both a
+  "URL and history are not supported" warning and a `ClipboardOutcome` with two
+  reasons instead of three, and the integration guide told prospective adopters
+  that deep URL routing was unsupported. Found by giving two clean-context
+  agents documentation-only access and asking them to build something.
 - **An effect kind the kernel cannot run is reported** as
   `BridgeError { phase: "effect" }` instead of raising an unhandled rejection
   and silently sending no result. The `"effect"` phase had been declared in
@@ -118,6 +153,7 @@ Pre-release development, beginning at `0.2.1`: the protocol, the browser kernel,
 the reference engine, the six original examples, the documentation set, and the
 architecture and documentation checks. See the repository history.
 
-[Unreleased]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.1...HEAD
 [0.5.1]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kemiller2002/typescript-wasm-kernel/releases/tag/v0.5.0

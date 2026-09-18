@@ -17,6 +17,7 @@ and Forward, and a URL that loads the right screen directly.
 | A browser-initiated move adopts and pushes **nothing** | `AdoptLocation` |
 | `back` is a request, not a result | `GoBack` → outcome `Dispatched` |
 | A navigation that failed is admitted | `urlOutOfSync` |
+| **Two capabilities at once** | `shareUrl`, `CopyLink` — composing an absolute link and copying it |
 
 ## Files
 
@@ -68,6 +69,26 @@ user presses the browser's Back button
 `LocationChanged` is the classic routing bug: Back fires popstate, the engine
 pushes the old URL back on, and the user cannot leave the page.
 
+## Copy link — the one place two capabilities meet
+
+This example deliberately breaks the one-example-one-lesson rule once, because
+the combination is the point:
+
+```ts
+export const shareUrl = (origin: string, base: string, route: Route): string =>
+  `${origin}${routeToUrl(base, route)}`;
+```
+
+`origin` arrives in `Initialize.location`, and it is the only reason an engine
+can build an absolute link at all — a relative path is not something anyone can
+share. The engine composes the link from state it already owns, projects it to
+the screen, and copies **that same value**; the link a user sees and the link on
+their clipboard cannot drift apart.
+
+Composing a shareable link (Navigation) and putting it on the clipboard
+(Clipboard) is the main reason either capability exists, so demonstrating them
+only separately would leave the interesting part to guesswork.
+
 ## Path routing vs. query routing
 
 This example puts routes in the query string (`?route=/invoices/1002`) so that
@@ -96,6 +117,8 @@ Then open <http://localhost:4173/examples/08-routing/>.
 | Press Forward | the invoice screen again |
 | Copy the URL into a new tab | that same invoice screen, directly |
 | Edit the URL to `?route=/invoices/9999` | the Not found screen |
+| Click Copy link, then paste | the absolute URL of the screen you are on |
+| Click Copy link over plain `http://` on a non-localhost host | "Copy the link above manually" — no retry offered |
 | Click Invoices twice | the second click does nothing, and Back still works |
 
 ## Exercises
