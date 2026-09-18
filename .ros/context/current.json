@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-18T10:32:42.260Z",
+  "updatedAt": "2026-09-18T10:33:05.588Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -366,10 +366,20 @@
     {
       "id": "WI-0020",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-18T10:32:42.260Z"
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "LIMEN-DOCUMENTATION-USABILITY-REPORT.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-18T10:33:05.588Z",
+      "completedAt": "2026-09-18T10:33:05.588Z"
     }
   ]
 }
