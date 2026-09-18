@@ -6,7 +6,8 @@ entry points: cloning the repository, installing the npm package, and arriving
 as a coding agent with no institutional knowledge.
 
 **Branch:** `claude/limen-docs-usability-hh5tvh` ·
-**Work items:** WI-0014 – WI-0018
+**Work items:** WI-0014 – WI-0019 ·
+**Version:** `0.5.1` → `0.6.0`
 
 ---
 
@@ -90,6 +91,10 @@ the largest part of this work.
 
 ### Findings, classified
 
+F-1 to F-16 come from the audit. F-17 to F-19 come from the clean-room
+comprehension pass in §12, which was run **after** the first round of fixes and
+found a class of defect the audit had created.
+
 | # | Class | Finding |
 | --- | --- | --- |
 | F-1 | Missing capability | No clipboard. Every answer was "extend the protocol yourself". |
@@ -108,6 +113,9 @@ the largest part of this work.
 | F-14 | Verification gap | No way to run the examples in a real browser, though the repository's own definition of done requires it. |
 | F-15 | Verification gap | Nothing checked what the tarball contained, or that it worked once installed. |
 | F-16 | Terminology | Residual "Typescript Wasm Kernel" in bootstrap/governance artifacts. Left deliberately; see §10. |
+| F-17 | **Documentation defect** | Found by the clean-room pass (§12): adding two capabilities left ~8 documents asserting those capabilities do not exist — including the agent guide and the glossary, which ships to npm. |
+| F-18 | **API ergonomics defect** | Found by the clean-room pass (§12): `BrowserLocation` omitted the origin, so composing a shareable link to the current screen — the main reason Navigation and Clipboard exist — was not expressible. |
+| F-19 | **Versioning defect** | Found by the clean-room pass (§12): the README presented four capabilities as shipped while the changelog filed them under `[Unreleased]`, and no document carried an "available since" marker. |
 
 ---
 
@@ -335,8 +343,8 @@ example's own README, the debugging recipe and the troubleshooting guide.
 | | Before | After |
 | --- | --- | --- |
 | Files | 33 | 48 |
-| Packed | 24.7 kB | 61.4 kB |
-| Unpacked | 84.6 kB | 209.0 kB |
+| Packed | 24.7 kB | 63.0 kB |
+| Unpacked | 84.6 kB | 213.7 kB |
 | Documentation | README only | README, CHANGELOG, 6 documents, docs index |
 | Example | none | `examples/minimal/` — four files, complete, no build step |
 | Runtime dependencies | 1 (wrongly) | **0** |
@@ -434,10 +442,10 @@ quietly disable the existence and orphan checks it already performed.
 ```
 npm run check
   Architecture checks passed.
-  Documentation checks passed (61 files).
+  Documentation checks passed (62 files, 8 protocol types cross-checked).
   Site artifact checks passed (6 pages).
-  Package checks passed: 48 files, 61.4 kB packed, 209.0 kB unpacked.
-  tests 110 · pass 109 · fail 0 · skipped 1 (the CLI test — needs the .NET SDK)
+  Package checks passed: 48 files, 63.0 kB packed, 213.7 kB unpacked.
+  tests 115 · pass 114 · fail 0 · skipped 1 (the CLI test — needs the .NET SDK)
 
 npm run check:clean-room
   installed package contains 48 files, including every documented one
@@ -445,11 +453,10 @@ npm run check:clean-room
   Clean-room check passed: the packed tarball installs, resolves, type-checks and runs.
 
 npm run smoke:browser   (real Chromium, Playwright installed out of tree)
-  16/16 browser checks passed
+  17/17 browser checks passed
 ```
 
-Against the baseline: 89 → 110 tests, 88 → 109 passing. 70 files changed,
-+5,571 / −349 lines, 30 files added.
+Against the baseline: 89 → 115 tests, 88 → 114 passing.
 
 | Verification | Status |
 | --- | --- |
@@ -457,12 +464,12 @@ Against the baseline: 89 → 110 tests, 88 → 109 passing. 70 files changed,
 | Example build | ✅ |
 | Site build | ✅ |
 | Architecture check | ✅ |
-| Docs check | ✅ |
+| Docs check | ✅ (now also cross-checks 8 protocol types against the source) |
 | Site artifact check | ✅ |
 | Package contents check | ✅ (new) |
 | Unit, kernel, example, site tests | ✅ 109/110, 1 skipped |
 | Clean-room install | ✅ (new) |
-| Browser smoke test | ✅ 16/16 (new) |
+| Browser smoke test | ✅ 17/17 (new) |
 | CLI tests (`dotnet test`) | ⚠️ **not run** — the .NET SDK was not installed in this session; unchanged by this work, and CI runs them |
 | Published site | ⚠️ not deployed from here; built and artifact-checked only |
 
@@ -486,6 +493,14 @@ Against the baseline: 89 → 110 tests, 88 → 109 passing. 70 files changed,
    and the audit stay, because that is what those documents are for.
 4. **Clipboard read is absent, not deferred** — a deliberate refusal, recorded
    in the roadmap and `docs/clipboard.md`.
+4a. **`GoBack` with no history to return to does nothing, silently.** The
+   protocol cannot ask whether a previous entry exists, so an engine cannot
+   project an explanation. Documented; still a rough edge for users.
+4b. **The site's *prose* is not cross-checked.** Its quoted protocol types now
+   are — the type-literal check strips the syntax-highlighting tags and reads
+   `site/pages/*.html` too, and it caught a stale `BrowserToEngineMessage`
+   there. Sentences that describe a capability in words remain unguarded on
+   all three surfaces, and always will be.
 5. **Still not implemented:** files, timers, focus control, geolocation,
    `IndexedDB`, `sessionStorage`. Each remains a deliberate protocol change.
 6. **`docs/README.md` and `examples/README.md` ship in the tarball whether or
@@ -496,7 +511,19 @@ Against the baseline: 89 → 110 tests, 88 → 109 passing. 70 files changed,
    size is later found to matter less than offline completeness, the set can
    grow — `scripts/check-package.ts` is the single place that decides.
 8. **No release was cut.** This sandbox cannot push tags (`CLAUDE.md` records
-   why). Version and tag remain a human step.
+   why). `package.json` is prepared at `0.6.0`; tagging remains a human step:
+
+   ```sh
+   git fetch origin main && git tag -a v0.6.0 <sha> -m "Limen 0.6.0" && git push origin v0.6.0
+   ```
+
+   Until that tag exists, the `0.6.0` changelog entry says so, and the
+   "available since 0.6.0" banners tell a reader on `0.5.1` exactly what symptom
+   to expect.
+9. **The clean-room comprehension pass was run once, at n = 2.** The gaps it
+   found are closed, but a third run against the *current* documentation has not
+   been done, so there is no evidence that nothing remains. §12 says what that
+   exercise is and is not evidence of.
 
 ---
 
@@ -530,6 +557,148 @@ improvement, and they are reported as such.
 
 ---
 
-## 12. Documentation smoke test and agent comprehension
+## 12. Clean-room comprehension exercises, and what they found
 
-*(Filled in below from the clean-context exercises.)*
+Two agents were given **documentation-only** access — `README.md`, `AGENTS.md`,
+`CHANGELOG.md`, `docs/**`, `examples/**`, and nothing under `src/`, `test/`,
+`scripts/`, `site/` or `cli/`. One was asked the fifteen smoke-test questions
+and the eight placement tasks the mission specifies; the other was asked to
+build an application with a counter, HTTP loading, a second routed screen,
+working Back, a Copy-link button, and clipboard-failure handling.
+
+### What worked
+
+Both answered **all fifteen questions** and placed **all eight changes**
+correctly, citing the document each answer came from. The builder produced a
+complete, plausible application — real state unions, real effect shapes, correct
+`push`/`adopt` asymmetry, correct stale-result guards — without inventing an
+API, apart from the one case below where the API genuinely could not express the
+requirement.
+
+Both independently singled out the same three documents as doing the heavy
+lifting: `mental-model.md`, `where-code-goes.md` and `traces.md`. One noted that
+`where-code-goes.md`'s "genuinely ambiguous cases" section pre-empted the exact
+edge cases it had intended to complain were missing.
+
+### What they found — and it was the same thing, twice
+
+**Adding two capabilities left roughly eight documents asserting those
+capabilities do not exist.** Not prose that aged badly: flat contradictions, in
+the documents a newcomer and an agent are told to start with.
+
+| Document | Said |
+| --- | --- |
+| `docs/14-agent-guide.md` | "**Not supported.** No clipboard capability exists" and "URL and history are not supported". This is the document `README` § For agents sends agents to. An agent that trusted it would decline the task and propose building something that already ships. |
+| `docs/glossary.md` | "Capability … currently `Http` and `Storage`"; "Router \| Not implemented. **No URL or history integration**" — thirty lines after defining `Route`, `BrowserLocation` and `LocationChanged`. **And it ships in the npm tarball**, so a consumer received a glossary denying half the protocol. |
+| `docs/15-recipes.md` | One recipe explaining Back and Forward; another, in the same file, warning they are unsupported. Plus an "add a capability" worked example claiming to show "the steps that were actually taken" with `operation: "write"` and two failure reasons instead of `"writeText"` and three. |
+| `docs/10-integration-guide.md` | "Deep URL routing and history … **Not supported today**" — on the adoption-decision page. |
+| `docs/USAGE.md` | Clipboard and navigation listed as unimplemented, in a file `docs/README.md` calls accurate. |
+| `docs/01-architecture.md` | A `BrowserToEngineMessage` union with no `LocationChanged`. |
+| `docs/07-effects…`, `ROADMAP.md` | A `DiagnosticEvent` phase union missing `"binding"` — which three other documents depend on existing. |
+| `CLAUDE.md` | Six examples, two capabilities, no `LocationChanged`. |
+
+All fixed. But the sweep is not the interesting part.
+
+### The interesting part: the guard
+
+Prose rot is hard to detect mechanically. A **quoted type declaration** is not.
+
+`scripts/check-docs.ts` now extracts the string literals of eight protocol types
+(`Capability`, `ClipboardOutcome`, `NavigationOutcome`, `StorageOutcome`,
+`EffectOutcome`, `EffectResult`, `BrowserToEngineMessage`, `DiagnosticEvent`)
+from `src/` and fails when any document — **or any page of the website**, whose
+syntax-highlighting tags are stripped first — declares the same type with a
+different set. A deliberately abbreviated declaration marks itself with an ellipsis, which
+is an honest label rather than a silent exception.
+
+It is not a vacuous check:
+
+- On its **first run** it found one more stale union nobody had reported
+  (`docs/01-architecture.md`), and the website arm found a second
+  (`site/pages/architecture.html`).
+- Reintroducing the two-reason `ClipboardOutcome` that actually shipped in the
+  recipes fails it immediately:
+
+  ```text
+  docs/glossary.md: the documented "ClipboardOutcome" disagrees with the source
+      documented: Failure, Success, denied, unavailable
+      source:     Failure, Success, denied, unavailable, unknown
+  ```
+
+### The hard blocker: you could not copy a link
+
+The builder hit something documentation could not fix. Copying a shareable link
+to the current screen — Navigation and Clipboard used **together**, which is the
+main reason either capability exists — was **not expressible**.
+
+`BrowserLocation` was `{ path, query, hash }`; the origin was deliberately
+omitted, and engine code may not name `window`. So an engine could compose
+`/app/?route=/invoices/42` and no more, and a relative path is not a link anyone
+can share. The workaround the agent invented — read `window.location.origin` in
+the composition root and pass it to the transport — works, and smuggles a
+browser value across the boundary through a side channel nothing checks.
+
+`BrowserLocation` now carries `origin`. The original reasoning (an engine that
+could read it would be tempted to branch on it) does not survive the use case,
+and the kernel enforces same-origin navigation regardless of what the engine
+believes. `examples/08-routing` now demonstrates the combination — the one place
+this repository deliberately breaks its one-example-one-lesson rule — and the
+browser smoke test copies the link and reads it back out of the real clipboard.
+
+### The most expensive finding: which version has what
+
+`CHANGELOG.md` filed the new capabilities under **[Unreleased]** while
+`README.md` presented four capabilities as shipped fact and
+`docs/quick-start.md` promised that the packaged copy "describes exactly the
+version you installed". As the first agent put it: install today, follow
+`docs/routing.md`, and you get an engine waiting forever for an effect the
+kernel cannot run.
+
+Fixed by making the version real rather than the documentation vaguer: the
+package is `0.6.0`, the changelog entry says plainly that none of it is in
+`0.5.1`, `routing.md` and `clipboard.md` open with an "available since" banner
+naming the exact symptom on an older version, and the API reference marks each
+new type.
+
+### Smaller gaps, all closed
+
+| Found | Fixed |
+| --- | --- |
+| `data-if` inside `data-each` works and was documented nowhere | documented in `06-rendering.md`, with the general rule that **every** binding in a row resolves against the item |
+| No rule for correlation-id uniqueness | a "Correlation IDs: the rules" section |
+| Unclear whether cancellation applies to non-Http effects | a table: Http only; the rest are structural no-ops |
+| `protocolVersion` checking pointed at `ReferenceEngine` in source | the two lines are shown inline |
+| No checkbox or radio recipe, though `.value` never reports `.checked` | a recipe, with both shapes pinned by tests |
+| Routing advice assumed route validation can be synchronous | a section on deep-linking into data that arrives over HTTP, separating `NotFound` (malformed) from `Missing` (well-formed, no such record) |
+| `not-same-origin` and `unavailable` collapsed into one message | a section on why the second is an environment problem and the first is a bug in your engine |
+| `limen init` reads as if it scaffolds an application | it does not, and its default config expects directories a by-the-book app does not have — both now stated |
+| "six attributes" vs. a seven-row table vs. "five primitives" | one count, with `data-key` named as a modifier of `data-each` |
+| Quick start switches on raw event names with no `eventToCommand` | a note that this is a simplification, and what real engines do |
+| CLI sample output showed `0.4.1` | current |
+
+### What this is, and is not, evidence of
+
+**n = 2, qualitative, unblinded, with no baseline.** No comparison against
+agents given the *old* documentation was run, so nothing here supports a claim
+that comprehension improved — only that these specific gaps existed, were found,
+and are closed.
+
+What it does establish is that the exercise is worth repeating: two agents with
+no shared context converged on the same root cause within one run, and neither
+was reading the source. The cheapest version of it — give a fresh agent
+documentation-only access and ask it to build the thing — is now the strongest
+review tool this repository has for documentation, and the type-literal check is
+the part of it that runs on every commit.
+
+### Residual ambiguity, deliberately left
+
+- **`GoBack` when there is no history to go back to** does nothing, and nothing
+  is projected to explain it. The protocol offers no way to ask whether a
+  previous entry exists. Documented as a correct outcome; still indistinguishable
+  from a broken button to a user.
+- **`start()` binds `document.body`, not a subtree.** Incremental adoption into
+  one part of an existing page has no path. Recorded in the integration guide,
+  unchanged by this work.
+- **Whether effects of different kinds may be batched in one `effects` array.**
+  They may — `Promise.all` runs them concurrently — but no example does it, so
+  it stays inference rather than demonstration.

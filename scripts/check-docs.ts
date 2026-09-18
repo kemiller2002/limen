@@ -210,9 +210,33 @@ for (const file of files) {
   }
 }
 
+// --- 5: the website quotes the same types, so check it too -----------------
+//
+// The site is a third surface, and the one nobody re-reads. Its code blocks are
+// syntax-highlighted HTML rather than fences, so the tags come off first; the
+// string literals survive that untouched.
+const stripTags = (html: string): string => html.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"');
+
+for (const page of await readdir(join(ROOT, "site/pages"))) {
+  if (!page.endsWith(".html")) continue;
+  const html = stripTags(await readFile(join(ROOT, "site/pages", page), "utf8"));
+  for (const [name, want] of expected) {
+    const declaration = declarationOf(html, name);
+    if (declaration === null || /…|\.\.\./.test(declaration)) continue;
+    const got = literalsOf(declaration);
+    if (sorted(got) !== sorted(want)) {
+      violations.push(
+        `site/pages/${page}: the documented "${name}" disagrees with the source\n` +
+        `    documented: ${sorted(got) || "(none)"}\n` +
+        `    source:     ${sorted(want)}`,
+      );
+    }
+  }
+}
+
 if (violations.length > 0) {
   console.error(violations.join("\n"));
   process.exitCode = 1;
 } else {
-  console.log(`Documentation checks passed (${files.length} files, ${expected.size} protocol types cross-checked).`);
+  console.log(`Documentation checks passed (${files.length} files plus the website, ${expected.size} protocol types cross-checked).`);
 }
