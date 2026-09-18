@@ -19,4 +19,5 @@
 | WI-0014 | Add Clipboard and Navigation browser capabilities to the Limen protocol and kernel | complete | capability, protocol | medium |
 | WI-0015 | Add clipboard, routing and npm-minimal examples with per-example READMEs | active | examples, documentation | medium |
 | WI-0016 | Documentation: mental model, where-code-goes, quick start, traces, routing and clipboard guides | active | documentation | medium |
-| WI-0017 | npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check | ready | packaging | medium |
+| WI-0017 | npm packaging: ship documentation and a minimal example, verify tarball contents, add a clean-room consumer check | active | packaging | medium |
+| WI-0018 | Surface the new capabilities and documents on the Limen site, and record the usability report | ready | documentation, site | medium |

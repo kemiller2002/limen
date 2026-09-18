@@ -225,8 +225,8 @@
         <p class="section-note">Recorded, not hidden. Several are deliberate.</p>
       </div>
       <div class="columns">
-        <div class="card"><h3>No routing or history</h3><p>Back and forward do not move between screens. Screens work within one page load; URL integration is not implemented.</p></div>
-        <div class="card"><h3>Two browser capabilities</h3><p>HTTP and <code>localStorage</code>. No clipboard, files, timers, navigation or IndexedDB — adding one is a deliberate protocol change.</p></div>
+        <div class="card"><h3>No router</h3><p>There is a navigation capability — push, replace, back, forward, and the browser&rsquo;s own moves — but no route table and no path matching. What a URL <em>means</em> is yours to decide.</p></div>
+        <div class="card"><h3>Four browser capabilities</h3><p>HTTP, <code>localStorage</code>, clipboard <em>write</em>, and history. No files, timers, focus control, IndexedDB or clipboard read — adding one is a deliberate protocol change.</p></div>
         <div class="card"><h3>No focus management</h3><p>Removing a focused list item drops focus. A known gap.</p></div>
         <div class="card"><h3>No virtualization</h3><p>Every projected item becomes a DOM node.</p></div>
         <div class="card"><h3>More ceremony when trivial</h3><p>For a genuinely simple page, a small component framework is less work. Limen earns its keep when behavior is complex.</p></div>

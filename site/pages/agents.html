@@ -33,6 +33,7 @@
           <li><span>06</span><div>HTML stays structural; CSS stays presentational</div></li>
           <li><span>07</span><div>The kernel stays generic — never branch on domain meaning in it</div></li>
           <li><span>08</span><div>All four HTTP outcomes are represented; <code>OutcomeUnknown</code> is not a failure</div></li>
+          <li><span>08b</span><div>A browser-initiated navigation is adopted, never answered with another push</div></li>
           <li><span>09</span><div>Existing public contracts are preserved</div></li>
           <li><span>10</span><div>The repository's full check passes before you are done</div></li>
         </ol>
@@ -57,12 +58,21 @@
 │  └─ <span class="k">YES</span> → the engine. Add a state, a command, a transition,
 │            and a projected key.
 │
-├─ Does it need HTTP or local storage?
+├─ Does it need HTTP, local storage, the clipboard, or the
+│  browser&rsquo;s history?
 │  └─ <span class="k">YES</span> → the engine returns an EffectRequest. It does NOT
-│            call fetch.
+│            call fetch, navigator.clipboard or history.pushState.
+│
+├─ Is it what a URL MEANS?
+│  └─ <span class="k">YES</span> → the engine. The kernel splits a URL into
+│            path/query/hash and stops.
+│
+├─ Did the browser move on its own (Back, Forward)?
+│  └─ <span class="k">YES</span> → adopt the location. Request NOTHING: pushing again
+│            traps the user on the page.
 │
 ├─ Does it need a browser capability that does not exist yet
-│  (clipboard, history, files, timers, focus)?
+│  (files, timers, focus, clipboard read)?
 │  └─ <span class="k">YES</span> → a protocol extension. A bigger change: propose it,
 │            do not slip it in.
 │

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 18,
+  "nextSeq": 19,
   "items": [
     {
       "id": "WI-0001",
@@ -282,6 +282,23 @@
       "attachments": [],
       "createdAt": "2026-09-18T06:42:52.672Z",
       "updatedAt": "2026-09-18T06:42:52.726Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0018",
+      "title": "Surface the new capabilities and documents on the Limen site, and record the usability report",
+      "description": null,
+      "tags": [
+        "documentation",
+        "site"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:45:38.193Z",
+      "updatedAt": "2026-09-18T06:45:38.249Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
