@@ -285,20 +285,26 @@ Being precise, because this is the most common misunderstanding:
 
 | Part | Language | Status |
 | --- | --- | --- |
-| The browser kernel (`src/kernel/`) | TypeScript | shipped |
-| The application engine (`src/engine/`, and yours) | TypeScript | shipped |
-| The lifecycle CLI (`cli/Limen.Core/`, `cli/Limen.Cli/`) | **F#** | shipped, as platform binaries |
-| A WASM engine in F# / C# / Rust / Kotlin | — | **not implemented** |
+| Browser kernel + protocol (`src/kernel/`, `src/protocol.ts`) | TypeScript | shipped in the npm package |
+| Reference engine (`src/engine/`) | TypeScript | shipped for examples/reference use |
+| Lifecycle CLI (`cli/Limen.Core/`, `cli/Limen.Cli/`) | **F#** | shipped as self-contained platform binaries |
+| Product-site application engine (`site/fsharp/Limen.Site.Engine/`) | **F#** | compiled to .NET WebAssembly and used by this site's interactive pages |
+| Product-site WASM host | tiny C# marshalling shim | one `[JSExport]`; no state or application rule |
+| Product-site browser mechanics | TypeScript | `BrowserKernel` + a loader/JSON transport only |
 
-The F# in this repository is the CLI, and it is a good demonstration of the same
-layering rule — inspect → plan → validate → execute → verify, with planning pure
-and one module allowed to write. It is **not** the application engine, and there
-is no F#-to-browser binding here.
+The important distinction is not "TypeScript versus F#." It is
+**mechanism versus authority**. Limen's browser side remains generic while the
+application engine may be TypeScript, F#, or another language behind
+`EngineTransport`.
 
-The boundary is designed so an engine in another language could replace the
-TypeScript one without the browser side changing: everything crossing it is
-plain data. What that migration would actually take, honestly assessed:
-[docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+The product site is now an in-repository existence proof of that seam. Its F#
+engine owns release legality, evidence, stale-result rejection, reconciliation,
+the placement challenge, and projection. The browser-side site code owns none
+of those concepts.
+
+See
+[docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)
+for the exact implementation and remaining limits.
 
 ## Examples
 
@@ -433,8 +439,10 @@ lifecycle logic.
 - **The CLI**: needs no .NET runtime; a self-contained binary ships for Linux
   x64/arm64, Windows x64, and macOS x64/arm64. Any other platform exits `7`
   saying so. Building it from source needs the **.NET SDK 8** and **F# 8**.
-- **WASM**: none is used, and none is required. See
-  [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+- **WASM**: not required by the npm kernel. This repository's product site does
+  use .NET WebAssembly for its F# application engine. Consumers may use the
+  in-process TypeScript reference engine or provide another `EngineTransport`.
+  See [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
 - **Versioning**: semver, currently `0.x` — the protocol may still change in a
   minor release. See
   [stability and compatibility](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/11-api-reference.md#stability-and-compatibility).
@@ -452,8 +460,10 @@ deployed by
 npm run serve:site   # build and serve on http://localhost:4174
 ```
 
-The demos page performs genuinely real requests to show all four effect
-outcomes — nothing is stubbed or animated.
+The release demo performs real Limen HTTP requests against harmless fixtures to
+exercise success, network failure, and timeout-after-dispatch classification.
+The stale-evidence and placement challenges are deterministic F# state-machine
+scenarios rather than animations.
 
 ## Development
 
