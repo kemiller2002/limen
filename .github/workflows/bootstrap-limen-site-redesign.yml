@@ -1,16 +1,16 @@
 name: Bootstrap Limen site redesign work item
 
 on:
-  push:
+  pull_request:
     branches:
-      - site/limen-value-and-evidence-pass
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   bootstrap:
-    if: github.actor != 'limen-site-redesign'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
