@@ -1,0 +1,43 @@
+name: Bootstrap Limen site redesign work item
+
+on:
+  push:
+    branches:
+      - site/limen-value-and-evidence-pass
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.actor != 'limen-site-redesign'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: site/limen-value-and-evidence-pass
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Create and start ROS work item
+        shell: bash
+        run: |
+          set -euo pipefail
+          ID="$(./ros add "Rework the Limen site around product value, architectural clarity, verified evidence, and honest WASM status" --tag limen,site,evidence,documentation --priority high | tail -n 1 | tr -d '\r')"
+          echo "Created $ID"
+          ./ros work ready "$ID"
+          ./ros work start "$ID"
+
+      - name: Remove bootstrap workflow and commit ROS state
+        shell: bash
+        run: |
+          git config user.name "limen-site-redesign"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/bootstrap-limen-site-redesign.yml
+          git add .ros
+          git commit -m "Start ROS work item for Limen site redesign"
+          git push origin HEAD:site/limen-value-and-evidence-pass
