@@ -29,9 +29,12 @@ enforcement mechanisms in [12-design-rules.md](12-design-rules.md).
 9. Existing public contracts (`src/protocol.ts`, `src/index.ts`) are preserved.
 10. `npm run check` passes before you are done.
 
-**There is no WebAssembly in this repository.** If you are looking for it, read
-[17-wasm-migration.md](17-wasm-migration.md) and stop looking. Nothing is
-missing.
+**There is now a real WebAssembly consumer in this repository.** The product
+site's application engine is F# under `site/fsharp/Limen.Site.Engine/`, loaded
+through `site/app/wasm-engine-transport.ts`. The npm kernel itself remains
+TypeScript and transport-neutral. Do not move site application decisions into
+the transport or C# export shim. See
+[17-wasm-migration.md](17-wasm-migration.md).
 
 ---
 
