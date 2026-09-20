@@ -1,0 +1,52 @@
+name: Complete Limen F# WASM site work item
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: complete-limen-site-wi-0022
+  cancel-in-progress: false
+
+jobs:
+  complete:
+    if: github.head_ref == 'site/limen-value-and-evidence-pass' || github.ref_name == 'site/limen-value-and-evidence-pass'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out work branch
+        uses: actions/checkout@v4
+        with:
+          ref: site/limen-value-and-evidence-pass
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Complete ROS work item with evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROS_BASE_REF=origin/main ./ros work complete WI-0022             --evidence implementation=site/fsharp/Limen.Site.Engine/Engine.fs             --evidence tests=scripts/smoke-site-wasm.sh
+
+          ./ros registry build
+          ROS_BASE_REF=origin/main ./ros validate
+
+      - name: Remove completion workflow and commit ROS state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "limen-site-redesign"
+          git config user.email "actions@users.noreply.github.com"
+
+          git rm .github/workflows/complete-limen-site-redesign.yml
+          git add .ros
+          git commit -m "Complete ROS work item for Limen F# WASM site"
+          git push origin HEAD:site/limen-value-and-evidence-pass
