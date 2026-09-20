@@ -555,6 +555,9 @@ module Engine =
               "canChangeEvidence", VBool(canChangeEvidence release)
               "canApproveRelease", VBool(canApprove release)
               "canDeployRelease", VBool(canDeploy release)
+              "evidenceDisabled", VBool(not (canChangeEvidence release))
+              "approveDisabled", VBool(not (canApprove release))
+              "deployDisabled", VBool(not (canDeploy release))
               "deploymentBusy", VBool(match release.Deployment with | InFlight _ -> true | _ -> false)
               "needsReleaseReconciliation", VBool(release.Deployment = ReconciliationRequired)
               "policyLatest", VString(policy.LatestRequest |> Option.defaultValue "none")
@@ -566,6 +569,10 @@ module Engine =
               "canStartPolicyB", VBool(policy.StartedA && not policy.StartedB)
               "canDeliverPolicyA", VBool(policy.StartedA && not policy.DeliveredA)
               "canDeliverPolicyB", VBool(policy.StartedB && not policy.DeliveredB)
+              "startPolicyADisabled", VBool policy.StartedA
+              "startPolicyBDisabled", VBool(not (policy.StartedA && not policy.StartedB))
+              "deliverPolicyADisabled", VBool(not (policy.StartedA && not policy.DeliveredA))
+              "deliverPolicyBDisabled", VBool(not (policy.StartedB && not policy.DeliveredB))
               "trace", VItems trace
               "traceCount", VNumber state.Trace.Length
               "traceEmpty", VBool(List.isEmpty state.Trace)
