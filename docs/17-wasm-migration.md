@@ -1,242 +1,412 @@
-# WASM: what exists, what doesn't, and what migration would take
+# WebAssembly status: what exists now
 
-**What this answers:** the question that gave this document its own page —
-*where is the WebAssembly?*
-
----
-
-## The short answer
-
-**There is none.** This repository contains:
-
-- no `.wasm` file
-- no `WebAssembly.instantiate` or `WebAssembly.compile` call
-- no module loader, no glue code, no binding generator
-- no build step that produces WebAssembly
-- no test that exercises a WebAssembly module
-
-A full-text search for `wasm` or `WebAssembly` across `src/`, `test/`,
-`examples/`, and `scripts/` returns exactly two hits, both **comments** in
-`test/kernel.test.ts` labelling test sections (`// WASM lifecycle — load,
-initialize, version-check`). The package name, description, and keywords mention
-WebAssembly; the code does not contain any.
-
-If you are an agent that went looking for the WASM engine and could not find it:
-nothing is missing and nothing is broken. This page is the answer.
-
-> This gap between the name and the implementation is the documentation defect
-> that prompted the audit. It is recorded as finding **A-2** in
-> [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
+**What this answers:** where WebAssembly is in the Limen repository, what the
+npm package actually ships, and what the F# site proves about the boundary.
 
 ---
 
-## What the name actually means
+## Short answer
 
-"WASM kernel" describes the **shape of the boundary**, not the technology
-currently on the far side of it.
+The historical answer was "there is no WebAssembly here."
 
-The kernel talks to the application through exactly one interface:
+That is no longer true.
 
-```ts
-export interface EngineTransport {
-  start(): Promise<void>;
-  dispatch(message: BrowserToEngineMessage): Promise<EngineToBrowserMessage>;
-}
+There are now three distinct surfaces that must not be conflated:
+
+1. **The npm package**
+   `@echelon-foundry/typescript-wasm-kernel` still ships a TypeScript browser
+   kernel, protocol types, reference engine, documentation, examples, and the
+   F# lifecycle CLI. It does **not** ship a domain-specific WASM application
+   engine.
+2. **The Limen product site**
+   The interactive site under `site/` is now a real Limen consumer whose
+   application authority lives in F# and runs in .NET WebAssembly.
+3. **The external time-entry consumer**
+   `kemiller2002/time-entry-state-machine` independently runs an F# engine
+   behind the same `EngineTransport` seam.
+
+So the correct statement is:
+
+> Limen is a TypeScript browser boundary with demonstrated F# WebAssembly
+> consumers. The package does not require an application's engine to be
+> TypeScript, F#, or any other specific language.
+
+---
+
+## The product site now crosses the real boundary
+
+The deployed site follows this path:
+
+```text
+static HTML + CSS
+        |
+        v
+Limen BrowserKernel
+DOM bindings + browser effects
+        |
+        v
+WasmSiteTransport
+JSON in / JSON out
+        |
+        v
+.NET WebAssembly runtime
+        |
+        v
+Limen.Site.Engine (F#)
+state + transitions + capabilities
+obligations + effect interpretation + projection
 ```
 
-Two methods. Both async. Every value that crosses is plain, JSON-serializable
-data — no functions, no DOM nodes, no class instances, no object identity, no
-shared memory. That is precisely the set of constraints a WebAssembly module can
-be driven through.
+Source:
 
-So the claim the name makes is: **an application written against this boundary
-can be moved into WebAssembly without changing the boundary.** That claim is
-currently untested, because no one has done it.
+- `site/app/main.ts`
+- `site/app/wasm-engine-transport.ts`
+- `site/fsharp/Limen.Site.Engine/`
+- `site/fsharp/Limen.Site.Wasm/`
 
-### What is actually shipped
+The old `site/app/engine.ts` no longer exists.
 
-```ts
-export class DirectTypeScriptTransport implements EngineTransport {
-  readonly #engine = new ReferenceEngine();
-  async start(): Promise<void> {}
-  async dispatch(message: BrowserToEngineMessage): Promise<EngineToBrowserMessage> {
-    return this.#engine.handle(message);
-  }
-}
-```
-
-An in-process TypeScript engine, called synchronously behind an async signature.
-`start()` does nothing because there is nothing to load, and no serialization
-occurs because both sides share a heap.
-
-Throughout the documentation the component that owns application meaning is
-called **the engine**, not "the WASM". That is deliberate — the engine is
-TypeScript today.
+The site build fails if the deployed artifact does not contain a WebAssembly
+runtime or if a legacy TypeScript site engine is emitted.
 
 ---
 
-## What is already in place
+## Why there is a tiny C# file
 
-Real work has been done toward this, and it is worth being precise about which
-parts are genuinely ready.
+`site/fsharp/Limen.Site.Wasm/Program.cs` contains the single `[JSExport]`
+entry point used by .NET's JavaScript interop generator.
+
+It has one job:
+
+```csharp
+[JSExport]
+internal static string Dispatch(string messageJson) =>
+    Limen.Site.Engine.Dispatch.handle(messageJson);
+```
+
+It has no state, transition, retry rule, capability, projection, or domain
+decision.
+
+The application remains F#. The C# file is marshalling glue at the runtime
+boundary.
+
+If .NET gains an equally small F#-native export mechanism that fits this
+architecture, the shim can disappear without changing Limen or the application
+engine.
+
+---
+
+## What the F# site engine actually owns
+
+The site was deliberately converted with nontrivial examples.
+
+The F# engine owns:
+
+- release evidence state;
+- approval legality;
+- deployment capability;
+- ambiguous external-effect handling;
+- reconciliation obligations;
+- stale-evidence rejection;
+- correlation state;
+- the architecture-placement challenge;
+- scoring and explanations for that challenge;
+- the visible transition trace;
+- the full view projection used by HTML bindings.
+
+The TypeScript site files do not contain those concepts.
+
+This matters more than simply proving that WebAssembly can increment a counter.
+The point of the boundary is to keep difficult application decisions on the
+application side while the browser layer stays generic.
+
+---
+
+## What is now demonstrated
 
 | Requirement | Status | Evidence |
 | --- | --- | --- |
-| A single, narrow interface to swap | ✅ done | `EngineTransport` — two methods |
-| Async signature, so a real boundary fits | ✅ done | both methods return promises |
-| Only serializable data crosses | ✅ done | `ViewValue` admits primitives and flat item arrays only |
-| No DOM references in messages | ✅ done | `SemanticEvent` carries no element id or node |
-| Engine free of browser APIs | ✅ done, **enforced** | [`check-architecture.ts`](../scripts/check-architecture.ts) |
-| Engine free of dynamic typing | ✅ done, **enforced** | same check bans `any`/`dynamic` |
-| Protocol version negotiation | ✅ done | `Initialize.protocolVersion`; `ReferenceEngine` rejects a mismatch |
-| Capability announcement | ✅ done | `Initialize.capabilities: ["Http", "Storage"]` |
-| Correlation IDs for async effects | ✅ done | effects are already correlated, not awaited in place |
-| Loading/instantiation hook | ⚠️ shape only | `start()` exists and is awaited; nothing loads |
-| Serialization codec | ❌ **not built** | ROADMAP item 12 — in-process, so none occurs |
-| A WASM transport | ❌ **not built** | — |
-| Toolchain, build, tests for one | ❌ **not built** | — |
+| A single narrow engine seam | demonstrated | `EngineTransport.start/dispatch` |
+| Async loading hook | demonstrated | site transport loads .NET runtime in `start()` |
+| JSON-serializable boundary | demonstrated for site message paths | TS serializes, F# parses/projects, TS parses response |
+| F# application engine | demonstrated | `site/fsharp/Limen.Site.Engine/` |
+| Real WebAssembly artifact | mechanically required | `scripts/check-site.ts` requires `.wasm` in Pages artifact |
+| Kernel unchanged for F# engine | demonstrated | site consumes existing `BrowserKernel` |
+| Application engine has no DOM dependency | demonstrated by project/source boundary | F# engine references no browser library or kernel implementation |
+| Protocol version check | demonstrated | F# `Dispatch` rejects unsupported version |
+| HTTP effect round trip | demonstrated | release deployment exercise |
+| Correlation/stale-result guard | tested | F# site-engine tests |
+| OutcomeUnknown preserved | tested | F# release state enters reconciliation |
+| Storage across F# boundary | demonstrated externally | time-entry consumer |
+| Clipboard across F# boundary | not demonstrated | TypeScript examples only |
+| Navigation across F# boundary | not demonstrated | TypeScript examples only |
+| Performance benefit | not measured | no controlled benchmark |
+| Bundle/startup cost | not yet published as a comparative measure | artifact exists, no comparison |
 
-The design work is largely done. The implementation work has not started.
-
-### Why the checker bans `JsValue` and `IJSRuntime`
-
-A detail that reveals the intent. `check-architecture.ts` forbids these two
-identifiers in `src/engine/**`:
-
-```ts
-for (const forbidden of ["document", "window", "fetch(", "localStorage", "sessionStorage", "JsValue", "IJSRuntime"]) {
-```
-
-`JsValue` is the wasm-bindgen (Rust) type for an opaque JavaScript handle.
-`IJSRuntime` is Blazor's (C#) JavaScript-interop service. Neither can appear in
-TypeScript — they are banned pre-emptively, so that **a future engine ported to
-Rust or C# cannot reach back into JavaScript** and quietly reintroduce the
-browser dependency the boundary exists to prevent.
-
-That is the strongest evidence of intent in the repository, and it is currently
-undocumented anywhere else.
+The important distinction is that "demonstrated" means an implementation
+exists and is verified. It does not mean that implementation is faster or
+better than another architecture.
 
 ---
 
-## What a real WASM transport would have to do
+## What the npm package still ships
 
-Not a plan of record — a description of the actual work, so the size is visible.
+Limen remains a browser kernel.
 
-### 1. Loading
+Its runtime surface is TypeScript because that is the code executing browser
+mechanics:
+
+- event binding;
+- projection application;
+- HTTP;
+- local storage;
+- clipboard write;
+- browser history/navigation;
+- diagnostics.
+
+An application engine may run:
+
+- directly in TypeScript;
+- in F#/.NET WebAssembly;
+- in another language behind a compatible transport.
+
+The package does not prescribe the application language.
+
+The F# lifecycle CLI is separate from the browser runtime. It manages repository
+installation, verification, upgrades, and diagnostics.
+
+---
+
+## Serialization is no longer hypothetical
+
+The original repository documentation said:
+
+> nothing currently proves the protocol survives a round trip through a codec.
+
+That was true when the reference engine and kernel shared a JavaScript heap.
+
+It is no longer true for the message paths used by the F# consumers.
+
+The site does this for every interactive message:
+
+```text
+BrowserToEngineMessage
+        |
+ JSON.stringify
+        |
+        v
+F# Protocol.parseMessage
+        |
+ F# transition + projection
+        |
+Protocol.serializeMessage
+        |
+        v
+ JSON.parse
+        |
+EngineToBrowserMessage
+```
+
+This does not prove every future protocol extension or every current capability
+has crossed F#. It proves the serialization seam is real and usable.
+
+---
+
+## The transport remains intentionally boring
+
+The site transport is not another application layer.
+
+Conceptually it does this:
 
 ```ts
-export function createWasmTransport(url: string): EngineTransport {
-  let instance: WebAssembly.Instance | null = null;
-  return {
-    async start(): Promise<void> {
-      const { instance: created } = await WebAssembly.instantiateStreaming(fetch(url), imports);
-      instance = created;
-      // whatever the module needs to set up its own state
-    },
-    async dispatch(message) { /* … */ },
-  };
+await runtime.start();
+
+async dispatch(message) {
+  const response = wasm.Dispatch(JSON.stringify(message));
+  return JSON.parse(response);
 }
 ```
 
-`start()` already exists and is already awaited, and its rejection path is
-already handled (the kernel reports `BridgeError` and does not bind). That part
-needs no change.
-
-Serving requires the `application/wasm` MIME type, or
-`instantiateStreaming` fails.
-
-### 2. Serialization
-
-The part that does not exist. `BrowserToEngineMessage` must become bytes in
-linear memory, and `EngineToBrowserMessage` must come back.
-
-Decisions to make:
-
-- **Format.** JSON is the obvious first move — the types are already
-  JSON-shaped, so `JSON.stringify`/`parse` on both sides works with no protocol
-  change. A compact binary format would be faster and much more work.
-- **Memory.** Who allocates, who frees, and how a returned pointer/length pair
-  is read out of `WebAssembly.Memory`.
-- **Strings.** UTF-8 encode/decode across the boundary.
-- **Errors.** A trap or a decode failure must surface as a rejected `dispatch`,
-  which the kernel already handles as `BridgeError { phase: "dispatch" }`.
-
-Because no serialization happens today, **nothing currently proves the protocol
-survives a round trip through a codec.** The types make it very likely; that is
-not the same as having tested it.
-
-### 3. The engine itself
-
-Port the state, transitions, and projection to the target language. These are
-pure functions over discriminated unions, which map cleanly onto F#, Rust, and
-Kotlin, and reasonably onto C# and Java.
-
-Two things must be preserved, or the port loses the guarantees:
-
-- **Exhaustive matching.** The TypeScript version relies on the compiler
-  catching an unhandled state. The target language needs the same, or a
-  fallback that fails loudly.
-- **No host callbacks.** The engine must not call back into JavaScript — which
-  is exactly what the `JsValue`/`IJSRuntime` ban is protecting.
-
-### 4. Testing
-
-- Engine tests port to the target language's test framework.
-- Kernel tests are unaffected — they use a `ScriptedTransport` and never touch a
-  real engine.
-- New tests needed: round-trip serialization, instantiation failure, trap
-  handling.
-
-### 5. Build and distribution
-
-A second toolchain in CI, a `.wasm` artifact in the published package, and a
-decision about size — a WebAssembly runtime plus the module is much larger than
-the current zero-dependency JavaScript.
+If the transport starts interpreting release state, HTTP status meaning, route
+meaning, or retry policy, the architecture has failed.
 
 ---
 
-## Open questions
+## Effects still belong to the browser side
 
-Genuinely unresolved. Recorded rather than guessed.
+Moving application authority into WebAssembly does **not** mean giving
+WebAssembly direct browser access.
 
-1. **Which language?** The repository mentions F#, C#, Rust, Kotlin, and Java as
-   candidates. No decision record exists.
-2. **Which serialization format?** JSON first, or binary immediately?
-3. **Does the async boundary stay honest?** `dispatch` returns a promise, but a
-   synchronous WASM call resolves immediately. Anything relying on a real
-   microtask gap between dispatch and response — including the timing regimes
-   the tests depend on — should be re-verified.
-4. **How is the module's own state persisted?** It lives in linear memory. A
-   page reload loses it, same as today, but a long-lived module raises questions
-   the protocol does not currently address.
-5. **Is the size cost acceptable?** No budget has been set.
-6. **Does anything actually need this yet?** Per the repository's own 🧊 policy,
-   building ahead of a demonstrated requirement is itself an architecture
-   violation. No consumer has filed one.
+The F# engine requests an effect as data.
+
+For example:
+
+```text
+F# engine
+  -> Http EffectRequest
+Limen
+  -> fetch(...)
+browser
+  -> response / failure / timeout
+Limen
+  -> classified EffectResult
+F# engine
+  -> application interpretation
+```
+
+The distinction between mechanism and meaning remains the entire point.
+
+The F# site treats a timeout-after-dispatch as
+`ReconciliationRequired`. Limen reports `OutcomeUnknown`; the engine decides
+what that means for deployment safety.
 
 ---
 
-## What to do in the meantime
+## Why the site uses a harmless GET for the deployment exercise
 
-**Write your engine as though it were already WASM.** Every constraint the
-target imposes is already enforceable today:
+The public Limen site must not perform an actual deployment or create external
+state merely to demonstrate write safety.
 
-- No browser APIs — the build already fails on this.
-- No `any` — the build already fails on this.
-- Only serializable data across the boundary — the types already enforce this.
-- Exhaustive matching — the compiler already enforces this.
-- No callbacks into the host — nothing in the protocol permits them.
+The deployment challenge therefore uses a harmless local GET to exercise the
+real Limen HTTP mechanism and timeout classification.
 
-An engine written that way is portable whether or not the port ever happens. And
-the constraints pay for themselves immediately in testability and in having one
-place to look — which is why the architecture is worth using even if WebAssembly
-never arrives.
+The F# application deliberately applies consequential-write semantics to the
+classified outcome:
+
+- success can advance;
+- timeout after dispatch becomes unknown;
+- unknown removes retry capability;
+- reconciliation must resolve the state.
+
+The transport behavior is real. The external mutation is intentionally not.
+
+---
+
+## Testing
+
+The site has separate verification at each boundary.
+
+### F# engine
+
+`site/fsharp/tests/Limen.Site.Engine.Tests/`
+
+Covers:
+
+- release evidence gating;
+- approval legality;
+- immutable evidence after approval;
+- effect creation;
+- stale deployment result rejection;
+- `OutcomeUnknown` to reconciliation;
+- blind-retry rejection;
+- reconciliation reopening deployment when authoritative evidence says
+  "not applied";
+- stale policy result rejection;
+- placement challenge shape;
+- projected capabilities;
+- serialized dispatch.
+
+### Site artifact
+
+`scripts/check-site.ts`
+
+Requires:
+
+- `site/app/main.js`;
+- `site/app/wasm-engine-transport.js`;
+- Limen kernel/protocol output;
+- `wasm/_framework/dotnet.js`;
+- at least one real `.wasm` artifact;
+- absence of `site/app/engine.js`.
+
+### HTML/F# contract
+
+`test/site.test.ts`
+
+Cross-checks:
+
+- bound top-level view keys against the F# projection vocabulary;
+- HTML `data-event` names against F# `eventToCommand`;
+- presence of the difficult scenarios;
+- absence of application vocabulary from browser-side site code.
+
+---
+
+## Build requirements
+
+Building the site requires:
+
+- Node.js;
+- .NET 8 SDK;
+- the WebAssembly workload restored by the build.
+
+```sh
+npm run build:site
+```
+
+The script:
+
+1. restores the WASM workload;
+2. publishes the .NET WebAssembly site host;
+3. runs the F# site-engine tests;
+4. compiles the TypeScript browser mechanics;
+5. assembles the Pages artifact.
+
+Both normal CI and the Pages workflow install .NET.
+
+---
+
+## What remains open
+
+The old question "can Limen host a WASM engine?" is closed by existence proof.
+
+These questions remain open:
+
+1. **Performance.** No controlled TypeScript-engine versus F#-WASM benchmark
+   exists.
+2. **Startup/bundle budget.** The .NET runtime has a real size/startup cost, but
+   no project budget or comparative decision threshold has been set.
+3. **All capabilities across F#.** HTTP is exercised by the site; Storage is
+   exercised by the time-entry consumer. Clipboard and Navigation are not yet
+   demonstrated through an F# codec.
+4. **Engine language choice per product.** Limen remains language-neutral. F#
+   is the Echelon Foundry preference, not a protocol requirement.
+5. **Controlled engineering outcome comparison.** No experiment isolates Limen
+   as the variable for time, defects, rework, context, or cost.
+
+---
+
+## If you are building a new F# consumer
+
+The proven shape is now simple:
+
+1. Model application state and transitions in F#.
+2. Mirror Limen's protocol as explicit DTO/union types.
+3. Parse one serialized `BrowserToEngineMessage`.
+4. Return one serialized `EngineToBrowserMessage`.
+5. Expose one marshalling entry point from the WASM host.
+6. Implement `EngineTransport` as mechanical loader/serializer code.
+7. Let `BrowserKernel` continue to own DOM and browser effects.
+
+Do not expose browser objects to F# merely because the runtime can technically
+interop with JavaScript. Doing so defeats the boundary.
+
+---
+
+## Evidence status
+
+This document describes implementation status.
+
+For claim strength, controlled measurements, adjacent SDE evidence, and known
+limitations, see [19-evidence.md](19-evidence.md).
 
 ---
 
 ## Related
 
-- [01-architecture.md](01-architecture.md) — why the boundary is shaped this way
-- [11-api-reference.md](11-api-reference.md) — `EngineTransport` in full
-- [ROADMAP.md](ROADMAP.md) — item 12, the serialization boundary
-- [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md) — finding A-2
+- [01-architecture.md](01-architecture.md)
+- [07-effects-and-browser-interop.md](07-effects-and-browser-interop.md)
+- [09-testing-and-debugging.md](09-testing-and-debugging.md)
+- [11-api-reference.md](11-api-reference.md)
+- [19-evidence.md](19-evidence.md)
+- [ROADMAP.md](ROADMAP.md)
