@@ -34,12 +34,17 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - name: Install dependencies
         run: npm ci
 
-      # Builds the kernel, the examples and the site, then runs the
-      # architecture check, the documentation check, and every test — including
-      # test/site.test.ts, which drives the built pages through the real kernel.
+      # Builds the kernel, examples, F# WebAssembly site engine and site,
+      # then runs architecture/documentation/artifact checks plus the F# and
+      # Node test surfaces.
       - name: Build and test everything
         run: npm run check
 
