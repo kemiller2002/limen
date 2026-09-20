@@ -58,10 +58,10 @@
         <figure class="code-figure">
           <figcaption>Browser → engine</figcaption>
           <pre><code><span class="k">type</span> BrowserToEngineMessage =
-  | Initialize
-  | Event
-  | EffectResult
-  | LocationChanged;
+  | { kind: <span class="s">"Initialize"</span>; protocolVersion; capabilities; location }
+  | { kind: <span class="s">"Event"</span>; event: SemanticEvent }
+  | { kind: <span class="s">"EffectResult"</span>; result: EffectResult }
+  | { kind: <span class="s">"LocationChanged"</span>; location: BrowserLocation };
 
 <span class="c">// No DOM node.</span>
 <span class="c">// No callback.</span>
