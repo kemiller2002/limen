@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-18T10:41:52.035Z",
+  "updatedAt": "2026-09-20T18:34:50.868Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -398,6 +398,14 @@
       ],
       "updatedAt": "2026-09-18T10:41:52.035Z",
       "completedAt": "2026-09-18T10:41:52.035Z"
+    },
+    {
+      "id": "WI-0022",
+      "type": "task",
+      "state": "active",
+      "semanticState": "active",
+      "evidence": [],
+      "updatedAt": "2026-09-20T18:34:50.868Z"
     }
   ]
 }
