@@ -70,7 +70,7 @@ Then, for depth:
 | 12 | [Design rules](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/12-design-rules.md) | What MUST/SHOULD/MAY I do? |
 | 13 | [Anti-patterns](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md) | What must I not do, and why? |
 | 14 | [Agent guide](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/14-agent-guide.md) | Where does a change belong? (written for AI coding agents) |
-| 17 | [WASM migration](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md) | Where is the WebAssembly, and what would adding it take? |
+| 17 | [WebAssembly status](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md) | What WebAssembly exists now, how the F# site crosses the boundary, and what remains open? |
 | 18 | [Naming and compatibility](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md) | What is Limen, what was renamed, and did anything break? |
 | — | [Glossary](glossary.md) | What does this word mean here? |
 
