@@ -105,3 +105,26 @@ browser side.
 
 If the needed browser capability does not exist, do not reach around Limen.
 File a protocol/capability change.
+
+
+## Real-browser gate
+
+A source build is not enough to establish that the self-hosting boundary works
+in a browser.
+
+`npm run smoke:site:wasm` serves the assembled `dist-site/` artifact, opens
+the real page in headless Chrome/Chromium, allows the .NET WebAssembly runtime
+to initialize, and asserts values that are projected only by the F# engine.
+
+CI and the Pages workflow both run this gate after the ordinary build and
+artifact checks.
+
+This prevents several false-green states:
+
+- static HTML published while the WASM loader is broken;
+- `dotnet.js` present but unable to load the exported assembly;
+- the C# export present but unable to reach F# dispatch;
+- Limen starting without the F# initialization projection reaching the DOM.
+
+Do not replace this with a jsdom-only check. jsdom remains useful for structural
+binding tests, but it does not execute the deployed .NET WebAssembly runtime.
