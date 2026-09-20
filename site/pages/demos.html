@@ -32,17 +32,17 @@
           <p class="verdict" data-bind-data-tone="deploymentTone" data-text="releaseDecision" role="status" aria-live="polite"></p>
 
           <div class="demo-controls">
-            <button class="button" data-event="testsPass" data-bind-disabled="canChangeEvidence">Pass tests</button>
-            <button class="button ghost" data-event="testsFail" data-bind-disabled="canChangeEvidence">Fail tests</button>
-            <button class="button" data-event="securityClear" data-bind-disabled="canChangeEvidence">Clear security</button>
-            <button class="button ghost" data-event="securityBlock" data-bind-disabled="canChangeEvidence">Block security</button>
-            <button class="button primary" data-event="approveRelease" data-bind-disabled="canApproveRelease">Approve release</button>
+            <button class="button" data-event="testsPass" data-bind-disabled="evidenceDisabled">Pass tests</button>
+            <button class="button ghost" data-event="testsFail" data-bind-disabled="evidenceDisabled">Fail tests</button>
+            <button class="button" data-event="securityClear" data-bind-disabled="evidenceDisabled">Clear security</button>
+            <button class="button ghost" data-event="securityBlock" data-bind-disabled="evidenceDisabled">Block security</button>
+            <button class="button primary" data-event="approveRelease" data-bind-disabled="approveDisabled">Approve release</button>
           </div>
 
           <div class="demo-controls">
-            <button class="button primary" data-event="deploySuccess" data-bind-disabled="canDeployRelease">Deploy: success</button>
-            <button class="button" data-event="deployTimeout" data-bind-disabled="canDeployRelease">Deploy: timeout after dispatch</button>
-            <button class="button" data-event="deployNetworkFailure" data-bind-disabled="canDeployRelease">Deploy: network failure</button>
+            <button class="button primary" data-event="deploySuccess" data-bind-disabled="deployDisabled">Deploy: success</button>
+            <button class="button" data-event="deployTimeout" data-bind-disabled="deployDisabled">Deploy: timeout after dispatch</button>
+            <button class="button" data-event="deployNetworkFailure" data-bind-disabled="deployDisabled">Deploy: network failure</button>
             <button class="button ghost" data-event="resetRelease">Reset</button>
           </div>
 
@@ -94,10 +94,10 @@
           <p class="note" data-text="policyExplanation"></p>
 
           <div class="demo-controls">
-            <button class="button primary" data-event="startPolicyA" data-bind-disabled="canStartPolicyA">1. Start policy A</button>
-            <button class="button primary" data-event="startPolicyB" data-bind-disabled="canStartPolicyB">2. Start newer policy B</button>
-            <button class="button" data-event="deliverPolicyA" data-bind-disabled="canDeliverPolicyA">3. Deliver A first</button>
-            <button class="button" data-event="deliverPolicyB" data-bind-disabled="canDeliverPolicyB">4. Deliver B</button>
+            <button class="button primary" data-event="startPolicyA" data-bind-disabled="startPolicyADisabled">1. Start policy A</button>
+            <button class="button primary" data-event="startPolicyB" data-bind-disabled="startPolicyBDisabled">2. Start newer policy B</button>
+            <button class="button" data-event="deliverPolicyA" data-bind-disabled="deliverPolicyADisabled">3. Deliver A first</button>
+            <button class="button" data-event="deliverPolicyB" data-bind-disabled="deliverPolicyBDisabled">4. Deliver B</button>
             <button class="button ghost" data-event="resetPolicy">Reset</button>
           </div>
 
