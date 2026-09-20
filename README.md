@@ -460,10 +460,12 @@ deployed by
 npm run serve:site   # build and serve on http://localhost:4174
 ```
 
-The release demo performs real Limen HTTP requests against harmless fixtures to
-exercise success, network failure, and timeout-after-dispatch classification.
-The stale-evidence and placement challenges are deterministic F# state-machine
-scenarios rather than animations.
+The release demo performs real Limen HTTP requests for success and network
+failure. Its timeout-after-dispatch control injects an already-classified
+`OutcomeUnknown` into the F# engine so the recovery path is deterministic on a
+static Pages site; the kernel's timeout classification itself is covered by
+kernel tests. The stale-evidence and placement challenges are deterministic F#
+state-machine scenarios rather than animations.
 
 ## Development
 
