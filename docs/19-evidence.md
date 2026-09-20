@@ -3,10 +3,11 @@
 **What this answers:** what has actually been measured about Limen, what has
 not, and where every number comes from.
 
-The short version: **no quantitative claim about Limen is supported by evidence
-today.** What exists is evidence about *SDE*, about *language and style*, and
-two qualitative observations about Limen itself. Those are different things and
-are kept apart here deliberately.
+The short version: **no comparative quantitative claim about Limen is supported
+by evidence today.** Limen now has mechanically verified existence evidence in
+this repository, plus qualitative observations from an external consumer.
+Evidence about *SDE* and about *language/style* remains separate and must not be
+attributed to Limen.
 
 ---
 
@@ -60,10 +61,44 @@ consequences* — things that follow from the boundary by construction — not a
 measured outcomes. "Application state exists in one place" is true because the
 engine is the only writer, not because a study found it.
 
-### What is observed
+### What is demonstrated or observed
 
-Two things, both qualitative, both from a real consumer project
-(`kemiller2002/time-entry-state-machine`).
+#### L-3 · The product site is an F# WebAssembly Limen consumer
+
+**Strength: Mechanically verified existence proof · Subject: Limen**
+
+The interactive product site no longer uses a TypeScript application engine.
+Its application authority is implemented in F# under
+`site/fsharp/Limen.Site.Engine/` and published through a .NET WebAssembly host.
+
+The browser side contains only:
+
+- `BrowserKernel`;
+- `WasmSiteTransport`, which loads .NET and forwards serialized messages;
+- static HTML/CSS.
+
+The site engine owns nontrivial behavior: release evidence/approval gating,
+unknown deployment outcomes and reconciliation, stale-evidence rejection, the
+placement challenge, and view projection.
+
+Verification includes:
+
+- F# engine tests;
+- serialized dispatch tests;
+- a built-site check that requires `wasm/_framework/dotnet.js` and a real
+  `.wasm` artifact;
+- a negative artifact check that rejects the old `site/app/engine.js`;
+- HTML binding/event checks against the F# source vocabulary.
+
+**What this establishes:** the Limen boundary can host an F# WebAssembly engine
+inside the product repository and drive nontrivial interactive state without
+moving application decisions into the browser layer.
+
+**What it does not establish:** performance, bundle efficiency, development
+speed, defect reduction, agent accuracy, token savings, or superiority over a
+conventional architecture.
+
+The two earlier consumer observations remain below.
 
 #### L-1 · An F# engine runs behind `EngineTransport` with no kernel change
 
@@ -276,7 +311,8 @@ is a decision it would inform — not to produce a number for a web page.
 
 | Evidence | Source |
 | --- | --- |
-| L-1 WASM existence proof | `kemiller2002/time-entry-state-machine` — `web/wasm-engine-transport.js`, `f-sharp/src/TimeEntry.Engine/`, `package.json` dependency on this package |
+| L-3 in-repo F# WASM site existence proof | this repository — `site/fsharp/Limen.Site.Engine/`, `site/fsharp/Limen.Site.Wasm/`, `site/app/wasm-engine-transport.ts`, `scripts/check-site.ts`, `test/site.test.ts` |
+| L-1 external WASM existence proof | `kemiller2002/time-entry-state-machine` — `web/wasm-engine-transport.js`, `f-sharp/src/TimeEntry.Engine/`, `package.json` dependency on this package |
 | L-2 silent `data-if` failure | same repo — `effort-experiment/EFFORT-LOG.md`, F#-increment-1, mistake 5; verified against [`src/kernel/browser-kernel.ts`](../src/kernel/browser-kernel.ts) |
 | SDE trial metrics | `kemiller2002/SDE-Engineering-Trial-2-Greenfield-Construction` — `experiment/TELEMETRY.md`, `experiment-2b/TELEMETRY.md` |
 | 0/5 verification overlap | same repo — `experiment-2b/INDEPENDENT-VERIFICATION.md`, `experiment-2b/DEFECT-REGISTER.md` |
