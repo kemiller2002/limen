@@ -422,7 +422,7 @@ module Engine =
         | ResetPolicy ->
             step state command { state with Policy = initialState.Policy } "—"
 
-        | Pick placement when state.Picked.IsNone ->
+        | Pick placement when Option.isNone state.Picked ->
             let task = placementTasks.[state.TaskIndex]
             let right = placement = task.Answer
 
@@ -434,7 +434,7 @@ module Engine =
 
             step state command next "—"
 
-        | NextTask when state.Picked.IsSome ->
+        | NextTask when Option.isSome state.Picked ->
             let next =
                 { state with
                     TaskIndex = (state.TaskIndex + 1) % placementTasks.Length
@@ -550,8 +550,8 @@ module Engine =
               "deploymentTone", VString(deploymentTone release.Deployment)
               "releaseDecision", VString(releaseDecision release)
               "releaseObligations", VItems obligations
-              "releaseHasObligations", VBool(not obligations.IsEmpty)
-              "releaseNoObligations", VBool obligations.IsEmpty
+              "releaseHasObligations", VBool(not (List.isEmpty obligations))
+              "releaseNoObligations", VBool(List.isEmpty obligations)
               "canChangeEvidence", VBool(canChangeEvidence release)
               "canApproveRelease", VBool(canApprove release)
               "canDeployRelease", VBool(canDeploy release)
@@ -568,8 +568,8 @@ module Engine =
               "canDeliverPolicyB", VBool(policy.StartedB && not policy.DeliveredB)
               "trace", VItems trace
               "traceCount", VNumber state.Trace.Length
-              "traceEmpty", VBool state.Trace.IsEmpty
-              "hasTrace", VBool(not state.Trace.IsEmpty)
+              "traceEmpty", VBool(List.isEmpty state.Trace)
+              "hasTrace", VBool(not (List.isEmpty state.Trace))
               "taskPrompt", VString task.Prompt
               "taskNumber", VNumber(state.TaskIndex + 1)
               "taskTotal", VNumber placementTasks.Length
