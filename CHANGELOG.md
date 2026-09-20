@@ -29,6 +29,22 @@ Nothing yet.
 
 ### Added
 
+- **The Limen product site is now an F#/.NET WebAssembly consumer of the
+  Limen boundary.** Application state, transitions, capabilities, obligations,
+  stale-evidence handling, reconciliation and projection live in F#. The
+  TypeScript site code is limited to `BrowserKernel`, runtime loading,
+  diagnostics and JSON transport. A tiny C# `[JSExport]` method is marshalling
+  glue only.
+- **Nontrivial self-hosting demonstrations** replace the counter-oriented site:
+  release/evidence gating, stale-result races, ambiguous external effects with
+  reconciliation, and a twelve-case boundary-placement challenge.
+- **A real-browser F# WebAssembly startup gate.** CI and Pages serve the built
+  artifact in headless Chrome and require an initialization value produced by
+  the F# engine to appear in the DOM.
+- **F# site authority enforcement.** The architecture checker rejects
+  JS/browser/I/O interop in the F# application engine and representative
+  application logic in the C# export shim.
+
 - **`Clipboard` capability.** `Clipboard { operation: "writeText", text }`, with
   `ClipboardOutcome` distinguishing `denied` (retry often works — browsers grant
   the write while a user gesture is fresh), `unavailable` (no Clipboard API in
@@ -96,9 +112,9 @@ Nothing yet.
   outcome.
 - The README's documentation links are absolute. Relative links break when npm
   renders the README on npmjs.com, which was the previous behavior.
-- The README now states plainly what F# is and is not here: the lifecycle CLI,
-  not the application engine. The engine is TypeScript, and no WASM engine
-  exists yet.
+- The README now distinguishes the TypeScript browser kernel/reference engine
+  from two real F# surfaces: the lifecycle CLI and the product site's
+  application engine compiled to .NET WebAssembly.
 
 ### Fixed
 
