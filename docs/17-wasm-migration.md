@@ -267,18 +267,24 @@ what that means for deployment safety.
 The public Limen site must not perform an actual deployment or create external
 state merely to demonstrate write safety.
 
-The deployment challenge therefore uses a harmless local GET to exercise the
-real Limen HTTP mechanism and timeout classification.
+The deployment challenge uses a harmless local GET for the real success path
+and a guaranteed-unreachable reserved domain for the real network-failure path.
 
-The F# application deliberately applies consequential-write semantics to the
-classified outcome:
+The timeout-after-dispatch path is different: a static Pages server cannot
+guarantee a response will be slower than an arbitrary browser timeout. Rather
+than make the demo flaky, that control injects an already-classified
+`OutcomeUnknown` into the F# state machine. The kernel's conversion of an
+actual timeout into `OutcomeUnknown{timeout-after-dispatch}` is tested at the
+kernel layer.
 
-- success can advance;
-- timeout after dispatch becomes unknown;
-- unknown removes retry capability;
-- reconciliation must resolve the state.
+The F# application then demonstrates the consequential part deterministically:
 
-The transport behavior is real. The external mutation is intentionally not.
+- unknown removes retry/deploy capability;
+- reconciliation becomes required work;
+- authoritative "applied" resolves to deployed;
+- authoritative "not applied" safely reopens deployment.
+
+The external mutation is intentionally not performed by the public site.
 
 ---
 
