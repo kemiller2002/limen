@@ -1,165 +1,188 @@
     <section class="page-intro">
       <p class="eyebrow">Evidence</p>
-      <h1>What we have actually measured.</h1>
+      <h1>What the repository proves, and what it does not.</h1>
       <p class="lead">
-        No quantitative claim about Limen is supported by evidence today. That
-        sentence is the honest headline, and this page exists to keep it visible
-        rather than let the benefits elsewhere on this site quietly harden into
-        numbers nobody measured.
+        Limen now has stronger existence evidence than the old site showed: this
+        website itself runs its application logic in F# WebAssembly behind the
+        real kernel. That is useful. It is still not a controlled benchmark, and
+        this page does not turn it into one.
       </p>
     </section>
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">Limen</p><h2>Not yet measured.</h2></div>
-        <p class="section-note">Six claims a reader might reasonably expect. None are supported.</p>
+        <div><p class="eyebrow">Evidence discipline</p><h2>Four categories, kept separate.</h2></div>
+        <p class="section-note">A structural property is not automatically a measured outcome.</p>
       </div>
+
       <div class="table-scroll">
         <table class="boundary">
-          <caption>Claims about Limen and their evidential status</caption>
-          <thead><tr><th scope="col">Claim</th><th scope="col">Status</th></tr></thead>
+          <caption>How claims are classified on this site</caption>
+          <thead><tr><th scope="col">Class</th><th scope="col">Meaning</th><th scope="col">Example</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Reduces development time</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
-            <tr><th scope="row">Reduces agent token consumption</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
-            <tr><th scope="row">Reduces cost</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
-            <tr><th scope="row">Reduces defects</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
-            <tr><th scope="row">Makes AI agents more accurate</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
-            <tr><th scope="row">Reduces context or discovery surface</th><td><span class="status" data-tone="bad">Insufficient evidence</span> — not measured</td></tr>
+            <tr><th scope="row">Mechanically verified</th><td>A build/test/check fails if the property is false.</td><td>The Pages artifact must contain the F# WASM runtime and must not contain the old TypeScript site engine.</td></tr>
+            <tr><th scope="row">Existence proof</th><td>A real implementation demonstrates feasibility once, without proving superiority.</td><td>The Limen site and the time-entry consumer both run F# engines behind <code>EngineTransport</code>.</td></tr>
+            <tr><th scope="row">Structural consequence</th><td>Follows from the architecture when its rules hold.</td><td>The DOM cannot be authoritative application state if all application decisions are owned by the engine.</td></tr>
+            <tr><th scope="row">Measured outcome</th><td>Requires a controlled or otherwise attributable observation.</td><td>Development time, defects, rework, context, tokens, cost, performance.</td></tr>
           </tbody>
         </table>
       </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">L-1 · self-hosting</p><h2>This site is now a real F# WebAssembly Limen application.</h2></div>
+        <p class="section-note">Mechanically verified existence proof.</p>
+      </div>
+
+      <div class="proof-strip">
+        <div><strong>F# owns application state</strong><span><code>site/fsharp/Limen.Site.Engine/</code></span></div>
+        <div><strong>.NET WebAssembly hosts it</strong><span><code>site/fsharp/Limen.Site.Wasm/</code></span></div>
+        <div><strong>Limen owns browser mechanics</strong><span><code>BrowserKernel</code> + explicit effects</span></div>
+        <div><strong>TypeScript engine removed</strong><span>artifact check rejects <code>site/app/engine.js</code></span></div>
+      </div>
+
       <p class="prose">
-        The benefits listed on the overview page are stated as <em>architectural
-        consequences</em> — things that follow from where the boundary is drawn — not as
-        outcomes anyone observed. &ldquo;Application state exists in one place&rdquo; is true
-        because the engine is the only writer, not because a study found it.
+        The F# engine drives release gating, evidence obligations, stale-result
+        rejection, ambiguous deployment outcomes, reconciliation, the placement
+        challenge, and the visible transition trace. TypeScript on the site side
+        loads the runtime and transports serialized protocol messages; it does not
+        contain those application concepts.
+      </p>
+      <p class="prose">
+        CI compiles and executes the F# engine tests, publishes the WebAssembly
+        runtime into <code>dist-site/wasm/</code>, requires a real <code>.wasm</code> artifact,
+        and fails if the legacy TypeScript application engine returns.
+      </p>
+
+      <p class="note">
+        What this establishes: Limen's protocol and transport seam can host a real
+        F# WebAssembly application with nontrivial state inside the Limen repository
+        itself. What it does not establish: that this is faster, cheaper, smaller,
+        easier, or less defective than another architecture.
       </p>
     </section>
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">Limen</p><h2>What has been observed.</h2></div>
-        <p class="section-note">Two things. Both qualitative. Both from a real consumer project.</p>
+        <div><p class="eyebrow">L-2 · external consumer</p><h2>The boundary also works outside its own showcase.</h2></div>
+        <p class="section-note">Observed existence proof in <code>time-entry-state-machine</code>.</p>
       </div>
+
+      <p class="prose">
+        The separate time-entry application loads a .NET WebAssembly runtime,
+        forwards Limen messages through a tiny transport, and executes an F#
+        engine behind a single <code>[JSExport]</code> marshalling method. That consumer
+        existed before the site conversion and required no application-specific
+        change to <code>BrowserKernel</code>.
+      </p>
+
+      <blockquote>
+        <p>One browser boundary, multiple application engines. The seam is real; superiority is still an open empirical question.</p>
+      </blockquote>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">L-3 · a defect that changed the kernel</p><h2>Real use found a silent binding failure.</h2></div>
+        <p class="section-note">Observed once, then converted into a regression check.</p>
+      </div>
+
+      <p class="prose">
+        The time-entry consumer once put <code>data-if</code> directly on a
+        <code>&lt;p&gt;</code>. Limen only interprets conditional rendering on
+        <code>&lt;template&gt;</code>, so the attribute was silently ignored. The live page
+        exposed the defect when tests did not.
+      </p>
+      <p class="prose">
+        That incident did not justify a defect-rate claim. It justified a product
+        change: misplaced <code>data-if</code>/<code>data-each</code> now surface a binding
+        error and have regression coverage.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Structural evidence</p><h2>What follows from the current implementation.</h2></div>
+        <p class="section-note">Useful, but not presented as measured improvement.</p>
+      </div>
+
       <div class="grid">
         <div class="card">
-          <p class="card-kicker">Observed · existence proof</p>
-          <h3>An F# engine runs behind the boundary, unchanged</h3>
-          <p>
-            A separate Echelon Foundry project implements <code>EngineTransport</code> over the
-            .NET WebAssembly runtime and drives a full F# engine through it, consuming
-            this package directly. Its own source records that it required <strong>no kernel
-            change</strong>.
-          </p>
-          <p class="note">
-            Establishes: the claim that this interface is a sufficient seam for a
-            WebAssembly engine is demonstrated, not merely argued. Does not establish:
-            anything about performance, size, startup cost, or effort.
-          </p>
+          <h3>Application decisions are out of the DOM layer</h3>
+          <p>The site's browser-side files contain no release, stale-evidence, reconciliation, or quiz decision vocabulary. Those concepts live in F#.</p>
         </div>
         <div class="card">
-          <p class="card-kicker">Observed · single incident</p>
-          <h3>A silent failure found only by loading the page</h3>
-          <p>
-            In that same project, <code>data-if</code> was written on a <code>&lt;p&gt;</code> instead of a
-            <code>&lt;template&gt;</code>. The kernel ignored it in silence, so an empty-state message
-            never disappeared. No test in either project caught it.
-          </p>
-          <p class="note">
-            Acted on: misplaced bindings now raise a reported binding error. Establishes
-            one real usability defect — not a defect <em>rate</em>. It is one incident.
-          </p>
+          <h3>Effects cross explicitly</h3>
+          <p>The F# engine requests effects as protocol data. Limen performs them and returns classified evidence with correlation IDs.</p>
+        </div>
+        <div class="card">
+          <h3>Unsupported authority is visible</h3>
+          <p>The challenge includes clipboard read and programmatic focus specifically because Limen does not expose them. The correct answer is a protocol change, not a hidden browser call.</p>
+        </div>
+        <div class="card">
+          <h3>Unknown outcomes remain representable</h3>
+          <p><code>OutcomeUnknown</code> is distinct from failure and is projected as unresolved reconciliation work rather than an automatic retry.</p>
         </div>
       </div>
     </section>
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">Adjacent, and not the same thing</p><h2>SDE evidence is not Limen evidence.</h2></div>
-        <p class="section-note">Verified rather than assumed.</p>
+        <div><p class="eyebrow">Not measured</p><h2>Claims this site still refuses to make.</h2></div>
+        <p class="section-note">The conversion to F# WebAssembly does not change this list.</p>
       </div>
-      <p class="prose">
-        Echelon Foundry runs preregistered engineering trials of <strong>State-Directed
-        Engineering</strong>, a construction method. Those trials produce genuinely useful
-        numbers. They also <strong>do not use Limen</strong> — checked directly: both trial
-        branches contain no reference to this package or any of its types, and
-        declare zero runtime dependencies. They are Node command-line applications.
-      </p>
-      <p class="prose">
-        Attributing their results to Limen would be the single easiest mistake to
-        make on a page like this, so it is called out rather than left to good
-        intentions. The strongest result from those trials, stated as what it is:
-      </p>
-      <blockquote>
-        <p>
-          An independent fresh-agent review produced <strong>5 findings, 0 of which
-          overlapped</strong> the builder's own 90-test suite and written self-review. Four
-          were real defects.
-        </p>
-      </blockquote>
-      <p class="prose">
-        That is evidence that heterogeneous verification finds what homogeneous
-        verification misses. It is evidence about a <em>method</em>, on one run, with one
-        reviewer, on one codebase — and it says nothing whatever about this
-        architecture.
-      </p>
-    </section>
 
-    <section>
-      <div class="section-heading">
-        <div><p class="eyebrow">Discipline</p><h2>What we refused to publish.</h2></div>
-        <p class="section-note">Usually the more informative list.</p>
-      </div>
       <div class="columns">
-        <div class="card">
-          <h3>&ldquo;Explicit state modelling reduces mistakes&rdquo;</h3>
-          <p>Tempting, adjacent, and contradicted by its own source. The originating project rates that hypothesis <strong>low confidence</strong> and records the contradiction itself: raw mistake counts came out roughly even. The defensible version is narrower — the effect appears to be in <em>which mechanism catches a mistake</em>, not in how many occur.</p>
-        </div>
-        <div class="card">
-          <h3>A speed comparison between two trials</h3>
-          <p>One run took ~30 minutes, another ~3 hours 12 minutes. Reading &ldquo;6× faster&rdquo; out of that would be wrong: the second run also performed mutation testing, an independent verification phase, and a cross-experiment analysis. Different work, not different speed.</p>
-        </div>
-        <div class="card">
-          <h3>Token and cost figures</h3>
-          <p>Almost all are marked <em>unavailable — not exposed to agent</em> in the source telemetry, explicitly rather than by omission. Exactly one sub-unit was ever instrumented. One measurement is not a rate, so it is not presented as one.</p>
-        </div>
-        <div class="card">
-          <h3>Two figures that do not reconcile</h3>
-          <p>Identical test-line counts reported across two runs with different file counts, and a mistake tally whose breakdown sums to one more than its total. Both are recorded as open data-quality questions rather than published as measurements.</p>
-        </div>
+        <div class="card"><h3>“Limen reduces development time.”</h3><p><strong>Not measured.</strong> No controlled construction comparison isolates Limen.</p></div>
+        <div class="card"><h3>“Limen reduces defects.”</h3><p><strong>Not measured.</strong> Existing defects and fixes are observations, not a comparative rate.</p></div>
+        <div class="card"><h3>“Limen saves tokens or context.”</h3><p><strong>Not measured.</strong> The relevant agent telemetry has not been available consistently enough to support this claim.</p></div>
+        <div class="card"><h3>“F# WASM is faster than TypeScript.”</h3><p><strong>Not measured.</strong> This work establishes an architectural boundary, not a runtime-performance result.</p></div>
+        <div class="card"><h3>“Agents understand Limen better.”</h3><p><strong>Not measured.</strong> Documentation usability and architecture checks are not an agent-accuracy experiment.</p></div>
+        <div class="card"><h3>“This produces better UIs.”</h3><p><strong>Not measured.</strong> Visual quality requires its own evaluation; Limen governs authority and mechanics, not taste.</p></div>
       </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Adjacent evidence</p><h2>Ordo/SDE results are still not Limen results.</h2></div>
+        <p class="section-note">The distinction remains important even when the architectures complement each other.</p>
+      </div>
+
+      <p class="prose">
+        Echelon Foundry's engineering experiments include useful results about
+        heterogeneous verification, explicit state, and construction method.
+        Those experiments did not isolate Limen. The strongest direct result in
+        that corpus remains the fresh-agent verification pass that found five
+        findings with zero overlap with the builder's own 90-test suite, four of
+        them real defects. That supports heterogeneous verification on that run;
+        it does not support a Limen effectiveness percentage.
+      </p>
     </section>
 
     <section class="method-band">
       <div>
-        <p class="eyebrow">What would settle it</p>
-        <h2>The trial that has not been run.</h2>
+        <p class="eyebrow">The experiment worth running</p>
+        <h2>Compare the boundary, not the marketing.</h2>
         <p>
-          Nothing above isolates Limen, because no controlled comparison exists
-          where Limen is the only variable. The blocker is instrumentation, not
-          willingness: token, cost, and context figures are not exposed to a running
-          agent in machine-readable form, and both existing trials record that and
-          refuse to estimate.
-        </p>
-        <p>
-          Such a trial can measure time, files, defects and rework today. It cannot
-          yet measure tokens or cost — which are the numbers most often asked for.
+          A useful next Limen experiment would hold requirements, model, effort,
+          and verification constant while changing the browser architecture.
+          Preregister the predictions and let an independent pass inspect both.
         </p>
       </div>
       <ol>
-        <li><span>01</span><div>One requirement set, implemented twice</div></li>
-        <li><span>02</span><div>Same agent, model, effort, and verification standard</div></li>
-        <li><span>03</span><div>One arm on Limen, one on a conventional architecture</div></li>
-        <li><span>04</span><div>Both instrumented: time, files inspected and changed, build cycles, defects by discovery stage, rework, escapes</div></li>
-        <li><span>05</span><div>Predictions preregistered and frozen before either arm starts</div></li>
-        <li><span>06</span><div>An independent verification pass on both — self-review demonstrably misses what matters</div></li>
+        <li><span>01</span><div>Same requirement set and starting constraints.</div></li>
+        <li><span>02</span><div>Limen/F# WASM arm versus a conventional browser-state architecture.</div></li>
+        <li><span>03</span><div>Measure time, files inspected/changed, build cycles, rework, defects by discovery stage, and escapes.</div></li>
+        <li><span>04</span><div>Record model identity and token/cost data only when actually exposed.</div></li>
+        <li><span>05</span><div>Freeze predictions before either arm begins.</div></li>
+        <li><span>06</span><div>Run heterogeneous verification on both.</div></li>
       </ol>
     </section>
 
     <section>
       <p class="prose">
-        The full accounting, including provenance for every figure quoted here and
-        the four open data-quality questions, lives in the repository as
+        Repository-level provenance and the longer evidence accounting remain in
         <a href="https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/19-evidence.md">docs/19-evidence.md</a>.
       </p>
     </section>
