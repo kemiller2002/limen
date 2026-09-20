@@ -1,0 +1,50 @@
+name: Complete Limen site redesign work item
+
+on:
+  push:
+    branches:
+      - site/limen-value-and-evidence-pass
+
+permissions:
+  contents: write
+
+jobs:
+  complete:
+    if: github.actor != 'limen-site-completion'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: site/limen-value-and-evidence-pass
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Complete ROS work item with evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          ROS_BASE_REF=origin/main ./ros work complete WI-0022 \
+            --evidence implementation=site/fsharp/Limen.Site.Engine/Engine.fs \
+            --evidence implementation=site/app/wasm-engine-transport.ts \
+            --evidence implementation=site/pages/index.html \
+            --evidence tests=site/fsharp/tests/Limen.Site.Engine.Tests/Program.fs \
+            --evidence tests=scripts/smoke-site-wasm.sh \
+            --evidence tests=test/site.test.ts
+          ./ros registry build
+          ROS_BASE_REF=origin/main ./ros validate
+
+      - name: Remove completion workflow and commit ROS state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "limen-site-completion"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/complete-limen-site-redesign.yml
+          git add .ros
+          git commit -m "Complete ROS work item for F# Limen site"
+          git push origin HEAD:site/limen-value-and-evidence-pass
