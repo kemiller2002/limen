@@ -27,7 +27,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ID="$(./ros add "Rework the Limen site around product value, architectural clarity, verified evidence, and honest WASM status" --tag limen,site,evidence,documentation --priority high | tail -n 1 | tr -d '\r')"
+          OUTPUT="$(./ros add "Rework the Limen site around product value, architectural clarity, verified evidence, and honest WASM status" --tag limen,site,evidence,documentation --priority high)"
+          ID="$(printf '%s' "$OUTPUT" | node -e "let s=''; process.stdin.on('data',d=>s+=d); process.stdin.on('end',()=>console.log(JSON.parse(s).id));")"
           echo "Created $ID"
           ./ros work ready "$ID"
           ./ros work start "$ID"
