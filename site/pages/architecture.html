@@ -1,176 +1,202 @@
     <section class="page-intro">
-      <p class="eyebrow">Architecture</p>
-      <h1>What runs where, and why.</h1>
+      <p class="eyebrow">Architecture · self-hosting implementation</p>
+      <h1>The application is F#. The browser boundary is Limen.</h1>
       <p class="lead">
-        Limen is roughly eighty lines of contract and one bridge file. The
-        interesting part is not the code — it is where the line is drawn, and what
-        becomes impossible once it is.
+        This site now uses the architecture it describes. Static HTML and CSS
+        remain browser-native. Limen owns DOM bindings and browser effects. A
+        tiny transport loads a .NET WebAssembly runtime. All application state,
+        transitions, capabilities, obligations, effect interpretation, and view
+        projection live in F#.
       </p>
     </section>
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">The contract</p><h2>Two message shapes cross. Nothing else.</h2></div>
-        <p class="section-note">Defined in <code>src/protocol.ts</code>.</p>
+        <div><p class="eyebrow">Runtime path</p><h2>Four layers. One authority boundary.</h2></div>
+        <p class="section-note">Every arrow crosses plain serializable data or browser-native structure.</p>
       </div>
+
+      <div class="architecture-flow" aria-label="Limen site runtime architecture">
+        <div class="architecture-node">
+          <strong>HTML + CSS</strong>
+          <p>Semantics, labels, layout, focusable controls, responsive presentation.</p>
+          <code>site/pages/*.html</code>
+        </div>
+        <div class="architecture-node">
+          <strong>Limen BrowserKernel</strong>
+          <p>Turns interactions into semantic events, applies projections, executes effects.</p>
+          <code>src/kernel/</code>
+        </div>
+        <div class="architecture-node">
+          <strong>WASM transport</strong>
+          <p>Loads .NET and forwards one JSON message in, one JSON result out.</p>
+          <code>site/app/wasm-engine-transport.ts</code>
+        </div>
+        <div class="architecture-node">
+          <strong>F# application engine</strong>
+          <p>Owns meaning: state, legal transitions, evidence, authority, obligations, capabilities, projection.</p>
+          <code>site/fsharp/Limen.Site.Engine/</code>
+        </div>
+      </div>
+
+      <p class="prose">
+        The only C# in the site application is the tiny
+        <code>[JSExport]</code> marshalling shim required by .NET's source-generated
+        JavaScript export mechanism. It contains no application state or decision:
+        it forwards the serialized message directly to
+        <code>Limen.Site.Engine.Dispatch.handle</code>.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">The contract</p><h2>The boundary carries evidence, never application objects.</h2></div>
+        <p class="section-note">Defined by the npm package in <code>src/protocol.ts</code>.</p>
+      </div>
+
       <div class="split">
         <figure class="code-figure">
-          <figcaption>Browser → Engine</figcaption>
+          <figcaption>Browser → engine</figcaption>
           <pre><code><span class="k">type</span> BrowserToEngineMessage =
   | { kind: <span class="s">"Initialize"</span>; protocolVersion; capabilities; location }
-  | { kind: <span class="s">"Event"</span>;           event:    SemanticEvent }
-  | { kind: <span class="s">"EffectResult"</span>;    result:   EffectResult }
+  | { kind: <span class="s">"Event"</span>; event: SemanticEvent }
+  | { kind: <span class="s">"EffectResult"</span>; result: EffectResult }
   | { kind: <span class="s">"LocationChanged"</span>; location: BrowserLocation };
 
-<span class="k">type</span> SemanticEvent = {
-  name:   <span class="k">string</span>;   <span class="c">// the data-event value, verbatim</span>
-  key?:   <span class="k">string</span>;   <span class="c">// the enclosing list item's key</span>
-  value?: <span class="k">string</span>;   <span class="c">// a form control's .value</span>
-};</code></pre>
+<span class="c">// No DOM node.</span>
+<span class="c">// No callback.</span>
+<span class="c">// No shared object identity.</span></code></pre>
         </figure>
+
         <figure class="code-figure">
-          <figcaption>Engine → Browser</figcaption>
+          <figcaption>Engine → browser</figcaption>
           <pre><code><span class="k">type</span> EngineToBrowserMessage = {
-  view:          ViewState;
-  effects:       EffectRequest[];
+  view: ViewState;
+  effects: EffectRequest[];
   cancellations: CorrelationId[];
 };
 
-<span class="c">// ViewState admits only these:</span>
-<span class="k">type</span> ViewValue =
-  | <span class="k">string</span> | <span class="k">number</span> | <span class="k">boolean</span>
-  | ViewItem[];   <span class="c">// flat records of the above</span></code></pre>
+<span class="c">// Projection + explicit requests.</span>
+<span class="c">// The browser never asks what they mean.</span></code></pre>
         </figure>
       </div>
+
       <p class="prose">
-        Three properties carry all the weight. It is <strong>data, not calls</strong> — no
-        callbacks, no DOM nodes, no object identity, so every value survives a
-        round trip through JSON. It is <strong>generic</strong> — the kernel's types mention no
-        domain concept, so there is nowhere for a feature to add a special case.
-        And it is <strong>total</strong> — every response carries a complete view, so the kernel
-        never diffs or patches; the engine says what things are now.
-      </p>
-      <p class="prose">
-        Note what <code>SemanticEvent</code> does <em>not</em> carry: no element id, no DOM node, no
-        event object. An engine that knew about element ids would be coupled to
-        markup, and changing the HTML would become a change to application logic.
+        This separation is what lets the application move across a real
+        WebAssembly boundary. The TypeScript package does not need F# types, and
+        the F# engine does not need DOM types. Both sides agree only on the
+        serialized protocol.
       </p>
     </section>
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">State ownership</p><h2>Four kinds of state. One owner each.</h2></div>
-        <p class="section-note">&ldquo;Owns&rdquo; means: if two disagree, this one is right.</p>
+        <div><p class="eyebrow">Authority</p><h2>Who is allowed to know what.</h2></div>
+        <p class="section-note">If two layers disagree, the owner in this table wins.</p>
       </div>
+
       <div class="table-scroll">
         <table class="boundary">
-          <caption>Who owns what, and what that rules out</caption>
-          <thead><tr><th scope="col">Kind</th><th scope="col">Examples</th><th scope="col">Owner</th><th scope="col">Consequence</th></tr></thead>
+          <caption>Authority by layer</caption>
+          <thead>
+            <tr><th scope="col">Layer</th><th scope="col">Owns</th><th scope="col">Must not decide</th></tr>
+          </thead>
           <tbody>
-            <tr><th scope="row">Application</th><td>Which screen is showing; what is in the draft; is a save in flight</td><td>Engine</td><td>Anything the application would behave differently because of lives here — including things that feel like &ldquo;UI state&rdquo;</td></tr>
-            <tr><th scope="row">DOM</th><td><code>textContent</code>, <code>disabled</code>, which templates are mounted</td><td>The DOM, written by the kernel</td><td>Output only. Never read back as truth</td></tr>
-            <tr><th scope="row">Browser-local</th><td>Focus, scroll, caret, hover, animation progress</td><td>The browser</td><td>Deliberately untracked. CSS and native behavior handle it</td></tr>
-            <tr><th scope="row">External</th><td>Server records, <code>localStorage</code> contents</td><td>The external system</td><td>The engine never holds this — only <em>evidence about it</em>, with a classified outcome</td></tr>
+            <tr><th scope="row">HTML</th><td>Document semantics, labels, native controls</td><td>Release legality, retry policy, state transitions</td></tr>
+            <tr><th scope="row">CSS</th><td>Presentation, focus appearance, responsive composition</td><td>Whether an action is legal</td></tr>
+            <tr><th scope="row">Browser</th><td>Paint, layout, caret, scroll, native input mechanics</td><td>Application state</td></tr>
+            <tr><th scope="row">Limen kernel</th><td>Binding, event transport, HTTP/storage/clipboard/navigation mechanisms</td><td>What an event, status code, route, or effect means</td></tr>
+            <tr><th scope="row">WASM transport</th><td>Runtime loading and serialization crossing</td><td>Any domain decision</td></tr>
+            <tr><th scope="row">F# engine</th><td>Application truth, transitions, capabilities, obligations, interpretation, projection</td><td>Direct browser API access</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="prose">
-        That last row is subtle and load-bearing. When the server says a customer
-        exists, the engine does not learn that a customer exists. It learns that it
-        received a response, at a moment, with a classified outcome, that said so.
-        That distinction is what makes <code>OutcomeUnknown</code> representable at all.
-      </p>
-      <p class="prose">
-        There is exactly one place the kernel reads from an element:
-        <code>readValue()</code>, which lifts <code>.value</code> off a form control into a
-        <code>SemanticEvent</code>. That is transporting a keystroke, not reading state — from
-        that moment the engine's copy is authoritative. There is no
-        <code>querySelector</code> anywhere in the engine, and there cannot be.
-      </p>
     </section>
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">Enforcement</p><h2>Which rules are actually checked.</h2></div>
-        <p class="section-note">A rule nobody checks is a preference.</p>
+        <div><p class="eyebrow">The hard cases</p><h2>Why this is more than state management.</h2></div>
+        <p class="section-note">These are the cases the site now runs through F#.</p>
       </div>
-      <div class="table-scroll">
-        <table class="boundary">
-          <caption>Enforcement mechanism per rule</caption>
-          <thead><tr><th scope="col">Rule</th><th scope="col">Enforced by</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">No <code>document</code>, <code>window</code>, <code>fetch(</code>, <code>localStorage</code>, <code>sessionStorage</code> in the engine</th><td><strong>Build script</strong> — fails CI</td></tr>
-            <tr><th scope="row">No dynamic-typing escape hatches in the engine</th><td><strong>Build script</strong> — fails CI</td></tr>
-            <tr><th scope="row">No <code>eval</code> or innerHTML-style escape anywhere in <code>src/</code></th><td><strong>Build script</strong> — fails CI</td></tr>
-            <tr><th scope="row">Every state handled in every switch</th><td><strong>Compiler</strong> — exhaustive unions</td></tr>
-            <tr><th scope="row">Protocol values stay JSON-serializable</th><td><strong>Compiler</strong> — <code>ViewValue</code> admits nothing else</td></tr>
-            <tr><th scope="row">Documentation links and examples stay valid</th><td><strong>Build script + test suite</strong></td></tr>
-            <tr><th scope="row">No second application-state store appears</th><td>Review only</td></tr>
-            <tr><th scope="row">The kernel does not branch on domain meaning</th><td>Review only</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="prose">
-        The last two rows are honest admissions. They are the rules most worth
-        having and the hardest to mechanize, so they depend on review — which is
-        exactly why they are written down in the design rules rather than assumed.
-      </p>
-    </section>
 
-    <section>
-      <div class="section-heading">
-        <div><p class="eyebrow">Reasoning</p><h2>Why the line sits here.</h2></div>
-        <p class="section-note">The part to reason from when the docs do not cover your case.</p>
-      </div>
       <div class="grid">
         <div class="card">
-          <h3>Why must the engine own all application state?</h3>
-          <p>State in two places will disagree, and when it does, nothing tells you which is right. Bugs of that kind are not fixed by being careful — they are fixed by making the second copy impossible. One owner also means one place to look, which matters far more for an agent than for a human: a human asks; an agent guesses and continues.</p>
+          <p class="card-kicker">Capability</p>
+          <h3>Approval is not a button state</h3>
+          <p>Tests and security evidence must both pass before F# projects approval capability. The DOM receives the result; it does not derive it.</p>
         </div>
         <div class="card">
-          <h3>Why must the kernel stay ignorant?</h3>
-          <p>The moment it knows what one event name means, it becomes a place application logic can accumulate. Bridges that &ldquo;just handle this one case&rdquo; grow into second application frameworks. Six generic attributes leave no hook to grab.</p>
+          <p class="card-kicker">Staleness</p>
+          <h3>Older evidence cannot win a race</h3>
+          <p>The F# engine carries the latest request identity. A late result for an older request is observable and discarded rather than silently overwriting current state.</p>
         </div>
         <div class="card">
-          <h3>Why represent effects as data?</h3>
-          <p>It keeps transitions pure and testable with no browser or network; it makes every external interaction visible at the boundary instead of buried in a function; and it forces the failure cases into the type system. You cannot request an HTTP effect without handling what happens when it fails.</p>
+          <p class="card-kicker">Unknown effect</p>
+          <h3>Timeout is not failure</h3>
+          <p>After dispatch, a timeout becomes reconciliation-required state. No retry capability exists until authoritative evidence resolves what happened.</p>
         </div>
         <div class="card">
-          <h3>Why is <code>OutcomeUnknown</code> separate from failure?</h3>
-          <p>A request that timed out after dispatch may have been processed. The kernel cannot know, and claiming otherwise causes duplicate records. The honest answer is &ldquo;we don't know&rdquo; — and the right recovery is domain-specific, which is precisely why the kernel reports instead of deciding.</p>
-        </div>
-        <div class="card">
-          <h3>Why project capabilities instead of deriving them?</h3>
-          <p>&ldquo;Disable Save when the text is empty&rdquo; is a business rule. If CSS or the DOM re-derives it, the rule now lives in two places and will drift. Projecting <code>saveDisabled</code> keeps one rule in one file.</p>
-        </div>
-        <div class="card">
-          <h3>Why serializable, when nothing is serialized?</h3>
-          <p>Because the alternative is a redesign later. Today the transport passes objects in process. Because the types admit nothing unserializable, adding a codec — or a WebAssembly engine — is additive rather than structural. One consumer has already done exactly that.</p>
+          <p class="card-kicker">Missing capability</p>
+          <h3>No browser escape hatch</h3>
+          <p>If focus control or clipboard read is not in the protocol, application code cannot quietly reach for a DOM/global API. It becomes an explicit protocol decision.</p>
         </div>
       </div>
     </section>
 
     <section class="method-band">
       <div>
-        <p class="eyebrow">A note on the name</p>
-        <h2>There is no WebAssembly in this package.</h2>
+        <p class="eyebrow">Compute in code</p>
+        <h2>F# makes the legal state space visible.</h2>
         <p>
-          The published package is still called <code>@echelon-foundry/typescript-wasm-kernel</code>,
-          and it contains no <code>.wasm</code> file, no loader, and no
-          <code>WebAssembly.instantiate</code> call. The name described the <em>shape</em> of the
-          boundary — narrow, serializable, and therefore drivable from a WebAssembly
-          module — rather than the current implementation.
+          The release demo is not built from four independent flags. Deployment
+          can be not started, in flight, deployed, failed, or reconciliation
+          required. The transition function controls which moves exist.
         </p>
-        <p>
-          That shape has since been demonstrated: a separate Echelon Foundry project
-          runs an F# engine behind this exact interface, over the .NET WebAssembly
-          runtime, and needed no change to the kernel to do it.
-        </p>
-        <p><a href="./evidence.html">What that does and does not prove →</a></p>
       </div>
       <ol>
-        <li><span>01</span><div><strong>The engine</strong> owns meaning. TypeScript in this package; F# in at least one consumer.</div></li>
-        <li><span>02</span><div><strong>The kernel</strong> is the browser-side bridge. That is what &ldquo;kernel&rdquo; names here — not the product.</div></li>
-        <li><span>03</span><div><strong>Limen</strong> is the whole: the contract, the kernel, and the rules about what may live where.</div></li>
+        <li><span>01</span><div>Evidence changes are legal only before approval.</div></li>
+        <li><span>02</span><div>Approval exists only after both required evidence gates pass.</div></li>
+        <li><span>03</span><div>Deployment exists only after approval.</div></li>
+        <li><span>04</span><div>Only the matching correlation may complete an in-flight effect.</div></li>
+        <li><span>05</span><div>OutcomeUnknown creates reconciliation, not retry.</div></li>
       </ol>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Package versus site</p><h2>What Limen ships, and what this repository demonstrates.</h2></div>
+        <p class="section-note">These are deliberately separate claims.</p>
+      </div>
+
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Distribution boundaries</caption>
+          <thead><tr><th scope="col">Surface</th><th scope="col">Implementation</th><th scope="col">What it establishes</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">npm package</th><td>TypeScript kernel + protocol + reference engine; F# lifecycle CLI binaries</td><td>A browser boundary with explicit effects and a repository verification surface</td></tr>
+            <tr><th scope="row">Limen website</th><td>Static HTML/CSS + TypeScript Limen mechanics + F# WebAssembly application engine</td><td>The boundary can host a non-TypeScript engine in the same repository and drive nontrivial UI state</td></tr>
+            <tr><th scope="row">Chrona/time-entry consumer</th><td>F# domain/engine + .NET WebAssembly transport</td><td>An independent application has also crossed the same boundary</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose">
+        None of those rows proves performance, development speed, defect
+        reduction, or token savings. Those require controlled measurement. The
+        <a href="./evidence.html">evidence page</a> keeps those boundaries explicit.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Verification</p><h2>The site architecture is part of CI now.</h2></div>
+        <p class="section-note">A self-hosting demo that can silently fall back is not evidence.</p>
+      </div>
+
+      <div class="proof-strip">
+        <div><strong>F# authority check</strong><span>CI rejects browser/JS interop in the F# engine and application logic in the C# export shim</span></div>
+        <div><strong>F# engine tests</strong><span>release gating · stale evidence · unknown effect · serialized dispatch</span></div>
+        <div><strong>Artifact checks</strong><span>dotnet.js + .wasm required in dist-site</span></div>
+        <div><strong>Negative assertion</strong><span>legacy site/app/engine.js must not exist</span></div>
+        <div><strong>Binding checks</strong><span>HTML bindings/events cross-checked against F# source vocabulary</span></div>
+      </div>
     </section>

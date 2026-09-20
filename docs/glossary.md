@@ -82,11 +82,13 @@ every caller to handle variants that cannot occur.
 ### Engine
 
 **Canonical name** for the component owning application meaning: state,
-transitions, validation, projection. Lives in `src/engine/`. TypeScript today.
+transitions, validation, projection. The package includes a TypeScript reference
+engine under `src/engine/`; the product site uses an F# engine under
+`site/fsharp/Limen.Site.Engine/` compiled to WebAssembly.
 
 > Aliases seen in older text: "WASM kernel", "the WASM side", "application
-> layer". **Prefer "engine"** — the component is not WebAssembly today, and
-> calling it that is the confusion this audit set out to fix. See
+> layer". **Prefer "engine"** because engine language/transport is independent
+> of the Limen kernel. See
 > [17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
 
 ### Evidence
@@ -166,9 +168,11 @@ implements the browser side, and the rules governing what may live where. It is
 The npm package is still `@echelon-foundry/typescript-wasm-kernel`; nothing was
 renamed. See [18-naming-and-compatibility.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md).
 
-> Discouraged aliases: "the WASM kernel", "the TypeScript WASM kernel". The
-> first is actively misleading — there is no WebAssembly
-> ([17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)).
+> Discouraged aliases: "the WASM kernel", "the TypeScript WASM kernel".
+> WebAssembly may exist behind `EngineTransport`, as it does for the product
+> site, but the **kernel** is the TypeScript browser boundary, not the WASM
+> engine. See
+> [17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
 
 ### `OutcomeUnknown`
 
@@ -253,7 +257,7 @@ design has drifted.
 | Prefer | Over | Because |
 | --- | --- | --- |
 | **Limen** | "the WASM kernel", "the TypeScript WASM kernel" | names the architecture, not a wrong technology |
-| **engine** | "WASM", "WASM kernel", "application layer" | it is TypeScript today |
+| **engine** | "WASM kernel", "application layer" | the engine may be TypeScript, F# WASM, or another transport-compatible implementation |
 | **kernel** / **the Limen kernel** | "bridge", "host", "JS layer" | matches the class name |
 | **projection** | "render", "view model" | nothing is rendered by the engine |
 | **effect request** | "side effect", "API call" | names the boundary crossing |

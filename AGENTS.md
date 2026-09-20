@@ -6,7 +6,7 @@ version: 2.0.0
 owners:
   - repository-governance
 created: 2026-07-22
-updated: 2026-09-14
+updated: 2026-09-21
 review_cycle: quarterly
 supersedes: []
 superseded_by: []
@@ -43,14 +43,19 @@ Note the term "kernel" is still load-bearing and still correct: it means the
 **browser-side bridge** (`BrowserKernel`, `src/kernel/`), not the whole
 product, and not the application side.
 
-**2. There is no WebAssembly in this repository.** No `.wasm` file, no loader,
-no `WebAssembly.instantiate`. The old name described a *boundary shape*, which
-is serializable and therefore WASM-ready. The component that owns application
-meaning is called **the engine**, and it is TypeScript today (`src/engine/`).
-See [docs/17-wasm-migration.md](docs/17-wasm-migration.md).
+**2. The repository now contains a real F# WebAssembly consumer.** The npm
+package is still a TypeScript browser kernel and protocol; `src/engine/` is
+the TypeScript reference engine. But Limen's own interactive product site uses
+an F# application engine compiled to .NET WebAssembly under `site/fsharp/`,
+loaded through the mechanical transport in
+`site/app/wasm-engine-transport.ts`. The tiny C# `[JSExport]` host is
+marshalling glue only and must contain no application decision. See
+[docs/17-wasm-migration.md](docs/17-wasm-migration.md) and
+[site/fsharp/README.md](site/fsharp/README.md).
 
-If you were about to report that you cannot find the WASM, that paragraph is
-the answer. Nothing is missing.
+Do not "simplify" the site by moving application state or rules back into
+TypeScript. The self-hosting boundary is now part of the site's acceptance
+criteria.
 
 ## Before you change anything: open a work item
 
@@ -86,7 +91,7 @@ full protocol.
 src/kernel/     the Limen kernel: browser mechanism ONLY
                 — DOM, fetch, localStorage, timers
 src/protocol.ts the threshold itself: plain, JSON-serializable data only
-src/engine/     application meaning ONLY — state, transitions, validation
+src/engine/     TypeScript reference-engine meaning ONLY — state, transitions, validation
 ```
 
 Four message types cross the boundary, and nothing else does:
@@ -196,7 +201,9 @@ JavaScript outside the engine?                 → STOP. That is rule 1.
 | Effect routing (exhaustive — a missing branch will not compile) | `#runEffect` |
 | A real state machine + transitions | [`src/engine/domain.ts`](src/engine/domain.ts) |
 | State → view projection | `project()` in [`src/engine/engine.ts`](src/engine/engine.ts) |
-| Today's in-process transport | [`src/engine/transport.ts`](src/engine/transport.ts) |
+| Today's in-process reference transport | [`src/engine/transport.ts`](src/engine/transport.ts) |
+| The product site's F# application authority | [`site/fsharp/Limen.Site.Engine/`](site/fsharp/Limen.Site.Engine/) |
+| The product site's WASM loading/serialization mechanics | [`site/app/wasm-engine-transport.ts`](site/app/wasm-engine-transport.ts) |
 | Diagnostics | [`src/kernel/diagnostics.ts`](src/kernel/diagnostics.ts) |
 | The smallest complete app | [`examples/01-counter/`](examples/01-counter/) |
 | The copy shipped to npm consumers (no build step) | [`examples/minimal/`](examples/minimal/) |
@@ -293,7 +300,7 @@ Answer all of these before you write code, and confirm them before you finish:
 8. What HTML/CSS changes are needed? Any new `data-*` wiring, or do existing
    primitives cover it? (Usually: they cover it.)
 9. Am I creating duplicate state anywhere? (Rule 1.)
-10. Am I putting application logic in JavaScript outside the engine? (Rule 1.)
+10. Am I putting application logic in JavaScript/TypeScript outside the chosen engine? (Rule 1.)
 11. Am I bypassing a boundary for convenience?
 12. What tests prove this — including the illegal case?
 13. Does `npm run check` pass?

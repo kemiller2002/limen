@@ -407,3 +407,50 @@ Genuinely unresolved. Not guessed at.
 7. **Is there a real consumer requirement for WebAssembly yet?** Per the
    repository's own 🧊 policy, the answer determines whether any of the
    migration work should begin.
+
+
+---
+
+## 2026-09-20 addendum: A-2 implementation status changed
+
+The original audit finding **A-2** was correct at the time it was recorded:
+the repository name referred to WebAssembly while the repository contained no
+WebAssembly implementation.
+
+That implementation state has changed.
+
+### What now exists
+
+The Limen product site is a real consumer of the Limen boundary with:
+
+- application state, transitions, capabilities, obligations and projection in
+  F# under `site/fsharp/Limen.Site.Engine/`;
+- a .NET WebAssembly host under `site/fsharp/Limen.Site.Wasm/`;
+- a mechanical TypeScript transport under
+  `site/app/wasm-engine-transport.ts`;
+- `BrowserKernel` unchanged as the browser mechanism boundary;
+- CI/artifact checks that require a real `.wasm` runtime and reject the
+  previous TypeScript site engine.
+
+The separate `time-entry-state-machine` consumer also continues to provide an
+external F#/.NET WebAssembly existence proof.
+
+### Revised status of A-2
+
+**A-2 is resolved as an implementation ambiguity, not as a package-name
+migration.**
+
+The npm package still does not ship a domain-specific WebAssembly application
+engine. It ships the TypeScript Limen browser boundary. WebAssembly belongs
+behind `EngineTransport`, and the repository now demonstrates that boundary
+with its own F# site.
+
+The package name remains historical and compatibility-sensitive.
+
+### Related consequence
+
+The original roadmap also called serialization "deferred" because the reference
+TypeScript transport shared a JavaScript heap. That is no longer true as a
+repository-level statement: the F# site performs a real JSON round trip for
+Limen messages. The live roadmap and `docs/17-wasm-migration.md` have been
+updated; this audit preserves the original finding as historical evidence.

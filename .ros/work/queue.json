@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 22,
+  "nextSeq": 23,
   "items": [
     {
       "id": "WI-0001",
@@ -348,6 +348,25 @@
       "attachments": [],
       "createdAt": "2026-09-18T10:40:15.438Z",
       "updatedAt": "2026-09-18T10:40:23.690Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0022",
+      "title": "Rework the Limen site around product value, architectural clarity, verified evidence, and honest WASM status",
+      "description": null,
+      "tags": [
+        "limen",
+        "site",
+        "evidence",
+        "documentation"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-20T18:34:50.749Z",
+      "updatedAt": "2026-09-20T18:34:50.835Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

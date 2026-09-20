@@ -23,3 +23,9 @@ cli/**/obj/
 
 # The release archive staged by publish.yml (npm pack --pack-destination).
 release/
+
+# The Limen product site compiles its F# application engine to .NET
+# WebAssembly. These are build artifacts; source lives under site/fsharp/.
+site/fsharp/**/bin/
+site/fsharp/**/obj/
+site/fsharp/publish/

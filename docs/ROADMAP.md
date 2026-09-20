@@ -9,23 +9,27 @@ next to the code, not ahead of it.
 ```text
 HTML/CSS
     ↓ events
-TypeScript Bridge
-    ↓ commands
-Engine (today: ReferenceEngine, TypeScript)
-    ↓ effect requests / projections
-TypeScript Bridge
+Limen BrowserKernel
+    ↓ BrowserToEngineMessage
+EngineTransport
+    ↓
+Application engine
+    ↓ EngineToBrowserMessage
+Limen BrowserKernel
     ↓
 Browser APIs + DOM
 ```
 
-> **Terminology note.** Earlier revisions of this diagram labelled the third row
-> "WASM Kernel". There is no WebAssembly in this repository — the component that
-> owns application meaning is called **the engine**, and it is TypeScript today.
-> Confusingly, "kernel" elsewhere in this repo means the *browser-side bridge*
-> (`BrowserKernel`), i.e. the opposite side of the boundary. See
-> [17-wasm-migration.md](17-wasm-migration.md) for what exists and what a real
-> WASM transport would take, [glossary.md](glossary.md) for canonical terms, and
-> [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md) findings A-2 and N-1.
+The package remains transport-neutral. Two concrete engine shapes now exist:
+
+- `DirectTypeScriptTransport` + `ReferenceEngine` for the package examples;
+- `WasmSiteTransport` + the F# `Limen.Site.Engine` for the product site.
+
+The site therefore crosses a real WebAssembly/JSON boundary while the kernel
+itself remains unaware of the engine language. "Kernel" continues to mean the
+browser-side bridge, never the F# application engine. See
+[17-wasm-migration.md](17-wasm-migration.md), [glossary.md](glossary.md), and
+the historical finding A-2 in [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
 
 The bridge (`src/kernel/browser-kernel.ts`) is the only layer permitted to
 touch `document`, `window`, `fetch`, or `localStorage`. The engine (`src/engine/`) never sees
@@ -51,7 +55,7 @@ plain, JSON-serializable value.
 
 | # | Responsibility | Status | Where | Tests |
 |---|---|---|---|---|
-| 1 | WASM lifecycle — load, initialize, version-check | ⚠️ Partial | `BrowserKernel.start()` dispatches `Initialize` with `PROTOCOL_VERSION`; `ReferenceEngine.handle()` rejects a mismatched version. "Expose the kernel instance" deliberately not done — no global handle, matching `architecture.yaml`'s `ambient_authority: forbidden`. | `kernel.test.ts`: "start() dispatches Initialize…", "a transport whose start() rejects…" |
+| 1 | Engine lifecycle — load, initialize, version-check | ✅ Demonstrated | `BrowserKernel.start()` awaits the transport, then dispatches `Initialize` with `PROTOCOL_VERSION`. The product site's `WasmSiteTransport.start()` loads the .NET WebAssembly runtime, while F# `Dispatch` rejects a mismatched version. The kernel remains transport-neutral. | `kernel.test.ts` lifecycle tests; F# site-engine serialized-dispatch tests; site artifact check requires the WASM runtime |
 | 2 | Command dispatch | ✅ | `#bindEvent` / `#fire` | `kernel.test.ts` event-dispatch tests |
 | 3 | Projection rendering | ✅ | `#applyScope`, `#applyIf`, `#applyEach` | `kernel.test.ts` projection tests |
 | 4 | Effect execution | ⚠️ Partial | Http (`#runHttp`, any of `GET`/`PUT`/`POST`/`PATCH`/`DELETE`, caller headers merged over the default, opaque pre-serialized body), Storage (`#executeStorage`/`runStorage`, `localStorage`-backed), Clipboard (`writeClipboardText`, write-only) and Navigation (`runNavigation`, push/replace/back/forward). An effect kind the kernel does not implement is reported as `BridgeError` phase `"effect"` rather than silently dropped. File/auth adapters and clipboard *read*: 🧊 deferred, see below. | `kernel.test.ts` effect-execution tests |
@@ -62,7 +66,7 @@ plain, JSON-serializable value.
 | 9 | Rendering helpers — text/attributes/visibility/lists/replace-update fragments | ✅ | `data-text`, `data-bind-<attr>` (visibility via `data-bind-hidden`), `data-each`, `data-if`. Arbitrary fragment replace/insert beyond keyed templates is deliberately unsupported — reconciliation is intentionally restricted to keyed repeated templates (zero-authoritative spec §25) | `kernel.test.ts` projection + list tests |
 | 10 | List rendering | ✅ (virtualization 🧊 deferred) | Keyed reconciliation preserves DOM node identity across reorder (`#applyEach`). Windowing/virtualization: no evidence yet that any list is large enough to need it — spec §30/§31 calls for measuring at 1k/10k/100k/1M records before optimizing. | `kernel.test.ts`: add/remove/reorder-preserves-identity |
 | 11 | Browser-local presentation state — focus, popovers, animation, pointer | ✅ by design | Left entirely to CSS/native browser behavior; the kernel does not track or synchronize any of it (`architecture.yaml`, zero-authoritative spec §4.3) | N/A — no kernel code exists to test |
-| 12 | Serialization boundary | 🧊 Deferred | `DirectTypeScriptTransport` is in-process; no serialization occurs. `protocol.ts` types are already plain, JSON-serializable data by construction, so adding a codec later doesn't require a protocol redesign. Becomes relevant only once an out-of-process/WASM transport exists. | — |
+| 12 | Serialization boundary | ✅ Demonstrated for real F# consumers | `DirectTypeScriptTransport` remains in-process, but the product site serializes `BrowserToEngineMessage` to JSON, F# parses it, and F# serializes `EngineToBrowserMessage` back. The external time-entry consumer uses the same pattern. A generic codec is not part of the npm API because serialization belongs to the chosen transport. | F# site-engine serialized-dispatch tests; `test/site.test.ts`; product-site artifact checks |
 | 13 | Error boundary | ✅ | Every engine round-trip funnels through one chokepoint, `#send()`. A transport throw or a malformed projection is caught, reported via diagnostics, and does not propagate or leave a half-applied view. | `kernel.test.ts`: "a transport.dispatch() rejection is reported…", "a malformed projection is reported…" |
 | 14 | Diagnostics hooks | ✅ | `src/kernel/diagnostics.ts` — injectable `DiagnosticsSink`, defaults to a no-op. Reports `BridgeError` in four phases — `dispatch` (the transport threw or its `start()` rejected), `binding` (malformed markup, e.g. `data-each` without `data-key`), `projection` (a view key missing or not scalar) and `effect` (an effect kind the kernel cannot run) — and `EffectTiming`. | `kernel.test.ts`: "the kernel reports effect timing…", both error-boundary tests |
 | 15 | Accessibility plumbing | ⚠️ Partial | `aria-live` regions work today because they're native HTML the kernel already updates via `data-text`/`textContent` (see `index.html`'s status paragraph) — no special kernel code needed. Focus restoration (e.g. after a keyed list item is removed) is 🧊 deferred, no demonstrated need yet. | — |
@@ -117,8 +121,13 @@ silently deleted.
 
 ## Test coverage summary
 
-- `test/domain.test.ts` — engine-level: state/transition legality, stale
-  evidence rejection, the generic event→command mapping's closed vocabulary.
+- `test/domain.test.ts` — TypeScript reference-engine level: state/transition
+  legality, stale evidence rejection, the generic event→command mapping's
+  closed vocabulary.
+- `site/fsharp/tests/Limen.Site.Engine.Tests/` — product-site F# engine:
+  release evidence/approval gates, stale deployment evidence, unknown-effect
+  reconciliation, stale policy evidence, projected capabilities, and serialized
+  Limen dispatch.
 - `test/kernel.test.ts` — bridge-level, against a real DOM (`jsdom`, dev
   dependency only — see `test/dom-helpers.ts`'s header comment for why a
   hand-rolled DOM shim was rejected in favor of a mature, standards-compliant

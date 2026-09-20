@@ -10,11 +10,6 @@
 // https://user.github.io/typescript-wasm-kernel/ and at a future custom domain.
 // Nothing is hardcoded to "/".
 //
-// NOTE ON LANGUAGE: the Echelon Foundry standard is for tooling like this to be
-// F#. It is TypeScript here because the .NET SDK cannot be installed in the
-// environment this was built in (builds.dotnet.microsoft.com is policy-denied),
-// so F# could not be compiled or verified. Recorded in docs/19-evidence.md and
-// intended to be ported. The logic is deliberately small to keep that cheap.
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
@@ -112,11 +107,16 @@ async function main(): Promise<void> {
   const scripts = await copyAppJs();
   await copyTree(join(ROOT, "dist"), join(OUT, "dist"));
 
+  // The site's application engine is F# compiled to .NET WebAssembly. The
+  // npm package remains a TypeScript browser boundary; this site is a real
+  // consumer of that boundary, not a TypeScript simulation of one.
+  await copyTree(join(ROOT, "site", "fsharp", "publish", "wwwroot"), join(OUT, "wasm"));
+
   // Pages serves what it is given; nothing here needs Jekyll processing, and
   // .nojekyll stops it from ignoring paths that begin with an underscore.
   await writeFile(join(OUT, ".nojekyll"), "", "utf8");
 
-  console.log(`Site built: ${PAGES.length} pages, ${scripts} app script(s), version ${version} (${commit}) → dist-site/`);
+  console.log(`Site built: ${PAGES.length} pages, ${scripts} browser-boundary script(s), F# WASM engine, version ${version} (${commit}) → dist-site/`);
 }
 
 await main();

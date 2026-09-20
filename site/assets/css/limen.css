@@ -276,3 +276,123 @@ pre .hl { background: color-mix(in srgb, var(--ef-oxide-bronze) 35%, transparent
   .brand-mark, .button.primary, .callout, .method-band, .site-footer, pre { border: 1px solid CanvasText; }
   .chip, .tag, .list-inline li, .status { border-color: CanvasText; }
 }
+
+
+/* Complex-state demonstrations. The layout stays ordinary CSS; only the
+   values and capabilities are projected by the F# application engine. */
+.state-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(9rem, 1fr));
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+.state-grid > div {
+  min-width: 0;
+  padding: .85rem;
+  border: 1px solid var(--ef-border-decorative);
+  background: var(--ef-surface-primary);
+}
+.state-grid .label,
+.obligations .label {
+  display: block;
+  margin-bottom: .45rem;
+  color: var(--ef-text-secondary);
+  font-family: var(--mono);
+  font-size: .64rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.obligations {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border: 1px solid var(--ef-border-decorative);
+  background: var(--ef-surface-primary);
+}
+.obligations ul {
+  display: grid;
+  gap: .55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.obligations li { margin: 0; }
+.reconciliation {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-left: 5px solid var(--ef-accent-primary);
+  background: color-mix(in srgb, var(--ef-oxide-bronze) 9%, var(--ef-surface-primary));
+}
+.reconciliation p { color: var(--ef-text-primary); }
+
+.architecture-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 2rem 0;
+  border: 1px solid var(--ef-border-functional);
+  background: var(--ef-border-functional);
+}
+.architecture-node {
+  position: relative;
+  min-width: 0;
+  padding: 1.25rem;
+  background: var(--ef-surface-secondary);
+}
+.architecture-node strong {
+  display: block;
+  margin-bottom: .35rem;
+  color: var(--ef-text-heading);
+}
+.architecture-node code {
+  display: inline-block;
+  margin-top: .45rem;
+}
+.architecture-node + .architecture-node::before {
+  content: "→";
+  position: absolute;
+  left: -.72rem;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  transform: translateY(-50%);
+  background: var(--ef-surface-inverse);
+  color: var(--ef-text-inverse);
+  font-family: var(--mono);
+  font-size: .72rem;
+}
+.proof-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1px;
+  margin: 1.5rem 0;
+  border: 1px solid var(--ef-border-decorative);
+  background: var(--ef-border-decorative);
+}
+.proof-strip > div {
+  padding: 1rem;
+  background: var(--ef-surface-primary);
+}
+.proof-strip strong {
+  display: block;
+  color: var(--ef-text-heading);
+}
+.proof-strip span {
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--ef-text-secondary);
+}
+
+@media (max-width: 900px) {
+  .state-grid,
+  .architecture-flow { grid-template-columns: 1fr 1fr; }
+  .architecture-node:nth-child(3)::before { content: none; }
+}
+
+@media (max-width: 560px) {
+  .state-grid,
+  .architecture-flow { grid-template-columns: 1fr; }
+  .architecture-node + .architecture-node::before { content: none; }
+}
