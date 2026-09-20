@@ -4,7 +4,7 @@
   "repository": "typescript-wasm-kernel",
   "actor": "ros-bootstrap",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-20T18:34:50.868Z",
+  "updatedAt": "2026-09-20T23:10:31.915Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -402,10 +402,20 @@
     {
       "id": "WI-0022",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-20T18:34:50.868Z"
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "site/fsharp/Limen.Site.Engine/Engine.fs"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-site-wasm.sh"
+        }
+      ],
+      "updatedAt": "2026-09-20T23:10:31.915Z",
+      "completedAt": "2026-09-20T23:10:31.915Z"
     }
   ]
 }
