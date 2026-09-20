@@ -82,7 +82,7 @@
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json",
     "build:examples": "tsc -p tsconfig.examples.json",
-    "build:site": "tsc -p tsconfig.site.json && node --experimental-strip-types scripts/build-site.ts",
+    "build:site": "npm run build:site:wasm && npm run test:site:fsharp && tsc -p tsconfig.site.json && node --experimental-strip-types scripts/build-site.ts",
     "serve:site": "npm run build:site && python3 -m http.server 4174 -d dist-site",
     "check:architecture": "node --experimental-strip-types scripts/check-architecture.ts",
     "check:docs": "node --experimental-strip-types scripts/check-docs.ts",
@@ -96,7 +96,9 @@
     "check:site": "node --experimental-strip-types scripts/check-site.ts",
     "check:package": "node --experimental-strip-types scripts/check-package.ts",
     "check:clean-room": "node --experimental-strip-types scripts/clean-room.ts",
-    "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.ts"
+    "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.ts",
+    "build:site:wasm": "dotnet workload restore site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj && dotnet publish site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj -c Release -o site/fsharp/publish",
+    "test:site:fsharp": "dotnet run --project site/fsharp/tests/Limen.Site.Engine.Tests/Limen.Site.Engine.Tests.fsproj -c Release"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",
