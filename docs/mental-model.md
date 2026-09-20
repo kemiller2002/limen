@@ -65,9 +65,10 @@ LocationChanged
 ```
 
 Everything is plain, JSON-serializable data. No functions, no DOM nodes, no
-class instances. That constraint is what makes the engine portable — and it is
-why the package is named for WebAssembly even though it contains none
-(see [WASM migration](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)).
+class instances. That constraint is what makes the engine portable. The
+TypeScript reference transport remains in-process, while the Limen product site
+now exercises the same contract through a real F#/.NET WebAssembly boundary
+(see [WASM status](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)).
 
 ## How a click reaches the engine
 
