@@ -35,12 +35,12 @@ module Protocol =
           Effects: EffectRequest list
           Cancellations: string list }
 
-    let private optionalString (obj: JsonObject) key =
+    let private optionalString (obj: JsonObject) (key: string) =
         match obj.[key] with
         | null -> None
         | node -> Some(node.GetValue<string>())
 
-    let private optionalInt (obj: JsonObject) key =
+    let private optionalInt (obj: JsonObject) (key: string) =
         match obj.[key] with
         | null -> None
         | node -> Some(node.GetValue<int>())
