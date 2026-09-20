@@ -51,6 +51,9 @@ jobs:
       - name: Verify the built site
         run: node --experimental-strip-types scripts/check-site.ts
 
+      - name: Smoke-test the F# WebAssembly site in real Chrome
+        run: npm run smoke:site:wasm
+
       # Only main produces a deployable artifact. A pull request has proven the
       # site builds and passes its checks, which is all it is entitled to do.
       - name: Configure Pages
