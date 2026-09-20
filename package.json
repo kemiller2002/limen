@@ -98,7 +98,8 @@
     "check:clean-room": "node --experimental-strip-types scripts/clean-room.ts",
     "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.ts",
     "build:site:wasm": "dotnet workload restore site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj && dotnet publish site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj -c Release -o site/fsharp/publish",
-    "test:site:fsharp": "dotnet run --project site/fsharp/tests/Limen.Site.Engine.Tests/Limen.Site.Engine.Tests.fsproj -c Release"
+    "test:site:fsharp": "dotnet run --project site/fsharp/tests/Limen.Site.Engine.Tests/Limen.Site.Engine.Tests.fsproj -c Release",
+    "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",
