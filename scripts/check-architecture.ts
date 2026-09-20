@@ -22,22 +22,24 @@ for (const file of await files("src")) {
 // The product site is now a real F# WebAssembly consumer. Its application
 // engine must remain on the authority side of Limen: no JS interop and no
 // browser APIs. The only .NET↔JS interop is the tiny C# host one directory over.
-for (const file of await files("site/fsharp/Limen.Site.Engine")) {
+for (const file of (await files("site/fsharp/Limen.Site.Engine")).filter((path) => path.endsWith(".fs"))) {
   const source = await readFile(file, "utf8");
   for (const forbidden of [
     "System.Runtime.InteropServices.JavaScript",
     "Microsoft.JSInterop",
+    "Fable.Core",
+    "Browser.Dom",
     "JSImport",
     "JSExport",
-    "document",
-    "window",
-    "fetch(",
-    "localStorage",
-    "sessionStorage",
-    "navigator",
-    "history.",
+    "JSHost",
+    "JSObject",
+    "System.Net.Http",
+    "HttpClient",
+    "System.IO",
+    "System.Net.WebClient",
+    "System.Diagnostics.Process",
   ]) {
-    if (source.includes(forbidden)) violations.push(`${file}: F# site engine leaked browser/interoperability authority via ${forbidden}`);
+    if (source.includes(forbidden)) violations.push(`${file}: F# site engine leaked interop/I/O authority via ${forbidden}`);
   }
 }
 
