@@ -41,7 +41,7 @@
 
           <div class="demo-controls">
             <button class="button primary" data-event="deploySuccess" data-bind-disabled="deployDisabled">Deploy: success</button>
-            <button class="button" data-event="deployTimeout" data-bind-disabled="deployDisabled">Deploy: timeout after dispatch</button>
+            <button class="button" data-event="injectOutcomeUnknown" data-bind-disabled="deployDisabled">Evidence: timeout after dispatch</button>
             <button class="button" data-event="deployNetworkFailure" data-bind-disabled="deployDisabled">Deploy: network failure</button>
             <button class="button ghost" data-event="resetRelease">Reset</button>
           </div>
@@ -70,11 +70,13 @@
       </div>
 
       <p class="prose">
-        The public demo uses a harmless GET fixture to exercise Limen's real
-        transport classification; it does not mutate a server. The F# application
-        deliberately treats the timeout as if the operation were consequential:
-        <code>OutcomeUnknown</code> removes the deploy capability and creates a
-        reconciliation obligation. That is the safety property being demonstrated.
+        The success and network-failure buttons use real Limen HTTP effects. The
+        timeout-after-dispatch button deliberately injects an already-classified
+        <code>OutcomeUnknown</code> into the F# state machine so this safety case is
+        deterministic on a static GitHub Pages site. Limen's transport-level
+        timeout classification is covered separately by kernel tests. The F#
+        application then removes deploy capability and creates the reconciliation
+        obligation.
       </p>
     </section>
 
