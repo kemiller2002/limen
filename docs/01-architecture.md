@@ -117,8 +117,9 @@ Three properties of this contract carry all the weight:
 
 1. **It is data, not calls.** No callbacks, no DOM nodes, no object identity, no
    shared memory. Every value survives `JSON.stringify`/`JSON.parse` unchanged.
-   That is what makes an out-of-process or WebAssembly engine possible later
-   without redesigning anything.
+   That is what makes an out-of-process or WebAssembly engine possible without
+   redesigning the contract. The product site now demonstrates this with a real
+   F#/.NET WebAssembly engine.
 2. **It is generic.** The kernel's types mention no domain concept. `ViewState`
    is `{ [key: string]: string | number | boolean | ViewItem[] }`. There is no
    place in the kernel where a feature could add a special case.
@@ -257,11 +258,12 @@ Save when the text is empty" is a rule; if CSS or JavaScript re-derives it, the
 rule now exists in two places and will drift. Projecting `saveDisabled` keeps
 one rule in one file.
 
-**Why is the protocol serializable when nothing is serialized today?**
-Because the alternative is a redesign later. `DirectTypeScriptTransport` passes
-objects in-process and no serialization occurs (ROADMAP item 12). But because
-the types admit nothing unserializable, adding a codec is additive rather than
-structural. See [17-wasm-migration.md](17-wasm-migration.md).
+**Why is the protocol serializable?**
+Because transport choice must not change application semantics.
+`DirectTypeScriptTransport` still passes objects in-process, while the product
+site serializes Limen messages to JSON across a real F#/.NET WebAssembly
+boundary. Both transports implement the same contract. See
+[17-wasm-migration.md](17-wasm-migration.md).
 
 ---
 
@@ -282,7 +284,9 @@ oversights being hidden — each is recorded in [ROADMAP.md](ROADMAP.md).
 - **No list virtualization.** Every projected item becomes a DOM node.
 - **No scheduling primitives.** No built-in debounce; `data-on="input"`
   dispatches on every keystroke.
-- **No serialization boundary yet**, therefore no WASM engine yet.
+- **WASM is optional, not absent.** The npm kernel does not require WebAssembly,
+  but the product site now uses an F#/.NET WebAssembly engine. That introduces
+  real startup/bundle cost, which has not yet been benchmarked comparatively.
 
 The deferrals are deliberate policy, not backlog: this repository treats
 building ahead of a demonstrated need as an architecture violation in itself
