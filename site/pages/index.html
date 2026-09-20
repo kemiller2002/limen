@@ -1,26 +1,27 @@
     <section class="hero">
       <div class="hero-grid">
         <div>
-          <p class="eyebrow">Browser architecture</p>
-          <h1>The threshold your application stands behind.</h1>
+          <p class="eyebrow">F# application authority · Limen browser boundary</p>
+          <h1>Make the browser a mechanism, not a second application.</h1>
           <p class="lead">
-            Limen is an explicit boundary that keeps browser capabilities separate
-            from application authority. The browser renders and interacts. Your
-            application owns what things mean. Nothing crosses between them except
-            plain, serializable data.
+            Limen gives the browser a narrow job: carry semantic events, apply a
+            projection, and perform explicit effects. The application behind this
+            page is F# compiled to WebAssembly. It owns the state, legal
+            transitions, capabilities, obligations, and interpretation of evidence.
           </p>
           <div class="actions">
-            <a class="button primary" href="./demos.html">See it run</a>
-            <a class="button ghost" href="./architecture.html">How it works</a>
+            <a class="button primary" href="./demos.html">Challenge the boundary</a>
+            <a class="button ghost" href="./architecture.html">See the architecture</a>
             <a class="button ghost" href="https://github.com/kemiller2002/typescript-wasm-kernel">Source</a>
           </div>
         </div>
         <div class="stack">
-          <p class="signal">Exactly one place owns application state, and it is not the browser.</p>
+          <p class="signal">This site is a consumer of Limen, not a mockup of it.</p>
           <ul class="list-inline">
-            <li>zero runtime dependencies</li>
-            <li>six HTML attributes</li>
-            <li>~80-line contract</li>
+            <li>application state: F#</li>
+            <li>application runtime: WebAssembly</li>
+            <li>browser authority: Limen</li>
+            <li>markup: static HTML</li>
           </ul>
         </div>
       </div>
@@ -29,222 +30,193 @@
     <section>
       <div class="section-heading">
         <div>
-          <p class="eyebrow">The problem</p>
-          <h2>Truth gets smeared across three places.</h2>
+          <p class="eyebrow">Why the boundary exists</p>
+          <h2>Hard UI problems are usually authority problems.</h2>
         </div>
-        <p class="section-note">Most browser applications end up here by accretion, not by decision.</p>
+        <p class="section-note">The issue is not whether JavaScript can update a span. It can.</p>
       </div>
       <div class="grid">
         <div class="card">
-          <p class="card-kicker">Symptom</p>
-          <h3>Three copies, no owner</h3>
-          <p>A JavaScript store, the DOM itself, and the server each hold a version of the same fact. When they disagree, nothing tells you which one is right.</p>
+          <p class="card-kicker">Legality</p>
+          <h3>Can this action happen now?</h3>
+          <p>Release approval depends on evidence. Deployment depends on approval. A disabled button should reflect that decision, not make it.</p>
         </div>
         <div class="card">
-          <p class="card-kicker">Symptom</p>
-          <h3>Impossible states, representable</h3>
-          <p><code>isSaving</code> and <code>isComplete</code> and <code>hasError</code> can all be true at once. Nothing prevents it, so every reader must invent a meaning for it.</p>
+          <p class="card-kicker">Evidence</p>
+          <h3>Is this response still current?</h3>
+          <p>Two requests overlap. The older response arrives last. Without correlation and explicit state, stale evidence silently wins.</p>
         </div>
         <div class="card">
-          <p class="card-kicker">Symptom</p>
-          <h3>Decisions hidden in handlers</h3>
-          <p>Business rules end up inside click handlers, mixed with DOM updates and network calls, where they cannot be tested without a browser.</p>
+          <p class="card-kicker">External effects</p>
+          <h3>Did the write fail, or do we not know?</h3>
+          <p>A timeout after dispatch is not failure. Treating it as failure and retrying blindly is how duplicate effects are created.</p>
         </div>
         <div class="card">
-          <p class="card-kicker">Symptom</p>
-          <h3>Agents edit the wrong layer</h3>
-          <p>When any layer could plausibly hold a rule, an AI agent has to guess which one does — and it will guess, silently, then keep going.</p>
+          <p class="card-kicker">Placement</p>
+          <h3>Which layer is allowed to decide?</h3>
+          <p>HTTP is browser mechanism. Interpreting 409 is application meaning. Focus control is not currently a Limen capability. Those distinctions are the architecture.</p>
         </div>
       </div>
-    </section>
-
-    <section>
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">The core idea</p>
-          <h2>Five responsibilities, none overlapping.</h2>
-        </div>
-        <p class="section-note">If a layer could hold a rule, eventually it will. So none of them can.</p>
-      </div>
-      <div class="table-scroll">
-        <table class="boundary">
-          <caption>Who owns what</caption>
-          <thead>
-            <tr><th scope="col">Layer</th><th scope="col">Owns</th><th scope="col">Never</th></tr>
-          </thead>
-          <tbody>
-            <tr><th scope="row">HTML</th><td>Document structure, semantics, labels, native validation</td><td>Decides anything</td></tr>
-            <tr><th scope="row">CSS</th><td>Presentation, hover, focus, motion</td><td>Encodes a business rule</td></tr>
-            <tr><th scope="row">Browser</th><td>Layout, paint, native input behavior</td><td>Is asked for permission</td></tr>
-            <tr><th scope="row">Limen kernel</th><td>Carrying events in, applying projections out, performing effects</td><td>Knows what an event <em>means</em></td></tr>
-            <tr><th scope="row">Engine</th><td>State, transitions, validation, capabilities, what to show</td><td>Touches a browser API</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="prose">
-        The kernel understands six HTML attributes and no application vocabulary
-        at all. It does not know what <code>checkAvailability</code> means or what a
-        <code>customers</code> list is. It moves opaque strings and plain data across a
-        boundary — which is exactly what stops application logic from accumulating
-        in the browser layer.
-      </p>
-    </section>
-
-    <section>
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Live</p>
-          <h2>This counter is a real Limen application.</h2>
-        </div>
-        <p class="section-note">Not an animation. The trace below is written by the engine as each round trip happens.</p>
-      </div>
-
-      <div class="demo">
-        <div class="demo-head">
-          <h3>Event → transition → projection → DOM</h3>
-          <span class="status" data-bind-data-tone="loadTone">live</span>
-        </div>
-        <div class="demo-body">
-          <div class="demo-controls">
-            <button class="button primary" data-event="increment">Add one</button>
-            <button class="button" data-event="decrement" data-bind-disabled="decrementDisabled">Subtract one</button>
-            <button class="button ghost" data-event="resetCounter" data-bind-disabled="resetDisabled">Reset</button>
-          </div>
-          <div class="readout">
-            <div>
-              <span class="label">Counter</span>
-              <span class="value" data-text="counter">0</span>
-            </div>
-            <div>
-              <span class="label">Round trips recorded</span>
-              <span class="value" data-text="traceCount">0</span>
-            </div>
-          </div>
-
-          <template data-if="traceEmpty">
-            <p class="trace-empty">Press a button. Every message across the boundary will appear here.</p>
-          </template>
-          <template data-if="hasTrace">
-            <ol class="trace">
-              <template data-each="trace" data-key="id">
-                <li>
-                  <span class="seq" data-text="id"></span>
-                  <span class="step">
-                    <b data-text="event"></b><span class="arrow">→</span><span data-text="command"></span><span class="arrow">→</span><span data-text="to"></span>
-                  </span>
-                </li>
-              </template>
-            </ol>
-          </template>
-
-          <noscript><p class="no-js">This demonstration needs JavaScript, because Limen is a browser runtime. The surrounding explanation does not.</p></noscript>
-        </div>
-      </div>
-      <p class="note">
-        Notice <code>Subtract one</code> and <code>Reset</code> disable themselves at zero. The engine
-        projects that as a value; the DOM never works it out from the number on screen.
-      </p>
-    </section>
-
-    <section>
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">The whole mechanism</p>
-          <h2>Three files. Nothing elided.</h2>
-        </div>
-        <p class="section-note">This is the counter above, in full.</p>
-      </div>
-      <div class="split">
-        <figure class="code-figure">
-          <figcaption>index.html — structure and bindings</figcaption>
-          <pre><code>&lt;button <span class="k">data-event</span>=<span class="s">"increment"</span>&gt;Add one&lt;/button&gt;
-&lt;button <span class="k">data-event</span>=<span class="s">"reset"</span>
-        <span class="k">data-bind-disabled</span>=<span class="s">"resetDisabled"</span>&gt;Reset&lt;/button&gt;
-&lt;p&gt;Count: &lt;span <span class="k">data-text</span>=<span class="s">"count"</span>&gt;0&lt;/span&gt;&lt;/p&gt;</code></pre>
-        </figure>
-        <figure class="code-figure">
-          <figcaption>engine.ts — all the meaning</figcaption>
-          <pre><code><span class="c">// Pure. No DOM, no fetch, no globals.</span>
-<span class="k">const</span> transition = (state, name) =&gt; {
-  <span class="k">switch</span> (name) {
-    <span class="k">case</span> <span class="s">"increment"</span>: <span class="k">return</span> { count: state.count + 1 };
-    <span class="k">case</span> <span class="s">"reset"</span>:     <span class="k">return</span> { count: 0 };
-    <span class="k">default</span>: <span class="k">throw new</span> Error(`Unrecognized event: ${name}`);
-  }
-};
-
-<span class="c">// Pure. Publishes a capability, not just data.</span>
-<span class="k">const</span> project = (state) =&gt; ({
-  count: state.count,
-  <span class="hl">resetDisabled: state.count === 0</span>,
-});</code></pre>
-        </figure>
-      </div>
-      <figure class="code-figure">
-        <figcaption>main.ts — the wiring, in full</figcaption>
-        <pre><code><span class="k">import</span> { BrowserKernel } <span class="k">from</span> <span class="s">"@echelon-foundry/typescript-wasm-kernel"</span>;
-<span class="k">import</span> { createCounterTransport } <span class="k">from</span> <span class="s">"./engine.js"</span>;
-
-<span class="k">await new</span> BrowserKernel(createCounterTransport(), document).start();</code></pre>
-      </figure>
-      <p class="prose">
-        That is the entire mechanism. A click becomes
-        <code>SemanticEvent { name: "increment" }</code>, the transition returns a new state,
-        the projection turns it into <code>{ count: 1, resetDisabled: false }</code>, and the
-        kernel writes <code>1</code> into the span and enables the button.
-      </p>
     </section>
 
     <section class="method-band">
       <div>
-        <p class="eyebrow">What follows from the boundary</p>
-        <h2>Consequences, not claims.</h2>
+        <p class="eyebrow">Self-hosting proof</p>
+        <h2>The site follows the architecture it describes.</h2>
         <p>
-          Each of these is true by construction — it follows from where the line
-          is drawn. None of them is a measured result, and this site does not
-          present them as one.
+          HTML and CSS remain browser-native. Limen turns interactions into plain
+          messages and performs browser effects. A tiny transport loads the .NET
+          WebAssembly runtime. Every application decision on the interactive pages
+          lives in the F# engine.
         </p>
-        <p><a href="./evidence.html">What has and has not been measured →</a></p>
+        <p class="note">The npm package itself is still a TypeScript browser kernel. The F# WASM site engine is a real consumer of that package boundary, not code shipped as part of the kernel.</p>
       </div>
       <ol>
-        <li><span>01</span><div><strong>One source of truth.</strong> State exists only in the engine. The DOM is output, never input.</div></li>
-        <li><span>02</span><div><strong>Illegal states unrepresentable.</strong> State is a union, so &ldquo;saving and already saved&rdquo; cannot be written down.</div></li>
-        <li><span>03</span><div><strong>Deterministic transitions.</strong> <code>(state, command) → state</code> is pure, and testable with no browser.</div></li>
-        <li><span>04</span><div><strong>Honest failure.</strong> Every effect reports Success, Failure, Cancelled, or OutcomeUnknown. &ldquo;We don't know&rdquo; is a real outcome.</div></li>
-        <li><span>05</span><div><strong>Portable logic.</strong> The engine touches no browser API, so it can move to another language without rewriting behavior.</div></li>
-        <li><span>06</span><div><strong>Less to audit.</strong> Browser access lives in one file, and the build fails if it leaks.</div></li>
+        <li><span>01</span><div><strong>HTML/CSS</strong> define document structure and presentation.</div></li>
+        <li><span>02</span><div><strong>BrowserKernel</strong> carries semantic events and applies projections.</div></li>
+        <li><span>03</span><div><strong>WASM transport</strong> serializes one message in and one response out.</div></li>
+        <li><span>04</span><div><strong>F# engine</strong> owns state, legality, obligations, effects, and view projection.</div></li>
       </ol>
     </section>
 
     <section>
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Honest limits</p>
-          <h2>What Limen does not give you.</h2>
+          <p class="eyebrow">Live problem</p>
+          <h2>A release is not a collection of booleans.</h2>
         </div>
-        <p class="section-note">Recorded, not hidden. Several are deliberate.</p>
+        <p class="section-note">Resolve evidence, obtain authority, then test what happens when deployment evidence becomes uncertain.</p>
       </div>
-      <div class="columns">
-        <div class="card"><h3>No router</h3><p>There is a navigation capability — push, replace, back, forward, and the browser&rsquo;s own moves — but no route table and no path matching. What a URL <em>means</em> is yours to decide.</p></div>
-        <div class="card"><h3>Four browser capabilities</h3><p>HTTP, <code>localStorage</code>, clipboard <em>write</em>, and history. No files, timers, focus control, IndexedDB or clipboard read — adding one is a deliberate protocol change.</p></div>
-        <div class="card"><h3>No focus management</h3><p>Removing a focused list item drops focus. A known gap.</p></div>
-        <div class="card"><h3>No virtualization</h3><p>Every projected item becomes a DOM node.</p></div>
-        <div class="card"><h3>More ceremony when trivial</h3><p>For a genuinely simple page, a small component framework is less work. Limen earns its keep when behavior is complex.</p></div>
-        <div class="card"><h3>No WebAssembly here</h3><p>The boundary is designed for it and one consumer runs an F# engine across it — but this package ships TypeScript.</p></div>
+
+      <div class="demo">
+        <div class="demo-head">
+          <h3>Release gate</h3>
+          <span class="status" data-bind-data-tone="deploymentTone" data-text="deploymentStatus">Not started</span>
+        </div>
+        <div class="demo-body">
+          <div class="state-grid">
+            <div><span class="label">Tests</span><span class="status" data-bind-data-tone="testsTone" data-text="testsStatus">Unverified</span></div>
+            <div><span class="label">Security</span><span class="status" data-bind-data-tone="securityTone" data-text="securityStatus">Unverified</span></div>
+            <div><span class="label">Approval</span><span class="status" data-bind-data-tone="approvalTone" data-text="approvalStatus">Not approved</span></div>
+            <div><span class="label">Deployment</span><span class="status" data-bind-data-tone="deploymentTone" data-text="deploymentStatus">Not started</span></div>
+          </div>
+
+          <p class="verdict" data-bind-data-tone="deploymentTone" data-text="releaseDecision" role="status"></p>
+
+          <div class="demo-controls">
+            <button class="button" data-event="testsPass" data-bind-disabled="canChangeEvidence">Pass tests</button>
+            <button class="button ghost" data-event="testsFail" data-bind-disabled="canChangeEvidence">Fail tests</button>
+            <button class="button" data-event="securityClear" data-bind-disabled="canChangeEvidence">Clear security</button>
+            <button class="button ghost" data-event="securityBlock" data-bind-disabled="canChangeEvidence">Block security</button>
+            <button class="button primary" data-event="approveRelease" data-bind-disabled="canApproveRelease">Approve release</button>
+          </div>
+
+          <div class="demo-controls">
+            <button class="button primary" data-event="deploySuccess" data-bind-disabled="canDeployRelease">Deploy: success</button>
+            <button class="button" data-event="deployTimeout" data-bind-disabled="canDeployRelease">Deploy: timeout after dispatch</button>
+            <button class="button" data-event="deployNetworkFailure" data-bind-disabled="canDeployRelease">Deploy: network failure</button>
+            <button class="button ghost" data-event="resetRelease">Reset scenario</button>
+          </div>
+
+          <template data-if="releaseHasObligations">
+            <div class="obligations">
+              <p class="label">Unresolved work</p>
+              <ul>
+                <template data-each="releaseObligations" data-key="id">
+                  <li><span class="status" data-bind-data-tone="tone" data-text="text"></span></li>
+                </template>
+              </ul>
+            </div>
+          </template>
+
+          <template data-if="needsReleaseReconciliation">
+            <div class="reconciliation">
+              <p><strong>No retry button.</strong> The request timed out after dispatch. The effect may already exist.</p>
+              <div class="demo-controls">
+                <button class="button primary" data-event="reconcileApplied">Authoritative check: applied</button>
+                <button class="button" data-event="reconcileNotApplied">Authoritative check: not applied</button>
+              </div>
+            </div>
+          </template>
+
+          <noscript><p class="no-js">The surrounding explanation is static. The release state machine requires the Limen browser runtime and F# WebAssembly engine.</p></noscript>
+        </div>
+      </div>
+
+      <p class="prose">
+        The buttons are not the rules. F# projects capabilities such as
+        <code>canApproveRelease</code> and <code>canDeployRelease</code> from authoritative
+        state. Limen only applies them to the DOM. A timeout becomes
+        <code>ReconciliationRequired</code>, which removes deployment capability until new
+        authoritative evidence arrives.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Why F# here</p>
+          <h2>The difficult part becomes ordinary typed code.</h2>
+        </div>
+        <p class="section-note">The engine never imports a browser API.</p>
+      </div>
+      <div class="split">
+        <figure class="code-figure">
+          <figcaption>F# state that cannot lie about deployment</figcaption>
+          <pre><code><span class="k">type</span> DeploymentState =
+  | NotStarted
+  | InFlight of CorrelationId
+  | Deployed
+  | DeploymentFailed of reason: string
+  | ReconciliationRequired
+
+<span class="k">type</span> ReleaseState = {
+  Tests: EvidenceState
+  Security: EvidenceState
+  Approved: bool
+  Deployment: DeploymentState
+}</code></pre>
+        </figure>
+        <figure class="code-figure">
+          <figcaption>Browser-side wiring has no application decision</figcaption>
+          <pre><code><span class="k">await new</span> BrowserKernel(
+  <span class="k">new</span> WasmSiteTransport(),
+  document,
+  diagnostics
+).start();
+
+<span class="c">// No release state.</span>
+<span class="c">// No approval rule.</span>
+<span class="c">// No retry policy.</span></code></pre>
+        </figure>
       </div>
     </section>
 
     <section>
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Next</p>
-          <h2>Where to go.</h2>
+          <p class="eyebrow">What follows from the boundary</p>
+          <h2>Structural consequences, not benchmark claims.</h2>
         </div>
+        <p class="section-note">The evidence page separates what is enforced from what remains unmeasured.</p>
       </div>
       <div class="grid">
-        <a class="card card-link" href="./architecture.html"><p class="card-kicker">Understand</p><h3>Architecture</h3><p>What runs where, who owns state, and why the line is drawn where it is.</p></a>
-        <a class="card card-link" href="./demos.html"><p class="card-kicker">See</p><h3>Interactive demos</h3><p>Event flow, illegal states, and all four effect outcomes — driven by the real kernel.</p></a>
-        <a class="card card-link" href="./agents.html"><p class="card-kicker">Build</p><h3>For AI agents</h3><p>The contract, the decision tree, and where a change belongs.</p></a>
-        <a class="card card-link" href="./docs.html"><p class="card-kicker">Reference</p><h3>Documentation</h3><p>Getting started, effects, testing, recipes, troubleshooting, API.</p></a>
+        <div class="card"><h3>Application state has one owner</h3><p>The F# engine decides. The DOM is projection output and browser-local state remains browser-local.</p></div>
+        <div class="card"><h3>Effects are evidence</h3><p>The browser reports classified outcomes. The engine decides what those outcomes mean to the application.</p></div>
+        <div class="card"><h3>Capabilities are projected</h3><p>The UI does not reconstruct permission by peeking at text, CSS classes, or unrelated flags.</p></div>
+        <div class="card"><h3>The boundary is executable</h3><p>This site crosses it for real: static HTML → Limen → serialized protocol → F# WebAssembly → projection.</p></div>
+      </div>
+      <p class="prose"><a href="./evidence.html">See exactly what is measured, structural, provisional, and still unknown →</a></p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Go deeper</p><h2>Make the hard cases fail in front of you.</h2></div>
+      </div>
+      <div class="grid">
+        <a class="card card-link" href="./demos.html"><p class="card-kicker">Challenge</p><h3>Interactive engineering cases</h3><p>Release gating, stale evidence, ambiguous effects, and boundary-placement problems.</p></a>
+        <a class="card card-link" href="./architecture.html"><p class="card-kicker">Understand</p><h3>Architecture</h3><p>What runs in F#, what stays in the browser, and what the kernel is forbidden to know.</p></a>
+        <a class="card card-link" href="./agents.html"><p class="card-kicker">Build</p><h3>For AI agents</h3><p>A bounded answer to “where does this change belong?”</p></a>
+        <a class="card card-link" href="./docs.html"><p class="card-kicker">Reference</p><h3>Documentation</h3><p>Protocol, effects, testing, routing, clipboard, troubleshooting, lifecycle CLI.</p></a>
       </div>
     </section>
