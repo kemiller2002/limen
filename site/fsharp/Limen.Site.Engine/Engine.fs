@@ -11,7 +11,6 @@ module Engine =
 
     type DeployScenario =
         | DeploySuccess
-        | DeployTimeout
         | DeployNetworkFailure
 
     type DeploymentState =
@@ -74,6 +73,7 @@ module Engine =
         | SecurityBlocked
         | ApproveRelease
         | BeginDeploy of scenario: DeployScenario * correlationId: string
+        | InjectOutcomeUnknown
         | RecordDeploy of correlationId: string * outcome: HttpOutcome
         | ReconcileApplied
         | ReconcileNotApplied
@@ -196,7 +196,6 @@ module Engine =
 
     let private deployScenarioName = function
         | DeploySuccess -> "success"
-        | DeployTimeout -> "timeout-after-dispatch"
         | DeployNetworkFailure -> "network-failure"
 
     let private canChangeEvidence release =
@@ -230,7 +229,7 @@ module Engine =
         | "securityBlock" -> SecurityBlocked
         | "approveRelease" -> ApproveRelease
         | "deploySuccess" -> BeginDeploy(DeploySuccess, correlationId)
-        | "deployTimeout" -> BeginDeploy(DeployTimeout, correlationId)
+        | "injectOutcomeUnknown" -> InjectOutcomeUnknown
         | "deployNetworkFailure" -> BeginDeploy(DeployNetworkFailure, correlationId)
         | "reconcileApplied" -> ReconcileApplied
         | "reconcileNotApplied" -> ReconcileNotApplied
@@ -248,7 +247,6 @@ module Engine =
     let private deploymentEffect scenario correlationId =
         match scenario with
         | DeploySuccess -> HttpGet(correlationId, "./demo/deploy-applied.json", 5000)
-        | DeployTimeout -> HttpGet(correlationId, "./demo/deploy-applied.json", 1)
         | DeployNetworkFailure -> HttpGet(correlationId, "https://limen-demo-unreachable.invalid/deploy.json", 5000)
 
     let private commandName = function
@@ -258,6 +256,7 @@ module Engine =
         | SecurityBlocked -> "SecurityBlocked"
         | ApproveRelease -> "ApproveRelease"
         | BeginDeploy(scenario, _) -> $"BeginDeploy({deployScenarioName scenario})"
+        | InjectOutcomeUnknown -> "InjectOutcomeUnknown"
         | RecordDeploy _ -> "RecordDeploy"
         | ReconcileApplied -> "ReconcileApplied"
         | ReconcileNotApplied -> "ReconcileNotApplied"
@@ -343,6 +342,15 @@ module Engine =
                       Effect =
                         match effect with
                         | HttpGet(_, url, timeoutMs) -> $"Http GET {url} ({timeoutMs}ms)" } }
+
+        | InjectOutcomeUnknown when canDeploy state.Release ->
+            let next =
+                { state with
+                    Release =
+                        { state.Release with
+                            Deployment = ReconciliationRequired } }
+
+            step state command next "demo evidence injection: OutcomeUnknown(timeout-after-dispatch)"
 
         | RecordDeploy(correlationId, outcome) ->
             match state.Release.Deployment with
