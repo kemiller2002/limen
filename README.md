@@ -39,15 +39,18 @@ and keeps it honest.
 
 ### Three things newcomers ask first
 
-1. **Where is the WebAssembly?** There is none — not yet. The name describes a
-   *boundary shape* that is narrow and serializable, and therefore WASM-ready.
-   Full answer: [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
-2. **Is the application written in F#?** Not today. **The engine is
-   TypeScript** (`src/engine/`), and the F# in this repository is the lifecycle
-   CLI (`cli/`), not the application side. A WASM engine in F#, C#, Rust or
-   Kotlin is the design target — the boundary exists so the engine can be
-   replaced without changing the browser side — but it is not implemented, and
-   nothing here should be read as though it were.
+1. **Where is the WebAssembly?** The **npm package is still a TypeScript browser
+   boundary** and does not ship a WASM application engine. The repository now
+   contains two real F#/.NET WebAssembly consumers of that boundary: the Limen
+   product site under `site/fsharp/`, and the separate
+   `time-entry-state-machine` application. The deployed Limen site therefore
+   demonstrates the seam rather than merely describing it. Full status:
+   [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+2. **Is Limen written in F#?** The **browser kernel and protocol are
+   TypeScript**. The lifecycle CLI is F#. The product site's application state,
+   transitions, evidence handling, capabilities and projection are also F#,
+   compiled to WebAssembly. A tiny C# `[JSExport]` file exists only as .NET
+   marshalling glue; it contains no application decision.
 3. **Why is the package named `typescript-wasm-kernel`?** History. Limen is the
    product name; **no exported symbol, file path, or protocol type was
    renamed**, and nothing was deprecated. See
@@ -63,18 +66,18 @@ single file tells you which is right.
 Limen takes a different position: **exactly one place owns application state,
 and it is not the browser.**
 
-| Benefit | Why it follows |
+| Property | What Limen actually supplies |
 | --- | --- |
-| One source of truth | Application state exists only in the engine. The DOM is output, never input. |
-| Illegal states are unrepresentable | State is a discriminated union, so "saving *and* already saved" cannot be written down. |
-| Deterministic transitions | `(state, command) → state` is pure, and testable without a browser. |
-| Honest failure | Every effect reports a closed set of outcomes. "We don't know" is a real, handled case. |
-| Portable logic | The engine touches no browser API, so it can move to another language without rewriting behavior. |
-| Less to audit | Browser access lives in one file, and a build check fails if it leaks. |
-| Easier for agents | There is one correct place for any given change, and it can be stated as a rule. |
+| Explicit application authority | The contract gives the engine one place to publish application state and decisions. A compliant application treats the DOM as projection output, not as a second source of truth. |
+| Explicit effects and uncertainty | Browser I/O crosses as typed requests/results, including `OutcomeUnknown` where the browser cannot honestly call an effect success or failure. |
+| Portable engine seam | `EngineTransport` carries serializable data only. The site and an external time-entry consumer both demonstrate F#/.NET WASM engines behind it. |
+| Centralized browser authority | HTTP, storage, clipboard and navigation mechanisms live in the kernel rather than application transitions. |
+| Small browser-facing audit surface | The reference engine is mechanically checked for forbidden browser APIs; consumers can apply the same rule. |
+| Strong domain modelling is possible, not automatic | F# or a typed TypeScript engine can make illegal domain states unrepresentable and transitions pure. **Limen does not manufacture that domain model for you.** |
 
-These are consequences of the boundary, not measured outcomes — see
-[Evidence](#evidence). The mechanically enforced one is the second-to-last:
+These are architectural properties or existence proofs, not measured claims
+about speed, defects, agent accuracy, tokens or cost — see [Evidence](#evidence).
+The mechanically enforced reference-engine boundary is:
 [`scripts/check-architecture.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/scripts/check-architecture.ts)
 fails the build if `src/engine/**` so much as mentions `document`, `window`,
 `fetch(`, `localStorage`, or `sessionStorage`.
