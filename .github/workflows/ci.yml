@@ -100,3 +100,79 @@ jobs:
 
       - name: Exercise the CLI through the npm bootstrap
         run: node --experimental-strip-types --test test/cli.test.ts
+
+  echelon-capability-rollout:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "chore/echelon-capabilities-2026-09-21"
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: "24"}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - run: |
+          git fetch origin main
+          git checkout origin/main -- ".github/workflows/ci.yml"
+      - name: SDE
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/kemiller2002/state-directed-engineering.git "$RUNNER_TEMP/sde-source"
+          (cd "$RUNNER_TEMP/sde-source/distribution" && npm run build:payload)
+          if [[ -d .sde || -f .echelon/sde.json ]]; then cmd=upgrade; else cmd=init; fi
+          SDE_PAYLOAD_DIR="$RUNNER_TEMP/sde-source/distribution/dist" dotnet run --project "$RUNNER_TEMP/sde-source/src/Sde.Cli/Sde.Cli.fsproj" -c Release -- "$cmd"
+          SDE_PAYLOAD_DIR="$RUNNER_TEMP/sde-source/distribution/dist" dotnet run --project "$RUNNER_TEMP/sde-source/src/Sde.Cli/Sde.Cli.fsproj" -c Release -- verify
+      - name: ROS
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/kemiller2002/repository-operating-system.git "$RUNNER_TEMP/ros-source"
+          dotnet run --project "$RUNNER_TEMP/ros-source/src/Ros.Cli/Ros.Cli.fsproj" -c Release -- init
+      - name: Visual Engineering
+        run: |
+          set -euo pipefail
+          if [[ -f .echelon/visual-engineering.json ]]; then cmd=upgrade; else cmd=init; fi
+          npx --yes @echelon-foundry/visual-engineering@1.0.0 "$cmd"
+      - name: Communication Engineering
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/kemiller2002/communication-engineering.git "$RUNNER_TEMP/communication-engineering-source"
+          if [[ -f .echelon/communication-engineering.json ]]; then cmd=upgrade; else cmd=init; fi
+          node "$RUNNER_TEMP/communication-engineering-source/bin/communication-engineering.mjs" "$cmd"
+      - name: Limen
+        run: |
+          set -euo pipefail
+          if [[ ! -f limen.config.json ]]; then
+            cat > limen.config.json <<'JSON'
+          {
+            "configurationVersion": 1,
+            "boundary": {"engine": ["src/engine"], "kernel": ["src/kernel"]}
+          }
+JSON
+          fi
+          if [[ -f .echelon/limen.json ]]; then cmd=upgrade; else cmd=init; fi
+          npx --yes @echelon-foundry/typescript-wasm-kernel@0.6.1 "$cmd"
+      - name: Verify combined state
+        run: |
+          set -euo pipefail
+          dotnet run --project "$RUNNER_TEMP/ros-source/src/Ros.Cli/Ros.Cli.fsproj" -c Release -- init
+          dotnet run --project "$RUNNER_TEMP/ros-source/src/Ros.Cli/Ros.Cli.fsproj" -c Release -- verify --strict
+          SDE_PAYLOAD_DIR="$RUNNER_TEMP/sde-source/distribution/dist" dotnet run --project "$RUNNER_TEMP/sde-source/src/Sde.Cli/Sde.Cli.fsproj" -c Release -- verify
+          npx --yes @echelon-foundry/visual-engineering@1.0.0 verify --strict
+          node "$RUNNER_TEMP/communication-engineering-source/bin/communication-engineering.mjs" verify --strict
+          npx --yes @echelon-foundry/typescript-wasm-kernel@0.6.1 verify --strict
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "Echelon Upgrade Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm --ignore-unmatch .github/workflows/echelon-capability-upgrade.yml .echelon-rollout-trigger
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "chore: install current Echelon engineering capabilities"
+          git push origin HEAD:"chore/echelon-capabilities-2026-09-21"
