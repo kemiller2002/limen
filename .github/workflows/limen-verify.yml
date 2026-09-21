@@ -22,5 +22,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: Verify the Limen boundary
-        run: npx --yes @echelon-foundry/typescript-wasm-kernel verify --strict
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Verify the Limen boundary from its source implementation
+        run: |
+          dotnet run --project cli/Limen.Cli/Limen.Cli.fsproj -c Release -p:Version=0.6.1 -- \
+            --root "$GITHUB_WORKSPACE" verify --strict
