@@ -148,12 +148,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ ! -f limen.config.json ]]; then
-            cat > limen.config.json <<'JSON'
-          {
-            "configurationVersion": 1,
-            "boundary": {"engine": ["src/engine"], "kernel": ["src/kernel"]}
-          }
-JSON
+            printf '%s\n' '{"configurationVersion":1,"boundary":{"engine":["src/engine"],"kernel":["src/kernel"]}}' > limen.config.json
           fi
           if [[ -f .echelon/limen.json ]]; then cmd=upgrade; else cmd=init; fi
           npx --yes @echelon-foundry/typescript-wasm-kernel@0.6.1 "$cmd"
