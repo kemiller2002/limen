@@ -17,8 +17,28 @@ open System
 open Limen.Core.Types
 
 /// Browser capabilities the engine side must not name.
+///
+/// JavaScript and TypeScript expose browser globals directly. Managed-language
+/// engines do not: a bare identifier such as `document` is ordinary domain
+/// vocabulary unless it is qualified through a browser binding. Keep the
+/// lexical check language-aware so the invariant remains useful without
+/// turning common domain names into false positives.
 let forbiddenBrowserTokens =
     [ "document"; "window"; "fetch("; "localStorage"; "sessionStorage"; "JsValue"; "IJSRuntime" ]
+
+let private managedBrowserTokens =
+    [ "Browser.Dom.document"
+      "Browser.Dom.window"
+      "Browser.Dom.fetch"
+      "JsValue"
+      "IJSRuntime" ]
+
+let private browserTokensFor (path: string) =
+    match IO.Path.GetExtension(path).ToLowerInvariant() with
+    | ".fs"
+    | ".fsx"
+    | ".cs" -> managedBrowserTokens
+    | _ -> forbiddenBrowserTokens
 
 /// Ways to defeat the type system, which is how meaning leaks across the
 /// boundary without anyone noticing.
@@ -127,7 +147,7 @@ let checkFile (isEngineSide: bool) (path: string) (content: string) =
 
         let browser =
             if isEngineSide then
-                forbiddenBrowserTokens
+                browserTokensFor path
                 |> List.filter (fun token -> containsWord token code)
                 |> List.map (fun token -> BoundaryViolation(path, sprintf "engine code references the browser capability '%s'" token))
             else
