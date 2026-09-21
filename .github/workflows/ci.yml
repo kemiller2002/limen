@@ -167,13 +167,19 @@ jobs:
           npx --yes @echelon-foundry/visual-engineering@1.0.0 verify --strict
           node "$RUNNER_TEMP/communication-engineering-source/bin/communication-engineering.mjs" verify --strict
           npx --yes @echelon-foundry/typescript-wasm-kernel@0.6.1 verify --strict
-      - name: Commit
+      - name: Commit non-workflow rollout state
+        shell: bash
         run: |
           set -euo pipefail
           git config user.name "Echelon Upgrade Bot"
           git config user.email "actions@users.noreply.github.com"
-          git rm --ignore-unmatch .github/workflows/echelon-capability-upgrade.yml .echelon-rollout-trigger
+          git checkout HEAD -- .github/workflows
+          git rm --ignore-unmatch .echelon-rollout-trigger
           git add -A
-          if git diff --cached --quiet; then exit 0; fi
+          git reset .github/workflows
+          if git diff --cached --quiet; then
+            echo "No non-workflow repository changes required."
+            exit 0
+          fi
           git commit -m "chore: install current Echelon engineering capabilities"
           git push origin HEAD:"chore/echelon-capabilities-2026-09-21"
