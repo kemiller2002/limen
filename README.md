@@ -522,6 +522,10 @@ This repository follows [SDE](https://github.com/kemiller2002/typescript-wasm-ke
 and the ROS work protocol: identify a work item and run `./ros work start WI-####`
 **before** meaningful changes, or CI's `validate` job will reject the branch.
 
+Installed ROS governance references are also part of the repository's documented engineering surface:
+[development telemetry](docs/development-telemetry.md) and
+[Ordo observation and handoff](docs/ordo-observation.md).
+
 ## Evidence
 
 Limen's benefits are stated above as *architectural consequences* — things that
