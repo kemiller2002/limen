@@ -29,3 +29,9 @@ release/
 site/fsharp/**/bin/
 site/fsharp/**/obj/
 site/fsharp/publish/
+
+# BEGIN echelon:visual-engineering
+# Installed Visual Engineering context. Refresh it with:
+#   npx @echelon-foundry/visual-engineering init
+.visual-engineering/
+# END echelon:visual-engineering

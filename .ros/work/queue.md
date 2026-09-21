@@ -2,6 +2,7 @@
 
 | ID | Work | Status | Tags | Priority |
 |---|---|---|---|---|
+| LIMEN-UPGRADE-2026-09-21 | Reconcile Limen self-hosting with current Echelon capabilities | complete | tooling,limen,ordo,ros | high |
 | ROS-INSTALL-1-2-1 | ROS-INSTALL-1-2-1 | complete |  |  |
 | WI-0001 | Release npm version 0.4.1 with ROS attribution | complete | npm, release | high |
 | WI-0002 | Documentation audit and reconstruction: rewrite README/AGENTS, add docs/ set, six verified examples, docs+example CI verification | complete | docs, examples, ci | high |
@@ -24,4 +25,4 @@
 | WI-0019 | Sweep the documents the new capabilities made stale, add BrowserLocation.origin, and guard against the recurrence | complete | documentation, protocol | medium |
 | WI-0020 | Record the decision to defer Playwright adoption rather than leave it an open question | complete | documentation | medium |
 | WI-0021 | Release as 0.6.1: the v0.6.0 tag was pushed at the pre-merge commit and cannot be re-pointed | complete | release | medium |
-| WI-0022 | Rework the Limen site around product value, architectural clarity, verified evidence, and honest WASM status | ready | limen, site, evidence, documentation | high |
+| WI-0022 | Rework the Limen site around product value, architectural clarity, verified evidence, and honest WASM status | complete | limen, site, evidence, documentation | high |
