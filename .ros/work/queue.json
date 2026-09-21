@@ -370,6 +370,22 @@
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "LIMEN-UPGRADE-2026-09-21",
+      "title": "Reconcile Limen self-hosting with current Echelon capabilities",
+      "description": null,
+      "tags": [
+        "tooling,limen,ordo,ros"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-21T18:51:11.942Z",
+      "updatedAt": "2026-09-21T18:51:24Z",
+      "createdBy": "agent:chatgpt",
+      "source": "agent-discovery",
+      "sourceReference": "public-repository-upgrade-2026-09-21"
     }
   ]
 }

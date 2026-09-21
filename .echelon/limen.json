@@ -8,8 +8,8 @@
     {
       "path": ".github/workflows/limen-verify.yml",
       "ownership": "tool-owned",
-      "disposition": "installed",
-      "sha256": "431a9121670becfcb8f3f7afab55393deaa2b8c5d3ad00513a039241e4d1dfa4"
+      "disposition": "preserved-existing",
+      "sha256": "382e6fb85e216d5ab981d704700f9871ccb118ffb11494c8b1c00bec75141043"
     },
     {
       "path": "limen.config.json",
