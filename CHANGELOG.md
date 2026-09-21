@@ -18,6 +18,17 @@ exhaustive lists.
 
 Nothing yet.
 
+## [0.6.2] — 2026-09-21
+
+### Fixed
+
+- **Language-aware browser capability detection.** JavaScript and TypeScript
+  engine code still rejects direct browser globals such as `document` and
+  `window`. F# and C# engine code now requires qualified browser bindings such
+  as `Browser.Dom.document` or managed interop types before reporting a
+  boundary violation, so ordinary domain identifiers named `document` or
+  `window` no longer produce false positives.
+
 ## [0.6.1] — unreleased at the time of writing
 
 > **Availability.** Everything in this entry is on `main` and is **not in

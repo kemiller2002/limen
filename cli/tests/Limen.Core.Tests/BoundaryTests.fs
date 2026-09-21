@@ -13,6 +13,20 @@ let ``engine code that reaches for the DOM is a violation`` () =
     Assert.NotEmpty problems
 
 [<Fact>]
+let ``managed engine code may use document as ordinary domain vocabulary`` () =
+    Assert.Empty(engine "src/engine/domain.fs" "let summarize document = document")
+
+[<Fact>]
+let ``managed engine code may use window as ordinary domain vocabulary`` () =
+    Assert.Empty(engine "src/engine/domain.cs" "string Name(Window window) => window.Name;")
+
+[<Theory>]
+[<InlineData("let x = Browser.Dom.document.title")>]
+[<InlineData("let x = Browser.Dom.window.location")>]
+let ``qualified FSharp browser globals remain violations`` (source: string) =
+    Assert.NotEmpty(engine "src/engine/leak.fs" source)
+
+[<Fact>]
 let ``kernel code that reaches for the DOM is allowed`` () =
     // This is the whole point: the kernel is the one place that may.
     let problems = kernel "src/kernel/bridge.ts" "export const f = () => document.title;"
