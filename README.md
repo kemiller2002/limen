@@ -523,8 +523,8 @@ and the ROS work protocol: identify a work item and run `./ros work start WI-###
 **before** meaningful changes, or CI's `validate` job will reject the branch.
 
 Installed ROS governance references are also part of the repository's documented engineering surface:
-[development telemetry](docs/development-telemetry.md) and
-[Ordo observation and handoff](docs/ordo-observation.md).
+[development telemetry](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/development-telemetry.md) and
+[Ordo observation and handoff](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/ordo-observation.md).
 
 ## Evidence
 
