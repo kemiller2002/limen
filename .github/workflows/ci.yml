@@ -132,7 +132,13 @@ jobs:
         run: |
           set -euo pipefail
           git clone --depth 1 https://github.com/kemiller2002/repository-operating-system.git "$RUNNER_TEMP/ros-source"
-          dotnet run --project "$RUNNER_TEMP/ros-source/src/Ros.Cli/Ros.Cli.fsproj" -c Release -- init
+          if [[ -f .echelon/ros.json ]]; then
+            dotnet run --project "$RUNNER_TEMP/ros-source/src/Ros.Cli/Ros.Cli.fsproj" -c Release -- init
+          elif [[ -f .ros/installation.json ]]; then
+            dotnet run --project "$RUNNER_TEMP/ros-source/src/Ros.Cli/Ros.Cli.fsproj" -c Release -- upgrade
+          else
+            dotnet run --project "$RUNNER_TEMP/ros-source/src/Ros.Cli/Ros.Cli.fsproj" -c Release -- init
+          fi
       - name: Visual Engineering
         run: |
           set -euo pipefail
