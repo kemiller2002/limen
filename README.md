@@ -148,6 +148,36 @@ about 160 lines, and the single most useful file to read.
 Three complete interactions traced through every file they touch:
 [docs/traces.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md).
 
+### More than one application engine
+
+A large application does not have to become one large WebAssembly binary.
+Limen now ships a language-neutral federation runtime for independently loaded
+bounded state systems:
+
+```text
+BrowserKernel
+     |
+application shell
+     |
+ModuleFederation
+  /    |     \
+WASM A WASM B WASM C
+ state  state  state
+```
+
+Each module owns its own state and legal transitions. Cross-module work uses
+versioned, JSON-safe envelopes; another module can request a transition but can
+never mutate the owner's state directly. Manifests declare accepted/emitted
+contract versions, dependencies, capabilities and routes. The federation layer
+checks those transport facts while remaining blind to application meaning.
+
+The runtime is implemented and tested. The product site still uses one F# WASM,
+so multiple independent F# WASMs are not yet claimed as a self-hosting
+demonstration.
+
+Full design and API:
+[docs/23-wasm-federation.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/23-wasm-federation.md).
+
 ## Install
 
 ```sh
@@ -343,6 +373,7 @@ mistakes people actually make with it.
 | About to do it wrong | [anti-patterns](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md) |
 | Adopting Limen elsewhere | [integration guide](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/10-integration-guide.md) |
 | Using the CLI | [lifecycle CLI](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/20-lifecycle-cli.md) |
+| Splitting an application across multiple WASMs | [WASM federation](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/23-wasm-federation.md) |
 
 Full index:
 **[docs/README.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/README.md)**.
