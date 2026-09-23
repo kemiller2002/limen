@@ -42,12 +42,15 @@ const manifest = (
 });
 
 class FakeModule implements FederatedModuleTransport {
+  readonly manifest: ModuleManifest;
   readonly log: string[] = [];
   readonly received: FederationEnvelope[] = [];
   snapshotValue: JsonValue | null = { version: 1 };
   reply: (envelope: FederationEnvelope) => readonly FederationEnvelope[] = () => [];
 
-  constructor(readonly manifest: ModuleManifest) {}
+  constructor(manifest: ModuleManifest) {
+    this.manifest = manifest;
+  }
 
   async load(): Promise<void> {
     this.log.push("load");
