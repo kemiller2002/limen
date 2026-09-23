@@ -276,6 +276,11 @@ it later.
 Lifecycle order is checked by `ModuleFederation`; illegal calls are rejected
 before module code is invoked.
 
+Declared dependencies participate in that lifecycle. `startAll()` starts
+dependencies before dependents even when registration order differs, rejects
+dependency cycles, and refuses to unload a dependency while an active dependent
+still requires it.
+
 A module should treat its snapshot as its own versioned persistence format.
 Cross-module references should be stable identifiers, not object identity.
 
