@@ -27,3 +27,4 @@
 | WI-0021 | Release as 0.6.1: the v0.6.0 tag was pushed at the pre-merge commit and cannot be re-pointed | complete | release | medium |
 | WI-0022 | Rework the Limen site around product value, architectural clarity, verified evidence, and honest WASM status | complete | limen, site, evidence, documentation | high |
 | WI-0023 | Define and implement federated multi-WASM modules with typed transitions | ready | limen, wasm, federation, architecture | high |
+| WI-0024 | Complete GitHub repository rename from typescript-wasm-kernel to Limen | ready | limen, rename, repository, documentation, pages | high |
