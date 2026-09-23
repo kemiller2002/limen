@@ -39,6 +39,9 @@ Know what you are allowed to depend on.
 
   The throw surfaces as `BridgeError { phase: "dispatch" }` rather than
   crashing the page.
+- **Federation compatibility is versioned independently** by
+  `FEDERATION_PROTOCOL_VERSION` (currently `1`). A federation wire-format
+  break does not by itself change the browser/engine protocol version.
 - **No written breaking-change policy exists** for `0.x` beyond semver itself.
   That is a genuine gap, not an implied guarantee — see
   [DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
@@ -62,6 +65,7 @@ import type { ViewState } from "@echelon-foundry/typescript-wasm-kernel/protocol
 | `…/protocol` | the protocol types |
 | `…/kernel` | `BrowserKernel` alone |
 | `…/reference-engine` | `DirectTypeScriptTransport` — reference only |
+| `…/federation` | multi-engine manifests, envelopes, lifecycle and `ModuleFederation` |
 
 `moduleResolution` must be `"bundler"`, `"node16"`, or `"nodenext"`; older modes
 do not read `exports`.
@@ -174,6 +178,96 @@ export function createTransport(): EngineTransport {
 **Common mistakes**: returning a partial view (bound keys must all be present);
 performing effects yourself instead of requesting them; forgetting that
 `Initialize` also needs a view.
+
+---
+
+## `ModuleFederation`
+
+The application-engine composition layer for applications that need multiple
+independently loaded engines or WASM binaries. It does not replace
+`BrowserKernel`; it sits on the application side of the Limen boundary.
+
+```ts
+const federation = new ModuleFederation(
+  [timeEntryTransport, billingTransport],
+  { availableCapabilities: ["storage.write"] },
+);
+
+await federation.startAll();
+
+await federation.exchange({
+  protocolVersion: FEDERATION_PROTOCOL_VERSION,
+  source: timeEntryModuleId,
+  target: billingModuleId,
+  correlationId,
+  kind: "TransitionRequest",
+  contract: submitContract,
+  contractVersion: 1,
+  capabilities: [],
+  evidence: [],
+  payload: { entryId: "TE-42" },
+});
+```
+
+### `FEDERATION_PROTOCOL_VERSION`
+
+Currently `1`. It versions the federation envelope/lifecycle contract and is
+independent of the browser/engine `PROTOCOL_VERSION`.
+
+### `ModuleManifest`
+
+Declares a module's identity, semantic version, accepted/emitted contract
+version ranges, required capabilities, dependencies and routes. Registration
+rejects duplicate IDs and protocol/contract-range errors.
+
+### `FederatedModuleTransport`
+
+```ts
+interface FederatedModuleTransport {
+  readonly manifest: ModuleManifest;
+  load(): Promise<void>;
+  initialize(context: ModuleInitialization): Promise<void>;
+  restore(snapshot: JsonValue | null): Promise<void>;
+  activate(): Promise<void>;
+  dispatch(envelope: FederationEnvelope): Promise<ModuleDispatchResult>;
+  suspend(): Promise<void>;
+  snapshot(): Promise<JsonValue | null>;
+  unload(): Promise<void>;
+}
+```
+
+Lifecycle is strict:
+`load → initialize → restore → activate → suspend → snapshot → unload`.
+
+### `FederationEnvelope`
+
+A JSON-safe, versioned cross-module message. It carries source/optional target,
+correlation and optional causation/idempotency information, message kind,
+contract/version, optional expected state version, capabilities, evidence and
+payload.
+
+Only `DomainEvent` may omit `target`. Untargeted domain events fan out to
+active compatible consumers. Other kinds require an explicit target.
+
+### `exchange(envelope, options?)`
+
+Validates the source's emitted contract, the target's accepted contract, module
+activity and source identity, then delivers emitted envelopes until the exchange
+settles. A configurable delivery bound rejects cycles instead of allowing
+unbounded message chatter.
+
+The coordinator validates transport facts only. It never decides whether a
+domain transition is legal.
+
+### `FederationError`
+
+Stable error codes currently include duplicate/unknown modules, protocol or
+manifest errors, dependency/capability failures, illegal lifecycle order,
+inactive modules, emitted/accepted contract mismatches, missing targets, source
+identity violations and delivery-limit exhaustion.
+
+Full semantics and design rules:
+[WASM federation](23-wasm-federation.md).
 
 ---
 
