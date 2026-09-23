@@ -223,6 +223,10 @@ manager/saga state machine with correlation, causation, idempotency and
 compensation/reconciliation states rather than assuming cross-module ACID.
 *(Review)*
 
+**7A.11 — MUST.** Declared module dependencies MUST be active before a
+dependent module initializes and MUST remain active until all active dependents
+have stopped. Dependency cycles MUST be rejected. *(Runtime validation)*
+
 ---
 
 ## 8. Testing
