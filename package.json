@@ -47,7 +47,8 @@
     "docs/11-api-reference.md",
     "docs/16-troubleshooting.md",
     "docs/glossary.md",
-    "examples/minimal"
+    "examples/minimal",
+    "docs/23-wasm-federation.md"
   ],
   "sideEffects": false,
   "repository": {
