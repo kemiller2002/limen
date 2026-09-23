@@ -202,6 +202,7 @@ JavaScript outside the engine?                 → STOP. That is rule 1.
 | A real state machine + transitions | [`src/engine/domain.ts`](src/engine/domain.ts) |
 | State → view projection | `project()` in [`src/engine/engine.ts`](src/engine/engine.ts) |
 | Today's in-process reference transport | [`src/engine/transport.ts`](src/engine/transport.ts) |
+| Multi-engine federation, manifests and envelope routing | [`src/federation.ts`](src/federation.ts) + [federation guide](docs/23-wasm-federation.md) |
 | The product site's F# application authority | [`site/fsharp/Limen.Site.Engine/`](site/fsharp/Limen.Site.Engine/) |
 | The product site's WASM loading/serialization mechanics | [`site/app/wasm-engine-transport.ts`](site/app/wasm-engine-transport.ts) |
 | Diagnostics | [`src/kernel/diagnostics.ts`](src/kernel/diagnostics.ts) |
@@ -304,6 +305,9 @@ Answer all of these before you write code, and confirm them before you finish:
 11. Am I bypassing a boundary for convenience?
 12. What tests prove this — including the illegal case?
 13. Does `npm run check` pass?
+14. If this crosses a module boundary, who owns the state and transition?
+15. Is the cross-module contract versioned and declared by both manifests?
+16. Am I accidentally creating shared mutable state or a universal shared domain model?
 
 ---
 
