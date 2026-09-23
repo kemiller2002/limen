@@ -348,6 +348,92 @@ test("module dependencies and required capabilities are checked before loading",
   assert.deepEqual(capable.log, []);
 });
 
+test("startAll activates dependencies before dependents even when registered later", async () => {
+  const dependencyId = moduleId("dependency");
+  const dependentId = moduleId("dependent");
+  const order: string[] = [];
+
+  class OrderedModule extends FakeModule {
+    override async activate(): Promise<void> {
+      order.push(String(this.manifest.id));
+      await super.activate();
+    }
+  }
+
+  const dependent = new OrderedModule(
+    manifest(dependentId, [], [], [dependencyId]),
+  );
+  const dependency = new OrderedModule(manifest(dependencyId, [], []));
+  const federation = new ModuleFederation([dependent, dependency]);
+
+  await federation.startAll();
+
+  assert.deepEqual(order, ["dependency", "dependent"]);
+  assert.equal(federation.state(dependencyId), "Active");
+  assert.equal(federation.state(dependentId), "Active");
+});
+
+test("starting a dependent directly requires its dependency to already be active", async () => {
+  const dependencyId = moduleId("dependency");
+  const dependentId = moduleId("dependent");
+  const dependent = new FakeModule(
+    manifest(dependentId, [], [], [dependencyId]),
+  );
+  const dependency = new FakeModule(manifest(dependencyId, [], []));
+  const federation = new ModuleFederation([dependent, dependency]);
+
+  await assert.rejects(
+    federation.start(dependentId),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "InactiveDependency",
+  );
+
+  await federation.start(dependencyId);
+  await federation.start(dependentId);
+  assert.equal(federation.state(dependentId), "Active");
+});
+
+test("dependency cycles are rejected deterministically", async () => {
+  const a = moduleId("module-a");
+  const b = moduleId("module-b");
+  const moduleA = new FakeModule(manifest(a, [], [], [b]));
+  const moduleB = new FakeModule(manifest(b, [], [], [a]));
+  const federation = new ModuleFederation([moduleA, moduleB]);
+
+  await assert.rejects(
+    federation.startAll(),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "DependencyCycle",
+  );
+  assert.deepEqual(moduleA.log, []);
+  assert.deepEqual(moduleB.log, []);
+});
+
+test("an active dependency cannot unload before its dependent", async () => {
+  const dependencyId = moduleId("dependency");
+  const dependentId = moduleId("dependent");
+  const dependent = new FakeModule(
+    manifest(dependentId, [], [], [dependencyId]),
+  );
+  const dependency = new FakeModule(manifest(dependencyId, [], []));
+  const federation = new ModuleFederation([dependent, dependency]);
+
+  await federation.startAll();
+
+  await assert.rejects(
+    federation.stop(dependencyId),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "DependencyInUse",
+  );
+
+  await federation.stop(dependentId);
+  await federation.stop(dependencyId);
+  assert.equal(federation.state(dependencyId), "Unloaded");
+});
+
 test("a delivery limit stops cyclic module chatter deterministically", async () => {
   const a = moduleId("module-a");
   const b = moduleId("module-b");
