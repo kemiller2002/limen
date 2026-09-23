@@ -22,6 +22,10 @@
     "./reference-engine": {
       "types": "./dist/engine/transport.d.ts",
       "import": "./dist/engine/transport.js"
+    },
+    "./federation": {
+      "types": "./dist/federation.d.ts",
+      "import": "./dist/federation.js"
     }
   },
   "bin": {
