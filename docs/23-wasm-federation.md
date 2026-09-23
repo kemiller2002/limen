@@ -164,6 +164,12 @@ Important fields:
 The federation layer validates transport facts. It does **not** decide whether a
 business transition is legal.
 
+`payload` is deliberately generic at the federation layer so Limen does not
+become a shared application-domain assembly. That also means it is **wire
+data**, not trusted domain state. The receiving module must select the parser
+for the declared contract/version, decode it into its own local typed contract,
+validate it, and only then allow Tier 1/2 logic to use it.
+
 For example, it can prove that module B accepts
 `chrona.time-entry.submit@3`. Only module B can decide whether the requested
 submission is legal from its current state.
