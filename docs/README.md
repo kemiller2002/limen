@@ -62,6 +62,7 @@ Then, for depth:
 | 16 | [Troubleshooting](16-troubleshooting.md) | Why isn't it working? |
 | 20 | [Lifecycle CLI](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/20-lifecycle-cli.md) | `init`, `status`, `verify`, `upgrade`, `doctor` — commands, flags, exit codes, JSON |
 | 21 | [Installation and upgrade](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/21-installation-and-upgrade.md) | What `init` does, who owns which file, what an upgrade may change |
+| 23 | [WASM federation](23-wasm-federation.md) | How do multiple independently loaded engines exchange typed transitions without sharing state? |
 
 ## Rules and reasoning
 
