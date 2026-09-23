@@ -362,6 +362,29 @@ Both normal CI and the Pages workflow install .NET.
 
 ---
 
+## Multiple WebAssembly engines
+
+Limen now also contains a language-neutral federation runtime in
+`src/federation.ts`. It supplies module manifests, independent lifecycle,
+versioned envelopes, contract compatibility checks, targeted cross-module
+transition requests and compatible domain-event fan-out.
+
+That closes a different question from the one this document originally tracked:
+the package now has an explicit composition model for **multiple** engines rather
+than requiring an application to grow one engine indefinitely.
+
+It does **not** yet prove that the Limen product site runs several independent
+F#/.NET WebAssembly binaries. The site remains one F# WASM engine today.
+Federation support is implemented and tested at the transport/composition layer;
+multi-F#-WASM self-hosting remains an existence proof to build.
+
+The governing rule is that each module owns its state. Other modules exchange
+serializable evidence, projections, events and transition requests rather than
+sharing mutable domain objects. See
+[23-wasm-federation.md](23-wasm-federation.md).
+
+---
+
 ## What remains open
 
 The old question "can Limen host a WASM engine?" is closed by existence proof.
@@ -379,6 +402,9 @@ These questions remain open:
    is the Echelon Foundry preference, not a protocol requirement.
 5. **Controlled engineering outcome comparison.** No experiment isolates Limen
    as the variable for time, defects, rework, context, or cost.
+6. **Multi-WASM self-hosting.** The federation runtime is implemented, but the
+   product site has not yet been decomposed into multiple independently loaded
+   F# WASM engines.
 
 ---
 
@@ -415,4 +441,5 @@ limitations, see [19-evidence.md](19-evidence.md).
 - [09-testing-and-debugging.md](09-testing-and-debugging.md)
 - [11-api-reference.md](11-api-reference.md)
 - [19-evidence.md](19-evidence.md)
+- [23-wasm-federation.md](23-wasm-federation.md)
 - [ROADMAP.md](ROADMAP.md)
