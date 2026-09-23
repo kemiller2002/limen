@@ -2,7 +2,7 @@
 # browser_interop.forbidden_modules and dynamic_types for the TypeScript
 # reference engine. It also verifies that the F# product-site engine contains
 # no browser/JS interop authority and that its tiny C# WASM host remains a
-# direct marshalling shim. Everything else in this file (state.*,
+# direct marshalling shim. Everything else in this file (state.*, federation.*,
 # effects.representation, capabilities.ambient_authority) is enforced by types,
 # tests and review, not by this YAML declaration alone.
 architecture:
@@ -22,3 +22,11 @@ architecture:
   state:
     string_discriminators: forbidden
     exhaustive_matching: required
+
+  federation:
+    module_state_ownership: local
+    cross_module_mutation: forbidden
+    boundary: versioned_serializable_envelopes
+    coordinator_domain_authority: forbidden
+    lifecycle: [load, initialize, restore, active, suspend, snapshot, unload]
+    untargeted_message_kinds: [domain_event]
