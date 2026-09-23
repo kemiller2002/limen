@@ -1,3 +1,4 @@
+export { ModuleFederation, FederationError, FEDERATION_PROTOCOL_VERSION } from "./federation.js";
 export { BrowserKernel } from "./kernel/browser-kernel.js";
 export { DirectTypeScriptTransport } from "./engine/transport.js";
 export { ReferenceEngine, project } from "./engine/engine.js";
@@ -35,3 +36,23 @@ export type {
   TransitionError,
   TransitionResult,
 } from "./engine/domain.js";
+
+export type {
+  ContractId,
+  ContractRange,
+  ExchangeResult,
+  FederatedModuleTransport,
+  FederationCorrelationId,
+  FederationEnvelope,
+  FederationErrorCode,
+  FederationMessageKind,
+  FederationOptions,
+  JsonPrimitive,
+  JsonValue,
+  ModuleDispatchResult,
+  ModuleId,
+  ModuleInitialization,
+  ModuleLifecycleState,
+  ModuleManifest,
+  ModulePeer,
+} from "./federation.js";
