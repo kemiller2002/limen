@@ -102,6 +102,9 @@ export type FederationErrorCode =
   | "ProtocolMismatch"
   | "InvalidManifest"
   | "MissingDependency"
+  | "InactiveDependency"
+  | "DependencyCycle"
+  | "DependencyInUse"
   | "MissingCapability"
   | "IllegalLifecycleTransition"
   | "InactiveModule"
@@ -234,10 +237,18 @@ export class ModuleFederation {
     this.#requireState(entry, moduleId, "Unloaded");
 
     for (const dependency of entry.transport.manifest.dependencies) {
-      if (!this.#modules.has(dependency)) {
+      const dependencyEntry = this.#modules.get(dependency);
+      if (!dependencyEntry) {
         throw new FederationError(
           "MissingDependency",
           "module " + moduleId + " requires unregistered module " + dependency,
+        );
+      }
+      if (dependencyEntry.state !== "Active") {
+        throw new FederationError(
+          "InactiveDependency",
+          "module " + moduleId + " requires active module " + dependency +
+            " but it is " + dependencyEntry.state,
         );
       }
     }
@@ -283,8 +294,36 @@ export class ModuleFederation {
   async startAll(
     snapshots: ReadonlyMap<ModuleId, JsonValue | null> = new Map(),
   ): Promise<void> {
-    for (const moduleId of this.#modules.keys()) {
+    const visiting = new Set<ModuleId>();
+
+    const startWithDependencies = async (moduleId: ModuleId): Promise<void> => {
+      const entry = this.#entry(moduleId);
+      if (entry.state === "Active") return;
+      if (visiting.has(moduleId)) {
+        throw new FederationError(
+          "DependencyCycle",
+          "dependency cycle detected at module " + moduleId,
+        );
+      }
+
+      visiting.add(moduleId);
+      for (const dependency of entry.transport.manifest.dependencies) {
+        if (!this.#modules.has(dependency)) {
+          throw new FederationError(
+            "MissingDependency",
+            "module " + moduleId +
+              " requires unregistered module " + dependency,
+          );
+        }
+        await startWithDependencies(dependency);
+      }
+      visiting.delete(moduleId);
+
       await this.start(moduleId, snapshots.get(moduleId) ?? null);
+    };
+
+    for (const moduleId of this.#modules.keys()) {
+      await startWithDependencies(moduleId);
     }
   }
 
@@ -311,6 +350,20 @@ export class ModuleFederation {
   }
 
   async stop(moduleId: ModuleId): Promise<JsonValue | null> {
+    const activeDependent = [...this.#modules.entries()].find(
+      ([candidateId, candidate]) =>
+        candidateId !== moduleId &&
+        candidate.state === "Active" &&
+        candidate.transport.manifest.dependencies.includes(moduleId),
+    );
+    if (activeDependent) {
+      throw new FederationError(
+        "DependencyInUse",
+        "module " + moduleId + " cannot stop while dependent module " +
+          activeDependent[0] + " is active",
+      );
+    }
+
     await this.suspend(moduleId);
     const snapshot = await this.snapshot(moduleId);
     await this.unload(moduleId);
