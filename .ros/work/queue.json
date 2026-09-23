@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 24,
+  "nextSeq": 25,
   "items": [
     {
       "id": "WI-0001",
@@ -405,6 +405,26 @@
       "createdBy": "agent:chatgpt",
       "source": "agent-discovery",
       "sourceReference": "multi-wasm-federation-2026-09-23"
+    },
+    {
+      "id": "WI-0024",
+      "title": "Complete GitHub repository rename from typescript-wasm-kernel to Limen",
+      "description": "Migrate repository identity, GitHub URLs, Pages URL, package repository metadata, documentation, and validation assumptions to kemiller2002/limen while preserving the published npm package name and legacy CLI executable as compatibility surfaces.",
+      "tags": [
+        "limen",
+        "rename",
+        "repository",
+        "documentation",
+        "pages"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-23T13:09:00.000Z",
+      "updatedAt": "2026-09-23T13:09:00.000Z",
+      "createdBy": "agent:chatgpt",
+      "source": "user-request",
+      "sourceReference": "repository-renamed-to-limen-2026-09-23"
     }
   ]
 }
