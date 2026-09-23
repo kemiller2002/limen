@@ -34,6 +34,7 @@ const REQUIRED = [
   // The published entry points, as declared in package.json "exports".
   "dist/index.js", "dist/index.d.ts",
   "dist/protocol.js", "dist/protocol.d.ts",
+  "dist/federation.js", "dist/federation.d.ts",
   "dist/kernel/browser-kernel.js", "dist/kernel/browser-kernel.d.ts",
   "dist/kernel/diagnostics.js", "dist/kernel/diagnostics.d.ts",
   "dist/engine/transport.js", "dist/engine/transport.d.ts",
@@ -45,6 +46,7 @@ const REQUIRED = [
   "docs/11-api-reference.md",
   "docs/16-troubleshooting.md",
   "docs/glossary.md",
+  "docs/23-wasm-federation.md",
   "docs/README.md",
   // One complete application, so a consumer never has to clone the repository
   // to see how the pieces fit together.

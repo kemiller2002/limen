@@ -16,7 +16,18 @@ exhaustive lists.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **Federated engine runtime for multi-WASM applications.** `ModuleFederation`,
+  `ModuleManifest`, versioned `FederationEnvelope` contracts, explicit module
+  lifecycle, dependency/capability preflight, contract compatibility checks,
+  domain-event fan-out, source identity enforcement, and bounded message
+  delivery are now exported from the package root and `./federation`.
+- **WASM federation guide.** `docs/23-wasm-federation.md` defines state
+  ownership, cross-module transition requests, lifecycle, event/projection
+  exchange, saga-style orchestration, deterministic testing, and anti-patterns.
+  The runtime is implemented; the product site remains a single F# WASM
+  consumer, so multi-F#-WASM self-hosting is not yet claimed.
 
 ## [0.6.2] — 2026-09-21
 

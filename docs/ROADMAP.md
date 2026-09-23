@@ -75,6 +75,20 @@ plain, JSON-serializable value.
 | 18 | Storage adapters | ✅ (`localStorage` only) | `StorageEffectRequest`/`StorageOutcome` in `protocol.ts`; `#executeStorage`/`runStorage` in the kernel. `get`/`set`/`remove` only, no `IndexedDB`/`Cache API` — build those when a feature demonstrates the need, same 🧊 policy as everything else here. No `OutcomeUnknown`: a single `localStorage` call is effectively atomic, so unlike Http there's no meaningful "dispatched but uncertain" state; failures classify as `unavailable` or `quota-exceeded`. | `kernel.test.ts`: set→get round-trip, remove→get reports `null`, quota-exceeded classification, stale-cancellation-is-a-no-op |
 | 19 | Network adapter | ✅ | `#runHttp` — classifies transport-level outcomes only (`Success`/`Failure`/`Cancelled`/`OutcomeUnknown`), never interprets a status code or decoded body as domain truth (per responsibility-spec §17: "TypeScript must not interpret business meaning"). Extended beyond `GET` to any of `PUT`/`POST`/`PATCH`/`DELETE` with caller-supplied headers (merged over the kernel's own `accept` default) and an opaque pre-serialized body — added for a real consumer's GitHub Contents API write (`PUT` + `Authorization` header + JSON body). Headers/body are never surfaced in a `DiagnosticEvent`. | `kernel.test.ts`: PUT with headers+body reaches `fetch()` correctly, GET omits body entirely, diagnostics never contain header/body content |
 
+## Federated application engines
+
+| # | Responsibility | Status | Where | Tests |
+|---|---|---|---|---|
+| 20 | Multi-engine federation — module manifests, independent lifecycle, versioned envelope exchange, targeted transitions and event fan-out | ✅ Runtime implemented; ⚠️ multi-F#-WASM self-hosting not yet demonstrated | `src/federation.ts`; [23-wasm-federation.md](23-wasm-federation.md). The coordinator validates protocol/contract compatibility, dependencies, capabilities and source identity but owns no domain state. | `test/federation.test.ts`: lifecycle, illegal lifecycle, transition round-trip, contract mismatch, spoofing, fan-out, explicit targeting, dependency/capability preflight and cycle limit |
+
+The federation capability is intentionally separate from the browser/engine
+`PROTOCOL_VERSION`. It composes application engines; it does not move browser
+capabilities or application meaning into the coordinator.
+
+The current product site remains one F# WASM consumer. Converting it into
+multiple independent WASM binaries is a separate existence proof and will be
+reported only after it actually runs that way.
+
 ## Cross-cutting: cancellation
 
 Not on the original list by name inside item 5, but required to make
