@@ -112,11 +112,11 @@ export type FederationErrorCode =
   | "DeliveryLimitExceeded";
 
 export class FederationError extends Error {
-  constructor(
-    public readonly code: FederationErrorCode,
-    message: string,
-  ) {
+  readonly code: FederationErrorCode;
+
+  constructor(code: FederationErrorCode, message: string) {
     super(message);
+    this.code = code;
     this.name = "FederationError";
   }
 }
