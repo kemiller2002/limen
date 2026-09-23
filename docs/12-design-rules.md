@@ -180,6 +180,49 @@ as public-contract changes. *(Review)*
 needs it. Speculative surface is untested surface with no design pressure behind
 it. *(Review; ROADMAP 🧊 legend)*
 
+### 7A. Federated engines
+
+**7A.1 — MUST.** A federated module MUST own its own authoritative domain
+state. Another module may request a transition but MUST NOT mutate, retain, or
+receive a writable reference to that state. *(Types + review)*
+
+**7A.2 — MUST.** Cross-module messages MUST use a versioned
+`FederationEnvelope` and a contract declared by both source and target module
+manifests. *(Runtime validation)*
+
+**7A.3 — MUST.** A module MUST emit messages using its own registered identity.
+It MUST NOT impersonate another module. *(Runtime validation)*
+
+**7A.4 — MUST.** Transition requests, queries, projections, and effect messages
+MUST name an explicit target. Only `DomainEvent` may be untargeted and fanned
+out to compatible active consumers. *(Runtime validation)*
+
+**7A.5 — MUST NOT.** `ModuleFederation` MUST NOT interpret application
+meaning, decide transition legality, retry domain work, or become an
+application-state store. *(Review)*
+
+**7A.6 — MUST.** Module lifecycle MUST follow
+`load → initialize → restore → activate → suspend → snapshot → unload`.
+Out-of-order lifecycle operations MUST be rejected before module code is
+invoked. *(Runtime validation)*
+
+**7A.7 — MUST.** Federation payloads MUST remain JSON-safe and MUST NOT depend
+on cross-runtime object identity. *(Compiler + review)*
+
+**7A.8 — MUST NOT.** A shared assembly or package MUST NOT become a back door
+for sharing mutable domain state or all internal domain types between modules.
+Shared federation types are protocol types, not a universal domain model.
+*(Review)*
+
+**7A.9 — SHOULD.** Split modules by bounded state ownership and domain
+capability, not by page, modal, web component, or arbitrary source-file size.
+*(Review)*
+
+**7A.10 — SHOULD.** Multi-module workflows SHOULD use an explicit process
+manager/saga state machine with correlation, causation, idempotency and
+compensation/reconciliation states rather than assuming cross-module ACID.
+*(Review)*
+
 ---
 
 ## 8. Testing
@@ -197,6 +240,10 @@ jsdom for cases where the DOM is genuinely the subject.
 
 **8.5 — SHOULD.** Any change affecting the DOM SHOULD be exercised in a real
 browser, not only asserted in jsdom.
+
+**8.6 — MUST.** A new federation contract or lifecycle behavior MUST have tests
+for its accepted path and its incompatible/illegal path. Cross-module workflows
+SHOULD be replayable from a snapshot plus an envelope sequence.
 
 ---
 
@@ -236,3 +283,4 @@ build enforces it.
 - [01-architecture.md](01-architecture.md) — *why* these rules exist
 - [13-anti-patterns.md](13-anti-patterns.md) — what violating them looks like
 - [14-agent-guide.md](14-agent-guide.md) — applying them to a change
+- [23-wasm-federation.md](23-wasm-federation.md) — multi-engine state ownership and message exchange
