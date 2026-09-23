@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "typescript-wasm-kernel",
-  "nextSeq": 23,
+  "nextSeq": 24,
   "items": [
     {
       "id": "WI-0001",
@@ -386,6 +386,25 @@
       "createdBy": "agent:chatgpt",
       "source": "agent-discovery",
       "sourceReference": "public-repository-upgrade-2026-09-21"
+    },
+    {
+      "id": "WI-0023",
+      "title": "Define and implement federated multi-WASM modules with typed transitions",
+      "description": "Add first-class Limen federation so independently loaded application engines can own bounded state, exchange versioned typed envelopes, request cross-module transitions without shared mutable state, coordinate lifecycle, and be tested deterministically.",
+      "tags": [
+        "limen",
+        "wasm",
+        "federation",
+        "architecture"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-23T12:04:00.000Z",
+      "updatedAt": "2026-09-23T12:04:00.000Z",
+      "createdBy": "agent:chatgpt",
+      "source": "agent-discovery",
+      "sourceReference": "multi-wasm-federation-2026-09-23"
     }
   ]
 }
