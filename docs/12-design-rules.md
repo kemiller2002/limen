@@ -227,6 +227,11 @@ compensation/reconciliation states rather than assuming cross-module ACID.
 dependent module initializes and MUST remain active until all active dependents
 have stopped. Dependency cycles MUST be rejected. *(Runtime validation)*
 
+**7A.12 — MUST.** A receiving module MUST decode and validate a contract's
+`payload` into its own contract-specific typed representation before that data
+can become authoritative domain state. `JsonValue` is a wire representation,
+not trusted semantic state. *(Review + module tests)*
+
 ---
 
 ## 8. Testing
