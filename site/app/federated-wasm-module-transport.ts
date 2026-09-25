@@ -90,12 +90,14 @@ export class FSharpWasmFederatedModuleTransport implements FederatedModuleTransp
     this.#exports = container as FederatedExports;
     this.#runtimeId = runtime.runtimeId;
 
-    const actualManifest = JSON.parse(this.#call("Manifest")) as unknown;
+    const actualManifest = JSON.parse(this.#call("Manifest")) as ModuleManifest;
+    const actualProjection = manifestProjection(actualManifest);
     const expectedManifest = manifestProjection(this.manifest);
-    if (JSON.stringify(actualManifest) !== JSON.stringify(expectedManifest)) {
+    if (JSON.stringify(actualProjection) !== JSON.stringify(expectedManifest)) {
       throw new Error(
         "F# module manifest disagrees with its declared federation manifest for " +
-          this.manifest.id + ".",
+          this.manifest.id + ": exported=" + JSON.stringify(actualProjection) +
+          " declared=" + JSON.stringify(expectedManifest),
       );
     }
   }

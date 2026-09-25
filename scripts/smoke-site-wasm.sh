@@ -66,6 +66,8 @@ dump_until_marker() {
   done
 
   echo "$label did not reach the expected DOM marker after three bounded attempts." >&2
+  echo "--- page status ---" >&2
+  grep -n -E 'federation-proof-status|data-federation-proof|federation-runtime-ids' "$output" >&2 || true
   echo "--- chrome ---" >&2
   tail -n 160 "$chrome_log" >&2 || true
   echo "--- server ---" >&2
