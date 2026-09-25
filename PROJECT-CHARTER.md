@@ -1,18 +1,18 @@
 ---
-id: PROJECT-CHARTER-typescript-wasm-kernel
-title: Typescript Wasm Kernel Project Charter
+id: PROJECT-CHARTER-limen
+title: Limen Project Charter
 status: draft
 version: 0.1.0
 created: 2026-08-21
 updated: 2026-08-21
 ---
 
-# Typescript Wasm Kernel project charter
+# Limen project charter
 
 ## Purpose
 
 Define the practical problem this project will solve. Do not assume that
-“Typescript Wasm Kernel” already names a distinct discipline; that is a research
+“Limen” already names a distinct discipline; that is a research
 question, not a starting fact.
 
 ## Intended users
