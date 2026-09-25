@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Limen.Federation.Source.Engine/Limen.Federation.Source.Engine.fsproj" />
+    <ProjectReference Include="../../Limen.Federation.Target.Engine/Limen.Federation.Target.Engine.fsproj" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+</Project>
