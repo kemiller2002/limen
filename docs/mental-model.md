@@ -53,7 +53,7 @@ Two rows are worth restating because they are the ones people get backwards:
 ## The two messages that cross
 
 That is the whole contract, defined in
-[`src/protocol.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/protocol.ts):
+[`src/protocol.ts`](https://github.com/kemiller2002/limen/blob/main/src/protocol.ts):
 
 ```text
 Browser → Engine        Engine → Browser
@@ -68,7 +68,7 @@ Everything is plain, JSON-serializable data. No functions, no DOM nodes, no
 class instances. That constraint is what makes the engine portable. The
 TypeScript reference transport remains in-process, while the Limen product site
 now exercises the same contract through a real F#/.NET WebAssembly boundary
-(see [WASM status](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)).
+(see [WASM status](https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md)).
 
 ## How a click reaches the engine
 
@@ -125,7 +125,7 @@ purpose: the moment the DOM can compute, it starts deciding.
 **Bindings inside a `data-each` row resolve against the item, not the top-level
 view.** A per-row capability must be projected onto each item.
 
-Full detail: [rendering](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/06-rendering.md).
+Full detail: [rendering](https://github.com/kemiller2002/limen/blob/main/docs/06-rendering.md).
 
 ## Why failure is a first-class shape
 
@@ -155,7 +155,7 @@ Stated plainly, because guessing is expensive:
 - No capabilities beyond Http, Storage, Clipboard and Navigation. Files,
   timers, focus management, geolocation, IndexedDB, WebSocket: not implemented.
   Adding one is a deliberate protocol change, documented in
-  [recipes](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md).
+  [recipes](https://github.com/kemiller2002/limen/blob/main/docs/15-recipes.md).
 - No list virtualization, no animation, no focus restoration.
 - No state persistence of its own. Nothing is remembered across a reload unless
   your engine asked for a `Storage` effect.
@@ -180,6 +180,6 @@ literal.
 | --- | --- |
 | To build something in five minutes | [quick-start.md](quick-start.md) |
 | To know where a specific change belongs | [where-code-goes.md](where-code-goes.md) |
-| To follow one interaction through every file | [traces.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md) |
+| To follow one interaction through every file | [traces.md](https://github.com/kemiller2002/limen/blob/main/docs/traces.md) |
 | The exact API | [11-api-reference.md](11-api-reference.md) |
 | A word you do not recognise | [glossary.md](glossary.md) |
