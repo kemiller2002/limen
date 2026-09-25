@@ -19,7 +19,7 @@ import { dirname, join, normalize, posix, resolve } from "node:path";
 import { promisify } from "node:util";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const REPO = "https://github.com/kemiller2002/typescript-wasm-kernel/";
+const REPO = "https://github.com/kemiller2002/limen/";
 const run = promisify(execFile);
 
 // Files a consumer or the documentation explicitly depends on. Anything here

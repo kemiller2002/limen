@@ -1,4 +1,4 @@
-# Typescript Wasm Kernel research queue
+# Limen research queue
 
 | Priority | Question | Decision affected | Discriminating evidence | Status |
 |---:|---|---|---|---|

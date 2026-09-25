@@ -5,6 +5,8 @@ const ROOT = resolve(import.meta.dirname, "..");
 const SITE = join(ROOT, "dist-site");
 
 const violations: string[] = [];
+const STALE_REPOSITORY_URL = "https://github.com/kemiller2002/typescript-wasm-kernel";
+const STALE_PAGES_URL = "https://kemiller2002.github.io/typescript-wasm-kernel/";
 const note = (message: string): number => violations.push(message);
 const exists = async (path: string): Promise<boolean> => stat(path).then(() => true, () => false);
 
@@ -47,6 +49,8 @@ const ATTR = /(?:href|src)="([^"]+)"/g;
 for (const page of htmlPages) {
   const html = await readFile(join(SITE, page), "utf8");
 
+  if (html.includes(STALE_REPOSITORY_URL)) note(`${page}: stale pre-rename repository URL -> ${STALE_REPOSITORY_URL}`);
+  if (html.includes(STALE_PAGES_URL)) note(`${page}: stale pre-rename Pages URL -> ${STALE_PAGES_URL}`);
   if (!/<title>[^<]+<\/title>/.test(html)) note(`${page}: no <title>`);
   if (!/<meta name="description" content="[^"]+"/.test(html)) note(`${page}: no meta description`);
   if (!/<html lang="/.test(html)) note(`${page}: no lang attribute`);

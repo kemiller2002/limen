@@ -10,7 +10,7 @@ document is about what changed and what was proven.
 
 ## 1 · Repository audited
 
-`kemiller2002/typescript-wasm-kernel` — the Limen browser kernel, published as
+`kemiller2002/limen` — the Limen browser kernel (repository renamed after this report's original work), published as
 `@echelon-foundry/typescript-wasm-kernel`. It also hosts a ROS research
 framework and an SDE methodology install.
 

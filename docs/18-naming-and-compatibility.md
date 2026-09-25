@@ -11,10 +11,11 @@ nothing you depend on broke.
 an explicit boundary that keeps browser capabilities separate from application
 authority.
 
-**No published identifier changed.** The npm package, every exported symbol,
-every file path, and the wire protocol are exactly what they were. If you
-depend on this package, Limen is a new name for something you already have —
-there is nothing to migrate.
+**No package or API identifier changed.** The npm package, every exported
+symbol, every file path, and the wire protocol are exactly what they were.
+The GitHub repository itself was renamed to `kemiller2002/limen`; GitHub
+redirects the previous repository URL. Package consumers have nothing to
+migrate.
 
 ---
 
@@ -67,7 +68,7 @@ classified before anything was renamed. Nothing was find-and-replaced.
 | **Filesystem path** | `src/kernel/`, `src/kernel/browser-kernel.ts`, `test/kernel.test.ts` | 3 | **PRESERVED** — renaming churns imports and `dist/` output paths for no functional gain |
 | **Component term** | "the kernel" meaning the browser bridge | many | **KEPT** — accurate; clarified to "the Limen kernel" where ambiguous |
 | **Product name** | "TypeScript WASM Kernel", "the WASM kernel" as a product | many | **RENAMED → Limen** |
-| **Repository name** | `typescript-wasm-kernel` | 1 | **PRESERVED** — see open items below |
+| **Repository name** | `typescript-wasm-kernel` → `limen` | 1 | **RENAMED** — GitHub repository identity now matches the product |
 | **Historical / research** | `prompts/`, ROS and research artifacts | all | **PRESERVED** — historical records are not retroactively edited |
 
 ---
@@ -88,7 +89,9 @@ Nothing to do.
 import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
 ```
 
-No deprecation, no alias, no shim, no codemod. The rename is documentation-only.
+No deprecation, no package alias, no shim, no codemod. The repository rename
+changes the canonical GitHub URL only; npm/package/API compatibility remains
+unchanged.
 
 ### If you write about it
 
@@ -107,14 +110,27 @@ bridge, and it is still the only place allowed to touch `document`, `window`,
 
 ---
 
+## Repository rename decision
+
+On 2026-09-23 the GitHub repository was renamed from
+`kemiller2002/typescript-wasm-kernel` to `kemiller2002/limen`. Repository
+metadata, Pages links, documentation links, Praxis/ROS current identity, and
+validation checks now use `limen`. Historical events and telemetry remain
+unchanged because they record the identity that existed when they were emitted.
+
+The published npm package `@echelon-foundry/typescript-wasm-kernel` and the
+legacy `typescript-wasm-kernel` CLI executable remain compatibility surfaces.
+
+---
+
 ## Open items, not decisions
 
-These are deliberately unresolved. They are recorded rather than guessed at.
+The repository rename is now resolved. The remaining items are deliberately
+unresolved and are recorded rather than guessed at.
 
 | Item | Why it is open |
 | --- | --- |
 | **Renaming the npm package to `@echelon-foundry/limen`** | Breaking for every consumer. Would need a deprecation of the old name, a transition period publishing both, and a migration note. Not attempted as part of a naming pass. |
-| **Renaming the GitHub repository** | Would change clone URLs and the `repository` field. GitHub redirects, but it is still a visible break. A maintainer decision. |
 | **Renaming `src/kernel/` → `src/limen/`** | Pure churn: it changes every import and every `dist/` path a consumer might deep-link, and `kernel` remains the accurate name for that component. Recommended against. |
 
 If the package is ever renamed, the safe sequence is: publish under the new

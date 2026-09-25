@@ -1,4 +1,4 @@
-# Typescript Wasm Kernel known risks
+# Limen known risks
 
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|

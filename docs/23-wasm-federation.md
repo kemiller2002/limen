@@ -532,8 +532,8 @@ force a browser-kernel protocol break, and vice versa.
 
 ## Related
 
-- [Architecture](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/01-architecture.md)
-- [State model](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/04-state-model.md)
-- [Effects and browser interop](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/07-effects-and-browser-interop.md)
-- [WebAssembly status](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)
-- [Design rules](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/12-design-rules.md)
+- [Architecture](https://github.com/kemiller2002/limen/blob/main/docs/01-architecture.md)
+- [State model](https://github.com/kemiller2002/limen/blob/main/docs/04-state-model.md)
+- [Effects and browser interop](https://github.com/kemiller2002/limen/blob/main/docs/07-effects-and-browser-interop.md)
+- [WebAssembly status](https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md)
+- [Design rules](https://github.com/kemiller2002/limen/blob/main/docs/12-design-rules.md)

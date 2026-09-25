@@ -62,7 +62,9 @@ const exists = async (path: string): Promise<boolean> => stat(path).then(() => t
 // repository around it). Those links are still repository paths, so they are
 // checked for existence and they still count against the orphan rule below —
 // otherwise adopting absolute links would quietly disable both checks.
-const REPO_URL = "https://github.com/kemiller2002/typescript-wasm-kernel/";
+const REPO_URL = "https://github.com/kemiller2002/limen/";
+const STALE_REPOSITORY_URL = "https://github.com/kemiller2002/typescript-wasm-kernel";
+const STALE_PAGES_URL = "https://kemiller2002.github.io/typescript-wasm-kernel/";
 
 const repositoryPath = (target: string): string | null => {
   if (!target.startsWith(REPO_URL)) return null;
@@ -86,6 +88,12 @@ const MENTION = /`((?:src|test|docs|examples|scripts|cli|bin)\/[A-Za-z0-9._/-]+\
 for (const file of files) {
   if (ROS_MANAGED.has(relative(ROOT, file))) continue;
   const source = await readFile(file, "utf8");
+  if (source.includes(STALE_REPOSITORY_URL)) {
+    violations.push(`${relative(ROOT, file)}: stale pre-rename repository URL -> ${STALE_REPOSITORY_URL}`);
+  }
+  if (source.includes(STALE_PAGES_URL)) {
+    violations.push(`${relative(ROOT, file)}: stale pre-rename Pages URL -> ${STALE_PAGES_URL}`);
+  }
   const body = withoutCodeFences(source);
   const here = dirname(file);
 
@@ -219,7 +227,14 @@ const stripTags = (html: string): string => html.replace(/<[^>]+>/g, "").replace
 
 for (const page of await readdir(join(ROOT, "site/pages"))) {
   if (!page.endsWith(".html")) continue;
-  const html = stripTags(await readFile(join(ROOT, "site/pages", page), "utf8"));
+  const rawHtml = await readFile(join(ROOT, "site/pages", page), "utf8");
+  if (rawHtml.includes(STALE_REPOSITORY_URL)) {
+    violations.push(`site/pages/${page}: stale pre-rename repository URL -> ${STALE_REPOSITORY_URL}`);
+  }
+  if (rawHtml.includes(STALE_PAGES_URL)) {
+    violations.push(`site/pages/${page}: stale pre-rename Pages URL -> ${STALE_PAGES_URL}`);
+  }
+  const html = stripTags(rawHtml);
   for (const [name, want] of expected) {
     const declaration = declarationOf(html, name);
     if (declaration === null || /…|\.\.\./.test(declaration)) continue;

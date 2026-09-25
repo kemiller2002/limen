@@ -17,7 +17,7 @@ Measured before any change, at the starting SHA.
 
 | | |
 | --- | --- |
-| Repository | `kemiller2002/typescript-wasm-kernel` |
+| Repository | `kemiller2002/limen` (renamed after the original audit) |
 | Starting SHA | `5fcaf7e` (`release: 0.5.1 — the first publishable version`) |
 | Working tree | clean |
 | Package name | `@echelon-foundry/typescript-wasm-kernel` |

@@ -53,12 +53,12 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kemiller2002/typescript-wasm-kernel.git"
+    "url": "git+https://github.com/kemiller2002/limen.git"
   },
   "bugs": {
-    "url": "https://github.com/kemiller2002/typescript-wasm-kernel/issues"
+    "url": "https://github.com/kemiller2002/limen/issues"
   },
-  "homepage": "https://github.com/kemiller2002/typescript-wasm-kernel#readme",
+  "homepage": "https://github.com/kemiller2002/limen#readme",
   "keywords": [
     "limen",
     "browser-kernel",

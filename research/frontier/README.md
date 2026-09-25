@@ -1,4 +1,4 @@
-# Typescript Wasm Kernel research frontier
+# Limen research frontier
 
 This directory contains derived frontier views: unresolved questions,
 contradictions, candidate research opportunities, dependencies, confidence
