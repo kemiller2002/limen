@@ -15,8 +15,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [[ ! -f "$ROOT/dist-site/index.html" ]]; then
-  echo "dist-site/index.html is missing; run npm run build:site first." >&2
+if [[ ! -f "$ROOT/dist-site/index.html" || ! -f "$ROOT/dist-site/federation.html" ]]; then
+  echo "dist-site is missing required pages; run npm run build:site first." >&2
   exit 1
 fi
 
@@ -33,7 +33,7 @@ if [[ -z "$CHROME" ]]; then
   exit 1
 fi
 
-python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$ROOT/dist-site"   >"$LOG_DIR/server.log" 2>&1 &
+python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$ROOT/dist-site" >"$LOG_DIR/server.log" 2>&1 &
 SERVER_PID="$!"
 
 for _ in $(seq 1 40); do
@@ -49,20 +49,47 @@ if ! curl --fail --silent "http://127.0.0.1:$PORT/index.html" >/dev/null; then
   exit 1
 fi
 
-"$CHROME"   --headless=new   --no-sandbox   --disable-gpu   --disable-dev-shm-usage   --virtual-time-budget=15000   --dump-dom   "http://127.0.0.1:$PORT/index.html"   >"$LOG_DIR/dom.html" 2>"$LOG_DIR/chrome.log"
+dump_until_marker() {
+  local page="$1"
+  local marker="$2"
+  local label="$3"
+  local output="$LOG_DIR/${page%.html}.html"
+  local chrome_log="$LOG_DIR/${page%.html}-chrome.log"
 
-if ! grep -Fq 'Release is not yet legal. Resolve the obligations below.' "$LOG_DIR/dom.html"; then
-  echo "The real browser loaded the page, but the F# WebAssembly initialization projection did not reach the DOM." >&2
+  for attempt in 1 2 3; do
+    if "$CHROME"       --headless=new       --no-sandbox       --disable-gpu       --disable-dev-shm-usage       --virtual-time-budget=20000       --dump-dom       "http://127.0.0.1:$PORT/$page"       >"$output" 2>"$chrome_log"; then
+      if grep -Fq "$marker" "$output"; then
+        return 0
+      fi
+    fi
+    sleep 0.5
+  done
+
+  echo "$label did not reach the expected DOM marker after three bounded attempts." >&2
   echo "--- chrome ---" >&2
-  tail -n 120 "$LOG_DIR/chrome.log" >&2 || true
+  tail -n 160 "$chrome_log" >&2 || true
   echo "--- server ---" >&2
-  tail -n 120 "$LOG_DIR/server.log" >&2 || true
+  tail -n 160 "$LOG_DIR/server.log" >&2 || true
+  return 1
+}
+
+dump_until_marker   "index.html"   "Release is not yet legal. Resolve the obligations below."   "The main F# WebAssembly initialization projection"
+
+if ! grep -Fq "Test evidence unresolved" "$LOG_DIR/index.html"; then
+  echo "The main F# WebAssembly engine did not project its initial obligation list." >&2
   exit 1
 fi
 
-if ! grep -Fq 'Test evidence unresolved' "$LOG_DIR/dom.html"; then
-  echo "The F# WebAssembly engine did not project its initial obligation list." >&2
+dump_until_marker   "federation.html"   'data-federation-proof="passed"'   "The two-module F# WebAssembly federation proof"
+
+if ! grep -Fq '"status": "Completed"' "$LOG_DIR/federation.html"; then
+  echo "The source F# module did not own the completed transition state." >&2
   exit 1
 fi
 
-echo "Real-browser F# WebAssembly site smoke test passed with $(basename "$CHROME")."
+if ! grep -Fq '"stateVersion": 1' "$LOG_DIR/federation.html"; then
+  echo "The target F# module did not advance and expose its independent state version." >&2
+  exit 1
+fi
+
+echo "Real-browser F# WebAssembly site + two-module federation smoke test passed with $(basename "$CHROME")."

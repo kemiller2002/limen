@@ -2,12 +2,12 @@
 //
 // Deliberately tiny: read a layout, substitute a page's content into it, copy
 // static files. No template engine, no bundler, no framework — the site is
-// static HTML plus one Limen application, and the build should not be more
+// static HTML plus Limen applications, and the build should not be more
 // complicated than the thing it builds.
 //
 // Every emitted path is RELATIVE (`./assets/...`, `./site/app/main.js`), and
 // every page sits at the root of the output, so the site works identically at
-// https://user.github.io/typescript-wasm-kernel/ and at a future custom domain.
+// https://user.github.io/limen/ and at a future custom domain.
 // Nothing is hardcoded to "/".
 //
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -21,14 +21,15 @@ type Page = {
   readonly slug: string;
   readonly title: string;
   readonly description: string;
-  /** Pages that carry application behavior load the Limen app. Prose pages do not. */
-  readonly app?: boolean;
+  /** Optional browser module loaded by this page. Prose pages omit it. */
+  readonly script?: string;
 };
 
 const PAGES: readonly Page[] = [
-  { slug: "index", title: "Overview", description: "Limen is an explicit boundary that keeps browser capabilities separate from application authority.", app: true },
+  { slug: "index", title: "Overview", description: "Limen is an explicit boundary that keeps browser capabilities separate from application authority.", script: "main.js" },
   { slug: "architecture", title: "Architecture", description: "What runs where in a Limen application, who owns state, and why the boundary is drawn where it is." },
-  { slug: "demos", title: "Demos", description: "Interactive demonstrations of Limen's event flow, state model, and effect outcomes — driven by the real kernel.", app: true },
+  { slug: "demos", title: "Demos", description: "Interactive demonstrations of Limen's event flow, state model, and effect outcomes — driven by the real kernel.", script: "main.js" },
+  { slug: "federation", title: "Federation", description: "A real-browser existence proof with two independently loaded F# WebAssembly modules exchanging versioned transitions through Limen.", script: "federation-proof.js" },
   { slug: "evidence", title: "Evidence", description: "What has actually been measured about Limen, what has not, and where every number comes from." },
   { slug: "agents", title: "For agents", description: "The architectural contract an AI coding agent needs before modifying a Limen application." },
   { slug: "docs", title: "Documentation", description: "The full Limen documentation set: architecture, getting started, effects, testing, recipes and troubleshooting." },
@@ -69,7 +70,8 @@ async function copyAppJs(): Promise<number> {
   return scripts.length;
 }
 
-const APP_TAG = `  <script type="module" src="./site/app/main.js"></script>`;
+const scriptTag = (script: string | undefined): string =>
+  script === undefined ? "" : `  <script type="module" src="./site/app/${script}"></script>`;
 
 async function main(): Promise<void> {
   const layout = await readFile(join(ROOT, "site", "templates", "layout.html"), "utf8");
@@ -94,7 +96,7 @@ async function main(): Promise<void> {
       version,
       commit,
       built,
-      app: page.app ? APP_TAG : "",
+      app: scriptTag(page.script),
     });
     await writeFile(join(OUT, `${page.slug}.html`), html, "utf8");
   }
@@ -111,12 +113,20 @@ async function main(): Promise<void> {
   // npm package remains a TypeScript browser boundary; this site is a real
   // consumer of that boundary, not a TypeScript simulation of one.
   await copyTree(join(ROOT, "site", "fsharp", "publish", "wwwroot"), join(OUT, "wasm"));
+  await copyTree(
+    join(ROOT, "site", "fsharp", "federation", "Limen.Federation.Source.Wasm", "publish", "wwwroot"),
+    join(OUT, "federation", "source"),
+  );
+  await copyTree(
+    join(ROOT, "site", "fsharp", "federation", "Limen.Federation.Target.Wasm", "publish", "wwwroot"),
+    join(OUT, "federation", "target"),
+  );
 
   // Pages serves what it is given; nothing here needs Jekyll processing, and
   // .nojekyll stops it from ignoring paths that begin with an underscore.
   await writeFile(join(OUT, ".nojekyll"), "", "utf8");
 
-  console.log(`Site built: ${PAGES.length} pages, ${scripts} browser-boundary script(s), F# WASM engine, version ${version} (${commit}) → dist-site/`);
+  console.log(`Site built: ${PAGES.length} pages, ${scripts} browser-boundary script(s), F# WASM engine + two-module federation proof, version ${version} (${commit}) → dist-site/`);
 }
 
 await main();

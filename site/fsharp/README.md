@@ -128,3 +128,24 @@ This prevents several false-green states:
 
 Do not replace this with a jsdom-only check. jsdom remains useful for structural
 binding tests, but it does not execute the deployed .NET WebAssembly runtime.
+
+
+## Multi-WASM federation proof
+
+The sibling projects under `site/fsharp/federation/` are deliberately not
+merged into the product-site engine. They are an existence proof for Limen
+federation:
+
+- `Limen.Federation.Source.Engine` owns request/correlation state;
+- `Limen.Federation.Target.Engine` owns target version and accepted values;
+- each has its own `Microsoft.NET.Sdk.WebAssembly` host and published runtime;
+- neither engine references the other engine assembly;
+- each receiver decodes generic JSON into its own typed F# contract before
+  changing authoritative state;
+- the TypeScript transport validates the F#-exported manifest against the
+  manifest registered with `ModuleFederation`;
+- the real-browser gate requires distinct .NET runtime IDs.
+
+The main product application is still one F# engine. The federation page is a
+separate proof surface and must not be described as if the product UI itself
+were decomposed into multiple modules.

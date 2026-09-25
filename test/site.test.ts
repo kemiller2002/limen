@@ -71,7 +71,7 @@ function markupEvents(html: string): Set<string> {
 
 test("the site builds every expected page", { skip: built ? false : "run `npm run build:site` first" }, async () => {
   assert.deepEqual(await pages(), [
-    "agents.html", "architecture.html", "demos.html", "docs.html", "evidence.html", "index.html",
+    "agents.html", "architecture.html", "demos.html", "docs.html", "evidence.html", "federation.html", "index.html",
   ]);
 });
 
@@ -97,6 +97,14 @@ test("application pages load Limen plus the WASM transport; prose pages do not",
     assert.equal(document.querySelectorAll('script[type="module"][src="./site/app/main.js"]').length, 1, `${name}: app script`);
   }
 
+  const federation = await load("federation.html");
+  assert.equal(
+    federation.querySelectorAll('script[type="module"][src="./site/app/federation-proof.js"]').length,
+    1,
+    "federation.html: federation proof script",
+  );
+  assert.equal(federation.querySelectorAll('script[src*="main.js"]').length, 0, "federation.html: no main app script");
+
   for (const name of ["architecture.html", "evidence.html", "agents.html", "docs.html"]) {
     const document = await load(name);
     assert.equal(document.querySelectorAll('script[src*="main.js"]').length, 0, `${name}: prose page should not load app`);
@@ -108,8 +116,13 @@ test("the deployed site contains a real WebAssembly runtime and no legacy TypeSc
   assert.ok(existsSync(new URL("site/app/wasm-engine-transport.js", SITE)), "WASM transport must be published");
   assert.ok(!existsSync(new URL("site/app/engine.js", SITE)), "TypeScript site engine must not be published");
 
-  const framework = await readdir(new URL("wasm/_framework/", SITE), { recursive: true });
-  assert.ok(framework.some((name) => String(name).endsWith(".wasm")), "published framework must contain WebAssembly");
+  for (const path of ["wasm/_framework/", "federation/source/_framework/", "federation/target/_framework/"]) {
+    const framework = await readdir(new URL(path, SITE), { recursive: true });
+    assert.ok(framework.some((name) => String(name).endsWith(".wasm")), path + " must contain WebAssembly");
+  }
+
+  assert.ok(existsSync(new URL("site/app/federated-wasm-module-transport.js", SITE)), "federated transport must be published");
+  assert.ok(existsSync(new URL("site/app/federation-proof.js", SITE)), "federation proof shell must be published");
 });
 
 test("browser-side site code contains mechanics, not release or policy decisions", async () => {
@@ -173,4 +186,36 @@ test("the challenging demos are actually present", { skip: built ? false : "not 
   assert.match(engine, /StaleDiscarded/);
   assert.match(engine, /placementTasks/);
   assert.ok((engine.match(/Prompt =/g) ?? []).length >= 10, "placement challenge should contain at least ten tasks");
+});
+
+
+test("federation proof keeps domain transition meaning inside F#", async () => {
+  const transport = await source("../site/app/federated-wasm-module-transport.ts");
+  const shell = await source("../site/app/federation-proof.ts");
+  const sourceEngine = await source("../site/fsharp/federation/Limen.Federation.Source.Engine/Federation.fs");
+  const targetEngine = await source("../site/fsharp/federation/Limen.Federation.Target.Engine/Federation.fs");
+
+  for (const forbidden of ["acceptedValue", "state-version-mismatch", "Value + 1", "AcceptedCount"]) {
+    assert.ok(!transport.includes(forbidden), "generic transport leaked domain concept: " + forbidden);
+    assert.ok(!shell.includes(forbidden), "federation shell leaked domain concept: " + forbidden);
+  }
+
+  assert.match(sourceEngine, /type AcceptedPayload/);
+  assert.match(targetEngine, /type TransitionRequest/);
+  assert.match(targetEngine, /request\.Value \+ 1/);
+  assert.match(targetEngine, /ExpectedStateVersion <> state\.StateVersion/);
+});
+
+test("federation proof uses two independent F# engine and WASM projects", async () => {
+  const sourceHost = await source("../site/fsharp/federation/Limen.Federation.Source.Wasm/Limen.Federation.Source.Wasm.csproj");
+  const targetHost = await source("../site/fsharp/federation/Limen.Federation.Target.Wasm/Limen.Federation.Target.Wasm.csproj");
+
+  assert.match(sourceHost, /Limen\.Federation\.Source\.Engine/);
+  assert.ok(!sourceHost.includes("Limen.Federation.Target.Engine"));
+  assert.match(targetHost, /Limen\.Federation\.Target\.Engine/);
+  assert.ok(!targetHost.includes("Limen.Federation.Source.Engine"));
+
+  const proof = await source("../site/app/federation-proof.ts");
+  assert.match(proof, /source\.runtimeId === target\.runtimeId/);
+  assert.match(proof, /ModuleFederation/);
 });
