@@ -1,13 +1,13 @@
 ---
-id: PILOT-MEASUREMENT-typescript-wasm-kernel
-title: Typescript Wasm Kernel ROS Pilot Measurement Plan
+id: PILOT-MEASUREMENT-limen
+title: Limen ROS Pilot Measurement Plan
 status: draft
 version: 0.1.0
 created: 2026-08-21
 updated: 2026-08-21
 ---
 
-# Typescript Wasm Kernel ROS pilot measurement plan
+# Limen ROS pilot measurement plan
 
 ## Evaluation question
 
