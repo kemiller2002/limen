@@ -48,21 +48,22 @@ module SourceModule =
     let mutable private initialized = false
     let mutable private active = false
 
-    let private valueNode value = JsonValue.Create(value) :> JsonNode
+    let private valueNode<'T> (value: 'T) =
+        JsonValue.Create<'T>(value) :> JsonNode
 
-    let private strings values =
+    let private strings (values: seq<string>) =
         let array = JsonArray()
-        values |> Seq.iter (fun value -> array.Add(JsonValue.Create(value)))
+        values |> Seq.iter (fun value -> array.Add(JsonValue.Create<string>(value)))
         array :> JsonNode
 
-    let private contractRange contract =
+    let private contractRange (contract: string) =
         let item = JsonObject()
         item["contract"] <- valueNode contract
         item["minVersion"] <- valueNode 1
         item["maxVersion"] <- valueNode 1
         item :> JsonNode
 
-    let private contractRanges contracts =
+    let private contractRanges (contracts: seq<string>) =
         let array = JsonArray()
         contracts |> Seq.iter (fun contract -> array.Add(contractRange contract))
         array :> JsonNode
