@@ -73,13 +73,13 @@ exhaustive lists.
   this browser or context; a retry can never work) and `unknown`. Read is
   deliberately absent. The copied text is never surfaced to diagnostics, under
   the same rule that keeps HTTP headers out of them.
-  ([docs/clipboard.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md), `examples/07-clipboard/`)
+  ([docs/clipboard.md](https://github.com/kemiller2002/limen/blob/main/docs/clipboard.md), `examples/07-clipboard/`)
 - **`Navigation` capability.** `push`, `replace`, `back` and `forward`;
   `NavigationOutcome` reports `Success { location }` for the first two and
   `Dispatched` for the last two, because those only *ask* the browser to move.
   Cross-origin URLs are refused with `not-same-origin` rather than followed. No
   history state object is stored: the engine already owns the state a URL stands
-  for. ([docs/routing.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md), `examples/08-routing/`)
+  for. ([docs/routing.md](https://github.com/kemiller2002/limen/blob/main/docs/routing.md), `examples/08-routing/`)
 - **`LocationChanged` message.** Sent when the browser moves through history on
   its own (Back, Forward, a gesture). It is not an `EffectResult`, because no
   effect was requested and nothing correlates it. An engine that ignores it
@@ -183,7 +183,7 @@ the wrong tree is worse than a gap in the sequence.
 
 - **The Limen name** across human-facing surfaces. No exported symbol, file path
   or protocol type was renamed, and nothing was deprecated
-  ([docs/18-naming-and-compatibility.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md)).
+  ([docs/18-naming-and-compatibility.md](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md)).
 - **The lifecycle CLI** — `init`, `status`, `verify`, `upgrade`, `doctor` —
   implemented in F# and shipped as self-contained binaries for Linux x64/arm64,
   Windows x64 and macOS x64/arm64. No .NET runtime required to use it.
@@ -204,7 +204,7 @@ Pre-release development, beginning at `0.2.1`: the protocol, the browser kernel,
 the reference engine, the six original examples, the documentation set, and the
 architecture and documentation checks. See the repository history.
 
-[Unreleased]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.6.1...HEAD
-[0.6.1]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.1...HEAD
-[0.5.1]: https://github.com/kemiller2002/typescript-wasm-kernel/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/kemiller2002/typescript-wasm-kernel/releases/tag/v0.5.0
+[Unreleased]: https://github.com/kemiller2002/limen/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/kemiller2002/limen/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/kemiller2002/limen/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/kemiller2002/limen/releases/tag/v0.5.0
