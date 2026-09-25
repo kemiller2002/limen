@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "repository": "typescript-wasm-kernel",
+  "repository": "limen",
   "nextSeq": 25,
   "items": [
     {
@@ -398,7 +398,7 @@
         "architecture"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-23T12:04:00.000Z",
       "updatedAt": "2026-09-23T12:04:00.000Z",
