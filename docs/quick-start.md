@@ -133,7 +133,7 @@ a browser needs to resolve a bare package name.
 > event name. Real engines add a small `eventToCommand(event) → Command` step
 > first, turning an open vocabulary of strings from the HTML into a closed union
 > the compiler can check — that is what every example past
-> [01-counter](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter) does, and what the recipes and
+> [01-counter](https://github.com/kemiller2002/limen/tree/main/examples/01-counter) does, and what the recipes and
 > traces assume. It is one function, and it is worth adding as soon as you have
 > a second event that carries data.
 
@@ -173,6 +173,6 @@ Everything else — eight progressive examples covering forms, validation, fetch
 storage, clipboard and routing; the anti-patterns catalogue; the agent guide;
 the architecture notes — lives online:
 
-- Examples: <https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples>
-- Documentation index: <https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/README.md>
-- Repository: <https://github.com/kemiller2002/typescript-wasm-kernel>
+- Examples: <https://github.com/kemiller2002/limen/tree/main/examples>
+- Documentation index: <https://github.com/kemiller2002/limen/blob/main/docs/README.md>
+- Repository: <https://github.com/kemiller2002/limen>
