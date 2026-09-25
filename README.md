@@ -13,10 +13,10 @@ npm install @echelon-foundry/typescript-wasm-kernel
 
 | | |
 | --- | --- |
-| **Five-minute start** | [docs/quick-start.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/quick-start.md) |
-| **Who owns what** | [docs/mental-model.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/mental-model.md) |
-| **Where does my change go?** | [docs/where-code-goes.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/where-code-goes.md) |
-| **I am an AI coding agent** | [AGENTS.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/AGENTS.md) |
+| **Five-minute start** | [docs/quick-start.md](https://github.com/kemiller2002/limen/blob/main/docs/quick-start.md) |
+| **Who owns what** | [docs/mental-model.md](https://github.com/kemiller2002/limen/blob/main/docs/mental-model.md) |
+| **Where does my change go?** | [docs/where-code-goes.md](https://github.com/kemiller2002/limen/blob/main/docs/where-code-goes.md) |
+| **I am an AI coding agent** | [AGENTS.md](https://github.com/kemiller2002/limen/blob/main/AGENTS.md) |
 
 ---
 
@@ -45,7 +45,7 @@ and keeps it honest.
    product site under `site/fsharp/`, and the separate
    `time-entry-state-machine` application. The deployed Limen site therefore
    demonstrates the seam rather than merely describing it. Full status:
-   [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+   [docs/17-wasm-migration.md](https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md).
 2. **Is Limen written in F#?** The **browser kernel and protocol are
    TypeScript**. The lifecycle CLI is F#. The product site's application state,
    transitions, evidence handling, capabilities and projection are also F#,
@@ -54,7 +54,7 @@ and keeps it honest.
 3. **Why is the package named `typescript-wasm-kernel`?** History. Limen is the
    product name; **no exported symbol, file path, or protocol type was
    renamed**, and nothing was deprecated. See
-   [docs/18-naming-and-compatibility.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/18-naming-and-compatibility.md).
+   [docs/18-naming-and-compatibility.md](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md).
 
 ## Why it exists
 
@@ -78,7 +78,7 @@ and it is not the browser.**
 These are architectural properties or existence proofs, not measured claims
 about speed, defects, agent accuracy, tokens or cost — see [Evidence](#evidence).
 The mechanically enforced reference-engine boundary is:
-[`scripts/check-architecture.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/scripts/check-architecture.ts)
+[`scripts/check-architecture.ts`](https://github.com/kemiller2002/limen/blob/main/scripts/check-architecture.ts)
 fails the build if `src/engine/**` so much as mentions `document`, `window`,
 `fetch(`, `localStorage`, or `sessionStorage`.
 
@@ -142,11 +142,11 @@ DOM event  →  Limen  →  SemanticEvent  →  transition()  →  new state
 ```
 
 The two arrows crossing the middle are the entire contract. They are defined in
-[`src/protocol.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/src/protocol.ts) —
+[`src/protocol.ts`](https://github.com/kemiller2002/limen/blob/main/src/protocol.ts) —
 about 160 lines, and the single most useful file to read.
 
 Three complete interactions traced through every file they touch:
-[docs/traces.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md).
+[docs/traces.md](https://github.com/kemiller2002/limen/blob/main/docs/traces.md).
 
 ### More than one application engine
 
@@ -176,7 +176,7 @@ so multiple independent F# WASMs are not yet claimed as a self-hosting
 demonstration.
 
 Full design and API:
-[docs/23-wasm-federation.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/23-wasm-federation.md).
+[docs/23-wasm-federation.md](https://github.com/kemiller2002/limen/blob/main/docs/23-wasm-federation.md).
 
 ## Install
 
@@ -255,7 +255,7 @@ capabilities, don't reconstruct them** — is most of what using Limen well
 consists of.
 
 This example is real, and the test suite executes it on every run:
-[`examples/01-counter/`](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter).
+[`examples/01-counter/`](https://github.com/kemiller2002/limen/tree/main/examples/01-counter).
 A no-build-step JavaScript copy ships **inside the npm package** at
 `examples/minimal/`.
 
@@ -274,7 +274,7 @@ A no-build-step JavaScript copy ships **inside the npm package** at
 - **Nothing persists by itself.** A reload starts from your initial state
   unless your engine asked for a `Storage` effect.
 
-Detail: [docs/04-state-model.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/04-state-model.md).
+Detail: [docs/04-state-model.md](https://github.com/kemiller2002/limen/blob/main/docs/04-state-model.md).
 
 ## How browser capabilities work
 
@@ -291,7 +291,7 @@ it and reports a typed outcome, which the engine then treats as evidence.
 **`Clipboard` and `Navigation` are new in 0.6.1.** On an earlier version they do
 not exist, and requesting one produces a `BridgeError` with `phase: "effect"`
 and no result. Check with `npm ls @echelon-foundry/typescript-wasm-kernel`; the
-per-version record is [CHANGELOG.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/CHANGELOG.md).
+per-version record is [CHANGELOG.md](https://github.com/kemiller2002/limen/blob/main/CHANGELOG.md).
 
 Plus one message nobody requested: **`LocationChanged`**, when the user presses
 Back or Forward. It is not an effect result, because no effect was asked for.
@@ -303,11 +303,11 @@ out must not be retried automatically, and no type that collapses that into
 
 Not implemented: files, timers, focus control, geolocation, `IndexedDB`,
 clipboard read. Adding one is a deliberate protocol change —
-[docs/15-recipes.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md).
+[docs/15-recipes.md](https://github.com/kemiller2002/limen/blob/main/docs/15-recipes.md).
 
-Detail: [effects and browser interop](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/07-effects-and-browser-interop.md) ·
-[routing](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md) ·
-[clipboard](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md).
+Detail: [effects and browser interop](https://github.com/kemiller2002/limen/blob/main/docs/07-effects-and-browser-interop.md) ·
+[routing](https://github.com/kemiller2002/limen/blob/main/docs/routing.md) ·
+[clipboard](https://github.com/kemiller2002/limen/blob/main/docs/clipboard.md).
 
 ## F# and this repository
 
@@ -333,67 +333,67 @@ the placement challenge, and projection. The browser-side site code owns none
 of those concepts.
 
 See
-[docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md)
+[docs/17-wasm-migration.md](https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md)
 for the exact implementation and remaining limits.
 
 ## Examples
 
 Each is executed by
-[`test/examples.test.ts`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/test/examples.test.ts)
+[`test/examples.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/examples.test.ts)
 against its own real `index.html`, so none can silently rot. Every one has a
 README covering its state model, event and effect flow, exercises, and the
 mistakes people actually make with it.
 
 | Example | Demonstrates |
 | --- | --- |
-| [01-counter](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/01-counter) | the minimum: event → transition → projection → DOM |
-| [02-form](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/02-form) | validation, capability projection, rejected illegal transitions |
-| [03-fetch-data](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/03-fetch-data) | HTTP effect, lists, all four outcomes, stale-result rejection |
-| [04-save-data](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/04-save-data) | full save lifecycle, storage effect, non-idempotent write safety |
-| [05-multi-screen](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/05-multi-screen) | screens as state, shared vs. screen-local lifetimes, no URLs |
-| [06-time-entries](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/06-time-entries) | a realistic feature: load, validate, add, mutate, refresh |
-| [07-clipboard](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/07-clipboard) | copying text; three failure reasons, only one worth retrying |
-| [08-routing](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/08-routing) | typed routes, deep links, Back and Forward, static hosting |
-| [minimal](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/minimal) | the copy shipped inside the npm package — four files, no build step |
-| [kitchen-sink](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples/kitchen-sink.html) | every primitive and every outcome, interactively |
+| [01-counter](https://github.com/kemiller2002/limen/tree/main/examples/01-counter) | the minimum: event → transition → projection → DOM |
+| [02-form](https://github.com/kemiller2002/limen/tree/main/examples/02-form) | validation, capability projection, rejected illegal transitions |
+| [03-fetch-data](https://github.com/kemiller2002/limen/tree/main/examples/03-fetch-data) | HTTP effect, lists, all four outcomes, stale-result rejection |
+| [04-save-data](https://github.com/kemiller2002/limen/tree/main/examples/04-save-data) | full save lifecycle, storage effect, non-idempotent write safety |
+| [05-multi-screen](https://github.com/kemiller2002/limen/tree/main/examples/05-multi-screen) | screens as state, shared vs. screen-local lifetimes, no URLs |
+| [06-time-entries](https://github.com/kemiller2002/limen/tree/main/examples/06-time-entries) | a realistic feature: load, validate, add, mutate, refresh |
+| [07-clipboard](https://github.com/kemiller2002/limen/tree/main/examples/07-clipboard) | copying text; three failure reasons, only one worth retrying |
+| [08-routing](https://github.com/kemiller2002/limen/tree/main/examples/08-routing) | typed routes, deep links, Back and Forward, static hosting |
+| [minimal](https://github.com/kemiller2002/limen/tree/main/examples/minimal) | the copy shipped inside the npm package — four files, no build step |
+| [kitchen-sink](https://github.com/kemiller2002/limen/tree/main/examples/kitchen-sink.html) | every primitive and every outcome, interactively |
 
 ## Documentation
 
 | You are… | Start here |
 | --- | --- |
-| Getting something working now | [quick-start](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/quick-start.md) |
-| Trying to understand the model | [mental model](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/mental-model.md) |
-| Deciding where a change belongs | [where does code go?](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/where-code-goes.md) |
-| Following one interaction end to end | [three traces](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md) |
-| Looking for an API | [API reference](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/11-api-reference.md) |
-| Doing one specific task | [recipes](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/15-recipes.md) |
-| Debugging | [troubleshooting](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/16-troubleshooting.md) |
-| Adding URLs | [routing](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/routing.md) |
-| Copying text | [clipboard](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/clipboard.md) |
-| About to do it wrong | [anti-patterns](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/13-anti-patterns.md) |
-| Adopting Limen elsewhere | [integration guide](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/10-integration-guide.md) |
-| Using the CLI | [lifecycle CLI](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/20-lifecycle-cli.md) |
-| Splitting an application across multiple WASMs | [WASM federation](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/23-wasm-federation.md) |
+| Getting something working now | [quick-start](https://github.com/kemiller2002/limen/blob/main/docs/quick-start.md) |
+| Trying to understand the model | [mental model](https://github.com/kemiller2002/limen/blob/main/docs/mental-model.md) |
+| Deciding where a change belongs | [where does code go?](https://github.com/kemiller2002/limen/blob/main/docs/where-code-goes.md) |
+| Following one interaction end to end | [three traces](https://github.com/kemiller2002/limen/blob/main/docs/traces.md) |
+| Looking for an API | [API reference](https://github.com/kemiller2002/limen/blob/main/docs/11-api-reference.md) |
+| Doing one specific task | [recipes](https://github.com/kemiller2002/limen/blob/main/docs/15-recipes.md) |
+| Debugging | [troubleshooting](https://github.com/kemiller2002/limen/blob/main/docs/16-troubleshooting.md) |
+| Adding URLs | [routing](https://github.com/kemiller2002/limen/blob/main/docs/routing.md) |
+| Copying text | [clipboard](https://github.com/kemiller2002/limen/blob/main/docs/clipboard.md) |
+| About to do it wrong | [anti-patterns](https://github.com/kemiller2002/limen/blob/main/docs/13-anti-patterns.md) |
+| Adopting Limen elsewhere | [integration guide](https://github.com/kemiller2002/limen/blob/main/docs/10-integration-guide.md) |
+| Using the CLI | [lifecycle CLI](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md) |
+| Splitting an application across multiple WASMs | [WASM federation](https://github.com/kemiller2002/limen/blob/main/docs/23-wasm-federation.md) |
 
 Full index:
-**[docs/README.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/README.md)**.
-Live site: **<https://kemiller2002.github.io/typescript-wasm-kernel/>**.
+**[docs/README.md](https://github.com/kemiller2002/limen/blob/main/docs/README.md)**.
+Live site: **<https://kemiller2002.github.io/limen/>**.
 
 ## For agents
 
 Start at
-**[AGENTS.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/AGENTS.md)**.
+**[AGENTS.md](https://github.com/kemiller2002/limen/blob/main/AGENTS.md)**.
 It opens with the non-negotiable rules, then gives a deterministic reading
 order, repository landmarks with real paths, a placement decision tree, and a
 list of mistakes agents actually make here.
 
 The three documents that answer most placement questions on their own:
-[mental model](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/mental-model.md),
-[where does code go?](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/where-code-goes.md),
-[three traces](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/traces.md).
+[mental model](https://github.com/kemiller2002/limen/blob/main/docs/mental-model.md),
+[where does code go?](https://github.com/kemiller2002/limen/blob/main/docs/where-code-goes.md),
+[three traces](https://github.com/kemiller2002/limen/blob/main/docs/traces.md).
 
 Deeper guidance:
-[agent guide](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/14-agent-guide.md).
+[agent guide](https://github.com/kemiller2002/limen/blob/main/docs/14-agent-guide.md).
 
 ## The npm package
 
@@ -451,9 +451,9 @@ codes; `init` and `upgrade` take `--dry-run` and `--check`. Nothing prompts, so
 nothing hangs.
 
 Full reference:
-**[docs/20-lifecycle-cli.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/20-lifecycle-cli.md)**.
+**[docs/20-lifecycle-cli.md](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md)**.
 What it writes and what an upgrade may change:
-**[docs/21-installation-and-upgrade.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/21-installation-and-upgrade.md)**.
+**[docs/21-installation-and-upgrade.md](https://github.com/kemiller2002/limen/blob/main/docs/21-installation-and-upgrade.md)**.
 
 The CLI is implemented in F# (`cli/Limen.Core/`, `cli/Limen.Cli/`); the Node
 side is a launcher that selects a binary and forwards arguments, and contains no
@@ -473,19 +473,19 @@ lifecycle logic.
 - **WASM**: not required by the npm kernel. This repository's product site does
   use .NET WebAssembly for its F# application engine. Consumers may use the
   in-process TypeScript reference engine or provide another `EngineTransport`.
-  See [docs/17-wasm-migration.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/17-wasm-migration.md).
+  See [docs/17-wasm-migration.md](https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md).
 - **Versioning**: semver, currently `0.x` — the protocol may still change in a
   minor release. See
-  [stability and compatibility](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/11-api-reference.md#stability-and-compatibility).
+  [stability and compatibility](https://github.com/kemiller2002/limen/blob/main/docs/11-api-reference.md#stability-and-compatibility).
 
 ## The site
 
 Limen's own website is built **with** Limen — its interactive sections are a
 real Limen application driven by the same package you would install, and its
 prose is ordinary static HTML. Source in
-[`site/`](https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/site),
+[`site/`](https://github.com/kemiller2002/limen/tree/main/site),
 deployed by
-[`.github/workflows/pages.yml`](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/.github/workflows/pages.yml).
+[`.github/workflows/pages.yml`](https://github.com/kemiller2002/limen/blob/main/.github/workflows/pages.yml).
 
 ```sh
 npm run serve:site   # build and serve on http://localhost:4174
@@ -546,16 +546,16 @@ npm run build:cli:all      # publish all five platform binaries (what npm pack s
 rather than passing when no binary has been built.
 
 Contributing — including AI agents — starts with
-[AGENTS.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/AGENTS.md)
-and [docs/12-design-rules.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/12-design-rules.md).
+[AGENTS.md](https://github.com/kemiller2002/limen/blob/main/AGENTS.md)
+and [docs/12-design-rules.md](https://github.com/kemiller2002/limen/blob/main/docs/12-design-rules.md).
 
-This repository follows [SDE](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/.sde/README.md)
+This repository follows [SDE](https://github.com/kemiller2002/limen/blob/main/.sde/README.md)
 and the ROS work protocol: identify a work item and run `./ros work start WI-####`
 **before** meaningful changes, or CI's `validate` job will reject the branch.
 
 Installed ROS governance references are also part of the repository's documented engineering surface:
-[development telemetry](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/development-telemetry.md) and
-[Ordo observation and handoff](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/ordo-observation.md).
+[development telemetry](https://github.com/kemiller2002/limen/blob/main/docs/development-telemetry.md) and
+[Ordo observation and handoff](https://github.com/kemiller2002/limen/blob/main/docs/ordo-observation.md).
 
 ## Evidence
 
@@ -570,12 +570,12 @@ documentation.
 
 Full accounting, including what a Limen trial would have to measure and why one
 has not been run:
-**[docs/19-evidence.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/19-evidence.md)**.
+**[docs/19-evidence.md](https://github.com/kemiller2002/limen/blob/main/docs/19-evidence.md)**.
 
 Known gaps, deferred work, and the reasoning behind both are tracked in
-[docs/ROADMAP.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/ROADMAP.md)
+[docs/ROADMAP.md](https://github.com/kemiller2002/limen/blob/main/docs/ROADMAP.md)
 and
-[docs/DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/DOCUMENTATION-AUDIT.md).
+[docs/DOCUMENTATION-AUDIT.md](https://github.com/kemiller2002/limen/blob/main/docs/DOCUMENTATION-AUDIT.md).
 
 ## Tradeoffs
 
@@ -584,7 +584,7 @@ Real, and documented rather than hidden: no route table or path matching (the
 the four above, no focus management, no list virtualization, no scheduling
 primitives, and more ceremony than a small component framework for a genuinely
 simple page. See
-[docs/01-architecture.md § Honest limits](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/docs/01-architecture.md#6-honest-limits).
+[docs/01-architecture.md § Honest limits](https://github.com/kemiller2002/limen/blob/main/docs/01-architecture.md#6-honest-limits).
 
 ## Release
 
@@ -598,11 +598,11 @@ Trusted Publishing over GitHub OIDC — no npm token is stored in GitHub.
 The publish workflow rejects a tag whose version does not match `package.json`,
 then runs all checks before publishing.
 
-Changes by version: [CHANGELOG.md](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/CHANGELOG.md).
+Changes by version: [CHANGELOG.md](https://github.com/kemiller2002/limen/blob/main/CHANGELOG.md).
 
 ## License
 
-MIT — see [LICENSE](https://github.com/kemiller2002/typescript-wasm-kernel/blob/main/LICENSE).
+MIT — see [LICENSE](https://github.com/kemiller2002/limen/blob/main/LICENSE).
 
 ---
 
