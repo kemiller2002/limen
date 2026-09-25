@@ -37,7 +37,7 @@ EXIT CODES
   2  invalid arguments            6  prerequisite failure
   3  verification failed          7  unsupported platform
 
-Documentation: https://github.com/kemiller2002/typescript-wasm-kernel
+Documentation: https://github.com/kemiller2002/limen
 """
 
 let init =
