@@ -63,9 +63,11 @@ equal "target owns accepted value" 42 (targetSnapshot["lastValue"].GetValue<int>
 // Re-deliver the original request after the target has advanced.
 // The target must reject it without mutating authoritative state.
 let staleResult = JsonNode.Parse(Target.dispatch requestJson).AsObject()
-let staleResponse = staleResult["emitted"].AsArray()[0].AsObject()
+let staleEmitted = staleResult["emitted"].AsArray()
+let staleResponse = staleEmitted[0].AsObject()
+let stalePayload = staleResponse["payload"].AsObject()
 equal "stale expected version is rejected" "TransitionRejected" (staleResponse["kind"].GetValue<string>())
-equal "stale rejection reports current version" 1 (staleResponse["payload"].AsObject()["currentStateVersion"].GetValue<int>())
+equal "stale rejection reports current version" 1 (stalePayload["currentStateVersion"].GetValue<int>())
 
 let targetAfterStale = JsonNode.Parse(Target.snapshotJson()).AsObject()
 equal "stale request does not increment target count" 1 (targetAfterStale["acceptedCount"].GetValue<int>())

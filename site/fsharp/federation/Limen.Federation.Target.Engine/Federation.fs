@@ -38,8 +38,11 @@ module TargetModule =
     let mutable private initialized = false
     let mutable private active = false
 
-    let private valueNode<'T> (value: 'T) =
-        JsonValue.Create<'T>(value) :> JsonNode
+    let private stringNode (value: string) =
+        JsonValue.Create(value) :> JsonNode
+
+    let private intNode (value: int) =
+        JsonValue.Create(value) :> JsonNode
 
     let private strings (values: seq<string>) =
         let array = JsonArray()
@@ -48,9 +51,9 @@ module TargetModule =
 
     let private contractRange (contract: string) =
         let item = JsonObject()
-        item["contract"] <- valueNode contract
-        item["minVersion"] <- valueNode 1
-        item["maxVersion"] <- valueNode 1
+        item["contract"] <- stringNode contract
+        item["minVersion"] <- intNode 1
+        item["maxVersion"] <- intNode 1
         item :> JsonNode
 
     let private contractRanges (contracts: seq<string>) =
@@ -60,9 +63,9 @@ module TargetModule =
 
     let manifestJson () =
         let root = JsonObject()
-        root["id"] <- valueNode ModuleId
-        root["version"] <- valueNode "1.0.0"
-        root["federationProtocolVersion"] <- valueNode FederationProtocolVersion
+        root["id"] <- stringNode ModuleId
+        root["version"] <- stringNode "1.0.0"
+        root["federationProtocolVersion"] <- intNode FederationProtocolVersion
         root["accepts"] <- contractRanges [ RequestContract ]
         root["emits"] <- contractRanges [ ResultContract ]
         root["capabilitiesRequired"] <- strings []
@@ -86,11 +89,11 @@ module TargetModule =
 
     let snapshotJson () =
         let root = JsonObject()
-        root["stateVersion"] <- valueNode state.StateVersion
-        root["acceptedCount"] <- valueNode state.AcceptedCount
+        root["stateVersion"] <- intNode state.StateVersion
+        root["acceptedCount"] <- intNode state.AcceptedCount
 
         match state.LastValue with
-        | Some value -> root["lastValue"] <- valueNode value
+        | Some value -> root["lastValue"] <- intNode value
         | None -> root["lastValue"] <- null
 
         root.ToJsonString()
@@ -157,14 +160,14 @@ module TargetModule =
         (payload: JsonObject)
         =
         let root = JsonObject()
-        root["protocolVersion"] <- valueNode FederationProtocolVersion
-        root["source"] <- valueNode ModuleId
-        root["target"] <- valueNode sourceModuleId
-        root["correlationId"] <- valueNode correlationId
-        root["causationId"] <- valueNode correlationId
-        root["kind"] <- valueNode kind
-        root["contract"] <- valueNode ResultContract
-        root["contractVersion"] <- valueNode 1
+        root["protocolVersion"] <- intNode FederationProtocolVersion
+        root["source"] <- stringNode ModuleId
+        root["target"] <- stringNode sourceModuleId
+        root["correlationId"] <- stringNode correlationId
+        root["causationId"] <- stringNode correlationId
+        root["kind"] <- stringNode kind
+        root["contract"] <- stringNode ResultContract
+        root["contractVersion"] <- intNode 1
         root["capabilities"] <- strings []
         root["evidence"] <- strings [ $"target-state-version:{state.StateVersion}" ]
         root["payload"] <- payload
@@ -191,8 +194,8 @@ module TargetModule =
 
         if request.ExpectedStateVersion <> state.StateVersion then
             let payload = JsonObject()
-            payload["reason"] <- valueNode "state-version-mismatch"
-            payload["currentStateVersion"] <- valueNode state.StateVersion
+            payload["reason"] <- stringNode "state-version-mismatch"
+            payload["currentStateVersion"] <- intNode state.StateVersion
             resultEnvelope sourceModuleId correlationId "TransitionRejected" payload
             |> emittedResult
         else
@@ -205,8 +208,8 @@ module TargetModule =
                   LastValue = Some acceptedValue }
 
             let payload = JsonObject()
-            payload["acceptedValue"] <- valueNode acceptedValue
-            payload["stateVersion"] <- valueNode nextVersion
+            payload["acceptedValue"] <- intNode acceptedValue
+            payload["stateVersion"] <- intNode nextVersion
             resultEnvelope sourceModuleId correlationId "TransitionAccepted" payload
             |> emittedResult
 

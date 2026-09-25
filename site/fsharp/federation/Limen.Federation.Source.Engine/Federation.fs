@@ -48,8 +48,11 @@ module SourceModule =
     let mutable private initialized = false
     let mutable private active = false
 
-    let private valueNode<'T> (value: 'T) =
-        JsonValue.Create<'T>(value) :> JsonNode
+    let private stringNode (value: string) =
+        JsonValue.Create(value) :> JsonNode
+
+    let private intNode (value: int) =
+        JsonValue.Create(value) :> JsonNode
 
     let private strings (values: seq<string>) =
         let array = JsonArray()
@@ -58,9 +61,9 @@ module SourceModule =
 
     let private contractRange (contract: string) =
         let item = JsonObject()
-        item["contract"] <- valueNode contract
-        item["minVersion"] <- valueNode 1
-        item["maxVersion"] <- valueNode 1
+        item["contract"] <- stringNode contract
+        item["minVersion"] <- intNode 1
+        item["maxVersion"] <- intNode 1
         item :> JsonNode
 
     let private contractRanges (contracts: seq<string>) =
@@ -70,9 +73,9 @@ module SourceModule =
 
     let manifestJson () =
         let root = JsonObject()
-        root["id"] <- valueNode ModuleId
-        root["version"] <- valueNode "1.0.0"
-        root["federationProtocolVersion"] <- valueNode FederationProtocolVersion
+        root["id"] <- stringNode ModuleId
+        root["version"] <- stringNode "1.0.0"
+        root["federationProtocolVersion"] <- intNode FederationProtocolVersion
         root["accepts"] <- contractRanges [ ResultContract ]
         root["emits"] <- contractRanges [ RequestContract ]
         root["capabilitiesRequired"] <- strings []
@@ -102,17 +105,17 @@ module SourceModule =
 
     let snapshotJson () =
         let root = JsonObject()
-        root["status"] <- valueNode (statusName state.Status)
-        root["targetStateVersion"] <- valueNode state.TargetStateVersion
-        root["sequence"] <- valueNode state.Sequence
+        root["status"] <- stringNode (statusName state.Status)
+        root["targetStateVersion"] <- intNode state.TargetStateVersion
+        root["sequence"] <- intNode state.Sequence
 
         match state.Status with
         | Awaiting correlationId ->
-            root["correlationId"] <- valueNode correlationId
+            root["correlationId"] <- stringNode correlationId
         | Completed acceptedValue ->
-            root["acceptedValue"] <- valueNode acceptedValue
+            root["acceptedValue"] <- intNode acceptedValue
         | Rejected reason ->
-            root["reason"] <- valueNode reason
+            root["reason"] <- stringNode reason
         | Idle -> ()
 
         root.ToJsonString()
@@ -177,18 +180,18 @@ module SourceModule =
                     Sequence = sequence }
 
             let payload = JsonObject()
-            payload["value"] <- valueNode 41
+            payload["value"] <- intNode 41
 
             let root = JsonObject()
-            root["protocolVersion"] <- valueNode FederationProtocolVersion
-            root["source"] <- valueNode ModuleId
-            root["target"] <- valueNode TargetModuleId
-            root["correlationId"] <- valueNode correlationId
-            root["idempotencyKey"] <- valueNode $"source-{sequence}"
-            root["kind"] <- valueNode "TransitionRequest"
-            root["contract"] <- valueNode RequestContract
-            root["contractVersion"] <- valueNode 1
-            root["expectedStateVersion"] <- valueNode state.TargetStateVersion
+            root["protocolVersion"] <- intNode FederationProtocolVersion
+            root["source"] <- stringNode ModuleId
+            root["target"] <- stringNode TargetModuleId
+            root["correlationId"] <- stringNode correlationId
+            root["idempotencyKey"] <- stringNode $"source-{sequence}"
+            root["kind"] <- stringNode "TransitionRequest"
+            root["contract"] <- stringNode RequestContract
+            root["contractVersion"] <- intNode 1
+            root["expectedStateVersion"] <- intNode state.TargetStateVersion
             root["capabilities"] <- strings []
             root["evidence"] <- strings [ "source-state-owned-by-fsharp" ]
             root["payload"] <- payload
