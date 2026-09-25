@@ -1,4 +1,4 @@
-# Typescript Wasm Kernel architecture
+# Limen architecture
 
 ## Current architecture
 
