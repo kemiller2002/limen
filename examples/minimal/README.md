@@ -68,4 +68,4 @@ every release.
 | Where a given change belongs | [docs/where-code-goes.md](../../docs/where-code-goes.md) |
 | Forms, fetch, storage, routing, clipboard | the numbered examples on GitHub |
 
-Online: <https://github.com/kemiller2002/typescript-wasm-kernel/tree/main/examples>
+Online: <https://github.com/kemiller2002/limen/tree/main/examples>
