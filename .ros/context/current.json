@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "agent:chatgpt",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-23T13:09:00.000Z",
+  "updatedAt": "2026-09-25T17:51:00.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -450,10 +450,24 @@
     {
       "id": "WI-0024",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-23T13:09:00.000Z"
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "package.json"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-site.ts"
+        }
+      ],
+      "updatedAt": "2026-09-25T17:51:00.000Z",
+      "completedAt": "2026-09-25T17:51:00.000Z"
     }
   ]
 }
