@@ -14,7 +14,8 @@ Everything here describes Limen as it is actually implemented. Where something
 is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 
 > **Limen** is the product name for this architecture. The npm package is still
-> `@echelon-foundry/typescript-wasm-kernel` and nothing was renamed —
+> The GitHub repository is now `kemiller2002/limen`; the published npm package
+> remains `@echelon-foundry/typescript-wasm-kernel` for compatibility —
 > see [naming and compatibility](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md).
 > Throughout these documents, **"the kernel"** means the browser-side bridge
 > and **"the engine"** means the application side.
