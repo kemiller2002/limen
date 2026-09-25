@@ -16,6 +16,14 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Changed
+
+- **Repository renamed to `kemiller2002/limen`.** GitHub repository metadata,
+  documentation links, Pages URL, current Praxis/ROS identity, CLI help, and
+  validation checks now use the Limen repository name. The published npm
+  package `@echelon-foundry/typescript-wasm-kernel` and legacy CLI alias remain
+  unchanged for compatibility.
+
 ### Added
 
 - **Federated engine runtime for multi-WASM applications.** `ModuleFederation`,
