@@ -1,4 +1,4 @@
-# Typescript Wasm Kernel decisions
+# Limen decisions
 
 Material decisions use `DF-` records under `research/decisions/`. This compact
 table is a navigation view, not a replacement for those records.
