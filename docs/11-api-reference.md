@@ -190,7 +190,14 @@ independently loaded engines or WASM binaries. It does not replace
 ```ts
 const federation = new ModuleFederation(
   [timeEntryTransport, billingTransport],
-  { availableCapabilities: ["storage.write"] },
+  {
+    availableCapabilities: ["storage.write"],
+    diagnostics: {
+      report(event) {
+        console.log(event);
+      },
+    },
+  },
 );
 
 await federation.startAll();
@@ -238,6 +245,9 @@ interface FederatedModuleTransport {
 
 Lifecycle is strict:
 `load → initialize → restore → activate → suspend → snapshot → unload`.
+A transport exception moves that module to `Faulted` and surfaces
+`FederationError { code: "TransportFailure" }`. Limen does not guess whether
+or how the module should recover.
 
 ### `FederationEnvelope`
 
@@ -248,6 +258,39 @@ payload.
 
 Only `DomainEvent` may omit `target`. Untargeted domain events fan out to
 active compatible consumers. Other kinds require an explicit target.
+
+### `startAvailable(snapshots?)`
+
+Starts as much of the registered module graph as can legally run. It preserves
+dependency order, continues independent modules after a transport fault, and
+returns:
+
+```ts
+type FederationStartReport = {
+  active: readonly ModuleId[];
+  faulted: readonly ModuleId[];
+  blocked: readonly FederationStartupBlock[];
+};
+```
+
+A blocked module remains unloaded. Reasons are `MissingDependency`,
+`DependencyUnavailable`, `MissingCapability`, or `UnavailableState`.
+Dependency cycles still reject because they are an invalid graph, not a runtime
+availability condition.
+
+Use `startAll()` when fail-fast startup is desired. Existing `startAll()`
+semantics are unchanged.
+
+### federation diagnostics
+
+`FederationOptions.diagnostics` accepts a `FederationDiagnosticsSink`.
+The default is `noopFederationDiagnostics`.
+
+`ModuleFault` reports module identity, failed transport operation, previous
+lifecycle state, and a payload-free envelope summary for dispatch failures.
+`ModuleStartupBlocked` reports the mechanical reason a module was not started.
+Diagnostic sink exceptions are swallowed so observability cannot become
+federation control flow.
 
 ### `exchange(envelope, options?)`
 
@@ -264,7 +307,11 @@ domain transition is legal.
 Stable error codes currently include duplicate/unknown modules, protocol or
 manifest errors, dependency/capability failures, illegal lifecycle order,
 inactive modules, emitted/accepted contract mismatches, missing targets, source
-identity violations and delivery-limit exhaustion.
+identity violations, delivery-limit exhaustion, and `TransportFailure`.
+
+For `TransportFailure`, the original transport exception is available as
+`FederationError.cause`. It is deliberately not copied into
+`FederationDiagnosticEvent`, where it could contain domain or sensitive data.
 
 Full semantics and design rules:
 [WASM federation](23-wasm-federation.md).

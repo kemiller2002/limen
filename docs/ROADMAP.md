@@ -82,6 +82,7 @@ plain, JSON-serializable value.
 | # | Responsibility | Status | Where | Tests |
 |---|---|---|---|---|
 | 20 | Multi-engine federation — module manifests, independent lifecycle, versioned envelope exchange, targeted transitions and event fan-out | ✅ Runtime implemented and real multi-F#-WASM proof demonstrated | `src/federation.ts`; `site/fsharp/federation/`; [23-wasm-federation.md](23-wasm-federation.md). The coordinator validates protocol/contract compatibility, dependencies, capabilities and source identity but owns no domain state. The federation proof loads two independently published F#/.NET WASM runtimes with distinct runtime IDs and routes a request/result exchange between them. | `test/federation.test.ts`; `Limen.Federation.Proof.Tests`; `test/site.test.ts`; real-Chrome `scripts/smoke-site-wasm.sh` |
+| 21 | Federation failure isolation and diagnostics — explicit fault state, transport-failure attribution, payload-safe diagnostics, partial startup of independent modules | ✅ Implemented & tested | `src/federation.ts`: `Faulted`, `FederationDiagnosticsSink`, `TransportFailure`, `startAvailable()`. Fail-fast `startAll()` remains unchanged; the coordinator never chooses business recovery. | `test/federation.test.ts`: load fault attribution, dispatch isolation, dependency blocking, missing capability isolation, diagnostic-sink containment |
 
 The federation capability is intentionally separate from the browser/engine
 `PROTOCOL_VERSION`. It composes application engines; it does not move browser

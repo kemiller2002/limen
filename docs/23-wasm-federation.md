@@ -280,12 +280,20 @@ only when a route or workflow needs it, snapshot it when inactive, and restore
 it later.
 
 Lifecycle order is checked by `ModuleFederation`; illegal calls are rejected
-before module code is invoked.
+before module code is invoked. If a transport operation itself throws, Limen
+records the module as `Faulted` before surfacing a `TransportFailure`. A
+faulted module is not silently returned to an earlier lifecycle state.
 
 Declared dependencies participate in that lifecycle. `startAll()` starts
 dependencies before dependents even when registration order differs, rejects
 dependency cycles, and refuses to unload a dependency while an active dependent
-still requires it.
+still requires it. `startAll()` remains deliberately fail-fast.
+
+For hosts that want partial availability, `startAvailable()` is additive. It
+continues starting independent modules after a transport failure, reports the
+faulted modules, and leaves dependents of unavailable modules blocked and
+unloaded. It never retries a faulted module and never invents application
+fallback behavior.
 
 A module should treat its snapshot as its own versioned persistence format.
 Cross-module references should be stable identifiers, not object identity.
@@ -449,15 +457,35 @@ wire exchange, and snapshots through the deployed artifact.
 
 ## Failure isolation
 
-A module boundary should also be a diagnosable failure boundary.
+A module boundary is also a diagnosable failure boundary.
 
-The shell should know which module failed to load or dispatch, but it should not
-invent a business recovery state. The owning workflow decides whether the
-application can continue, retry, fall back, or require user intervention.
+Every transport operation is wrapped by `ModuleFederation`. If
+`load`, `initialize`, `restore`, `activate`, `dispatch`, `suspend`,
+`snapshot`, or `unload` throws:
 
-A future production host may add diagnostics, telemetry and module-level circuit
-breaking around `FederatedModuleTransport`. Those mechanisms must remain
-semantically blind.
+1. the owning module moves to `Faulted`;
+2. an optional `FederationDiagnosticsSink` receives a `ModuleFault` event;
+3. Limen throws `FederationError { code: "TransportFailure" }`;
+4. unrelated active modules remain active.
+
+Diagnostics are intentionally mechanical. A fault event includes the module,
+operation, prior lifecycle state and, for dispatch, an envelope summary containing
+identity/correlation/contract metadata. It does **not** contain the payload,
+evidence, capabilities, or the transport exception message. The original error
+is available only as the thrown `FederationError.cause`.
+
+`startAvailable()` adds dependency-aware startup isolation. A failed module is
+reported in `faulted`; a dependent that cannot legally start is reported in
+`blocked`; unrelated modules can still become `Active`. Missing dependencies
+and capabilities are startup blocks, not fabricated module faults.
+
+The shell may use those mechanical facts to decide what workflow to ask next,
+but `ModuleFederation` does not retry, choose a fallback domain state,
+compensate business work, or convert a transport exception into application
+meaning. Those decisions belong to the owning workflow.
+
+A host may add telemetry or circuit breaking around this API, but those
+mechanisms must remain semantically blind.
 
 ---
 
@@ -475,6 +503,9 @@ Implemented in the npm package:
 - targeted messages;
 - compatible `DomainEvent` fan-out;
 - bounded exchange delivery to detect message cycles;
+- explicit `Faulted` lifecycle state for transport failures;
+- semantically blind federation diagnostics;
+- dependency-aware isolated startup via `startAvailable()`;
 - deterministic tests.
 
 Demonstrated in the repository:
@@ -536,7 +567,9 @@ import {
   FEDERATION_PROTOCOL_VERSION,
   ModuleFederation,
   type FederatedModuleTransport,
+  type FederationDiagnosticsSink,
   type FederationEnvelope,
+  type FederationStartReport,
   type ModuleManifest,
 } from "@echelon-foundry/typescript-wasm-kernel/federation";
 ```
