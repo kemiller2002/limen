@@ -25,9 +25,14 @@ for (const required of [
   "assets/css/limen.css",
   "site/app/main.js",
   "site/app/wasm-engine-transport.js",
+  "site/app/federated-wasm-module-transport.js",
+  "site/app/federation-proof.js",
   "dist/kernel/browser-kernel.js",
+  "dist/federation.js",
   "dist/protocol.js",
   "wasm/_framework/dotnet.js",
+  "federation/source/_framework/dotnet.js",
+  "federation/target/_framework/dotnet.js",
 ]) {
   if (!await exists(join(SITE, required))) note(`required runtime asset missing: ${required}`);
 }
@@ -36,11 +41,17 @@ if (await exists(join(SITE, "site/app/engine.js"))) {
   note("legacy TypeScript site engine was published — site application authority must remain in F# WebAssembly");
 }
 
-const framework = join(SITE, "wasm", "_framework");
-if (await exists(framework)) {
-  const frameworkEntries = await readdir(framework, { recursive: true });
-  if (!frameworkEntries.some((name) => String(name).endsWith(".wasm"))) {
-    note("wasm/_framework contains no .wasm artifact");
+for (const relativeFramework of [
+  "wasm/_framework",
+  "federation/source/_framework",
+  "federation/target/_framework",
+]) {
+  const framework = join(SITE, relativeFramework);
+  if (await exists(framework)) {
+    const frameworkEntries = await readdir(framework, { recursive: true });
+    if (!frameworkEntries.some((name) => String(name).endsWith(".wasm"))) {
+      note(relativeFramework + " contains no .wasm artifact");
+    }
   }
 }
 
@@ -73,4 +84,4 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log(`Site artifact checks passed (${htmlPages.length} pages, F# WASM runtime present).`);
+console.log(`Site artifact checks passed (${htmlPages.length} pages, main F# WASM runtime plus two federated F# WASM runtimes present).`);

@@ -1,0 +1,82 @@
+    <section class="page-intro">
+      <p class="eyebrow">Federation · real-browser existence proof</p>
+      <h1>Two F# WebAssembly modules. Two state owners. One typed exchange.</h1>
+      <p class="lead">
+        This page loads two independently published .NET WebAssembly runtimes.
+        Limen starts them in dependency order, validates their manifests, routes
+        one versioned transition request to the owning module, routes the typed
+        result back, then snapshots both modules independently.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Live proof</p><h2 id="federation-proof-status">Starting the federation proof…</h2></div>
+        <p class="section-note" id="federation-runtime-ids">Loading independent runtimes.</p>
+      </div>
+
+      <div class="architecture-flow" aria-label="Federated WebAssembly proof architecture">
+        <div class="architecture-node">
+          <strong>F# source module</strong>
+          <p>Owns request/correlation state and originates the transition.</p>
+          <code>limen.proof.source</code>
+        </div>
+        <div class="architecture-node">
+          <strong>ModuleFederation</strong>
+          <p>Checks lifecycle, dependency, source identity and contract compatibility. It knows no payload meaning.</p>
+          <code>src/federation.ts</code>
+        </div>
+        <div class="architecture-node">
+          <strong>F# target module</strong>
+          <p>Decodes the request into its own typed contract before changing its authoritative state.</p>
+          <code>limen.proof.target</code>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Wire transcript</p><h2>The coordinator carries envelopes, not shared objects.</h2></div>
+        <p class="section-note">Request and response are emitted by F#; TypeScript only routes and displays them.</p>
+      </div>
+      <figure class="code-figure">
+        <figcaption>Federation exchange</figcaption>
+        <pre><code id="federation-transcript">Waiting for modules…</code></pre>
+      </figure>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">Independent state</p><h2>Each module snapshots only what it owns.</h2></div>
+        <p class="section-note">No shared mutable state and no universal shared-domain assembly.</p>
+      </div>
+      <figure class="code-figure">
+        <figcaption>Source and target snapshots</figcaption>
+        <pre><code id="federation-snapshots">Waiting for snapshots…</code></pre>
+      </figure>
+      <p class="note">
+        The source module depends on the target for this proof, so <code>startAll()</code>
+        must activate the target first. The target accepts only the request contract.
+        The source accepts only the result contract. Both F# modules independently
+        decode JSON into local typed records before any value becomes authoritative state.
+      </p>
+    </section>
+
+    <section class="method-band">
+      <div>
+        <p class="eyebrow">What this establishes</p>
+        <h2>Federation is now demonstrated across real F# WebAssembly runtimes.</h2>
+        <p>
+          This is an existence proof, not a performance claim. The main Limen
+          product application remains one F# engine; this sibling proof demonstrates
+          that independently loaded F# WASM state systems can compose without
+          weakening the Limen boundary.
+        </p>
+      </div>
+      <ol>
+        <li><span>01</span><div>Two distinct .NET WebAssembly runtime IDs are required.</div></li>
+        <li><span>02</span><div>Both runtime-exported manifests must exactly match the manifests registered with Limen.</div></li>
+        <li><span>03</span><div>A versioned request crosses to the target and a versioned result crosses back.</div></li>
+        <li><span>04</span><div>Stale expected-state evidence is rejected by F# tests without mutating target state.</div></li>
+      </ol>
+    </section>

@@ -20,10 +20,12 @@ Limen BrowserKernel
 Browser APIs + DOM
 ```
 
-The package remains transport-neutral. Two concrete engine shapes now exist:
+The package remains transport-neutral. Concrete engine shapes now include:
 
 - `DirectTypeScriptTransport` + `ReferenceEngine` for the package examples;
-- `WasmSiteTransport` + the F# `Limen.Site.Engine` for the product site.
+- `WasmSiteTransport` + the F# `Limen.Site.Engine` for the product site;
+- `FSharpWasmFederatedModuleTransport` + two independently published F#/.NET
+  WebAssembly modules for the federation existence proof.
 
 The site therefore crosses a real WebAssembly/JSON boundary while the kernel
 itself remains unaware of the engine language. "Kernel" continues to mean the
@@ -79,15 +81,18 @@ plain, JSON-serializable value.
 
 | # | Responsibility | Status | Where | Tests |
 |---|---|---|---|---|
-| 20 | Multi-engine federation — module manifests, independent lifecycle, versioned envelope exchange, targeted transitions and event fan-out | ✅ Runtime implemented; ⚠️ multi-F#-WASM self-hosting not yet demonstrated | `src/federation.ts`; [23-wasm-federation.md](23-wasm-federation.md). The coordinator validates protocol/contract compatibility, dependencies, capabilities and source identity but owns no domain state. | `test/federation.test.ts`: lifecycle, illegal lifecycle, transition round-trip, contract mismatch, spoofing, fan-out, explicit targeting, dependency/capability preflight and cycle limit |
+| 20 | Multi-engine federation — module manifests, independent lifecycle, versioned envelope exchange, targeted transitions and event fan-out | ✅ Runtime implemented and real multi-F#-WASM proof demonstrated | `src/federation.ts`; `site/fsharp/federation/`; [23-wasm-federation.md](23-wasm-federation.md). The coordinator validates protocol/contract compatibility, dependencies, capabilities and source identity but owns no domain state. The federation proof loads two independently published F#/.NET WASM runtimes with distinct runtime IDs and routes a request/result exchange between them. | `test/federation.test.ts`; `Limen.Federation.Proof.Tests`; `test/site.test.ts`; real-Chrome `scripts/smoke-site-wasm.sh` |
 
 The federation capability is intentionally separate from the browser/engine
 `PROTOCOL_VERSION`. It composes application engines; it does not move browser
 capabilities or application meaning into the coordinator.
 
-The current product site remains one F# WASM consumer. Converting it into
-multiple independent WASM binaries is a separate existence proof and will be
-reported only after it actually runs that way.
+The main product-site application remains one F# WASM consumer. A separate
+`federation.html` proof surface now loads two independent F#/.NET WebAssembly
+modules, verifies distinct .NET runtime IDs, exchanges a versioned transition
+through `ModuleFederation`, and snapshots each module independently. This
+establishes feasibility without claiming that the main product UI itself has
+been decomposed.
 
 ## Cross-cutting: cancellation
 
@@ -142,6 +147,12 @@ silently deleted.
   release evidence/approval gates, stale deployment evidence, unknown-effect
   reconciliation, stale policy evidence, projected capabilities, and serialized
   Limen dispatch.
+- `site/fsharp/federation/tests/Limen.Federation.Proof.Tests/` — independent
+  F# module behavior: typed request decoding, expected-state-version acceptance
+  and rejection, response correlation, and independent snapshots.
+- `scripts/smoke-site-wasm.sh` — real Chrome: the main F# application plus
+  the two-runtime federation proof, including distinct runtime IDs and the
+  completed cross-module transition.
 - `test/kernel.test.ts` — bridge-level, against a real DOM (`jsdom`, dev
   dependency only — see `test/dom-helpers.ts`'s header comment for why a
   hand-rolled DOM shim was rejected in favor of a mature, standards-compliant

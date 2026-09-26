@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Limen.Federation.Target.Wasm</RootNamespace>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Limen.Federation.Target.Engine/Limen.Federation.Target.Engine.fsproj" />
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+</Project>

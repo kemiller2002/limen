@@ -65,7 +65,41 @@
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">L-2 · external consumer</p><h2>The boundary also works outside its own showcase.</h2></div>
+        <div><p class="eyebrow">L-2 · federated F# WebAssembly</p><h2>Two independent F# WASM state systems now compose through Limen.</h2></div>
+        <p class="section-note">Mechanically verified real-browser existence proof.</p>
+      </div>
+
+      <div class="proof-strip">
+        <div><strong>Two independent runtimes</strong><span>real browser requires distinct .NET <code>runtimeId</code> values</span></div>
+        <div><strong>Typed F# receivers</strong><span>wire JSON is decoded into local F# request/result records</span></div>
+        <div><strong>State stays local</strong><span>source and target expose independent snapshots</span></div>
+        <div><strong>Coordinator stays blind</strong><span><code>ModuleFederation</code> validates and routes without interpreting payload meaning</span></div>
+      </div>
+
+      <p class="prose">
+        The federation proof publishes a source module and a target module as
+        separate .NET WebAssembly applications. The source requests a transition
+        with an expected target state version. The target owns the legality check,
+        advances its own state, and emits a versioned accepted result. Limen routes
+        that result back to the source, which updates only its own state.
+      </p>
+      <p class="prose">
+        CI verifies the module behavior outside the browser and then runs the
+        assembled artifact in real Chrome. The browser gate requires two distinct
+        runtime identities and fails unless the request/result exchange reaches a
+        completed source snapshot and an advanced target state version.
+      </p>
+      <p class="note">
+        What this establishes: independently loaded F# WebAssembly state systems
+        can compose through Limen without shared mutable domain state. What it does
+        not establish: that splitting every application into multiple modules is
+        desirable, or that federation improves startup time or runtime performance.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <div><p class="eyebrow">L-3 · external consumer</p><h2>The boundary also works outside its own showcase.</h2></div>
         <p class="section-note">Observed existence proof in <code>time-entry-state-machine</code>.</p>
       </div>
 
@@ -84,7 +118,7 @@
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">L-3 · a defect that changed the kernel</p><h2>Real use found a silent binding failure.</h2></div>
+        <div><p class="eyebrow">L-4 · a defect that changed the kernel</p><h2>Real use found a silent binding failure.</h2></div>
         <p class="section-note">Observed once, then converted into a regression check.</p>
       </div>
 

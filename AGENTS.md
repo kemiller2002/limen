@@ -203,6 +203,8 @@ JavaScript outside the engine?                 → STOP. That is rule 1.
 | State → view projection | `project()` in [`src/engine/engine.ts`](src/engine/engine.ts) |
 | Today's in-process reference transport | [`src/engine/transport.ts`](src/engine/transport.ts) |
 | Multi-engine federation, manifests and envelope routing | [`src/federation.ts`](src/federation.ts) + [federation guide](docs/23-wasm-federation.md) |
+| Real two-F#-WASM federation proof | [`site/fsharp/federation/`](site/fsharp/federation/) + [`site/app/federation-proof.ts`](site/app/federation-proof.ts) |
+| Generic .NET WASM federation adapter | [`site/app/federated-wasm-module-transport.ts`](site/app/federated-wasm-module-transport.ts) |
 | The product site's F# application authority | [`site/fsharp/Limen.Site.Engine/`](site/fsharp/Limen.Site.Engine/) |
 | The product site's WASM loading/serialization mechanics | [`site/app/wasm-engine-transport.ts`](site/app/wasm-engine-transport.ts) |
 | Diagnostics | [`src/kernel/diagnostics.ts`](src/kernel/diagnostics.ts) |
