@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 27,
+  "nextSeq": 28,
   "items": [
     {
       "id": "WI-0001",
@@ -465,6 +465,26 @@
       "createdBy": "agent:chatgpt",
       "source": "agent-recommendation",
       "sourceReference": "post-federation-production-hardening-2026-09-26"
+    },
+    {
+      "id": "WI-0027",
+      "title": "Add true WASM teardown and explicit fault recovery",
+      "description": "Make federated module unload terminate its independently created .NET WebAssembly runtime and add an explicit host-controlled recovery path from Faulted to Unloaded. Recovery must be opt-in per transport, perform mechanical cleanup only, never restart automatically, and preserve fault state if cleanup fails.",
+      "tags": [
+        "limen",
+        "wasm",
+        "federation",
+        "lifecycle",
+        "recovery"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-26T07:52:00.000Z",
+      "updatedAt": "2026-09-26T07:52:00.000Z",
+      "createdBy": "agent:chatgpt",
+      "source": "agent-recommendation",
+      "sourceReference": "post-WI-0026-runtime-teardown-review-2026-09-26"
     }
   ]
 }
