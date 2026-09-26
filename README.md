@@ -171,9 +171,13 @@ never mutate the owner's state directly. Manifests declare accepted/emitted
 contract versions, dependencies, capabilities and routes. The federation layer
 checks those transport facts while remaining blind to application meaning.
 
-The runtime is implemented and tested. The product site still uses one F# WASM,
-so multiple independent F# WASMs are not yet claimed as a self-hosting
-demonstration.
+The runtime is implemented and tested, and the repository now includes a real
+multi-F#-WASM existence proof. The `federation.html` proof loads two
+independently published .NET WebAssembly runtimes, requires distinct runtime
+IDs, routes a versioned transition request/result through `ModuleFederation`,
+and snapshots each module independently. The main product application still
+uses one F# engine; the proof is deliberately separate so the site is not split
+without a real state-ownership reason.
 
 Full design and API:
 [docs/23-wasm-federation.md](https://github.com/kemiller2002/limen/blob/main/docs/23-wasm-federation.md).

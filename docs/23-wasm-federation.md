@@ -440,6 +440,11 @@ a test should be able to observe:
 This separation lets application tests prove domain behavior while federation
 tests prove boundary behavior.
 
+The repository also exercises both layers together. The F# proof tests validate
+module-owned transition semantics without a browser; the real-Chrome smoke test
+then validates independent runtime loading, manifest agreement, lifecycle order,
+wire exchange, and snapshots through the deployed artifact.
+
 ---
 
 ## Failure isolation
@@ -472,17 +477,32 @@ Implemented in the npm package:
 - bounded exchange delivery to detect message cycles;
 - deterministic tests.
 
+Demonstrated in the repository:
+
+- `site/fsharp/federation/Limen.Federation.Source.*` and
+  `Limen.Federation.Target.*` are independently published F#/.NET WebAssembly
+  modules with separate engine assemblies and no cross-engine project reference;
+- each receiver decodes generic JSON into its own local typed F# contract before
+  changing authoritative state;
+- `site/app/federated-wasm-module-transport.ts` is a semantically blind runtime
+  adapter and validates the runtime-exported manifest against the manifest
+  registered with `ModuleFederation`;
+- `federation.html` loads both modules in a real browser, requires distinct
+  .NET runtime IDs, routes a versioned transition request to the target, routes
+  the accepted result back to the source, and snapshots each module separately;
+- the real-Chrome CI gate fails unless that exchange completes.
+
 Not yet claimed:
 
-- the Limen product site has **not** been converted into multiple independent
-  F# WASM binaries;
-- no performance or startup improvement has been measured;
-- no binary codec has been demonstrated;
-- no shared-memory transport is implemented;
-- no generic durable saga store is provided.
+- the **main product application** has been decomposed into multiple WASM modules;
+- any performance or startup improvement;
+- a binary codec;
+- shared-memory transport;
+- a generic durable saga store.
 
-The first two points matter. Federation support is now an implemented package
-capability, while multi-F#-WASM self-hosting remains the next existence proof.
+The distinction matters: multi-F#-WASM federation is now an evidence-backed
+existence proof, while decomposition of the main Limen product application
+remains unnecessary until a real ownership boundary demonstrates the need.
 
 ---
 

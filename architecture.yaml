@@ -30,3 +30,8 @@ architecture:
     coordinator_domain_authority: forbidden
     lifecycle: [load, initialize, restore, active, suspend, snapshot, unload]
     untargeted_message_kinds: [domain_event]
+    proof:
+      independent_fsharp_wasm_modules: 2
+      distinct_runtime_ids_required: true
+      typed_receiver_decode_required: true
+      real_browser_gate: scripts/smoke-site-wasm.sh

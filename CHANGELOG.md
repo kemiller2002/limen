@@ -34,8 +34,13 @@ exhaustive lists.
 - **WASM federation guide.** `docs/23-wasm-federation.md` defines state
   ownership, cross-module transition requests, lifecycle, event/projection
   exchange, saga-style orchestration, deterministic testing, and anti-patterns.
-  The runtime is implemented; the product site remains a single F# WASM
-  consumer, so multi-F#-WASM self-hosting is not yet claimed.
+  The main product application remains a single F# WASM consumer.
+- **Real multi-F#-WASM federation existence proof.** Two independently
+  published F#/.NET WebAssembly modules now load behind
+  `ModuleFederation`, expose and validate their own manifests, decode wire
+  payloads into local typed F# contracts, exchange a versioned transition
+  request/result, and snapshot independent state. The real-Chrome gate requires
+  distinct .NET runtime IDs and the completed exchange.
 
 ## [0.6.2] — 2026-09-21
 
