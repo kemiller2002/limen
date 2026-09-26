@@ -6,6 +6,7 @@ everything a consumer uses.
 Source of truth: [`src/protocol.ts`](https://github.com/kemiller2002/limen/blob/main/src/protocol.ts),
 [`src/kernel/browser-kernel.ts`](https://github.com/kemiller2002/limen/blob/main/src/kernel/browser-kernel.ts),
 [`src/kernel/diagnostics.ts`](https://github.com/kemiller2002/limen/blob/main/src/kernel/diagnostics.ts),
+[`src/federation.ts`](https://github.com/kemiller2002/limen/blob/main/src/federation.ts),
 [`src/index.ts`](https://github.com/kemiller2002/limen/blob/main/src/index.ts).
 
 ---
@@ -16,8 +17,8 @@ Know what you are allowed to depend on.
 
 | Tier | What | Examples |
 | --- | --- | --- |
-| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
-| **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport` (write your own), `DiagnosticsSink` (supply your own) |
+| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, `ModuleFederation`, `ModuleManifest`, `FederationEnvelope`, `FEDERATION_PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
+| **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport`, `DiagnosticsSink`, `FederatedModuleTransport`, `FederationDiagnosticsSink` |
 | **Reference implementation** | Ships, but is this repo's demo. Do **not** build on it. | `DirectTypeScriptTransport`, `ReferenceEngine`, `project`, `State`, `Command`, `TransitionResult`, `EmailAddress` |
 | **Internal** | Private; may change without notice. | every `#`-prefixed member of `BrowserKernel`, `Scope`/binding types, `TRIGGER_BY_TAG`, `BOOLEAN_PROPS` |
 | **Experimental** | None currently. | — |

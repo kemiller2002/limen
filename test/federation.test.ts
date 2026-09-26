@@ -672,3 +672,126 @@ test("diagnostic sink failures never replace the federation failure", async () =
   );
   assert.equal(federation.state(id), "Faulted");
 });
+
+
+test("dispatch diagnostics expose envelope identity but never payload, evidence, capabilities, or raw error text", async () => {
+  const sourceId = moduleId("source");
+  const targetId = moduleId("target");
+  const source = new FakeModule(
+    manifest(
+      sourceId,
+      [],
+      [{ contract: requestContract, minVersion: 1, maxVersion: 1 }],
+    ),
+  );
+
+  class FailingTarget extends FakeModule {
+    override async dispatch(
+      envelope: FederationEnvelope,
+    ): Promise<ModuleDispatchResult> {
+      this.received.push(envelope);
+      throw new Error("raw-secret-error");
+    }
+  }
+
+  const target = new FailingTarget(
+    manifest(
+      targetId,
+      [{ contract: requestContract, minVersion: 1, maxVersion: 1 }],
+      [],
+    ),
+  );
+  const events: FederationDiagnosticEvent[] = [];
+  const federation = new ModuleFederation([source, target], {
+    diagnostics: { report: (event) => events.push(event) },
+  });
+  await federation.startAll();
+
+  const request: FederationEnvelope = {
+    ...envelope(
+      sourceId,
+      targetId,
+      "TransitionRequest",
+      requestContract,
+    ),
+    capabilities: ["capability-secret"],
+    evidence: ["evidence-secret"],
+    payload: { secret: "payload-secret" },
+  };
+
+  await assert.rejects(
+    federation.exchange(request),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "TransportFailure" &&
+      error.cause instanceof Error &&
+      error.cause.message === "raw-secret-error",
+  );
+
+  const fault = events.find(
+    (event): event is Extract<FederationDiagnosticEvent, { kind: "ModuleFault" }> =>
+      event.kind === "ModuleFault",
+  );
+  assert.ok(fault);
+  assert.equal(fault.moduleId, targetId);
+  assert.equal(fault.operation, "dispatch");
+  assert.equal(fault.envelope?.source, sourceId);
+  assert.equal(fault.envelope?.target, targetId);
+  assert.equal(fault.envelope?.contract, requestContract);
+  assert.equal(fault.envelope?.contractVersion, 1);
+
+  const diagnosticJson = JSON.stringify(fault);
+  for (const secret of [
+    "payload-secret",
+    "evidence-secret",
+    "capability-secret",
+    "raw-secret-error",
+  ]) {
+    assert.ok(!diagnosticJson.includes(secret), "diagnostic leaked " + secret);
+  }
+});
+
+test("startAll remains fail-fast after transport faults", async () => {
+  const failingId = moduleId("failing");
+  const independentId = moduleId("independent");
+
+  class FailingModule extends FakeModule {
+    override async load(): Promise<void> {
+      this.log.push("load");
+      throw new Error("load failed");
+    }
+  }
+
+  const failing = new FailingModule(manifest(failingId, [], []));
+  const independent = new FakeModule(manifest(independentId, [], []));
+  const federation = new ModuleFederation([failing, independent]);
+
+  await assert.rejects(
+    federation.startAll(),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "TransportFailure",
+  );
+
+  assert.equal(federation.state(failingId), "Faulted");
+  assert.equal(federation.state(independentId), "Unloaded");
+  assert.deepEqual(independent.log, []);
+});
+
+test("startAvailable still rejects structurally invalid dependency cycles", async () => {
+  const a = moduleId("cycle-a");
+  const b = moduleId("cycle-b");
+  const moduleA = new FakeModule(manifest(a, [], [], [b]));
+  const moduleB = new FakeModule(manifest(b, [], [], [a]));
+  const federation = new ModuleFederation([moduleA, moduleB]);
+
+  await assert.rejects(
+    federation.startAvailable(),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "DependencyCycle",
+  );
+
+  assert.deepEqual(moduleA.log, []);
+  assert.deepEqual(moduleB.log, []);
+});
