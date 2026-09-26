@@ -7,6 +7,7 @@ import {
   type ContractId,
   type FederatedModuleTransport,
   type FederationCorrelationId,
+  type FederationDiagnosticEvent,
   type FederationEnvelope,
   type JsonValue,
   type ModuleDispatchResult,
@@ -470,4 +471,204 @@ test("a delivery limit stops cyclic module chatter deterministically", async () 
       error instanceof FederationError &&
       error.code === "DeliveryLimitExceeded",
   );
+});
+
+
+test("a transport failure faults the module and reports safe mechanical diagnostics", async () => {
+  const id = moduleId("failing");
+  class FailingModule extends FakeModule {
+    override async load(): Promise<void> {
+      this.log.push("load");
+      throw new Error("secret-domain-payload");
+    }
+  }
+
+  const events: FederationDiagnosticEvent[] = [];
+  const failing = new FailingModule(manifest(id, [], []));
+  const federation = new ModuleFederation([failing], {
+    diagnostics: { report: (event) => events.push(event) },
+  });
+
+  await assert.rejects(
+    federation.start(id),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "TransportFailure" &&
+      error.cause instanceof Error &&
+      error.cause.message === "secret-domain-payload",
+  );
+
+  assert.equal(federation.state(id), "Faulted");
+  assert.equal(events.length, 1);
+  assert.deepEqual(events[0], {
+    kind: "ModuleFault",
+    moduleId: id,
+    operation: "load",
+    previousState: "Unloaded",
+  });
+  assert.ok(!JSON.stringify(events[0]).includes("secret-domain-payload"));
+});
+
+test("isolated startup continues independent modules and blocks dependents of a faulted module", async () => {
+  const dependencyId = moduleId("dependency");
+  const dependentId = moduleId("dependent");
+  const independentId = moduleId("independent");
+
+  class FailingDependency extends FakeModule {
+    override async activate(): Promise<void> {
+      this.log.push("activate");
+      throw new Error("activation failed");
+    }
+  }
+
+  const dependency = new FailingDependency(manifest(dependencyId, [], []));
+  const dependent = new FakeModule(
+    manifest(dependentId, [], [], [dependencyId]),
+  );
+  const independent = new FakeModule(manifest(independentId, [], []));
+  const events: FederationDiagnosticEvent[] = [];
+
+  const federation = new ModuleFederation(
+    [dependent, dependency, independent],
+    { diagnostics: { report: (event) => events.push(event) } },
+  );
+
+  const report = await federation.startAvailable();
+
+  assert.deepEqual(report.active, [independentId]);
+  assert.deepEqual(report.faulted, [dependencyId]);
+  assert.deepEqual(report.blocked, [
+    {
+      moduleId: dependentId,
+      reason: "DependencyUnavailable",
+      dependency: dependencyId,
+      dependencyState: "Faulted",
+    },
+  ]);
+
+  assert.equal(federation.state(dependencyId), "Faulted");
+  assert.equal(federation.state(dependentId), "Unloaded");
+  assert.equal(federation.state(independentId), "Active");
+  assert.equal(
+    events.filter((event) => event.kind === "ModuleFault").length,
+    1,
+  );
+  assert.equal(
+    events.filter((event) => event.kind === "ModuleStartupBlocked").length,
+    1,
+  );
+});
+
+test("isolated startup reports missing capabilities without preventing unrelated startup", async () => {
+  const blockedId = moduleId("blocked");
+  const independentId = moduleId("independent");
+  const blockedManifest: ModuleManifest = {
+    ...manifest(blockedId, [], []),
+    capabilitiesRequired: ["storage.write"],
+  };
+  const blocked = new FakeModule(blockedManifest);
+  const independent = new FakeModule(manifest(independentId, [], []));
+  const federation = new ModuleFederation([blocked, independent]);
+
+  const report = await federation.startAvailable();
+
+  assert.deepEqual(report.active, [independentId]);
+  assert.deepEqual(report.faulted, []);
+  assert.deepEqual(report.blocked, [
+    {
+      moduleId: blockedId,
+      reason: "MissingCapability",
+      capabilities: ["storage.write"],
+    },
+  ]);
+  assert.deepEqual(blocked.log, []);
+});
+
+test("a dispatch fault isolates the target while healthy modules remain usable", async () => {
+  const sourceId = moduleId("source");
+  const brokenId = moduleId("broken");
+  const healthyId = moduleId("healthy");
+
+  const source = new FakeModule(
+    manifest(
+      sourceId,
+      [],
+      [{ contract: requestContract, minVersion: 1, maxVersion: 1 }],
+    ),
+  );
+
+  class BrokenDispatch extends FakeModule {
+    override async dispatch(
+      envelope: FederationEnvelope,
+    ): Promise<ModuleDispatchResult> {
+      this.received.push(envelope);
+      throw new Error("dispatch exploded");
+    }
+  }
+
+  const broken = new BrokenDispatch(
+    manifest(
+      brokenId,
+      [{ contract: requestContract, minVersion: 1, maxVersion: 1 }],
+      [],
+    ),
+  );
+  const healthy = new FakeModule(
+    manifest(
+      healthyId,
+      [{ contract: requestContract, minVersion: 1, maxVersion: 1 }],
+      [],
+    ),
+  );
+
+  const federation = new ModuleFederation([source, broken, healthy]);
+  await federation.startAll();
+
+  await assert.rejects(
+    federation.exchange(
+      envelope(sourceId, brokenId, "TransitionRequest", requestContract),
+    ),
+    (error: unknown) =>
+      error instanceof FederationError && error.code === "TransportFailure",
+  );
+
+  assert.equal(federation.state(brokenId), "Faulted");
+  assert.equal(federation.state(sourceId), "Active");
+  assert.equal(federation.state(healthyId), "Active");
+
+  const result = await federation.exchange(
+    envelope(sourceId, healthyId, "TransitionRequest", requestContract),
+  );
+  assert.equal(result.transcript.length, 1);
+  assert.equal(healthy.received.length, 1);
+});
+
+test("diagnostic sink failures never replace the federation failure", async () => {
+  const id = moduleId("failing");
+  class FailingModule extends FakeModule {
+    override async load(): Promise<void> {
+      throw new Error("transport failed");
+    }
+  }
+
+  const federation = new ModuleFederation(
+    [new FailingModule(manifest(id, [], []))],
+    {
+      diagnostics: {
+        report: () => {
+          throw new Error("diagnostics failed");
+        },
+      },
+    },
+  );
+
+  await assert.rejects(
+    federation.start(id),
+    (error: unknown) =>
+      error instanceof FederationError &&
+      error.code === "TransportFailure" &&
+      error.cause instanceof Error &&
+      error.cause.message === "transport failed",
+  );
+  assert.equal(federation.state(id), "Faulted");
 });
