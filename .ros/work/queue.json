@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 26,
+  "nextSeq": 27,
   "items": [
     {
       "id": "WI-0001",
@@ -445,6 +445,26 @@
       "createdBy": "agent:chatgpt",
       "source": "user-request",
       "sourceReference": "continue-limen-federation-proof-2026-09-25"
+    },
+    {
+      "id": "WI-0026",
+      "title": "Add federation failure isolation and diagnostics",
+      "description": "Make multi-module Limen federation production-safe when a module transport fails. Add an explicit faulted lifecycle state, semantically blind module diagnostics, and isolated startup that continues independent modules while blocking dependents of failed modules. Preserve existing fail-fast startAll behavior and do not invent domain recovery.",
+      "tags": [
+        "limen",
+        "wasm",
+        "federation",
+        "diagnostics",
+        "resilience"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-26T07:28:00.000Z",
+      "updatedAt": "2026-09-26T07:42:00.000Z",
+      "createdBy": "agent:chatgpt",
+      "source": "agent-recommendation",
+      "sourceReference": "post-federation-production-hardening-2026-09-26"
     }
   ]
 }

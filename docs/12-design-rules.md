@@ -232,6 +232,21 @@ have stopped. Dependency cycles MUST be rejected. *(Runtime validation)*
 can become authoritative domain state. `JsonValue` is a wire representation,
 not trusted semantic state. *(Review + module tests)*
 
+**7A.13 — MUST.** A transport exception MUST leave the affected module visibly
+`Faulted`. The federation layer MUST NOT silently roll the lifecycle backward,
+retry the operation, or invent a domain recovery state. *(Runtime validation +
+tests)*
+
+**7A.14 — MUST NOT.** Federation diagnostics MUST NOT contain envelope payloads,
+evidence, capabilities, or raw transport exception messages. Diagnostics MAY
+contain module identity, lifecycle/operation, correlation, message kind,
+contract and contract version. *(Tests + review)*
+
+**7A.15 — MUST.** Partial startup MAY continue independent modules after a fault,
+but a module whose declared dependency is unavailable MUST remain blocked and
+unloaded. Partial startup MUST NOT weaken dependency ordering. *(Runtime
+validation + tests)*
+
 ---
 
 ## 8. Testing

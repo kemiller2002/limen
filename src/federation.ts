@@ -94,7 +94,77 @@ export type ModuleLifecycleState =
   | "Restored"
   | "Active"
   | "Suspended"
-  | "Snapshotted";
+  | "Snapshotted"
+  | "Faulted";
+
+export type FederationOperation =
+  | "load"
+  | "initialize"
+  | "restore"
+  | "activate"
+  | "dispatch"
+  | "suspend"
+  | "snapshot"
+  | "unload";
+
+export type FederationEnvelopeDiagnostic = {
+  readonly source: ModuleId;
+  readonly target?: ModuleId;
+  readonly correlationId: FederationCorrelationId;
+  readonly kind: FederationMessageKind;
+  readonly contract: ContractId;
+  readonly contractVersion: number;
+};
+
+export type FederationStartupBlock =
+  | {
+      readonly moduleId: ModuleId;
+      readonly reason: "MissingDependency";
+      readonly dependency: ModuleId;
+    }
+  | {
+      readonly moduleId: ModuleId;
+      readonly reason: "DependencyUnavailable";
+      readonly dependency: ModuleId;
+      readonly dependencyState: ModuleLifecycleState;
+    }
+  | {
+      readonly moduleId: ModuleId;
+      readonly reason: "MissingCapability";
+      readonly capabilities: readonly string[];
+    }
+  | {
+      readonly moduleId: ModuleId;
+      readonly reason: "UnavailableState";
+      readonly state: ModuleLifecycleState;
+    };
+
+export type FederationDiagnosticEvent =
+  | {
+      readonly kind: "ModuleFault";
+      readonly moduleId: ModuleId;
+      readonly operation: FederationOperation;
+      readonly previousState: ModuleLifecycleState;
+      readonly envelope?: FederationEnvelopeDiagnostic;
+    }
+  | {
+      readonly kind: "ModuleStartupBlocked";
+      readonly block: FederationStartupBlock;
+    };
+
+export interface FederationDiagnosticsSink {
+  report(event: FederationDiagnosticEvent): void;
+}
+
+export const noopFederationDiagnostics: FederationDiagnosticsSink = {
+  report: () => {},
+};
+
+export type FederationStartReport = {
+  readonly active: readonly ModuleId[];
+  readonly faulted: readonly ModuleId[];
+  readonly blocked: readonly FederationStartupBlock[];
+};
 
 export type FederationErrorCode =
   | "DuplicateModule"
@@ -112,14 +182,17 @@ export type FederationErrorCode =
   | "ContractNotAccepted"
   | "TargetRequired"
   | "InvalidEnvelopeSource"
-  | "DeliveryLimitExceeded";
+  | "DeliveryLimitExceeded"
+  | "TransportFailure";
 
 export class FederationError extends Error {
   readonly code: FederationErrorCode;
+  readonly cause?: unknown;
 
-  constructor(code: FederationErrorCode, message: string) {
+  constructor(code: FederationErrorCode, message: string, cause?: unknown) {
     super(message);
     this.code = code;
+    this.cause = cause;
     this.name = "FederationError";
   }
 }
@@ -132,6 +205,7 @@ type ModuleEntry = {
 export type FederationOptions = {
   readonly availableCapabilities?: readonly string[];
   readonly maxDeliveries?: number;
+  readonly diagnostics?: FederationDiagnosticsSink;
 };
 
 export type ExchangeResult = {
@@ -189,6 +263,7 @@ export class ModuleFederation {
   readonly #modules = new Map<ModuleId, ModuleEntry>();
   readonly #availableCapabilities: ReadonlySet<string>;
   readonly #maxDeliveries: number;
+  readonly #diagnostics: FederationDiagnosticsSink;
 
   constructor(
     transports: readonly FederatedModuleTransport[] = [],
@@ -196,6 +271,7 @@ export class ModuleFederation {
   ) {
     this.#availableCapabilities = new Set(options.availableCapabilities ?? []);
     this.#maxDeliveries = options.maxDeliveries ?? 256;
+    this.#diagnostics = options.diagnostics ?? noopFederationDiagnostics;
 
     if (!isPositiveInteger(this.#maxDeliveries)) {
       throw new FederationError(
@@ -253,10 +329,7 @@ export class ModuleFederation {
       }
     }
 
-    const missingCapabilities =
-      entry.transport.manifest.capabilitiesRequired.filter(
-        (capability) => !this.#availableCapabilities.has(capability),
-      );
+    const missingCapabilities = this.#missingCapabilities(entry);
     if (missingCapabilities.length > 0) {
       throw new FederationError(
         "MissingCapability",
@@ -265,10 +338,10 @@ export class ModuleFederation {
       );
     }
 
-    await entry.transport.load();
+    await this.#invokeTransport(moduleId, "load", () => entry.transport.load());
     entry.state = "Loaded";
 
-    await entry.transport.initialize({
+    await this.#invokeTransport(moduleId, "initialize", () => entry.transport.initialize({
       federationProtocolVersion: FEDERATION_PROTOCOL_VERSION,
       moduleId,
       peers: this.manifests()
@@ -281,13 +354,21 @@ export class ModuleFederation {
           routes: manifest.routes,
         })),
       availableCapabilities: [...this.#availableCapabilities],
-    });
+    }));
     entry.state = "Initialized";
 
-    await entry.transport.restore(snapshot);
+    await this.#invokeTransport(
+      moduleId,
+      "restore",
+      () => entry.transport.restore(snapshot),
+    );
     entry.state = "Restored";
 
-    await entry.transport.activate();
+    await this.#invokeTransport(
+      moduleId,
+      "activate",
+      () => entry.transport.activate(),
+    );
     entry.state = "Active";
   }
 
@@ -327,17 +408,137 @@ export class ModuleFederation {
     }
   }
 
+
+  async startAvailable(
+    snapshots: ReadonlyMap<ModuleId, JsonValue | null> = new Map(),
+  ): Promise<FederationStartReport> {
+    const active: ModuleId[] = [];
+    const faulted: ModuleId[] = [];
+    const blocked: FederationStartupBlock[] = [];
+    const outcomes = new Map<ModuleId, "Active" | "Faulted" | "Blocked">();
+    const visiting = new Set<ModuleId>();
+
+    const addBlocked = (block: FederationStartupBlock): void => {
+      outcomes.set(block.moduleId, "Blocked");
+      blocked.push(block);
+      this.#report({ kind: "ModuleStartupBlocked", block });
+    };
+
+    const attempt = async (moduleId: ModuleId): Promise<void> => {
+      const existing = outcomes.get(moduleId);
+      if (existing !== undefined) return;
+
+      const entry = this.#entry(moduleId);
+
+      if (entry.state === "Active") {
+        outcomes.set(moduleId, "Active");
+        active.push(moduleId);
+        return;
+      }
+
+      if (entry.state === "Faulted") {
+        outcomes.set(moduleId, "Faulted");
+        faulted.push(moduleId);
+        return;
+      }
+
+      if (entry.state !== "Unloaded") {
+        addBlocked({
+          moduleId,
+          reason: "UnavailableState",
+          state: entry.state,
+        });
+        return;
+      }
+
+      if (visiting.has(moduleId)) {
+        throw new FederationError(
+          "DependencyCycle",
+          "dependency cycle detected at module " + moduleId,
+        );
+      }
+
+      visiting.add(moduleId);
+
+      for (const dependency of entry.transport.manifest.dependencies) {
+        const dependencyEntry = this.#modules.get(dependency);
+        if (!dependencyEntry) {
+          visiting.delete(moduleId);
+          addBlocked({
+            moduleId,
+            reason: "MissingDependency",
+            dependency,
+          });
+          return;
+        }
+
+        await attempt(dependency);
+
+        if (outcomes.get(dependency) !== "Active") {
+          visiting.delete(moduleId);
+          addBlocked({
+            moduleId,
+            reason: "DependencyUnavailable",
+            dependency,
+            dependencyState: dependencyEntry.state,
+          });
+          return;
+        }
+      }
+
+      const missingCapabilities = this.#missingCapabilities(entry);
+      if (missingCapabilities.length > 0) {
+        visiting.delete(moduleId);
+        addBlocked({
+          moduleId,
+          reason: "MissingCapability",
+          capabilities: missingCapabilities,
+        });
+        return;
+      }
+
+      visiting.delete(moduleId);
+
+      try {
+        await this.start(moduleId, snapshots.get(moduleId) ?? null);
+        outcomes.set(moduleId, "Active");
+        active.push(moduleId);
+      } catch (error) {
+        if (this.state(moduleId) === "Faulted") {
+          outcomes.set(moduleId, "Faulted");
+          faulted.push(moduleId);
+          return;
+        }
+        throw error;
+      }
+    };
+
+    for (const moduleId of this.#modules.keys()) {
+      await attempt(moduleId);
+    }
+
+    return { active, faulted, blocked };
+  }
+
   async suspend(moduleId: ModuleId): Promise<void> {
     const entry = this.#entry(moduleId);
     this.#requireState(entry, moduleId, "Active");
-    await entry.transport.suspend();
+    await this.#invokeTransport(
+      moduleId,
+      "suspend",
+      () => entry.transport.suspend(),
+    );
     entry.state = "Suspended";
   }
 
   async snapshot(moduleId: ModuleId): Promise<JsonValue | null> {
     const entry = this.#entry(moduleId);
     this.#requireState(entry, moduleId, "Suspended");
-    const snapshot = await entry.transport.snapshot();
+    const snapshot = await this.#invokeTransport(
+      moduleId,
+      "snapshot",
+      () => entry.transport.snapshot(),
+    );
     entry.state = "Snapshotted";
     return snapshot;
   }
@@ -345,7 +546,11 @@ export class ModuleFederation {
   async unload(moduleId: ModuleId): Promise<void> {
     const entry = this.#entry(moduleId);
     this.#requireState(entry, moduleId, "Snapshotted");
-    await entry.transport.unload();
+    await this.#invokeTransport(
+      moduleId,
+      "unload",
+      () => entry.transport.unload(),
+    );
     entry.state = "Unloaded";
   }
 
@@ -437,6 +642,66 @@ export class ModuleFederation {
     return { transcript };
   }
 
+
+  #missingCapabilities(entry: ModuleEntry): readonly string[] {
+    return entry.transport.manifest.capabilitiesRequired.filter(
+      (capability) => !this.#availableCapabilities.has(capability),
+    );
+  }
+
+  #report(event: FederationDiagnosticEvent): void {
+    try {
+      this.#diagnostics.report(event);
+    } catch {
+      // Diagnostics must never become federation control flow.
+    }
+  }
+
+  #envelopeDiagnostic(
+    envelope: FederationEnvelope,
+  ): FederationEnvelopeDiagnostic {
+    const base = {
+      source: envelope.source,
+      correlationId: envelope.correlationId,
+      kind: envelope.kind,
+      contract: envelope.contract,
+      contractVersion: envelope.contractVersion,
+    } as const;
+    return envelope.target === undefined
+      ? base
+      : { ...base, target: envelope.target };
+  }
+
+  async #invokeTransport<T>(
+    moduleId: ModuleId,
+    operation: FederationOperation,
+    action: () => Promise<T>,
+    envelope?: FederationEnvelope,
+  ): Promise<T> {
+    const entry = this.#entry(moduleId);
+    const previousState = entry.state;
+
+    try {
+      return await action();
+    } catch (error) {
+      entry.state = "Faulted";
+      this.#report({
+        kind: "ModuleFault",
+        moduleId,
+        operation,
+        previousState,
+        ...(envelope === undefined
+          ? {}
+          : { envelope: this.#envelopeDiagnostic(envelope) }),
+      });
+      throw new FederationError(
+        "TransportFailure",
+        "module " + moduleId + " failed during " + operation,
+        error,
+      );
+    }
+  }
+
   #entry(moduleId: ModuleId): ModuleEntry {
     const entry = this.#modules.get(moduleId);
     if (!entry) {
@@ -525,7 +790,12 @@ export class ModuleFederation {
       );
     }
 
-    const result = await target.transport.dispatch(envelope);
+    const result = await this.#invokeTransport(
+      targetId,
+      "dispatch",
+      () => target.transport.dispatch(envelope),
+      envelope,
+    );
     for (const emitted of result.emitted) {
       if (emitted.source !== targetId) {
         throw new FederationError(

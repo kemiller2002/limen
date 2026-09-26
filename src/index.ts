@@ -1,4 +1,9 @@
-export { ModuleFederation, FederationError, FEDERATION_PROTOCOL_VERSION } from "./federation.js";
+export {
+  ModuleFederation,
+  FederationError,
+  FEDERATION_PROTOCOL_VERSION,
+  noopFederationDiagnostics,
+} from "./federation.js";
 export { BrowserKernel } from "./kernel/browser-kernel.js";
 export { DirectTypeScriptTransport } from "./engine/transport.js";
 export { ReferenceEngine, project } from "./engine/engine.js";
@@ -43,10 +48,16 @@ export type {
   ExchangeResult,
   FederatedModuleTransport,
   FederationCorrelationId,
+  FederationDiagnosticEvent,
+  FederationDiagnosticsSink,
   FederationEnvelope,
+  FederationEnvelopeDiagnostic,
   FederationErrorCode,
   FederationMessageKind,
+  FederationOperation,
   FederationOptions,
+  FederationStartReport,
+  FederationStartupBlock,
   JsonPrimitive,
   JsonValue,
   ModuleDispatchResult,

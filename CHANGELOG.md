@@ -41,6 +41,12 @@ exhaustive lists.
   payloads into local typed F# contracts, exchange a versioned transition
   request/result, and snapshot independent state. The real-Chrome gate requires
   distinct .NET runtime IDs and the completed exchange.
+- **Federation failure isolation and diagnostics.** Transport exceptions now
+  move only the affected module to an explicit `Faulted` state and surface
+  `TransportFailure`. `FederationDiagnosticsSink` reports mechanical fault
+  and startup-block metadata without payloads or raw exception messages, while
+  `startAvailable()` can continue independent modules and keep dependents of
+  unavailable modules blocked. Existing `startAll()` remains fail-fast.
 
 ## [0.6.2] — 2026-09-21
 

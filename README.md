@@ -170,6 +170,10 @@ versioned, JSON-safe envelopes; another module can request a transition but can
 never mutate the owner's state directly. Manifests declare accepted/emitted
 contract versions, dependencies, capabilities and routes. The federation layer
 checks those transport facts while remaining blind to application meaning.
+Transport exceptions fault only the affected module, can be observed through
+payload-safe diagnostics, and `startAvailable()` can continue unrelated modules
+while leaving dependents of unavailable modules blocked. Limen does not retry or
+invent recovery policy.
 
 The runtime is implemented and tested, and the repository now includes a real
 multi-F#-WASM existence proof. The `federation.html` proof loads two

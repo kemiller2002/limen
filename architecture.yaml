@@ -30,6 +30,14 @@ architecture:
     coordinator_domain_authority: forbidden
     lifecycle: [load, initialize, restore, active, suspend, snapshot, unload]
     untargeted_message_kinds: [domain_event]
+    transport_failure_state: faulted
+    automatic_retry: forbidden
+    partial_startup:
+      independent_modules_may_continue: true
+      unavailable_dependents_must_remain_unloaded: true
+    diagnostics:
+      domain_payloads: forbidden
+      raw_transport_errors: forbidden
     proof:
       independent_fsharp_wasm_modules: 2
       distinct_runtime_ids_required: true
