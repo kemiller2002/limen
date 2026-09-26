@@ -56,7 +56,7 @@ module SourceModule =
 
     let private strings (values: seq<string>) =
         let array = JsonArray()
-        values |> Seq.iter (fun value -> array.Add(JsonValue.Create<string>(value)))
+        values |> Seq.iter (fun value -> array.Add(JsonValue.Create(value)))
         array :> JsonNode
 
     let private contractRange (contract: string) =
