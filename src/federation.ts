@@ -504,7 +504,7 @@ export class ModuleFederation {
         outcomes.set(moduleId, "Active");
         active.push(moduleId);
       } catch (error) {
-        if (entry.state === "Faulted") {
+        if (this.state(moduleId) === "Faulted") {
           outcomes.set(moduleId, "Faulted");
           faulted.push(moduleId);
           return;
