@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T06:33:14Z",
+  "updatedAt": "2026-09-29T06:33:45Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -862,24 +862,52 @@
     {
       "id": "WI-0042",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T06:20:33Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/bench.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "bench/pages/bench.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        },
+        {
+          "type": "measurement",
+          "path": "bench/results/baseline-2026-09-29.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:33:45Z",
       "telemetryExecutionIds": [
         "EXE-20260929T062033336Z-41f9501c"
-      ]
+      ],
+      "completedAt": "2026-09-29T06:33:45Z"
     },
     {
       "id": "WI-0048",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T06:33:14Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tsconfig.bench.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:33:45Z",
       "telemetryExecutionIds": [
         "EXE-20260929T063314469Z-bcae3d81"
-      ]
+      ],
+      "completedAt": "2026-09-29T06:33:45Z"
     }
   ]
 }
