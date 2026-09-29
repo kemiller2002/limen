@@ -26,5 +26,6 @@
     <Compile Include="Generated/Presentation.fs" />
     <Compile Include="Generated/Environment.fs" />
     <Compile Include="Generated/Lifecycle.fs" />
+    <Compile Include="Generated/Offline.fs" />
   </ItemGroup>
 </Project>

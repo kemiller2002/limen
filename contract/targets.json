@@ -15,7 +15,8 @@
     "contract/transfer.contract.json",
     "contract/presentation.contract.json",
     "contract/environment.contract.json",
-    "contract/lifecycle.contract.json"
+    "contract/lifecycle.contract.json",
+    "contract/offline.contract.json"
   ],
   "outputs": [
     {
@@ -430,6 +431,32 @@
       "unit": "limen.lifecycle",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_lifecycle.rs"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "typescript-types",
+      "path": "src/capabilities/offline/generated/offline.ts"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/offline/generated/offline.codec.ts",
+      "typesModule": "./offline.js"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Offline.fs"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Offline.cs"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_offline.rs"
     }
   ]
 }
