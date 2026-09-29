@@ -90,5 +90,5 @@
 | WI-0083 | Core HTTP profile, protocol 1.3 additive: text/base64/none response representations, response-header allowlist, explicit credentials, HEAD/OPTIONS, same-origin XSRF cookie-to-header binding; JSON default and OutcomeUnknown unchanged (GH-47) | complete |  | medium |
 | WI-0084 | Guardrail: compile-pressure consumers name HttpFailureReason too-large (protocol 1.3, GH-47) | complete |  | medium |
 | WI-0085 | Re-baseline payload budgets after the Core HTTP profile (protocol 1.3): about 1.7 KB gzip on every profile that loads the kernel (GH-47, GH-19) | complete |  | medium |
-| WI-0086 | HTTP transfer profile pack: opt-in upload/download progress facts, uploads of picked files by opaque id and multipart, four-outcome semantics with OutcomeUnknown intact (GH-47) | active |  | medium |
-| WI-0087 | Guardrail: register the limen.transfer contract unit and its generated bindings (GH-47) | ready |  | medium |
+| WI-0086 | HTTP transfer profile pack: opt-in upload/download progress facts, uploads of picked files by opaque id and multipart, four-outcome semantics with OutcomeUnknown intact (GH-47) | complete |  | medium |
+| WI-0087 | Guardrail: register the limen.transfer contract unit and its generated bindings (GH-47) | complete |  | medium |

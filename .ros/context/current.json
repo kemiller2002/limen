@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T10:00:59Z",
+  "updatedAt": "2026-09-29T10:10:41Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1794,24 +1794,48 @@
     {
       "id": "WI-0086",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T10:00:58Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/transfer/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/transfer.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/transfer/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:10:41Z",
       "telemetryExecutionIds": [
         "EXE-20260929T100058679Z-e7929898"
-      ]
+      ],
+      "completedAt": "2026-09-29T10:10:41Z"
     },
     {
       "id": "WI-0087",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T10:00:59Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_transfer.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:10:41Z",
       "telemetryExecutionIds": [
         "EXE-20260929T100059945Z-db114122"
-      ]
+      ],
+      "completedAt": "2026-09-29T10:10:41Z"
     }
   ]
 }
