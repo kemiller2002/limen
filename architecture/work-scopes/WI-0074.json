@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0074",
+  "reference": "kemiller2002/limen#31",
+  "placement": "Tooling — the smoke:packs npm script. A pack page may point at an example (page.json), whose compiled JavaScript is gitignored; the script must build it rather than rely on an earlier pretest. No guardrail file, CI step or check is changed or weakened.",
+  "guardrail": false,
+  "paths": ["package.json", "docs/**", "CLAUDE.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
