@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 89,
+  "nextSeq": 90,
   "items": [
     {
       "id": "WI-0001",
@@ -1360,6 +1360,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T10:11:28Z",
       "updatedAt": "2026-09-29T10:18:02Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0089",
+      "title": "Fix: a malformed projection partially mutated the view (texts applied before a later data-each/data-if/value error threw); validate the whole projection, including templates not yet mounted, before applying any of it (GH-50)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:19:34Z",
+      "updatedAt": "2026-09-29T10:19:35Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

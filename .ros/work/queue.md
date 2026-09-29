@@ -93,3 +93,4 @@
 | WI-0086 | HTTP transfer profile pack: opt-in upload/download progress facts, uploads of picked files by opaque id and multipart, four-outcome semantics with OutcomeUnknown intact (GH-47) | complete |  | medium |
 | WI-0087 | Guardrail: register the limen.transfer contract unit and its generated bindings (GH-47) | complete |  | medium |
 | WI-0088 | HTTP engine library: pure interceptor composition, retry decisions that never blind-retry non-idempotent unknown outcomes, ETag revalidation cache, polling decisions; language-neutral vectors and F# reference (GH-47) | complete |  | medium |
+| WI-0089 | Fix: a malformed projection partially mutated the view (texts applied before a later data-each/data-if/value error threw); validate the whole projection, including templates not yet mounted, before applying any of it (GH-50) | ready |  | medium |
