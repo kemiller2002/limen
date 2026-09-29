@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0067",
+  "reference": "kemiller2002/limen#29 (LCP-020, IME acceptance criterion)",
+  "placement": "Core (kernel event mechanism) — the simple data-event path itself reported half-composed IME text on every input event; only the kernel's own listener can tell a composing input from a committed one. No protocol change.",
+  "guardrail": false,
+  "paths": ["src/kernel/**", "test/**", "docs/**", "bench/budgets.json", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 67,
+  "nextSeq": 68,
   "items": [
     {
       "id": "WI-0001",
@@ -1052,6 +1052,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T08:00:08Z",
       "updatedAt": "2026-09-29T08:06:58Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0067",
+      "title": "Kernel: data-on=input does not report uncommitted IME composition text; the committed value is reported at compositionend (GH-29)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:07:44Z",
+      "updatedAt": "2026-09-29T08:07:44Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

@@ -71,3 +71,4 @@
 | WI-0064 | Guardrail: register the limen.schedule contract unit and its generated bindings (GH-24) | complete |  | medium |
 | WI-0065 | Measurement and observer capability pack: rects, viewport, resize and visibility subscriptions, removed targets (GH-25) | complete |  | medium |
 | WI-0066 | Guardrail: register the limen.measure contract unit and its generated bindings (GH-25) | complete |  | medium |
+| WI-0067 | Kernel: data-on=input does not report uncommitted IME composition text; the committed value is reported at compositionend (GH-29) | ready |  | medium |
