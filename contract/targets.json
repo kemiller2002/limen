@@ -3,7 +3,8 @@
     "contract/core.contract.json",
     "test/fixtures/capabilities/echo.contract.json",
     "test/fixtures/capabilities/handle.contract.json",
-    "contract/focus.contract.json"
+    "contract/focus.contract.json",
+    "contract/schedule.contract.json"
   ],
   "outputs": [
     {
@@ -106,6 +107,32 @@
       "unit": "limen.focus",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_focus.rs"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "typescript-types",
+      "path": "src/capabilities/schedule/generated/schedule.ts"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/schedule/generated/schedule.codec.ts",
+      "typesModule": "./schedule.js"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Schedule.fs"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Schedule.cs"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_schedule.rs"
     }
   ]
 }
