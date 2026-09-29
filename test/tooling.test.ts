@@ -65,7 +65,7 @@ test("a handshaking engine negotiates with the fake host exactly as with the ker
     }),
   };
   const host = createFakeHost({ transport: engine, requireHandshake: true });
-  assert.deepEqual(await host.start(), { kind: "Compatible", negotiation: { kind: "Negotiated", capabilities: [] } });
+  assert.deepEqual(await host.start(), { kind: "Compatible", negotiation: { kind: "Negotiated", protocol: { major: 1, minor: 1 }, capabilities: [] } });
 });
 
 test("fake storage and navigation behave like their browser counterparts, and cross-origin pushes are refused", async () => {

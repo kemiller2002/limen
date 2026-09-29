@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
+// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
 // generator: limen-contract-gen/1 (typescript-types)
-// content-hash: sha256:5c9457567cb303bf2df7d633cbfb751b7e8228a357320b9f52ca8cae0a85b406
+// content-hash: sha256:8b1ad39f7e68da3b1dc1297d742dfad2c651619972fade742225cc318a17d227
 // </auto-generated>
 /** The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand. */
 
@@ -12,10 +12,10 @@
 export const PROTOCOL_VERSION = 1 as const;
 
 /** Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. */
-export const PROTOCOL_MINOR = 1 as const;
+export const PROTOCOL_MINOR = 2 as const;
 
 /** The identity of this generated contract unit, exchanged in the handshake. */
-export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd" } as const;
+export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e" } as const;
 
 /** Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected. */
 export type CorrelationId = string & { readonly __correlationId: unique symbol };
@@ -24,7 +24,7 @@ export type CorrelationId = string & { readonly __correlationId: unique symbol }
 export type Capability = "Http" | "Storage" | "Clipboard" | "Navigation";
 
 /** `name` is a domain-chosen identifier (the value of a data-event attribute). The bridge does not know its meaning; only the engine interprets it. */
-export type SemanticEvent = { readonly kind: "Event"; readonly name: string; readonly key?: string; readonly value?: string };
+export type SemanticEvent = { readonly kind: "Event"; readonly name: string; readonly key?: string; readonly value?: string; readonly checked?: boolean; readonly values?: readonly string[]; readonly submitter?: string };
 
 /** The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this. */
 export type BrowserLocation = { readonly origin: string; readonly path: string; readonly query: string; readonly hash: string };

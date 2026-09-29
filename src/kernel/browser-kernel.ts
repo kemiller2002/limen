@@ -77,6 +77,29 @@ function readValue(el: HTMLElement): string | undefined {
   return undefined;
 }
 
+// Protocol 1.2: what `.value` alone cannot say. A checkbox or radio's checked
+// state; a multi-select's selected values, or the checked values of the
+// checkbox group (same name, same form) an event came from; the name of the
+// button that submitted a form. Mechanism only — what a value means is the
+// engine's.
+type ControlState = { readonly checked?: boolean; readonly values?: readonly string[]; readonly submitter?: string };
+
+function readControlState(el: HTMLElement, submitter: HTMLElement | null): ControlState {
+  if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
+    const group = el.type === "checkbox" && el.name !== ""
+      ? Array.from((el.form ?? el.ownerDocument).querySelectorAll("input[type=checkbox]"))
+        .filter((other): other is HTMLInputElement => other instanceof HTMLInputElement && other.name === el.name && other.form === el.form)
+      : [];
+    return { checked: el.checked, ...(group.length > 0 ? { values: group.filter((box) => box.checked).map((box) => box.value) } : {}) };
+  }
+  if (el instanceof HTMLSelectElement && el.multiple) return { values: Array.from(el.selectedOptions, (option) => option.value) };
+  if (el instanceof HTMLFormElement && submitter !== null) {
+    const name = submitter.getAttribute("name");
+    return name !== null && name !== "" ? { submitter: name } : {};
+  }
+  return {};
+}
+
 // Bindings inside <template> content are bound only when a row or a
 // conditional section mounts. Refuse a forbidden target there when the page
 // starts, not later in the middle of a projection.
@@ -311,10 +334,11 @@ export class BrowserKernel {
   #bindEvent(el: HTMLElement, itemKey: string | undefined): void {
     const name = el.getAttribute("data-event")!;
     const trigger = el.getAttribute("data-on") ?? TRIGGER_BY_TAG[el.tagName] ?? "click";
-    const fire = (): Promise<void> => this.#fire(el, name, itemKey);
+    const fire = (): Promise<void> => this.#fire(el, name, itemKey, null);
     el.addEventListener(trigger, (domEvent) => {
       if (trigger === "submit") domEvent.preventDefault();
-      void fire();
+      const submitter = "submitter" in domEvent && domEvent.submitter instanceof HTMLElement ? domEvent.submitter : null;
+      void this.#fire(el, name, itemKey, submitter);
     });
     const form = "form" in el ? (el as HTMLInputElement).form : null;
     if (trigger !== "submit" && form !== null) {
@@ -324,7 +348,7 @@ export class BrowserKernel {
     }
   }
 
-  async #fire(el: HTMLElement, name: string, itemKey: string | undefined): Promise<void> {
+  async #fire(el: HTMLElement, name: string, itemKey: string | undefined, submitter: HTMLElement | null): Promise<void> {
     if (el instanceof HTMLFormElement) {
       if (!el.reportValidity()) return;
       // Prune bindings whose element has since been unmounted. Without this,
@@ -336,7 +360,15 @@ export class BrowserKernel {
       for (const entry of live) await entry.fire();
     }
     const value = readValue(el);
-    await this.#send({ kind: "Event", event: makeEvent(name, itemKey, value) });
+    // A 1.1 engine's strict decoder would refuse fields it has never heard of,
+    // so control state is sent only to an engine that negotiated 1.2.
+    const state = this.#speaks(2) ? readControlState(el, submitter) : {};
+    const event: SemanticEvent = { ...makeEvent(name, itemKey, value), ...state, ...(state.values !== undefined ? { values: [...state.values] } : {}) };
+    await this.#send({ kind: "Event", event });
+  }
+
+  #speaks(minor: number): boolean {
+    return this.#phase.kind === "Running" && this.#phase.negotiation.kind === "Negotiated" && this.#phase.negotiation.protocol.minor >= minor;
   }
 
   // The single chokepoint every engine round-trip passes through. A failure

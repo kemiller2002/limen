@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
+// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:8ffe8809e2f1c2bc3413d9002fdd18e9e6bb3ebda4dc172d92115877aeacc1a1
+// content-hash: sha256:b32b427c1bbe62435fae8aa2b2e405e0369bed9888fe5a2b2559c5dbf029f12e
 // </auto-generated>
 import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
 
@@ -82,7 +82,7 @@ export const decodeCorrelationId = (value: unknown, path = "$"): Decoded<Correla
 export const decodeCapability = (value: unknown, path = "$"): Decoded<Capability> => enumValue(value, path, ["Http","Storage","Clipboard","Navigation"] as const);
 
 export const decodeSemanticEvent = (value: unknown, path = "$"): Decoded<SemanticEvent> => {
-  const object = objectValue(value, path, ["kind","name","key","value"]);
+  const object = objectValue(value, path, ["kind","name","key","value","checked","values","submitter"]);
   if (!object.ok) return object;
   const field_kind = literalValue(object.value["kind"], `${path}.kind`, "Event");
   if (!field_kind.ok) return field_kind;
@@ -92,7 +92,13 @@ export const decodeSemanticEvent = (value: unknown, path = "$"): Decoded<Semanti
   if (!field_key.ok) return field_key;
   const field_value = object.value["value"] === undefined ? ok(undefined) : stringValue(object.value["value"], `${path}.value`);
   if (!field_value.ok) return field_value;
-  return ok<SemanticEvent>({ kind: field_kind.value, name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}), ...(field_value.value !== undefined ? { value: field_value.value } : {}) });
+  const field_checked = object.value["checked"] === undefined ? ok(undefined) : boolValue(object.value["checked"], `${path}.checked`);
+  if (!field_checked.ok) return field_checked;
+  const field_values = object.value["values"] === undefined ? ok(undefined) : listOf(object.value["values"], `${path}.values`, (item, at) => stringValue(item, at));
+  if (!field_values.ok) return field_values;
+  const field_submitter = object.value["submitter"] === undefined ? ok(undefined) : stringValue(object.value["submitter"], `${path}.submitter`);
+  if (!field_submitter.ok) return field_submitter;
+  return ok<SemanticEvent>({ kind: field_kind.value, name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}), ...(field_value.value !== undefined ? { value: field_value.value } : {}), ...(field_checked.value !== undefined ? { checked: field_checked.value } : {}), ...(field_values.value !== undefined ? { values: field_values.value } : {}), ...(field_submitter.value !== undefined ? { submitter: field_submitter.value } : {}) });
 };
 
 export const decodeBrowserLocation = (value: unknown, path = "$"): Decoded<BrowserLocation> => {

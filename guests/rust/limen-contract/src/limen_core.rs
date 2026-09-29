@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
+// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:48c9ac02d34729da3803b205235d7bba62042cb6b05c795a06b113fa1b426264
+// content-hash: sha256:41483374105ea30bcc61ed02ba9e684914ee4bcd85028a4b4a26774b8a689a96
 // </auto-generated>
 //! The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.
 
@@ -18,9 +18,9 @@ use crate::runtime::{wire, DecodeError, RawJson};
 pub mod contract {
     pub const UNIT: &str = "limen.core";
     pub const VERSION: i64 = 1;
-    pub const FINGERPRINT: &str = "sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd";
+    pub const FINGERPRINT: &str = "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e";
     pub const PROTOCOL_VERSION: i64 = 1;
-    pub const PROTOCOL_MINOR: i64 = 1;
+    pub const PROTOCOL_MINOR: i64 = 2;
 }
 
 /// Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected.
@@ -54,6 +54,12 @@ pub struct SemanticEvent {
     pub name: String,
     pub key: Option<String>,
     pub value: Option<String>,
+    /// Protocol 1.2: a checkbox's or radio button's checked state. Sent only to an engine that negotiated 1.2 or later.
+    pub checked: Option<bool>,
+    /// Protocol 1.2: every selected value of a multi-select, or every checked value of the checkbox group (same name, same form) the event came from. Sent only to an engine that negotiated 1.2 or later.
+    pub values: Option<Vec<String>>,
+    /// Protocol 1.2: the name of the button that submitted a form, when it has one. Sent only to an engine that negotiated 1.2 or later.
+    pub submitter: Option<String>,
 }
 
 /// The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this.
@@ -481,12 +487,15 @@ pub fn decode_capability(value: &Value, path: &str) -> Result<Capability, Decode
 }
 
 pub fn decode_semantic_event(value: &Value, path: &str) -> Result<SemanticEvent, DecodeError> {
-    let props = wire::closed(wire::properties(value, path)?, path, &["kind", "name", "key", "value"])?;
+    let props = wire::closed(wire::properties(value, path)?, path, &["kind", "name", "key", "value", "checked", "values", "submitter"])?;
     wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Event"))?;
     let f_name = wire::required(props, path, "name", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_key = wire::optional(props, path, "key", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_value = wire::optional(props, path, "value", |v0: &Value, p0: &str| wire::string(v0, p0))?;
-    Ok(SemanticEvent { name: f_name, key: f_key, value: f_value })
+    let f_checked = wire::optional(props, path, "checked", |v0: &Value, p0: &str| wire::boolean(v0, p0))?;
+    let f_values = wire::optional(props, path, "values", |v0: &Value, p0: &str| wire::list(v0, p0, |v1: &Value, p1: &str| wire::string(v1, p1)))?;
+    let f_submitter = wire::optional(props, path, "submitter", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+    Ok(SemanticEvent { name: f_name, key: f_key, value: f_value, checked: f_checked, values: f_values, submitter: f_submitter })
 }
 
 pub fn decode_browser_location(value: &Value, path: &str) -> Result<BrowserLocation, DecodeError> {
@@ -968,7 +977,7 @@ pub fn encode_capability(value: &Capability) -> Value {
 }
 
 pub fn encode_semantic_event(value: &SemanticEvent) -> Value {
-    wire::of_object(vec![Some(("kind", wire::of_string("Event"))), Some(("name", wire::of_string(&value.name))), (&value.key).as_ref().map(|x0| ("key", wire::of_string(x0))), (&value.value).as_ref().map(|x0| ("value", wire::of_string(x0)))])
+    wire::of_object(vec![Some(("kind", wire::of_string("Event"))), Some(("name", wire::of_string(&value.name))), (&value.key).as_ref().map(|x0| ("key", wire::of_string(x0))), (&value.value).as_ref().map(|x0| ("value", wire::of_string(x0))), (&value.checked).as_ref().map(|x0| ("checked", wire::of_bool(*x0))), (&value.values).as_ref().map(|x0| ("values", wire::of_list(x0, |x1| wire::of_string(x1)))), (&value.submitter).as_ref().map(|x0| ("submitter", wire::of_string(x0)))])
 }
 
 pub fn encode_browser_location(value: &BrowserLocation) -> Value {

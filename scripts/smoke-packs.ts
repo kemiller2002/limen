@@ -1,6 +1,8 @@
-// Real-browser proof for every capability pack (kemiller2002/limen#15).
+// Real-browser proof for every capability pack (kemiller2002/limen#15), and
+// for Core mechanisms whose behaviour only a real browser shows (directories
+// named core-*, such as form-control state).
 //
-// Each directory under test/browser/packs/ is one pack's page. Its own script
+// Each directory under test/browser/packs/ is one page. Its own script
 // drives the pack through the real kernel and sets
 //   window.__limenPackResult = { pack, checks: [{ name, ok, detail }] }.
 // This runner serves them under the same strict CSP with Trusted Types

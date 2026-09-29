@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
+// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:77a6a9171b54f807454d3a69af30b128a469b76b4e07d7d9caf86b0df5b0ce87
+// content-hash: sha256:70ed79878805fffa194cb4cebd140063b1cf97dbbfccb0dd9117db66e0f9d31e
 // </auto-generated>
 namespace Limen.Contract.Core
 
@@ -31,6 +31,12 @@ module Types =
             Name: string
             Key: string option
             Value: string option
+            /// Protocol 1.2: a checkbox's or radio button's checked state. Sent only to an engine that negotiated 1.2 or later.
+            Checked: bool option
+            /// Protocol 1.2: every selected value of a multi-select, or every checked value of the checkbox group (same name, same form) the event came from. Sent only to an engine that negotiated 1.2 or later.
+            Values: string list option
+            /// Protocol 1.2: the name of the button that submitted a form, when it has one. Sent only to an engine that negotiated 1.2 or later.
+            Submitter: string option
         }
 
     /// The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this.
@@ -245,9 +251,9 @@ module Types =
 module Contract =
     let [<Literal>] Unit = "limen.core"
     let [<Literal>] Version = 1L
-    let [<Literal>] Fingerprint = "sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd"
+    let [<Literal>] Fingerprint = "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e"
     let [<Literal>] ProtocolVersion = 1L
-    let [<Literal>] ProtocolMinor = 1L
+    let [<Literal>] ProtocolMinor = 2L
 
 /// Strict decoders (untrusted JSON → contract values) and encoders.
 [<RequireQualifiedAccess>]
@@ -261,12 +267,15 @@ module Codec =
     and decodeSemanticEvent (path: string) (element: JsonElement) : Result<SemanticEvent, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
-            let! props = Wire.closed [ "kind"; "name"; "key"; "value" ] path props
+            let! props = Wire.closed [ "kind"; "name"; "key"; "value"; "checked"; "values"; "submitter" ] path props
             let! () = Wire.required "kind" (Wire.literalString "Event") path props
             let! f_name = Wire.required "name" Wire.string path props
             let! f_key = Wire.optional "key" Wire.string path props
             let! f_value = Wire.optional "value" Wire.string path props
-            return { Name = f_name; Key = f_key; Value = f_value }
+            let! f_checked = Wire.optional "checked" Wire.boolean path props
+            let! f_values = Wire.optional "values" (Wire.list Wire.string) path props
+            let! f_submitter = Wire.optional "submitter" Wire.string path props
+            return { Name = f_name; Key = f_key; Value = f_value; Checked = f_checked; Values = f_values; Submitter = f_submitter }
         }
 
     and decodeBrowserLocation (path: string) (element: JsonElement) : Result<BrowserLocation, DecodeError> =
@@ -772,7 +781,7 @@ module Codec =
         | Capability.Navigation -> Wire.ofString "Navigation"
 
     and encodeSemanticEvent (value: SemanticEvent) : JsonNode =
-        Wire.ofObject [ Some("kind", Wire.ofString "Event"); Some("name", Wire.ofString value.Name); value.Key |> Option.map (fun value -> "key", Wire.ofString value); value.Value |> Option.map (fun value -> "value", Wire.ofString value) ]
+        Wire.ofObject [ Some("kind", Wire.ofString "Event"); Some("name", Wire.ofString value.Name); value.Key |> Option.map (fun value -> "key", Wire.ofString value); value.Value |> Option.map (fun value -> "value", Wire.ofString value); value.Checked |> Option.map (fun value -> "checked", Wire.ofBool value); value.Values |> Option.map (fun value -> "values", (Wire.ofList Wire.ofString) value); value.Submitter |> Option.map (fun value -> "submitter", Wire.ofString value) ]
 
     and encodeBrowserLocation (value: BrowserLocation) : JsonNode =
         Wire.ofObject [ Some("origin", Wire.ofString value.Origin); Some("path", Wire.ofString value.Path); Some("query", Wire.ofString value.Query); Some("hash", Wire.ofString value.Hash) ]

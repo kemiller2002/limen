@@ -369,11 +369,16 @@ type SemanticEvent = {
   readonly name:   string;   // the data-event value, verbatim
   readonly key?:   string;   // enclosing data-each item's key
   readonly value?: string;   // .value of an input/select/textarea
+  readonly checked?: boolean;           // 1.2: checkbox / radio checked state
+  readonly values?: readonly string[];  // 1.2: multi-select selected; checkbox group checked
+  readonly submitter?: string;          // 1.2: name of the submitting button
 };
 ```
 
 `value` is always a string, even for `type="number"`. No element id, no DOM
-node, no event object.
+node, no event object. The three 1.2 fields are sent only to an engine whose
+handshake answered protocol 1.2 or later; a 1.1 or legacy engine receives
+exactly the 1.1 shape.
 
 ---
 

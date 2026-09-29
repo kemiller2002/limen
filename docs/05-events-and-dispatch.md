@@ -38,10 +38,19 @@ type SemanticEvent = {
   readonly name:   string;   // the data-event attribute value, verbatim
   readonly key?:   string;   // the enclosing data-each item's key, if any
   readonly value?: string;   // the element's .value, for form controls
+  // Protocol 1.2 — only to an engine that negotiated 1.2 or later:
+  readonly checked?: boolean;            // checkbox / radio: is it checked
+  readonly values?: readonly string[];   // multi-select: selected; checkbox group: checked (same name, same form)
+  readonly submitter?: string;           // form submit: the submitting button's name
 };
 ```
 
-That is the entire payload. Three optional-ish strings.
+That is the entire payload: three optional strings, plus the state of the
+control that `.value` alone cannot express. A checkbox's `.value` is its
+static value (`"on"` by default) whether or not it is checked, which is why
+1.2 adds `checked`. A 1.1 engine never receives the 1.2 fields: its strict
+decoder would refuse a field it has never heard of, so the kernel sends them
+only when the handshake says the engine speaks 1.2.
 
 **There is no element id, no DOM node, no event object, no coordinates, no
 modifier keys, no target reference.** The engine cannot know which element was

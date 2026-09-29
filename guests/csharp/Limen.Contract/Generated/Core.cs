@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
+// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:4a50c61a1a5f7cdc59cbebcc7f7e2ed248c85146aa38b9be3c87934cc82a3f92
+// content-hash: sha256:280eb98b5913ddb16bdef6861b16aa3279051fde5f802da4946b3e9c6bff736e
 // </auto-generated>
 #nullable enable
 
@@ -17,9 +17,9 @@ public static class Contract
 {
     public const string Unit = "limen.core";
     public const long Version = 1;
-    public const string Fingerprint = "sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd";
+    public const string Fingerprint = "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e";
     public const long ProtocolVersion = 1;
-    public const long ProtocolMinor = 1;
+    public const long ProtocolMinor = 2;
 }
 
 /// <summary>Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected.</summary>
@@ -52,7 +52,7 @@ public static class CapabilityMatch
 }
 
 /// <summary>`name` is a domain-chosen identifier (the value of a data-event attribute). The bridge does not know its meaning; only the engine interprets it.</summary>
-public sealed record SemanticEvent(string Name, string? Key, string? Value);
+public sealed record SemanticEvent(string Name, string? Key, string? Value, bool? Checked, global::System.Collections.Generic.IReadOnlyList<string>? Values, string? Submitter);
 
 /// <summary>The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this.</summary>
 public sealed record BrowserLocation(string Origin, string Path, string Query, string Hash);
@@ -680,12 +680,15 @@ public static class Codec
 
     internal static global::Limen.Contract.Core.SemanticEvent ReadSemanticEvent(global::System.Text.Json.JsonElement element, string path)
     {
-        var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "name", "key", "value");
+        var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "name", "key", "value", "checked", "values", "submitter");
         Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Event"));
         var f_name = Wire.Required(props, path, "name", (e0, p0) => Wire.String(e0, p0));
         var f_key = Wire.OptionalReference<string>(props, path, "key", (e0, p0) => Wire.String(e0, p0));
         var f_value = Wire.OptionalReference<string>(props, path, "value", (e0, p0) => Wire.String(e0, p0));
-        return new global::Limen.Contract.Core.SemanticEvent(f_name, f_key, f_value);
+        var f_checked = Wire.OptionalValue<bool>(props, path, "checked", (e0, p0) => Wire.Boolean(e0, p0));
+        var f_values = Wire.OptionalReference<global::System.Collections.Generic.IReadOnlyList<string>>(props, path, "values", (e0, p0) => Wire.List(e0, p0, (e1, p1) => Wire.String(e1, p1)));
+        var f_submitter = Wire.OptionalReference<string>(props, path, "submitter", (e0, p0) => Wire.String(e0, p0));
+        return new global::Limen.Contract.Core.SemanticEvent(f_name, f_key, f_value, f_checked, f_values, f_submitter);
     }
 
     internal static global::Limen.Contract.Core.BrowserLocation ReadBrowserLocation(global::System.Text.Json.JsonElement element, string path)
@@ -1244,7 +1247,7 @@ public static class Codec
         };
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeSemanticEvent(global::Limen.Contract.Core.SemanticEvent value) =>
-        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Event")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), (value.Key is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("key", Wire.OfString(value.Key))), (value.Value is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("value", Wire.OfString(value.Value))));
+        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Event")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), (value.Key is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("key", Wire.OfString(value.Key))), (value.Value is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("value", Wire.OfString(value.Value))), (value.Checked.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("checked", Wire.OfBool(value.Checked.Value)) : null), (value.Values is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("values", Wire.OfList(value.Values, x0 => Wire.OfString(x0)))), (value.Submitter is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("submitter", Wire.OfString(value.Submitter))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeBrowserLocation(global::Limen.Contract.Core.BrowserLocation value) =>
         Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("origin", Wire.OfString(value.Origin)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("path", Wire.OfString(value.Path)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("query", Wire.OfString(value.Query)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("hash", Wire.OfString(value.Hash)));

@@ -81,10 +81,13 @@ let initialize =
 let legacy = JsonNode.Parse(Dispatch.handle initialize).AsObject()
 equal "a pre-1.1 kernel is refused as HandshakeMissing" "HandshakeMissing" (legacy.["handshake"].["reason"].["kind"].GetValue<string>())
 
+// The host offers the protocol revision the generated bindings define.
+let hostMinor = Contract.ProtocolMinor
+
 let offered =
     initialize.Replace(
         "\"location\":",
-        $"\"handshake\":{{\"protocol\":{{\"major\":1,\"minor\":1}},\"contract\":{{\"unit\":\"limen.core\",\"version\":1,\"fingerprint\":\"{Contract.Fingerprint}\"}},\"capabilities\":[]}},\"location\":")
+        $"\"handshake\":{{\"protocol\":{{\"major\":1,\"minor\":{hostMinor}}},\"contract\":{{\"unit\":\"limen.core\",\"version\":1,\"fingerprint\":\"{Contract.Fingerprint}\"}},\"capabilities\":[]}},\"location\":")
 
 let initialized = JsonNode.Parse(Dispatch.handle offered).AsObject()
 equal "a host offering the generated core contract is accepted" "Accepted" (initialized.["handshake"].["kind"].GetValue<string>())

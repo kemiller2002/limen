@@ -31,6 +31,15 @@ exhaustive lists.
 
 ### Added
 
+- **Protocol 1.2: form-control state (#21).** `SemanticEvent` gains
+  optional `checked` (checkbox and radio), `values` (multi-select selections
+  and checkbox-group checked values) and `submitter` (the submitting
+  button's name). The kernel sends them only to engines whose handshake
+  answered 1.2, so 1.1 and legacy engines receive exactly the old shape.
+  `Negotiation.Negotiated` now records the engine's protocol revision.
+  Bindings are regenerated for TypeScript, F#, C# and Rust. The minimal
+  engines stay on 1.1, as their specification says, which keeps a 1.1 engine
+  on a 1.2 kernel under test in Chromium.
 - **Language-neutral form semantics and the F# reference library (#21).**
   `conformance/forms/` defines engine-owned form state as data: nine
   scenarios, 87 steps. It covers typed sync validation, conditional

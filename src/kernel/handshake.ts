@@ -9,8 +9,9 @@ import { decodeEngineHandshake, type DecodeError } from "../generated/core.codec
 import type { CapabilityId, CapabilityOffer, ContractIdentity, HandshakeRejection, HostHandshake, ProtocolRevision } from "../protocol.js";
 
 export type Negotiation =
-  // The engine accepted and selected exactly these capabilities.
-  | { readonly kind: "Negotiated"; readonly capabilities: readonly CapabilityOffer[] }
+  // The engine accepted, speaks `protocol` (never newer than the host's), and
+  // selected exactly these capabilities.
+  | { readonly kind: "Negotiated"; readonly protocol: ProtocolRevision; readonly capabilities: readonly CapabilityOffer[] }
   // The engine predates protocol 1.1 and sent no handshake. It may use the four
   // built-in effects and nothing else.
   | { readonly kind: "Legacy" };
@@ -67,7 +68,7 @@ export const verifyHandshake = (offer: HostHandshake, answer: unknown, requireHa
       if (!protocolAccepted(offer.protocol, handshake.protocol)) return incompatible({ kind: "protocol-mismatch", host: offer.protocol, engine: handshake.protocol });
       if (!sameContract(offer.contract, handshake.contract)) return incompatible({ kind: "contract-mismatch", host: offer.contract, engine: handshake.contract });
       const problem = selectionProblem(offer.capabilities, handshake.capabilities);
-      return problem === undefined ? compatible({ kind: "Negotiated", capabilities: handshake.capabilities }) : incompatible(problem);
+      return problem === undefined ? compatible({ kind: "Negotiated", protocol: handshake.protocol, capabilities: handshake.capabilities }) : incompatible(problem);
     }
   }
 };

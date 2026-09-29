@@ -87,12 +87,19 @@ public static class Engine
 
     private static readonly EffectRequest[] None = new EffectRequest[0];
 
+    /// <summary>
+    /// The minimal engine speaks protocol 1.1, as its specification says
+    /// (conformance/sessions/minimal-engine.md): it uses none of 1.2's
+    /// form-control state, so a 1.2 kernel never sends it those fields.
+    /// </summary>
+    private static readonly Requirements MinimalRequirements = Requirements.CoreOnly with { Protocol = new ProtocolRevision(1, 1) };
+
     /// <summary>One transition: the state after the message, and the response to send.</summary>
     public static (State, EngineToBrowserMessage) Handle(State state, BrowserToEngineMessage message)
     {
         if (state is not State.Ready ready) return Respond(state, None, null);
         return message.Match(
-            initialize: initialize => Handshake.Answer(initialize.Handshake, Requirements.CoreOnly).Match(
+            initialize: initialize => Handshake.Answer(initialize.Handshake, MinimalRequirements).Match(
                 accepted: accepted => Respond(Record(ready, "ready"), None, accepted),
                 rejected: rejected => Respond(new State.Incompatible(), None, rejected)),
             @event: semanticEvent =>

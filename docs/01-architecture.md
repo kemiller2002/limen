@@ -101,6 +101,10 @@ type SemanticEvent = {
   name:   string;   // the data-event value, verbatim
   key?:   string;   // the enclosing data-each item's key, if any
   value?: string;   // the element's .value, for inputs/selects/textareas
+  // Protocol 1.2, sent only to an engine that negotiated 1.2 or later:
+  checked?: boolean;    // a checkbox's or radio's checked state
+  values?: string[];    // a multi-select's selected values, or a checkbox group's checked values
+  submitter?: string;   // the name of the button that submitted a form
 };
 ```
 

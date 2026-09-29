@@ -11,6 +11,13 @@ type State =
     | Ready of log: Entry list * lastId: int * next: int * pending: Map<string, string>
     | Incompatible
 
+
+/// The minimal engine speaks protocol 1.1, as its specification says
+/// (conformance/sessions/minimal-engine.md): it uses none of 1.2's form-control
+/// state, so a 1.2 kernel never sends it those fields.
+let minimalRequirements : Handshake.Requirements =
+    { Handshake.coreOnly with Protocol = { Major = 1L; Minor = 1L } }
+
 let initial = Ready([], 0, 1, Map.empty)
 
 let private logLimit = 20
@@ -91,7 +98,7 @@ let handle (state: State) (message: BrowserToEngineMessage) : State * EngineToBr
     | Ready(_, _, next, pending) ->
         match message with
         | BrowserToEngineMessage.Initialize(_, _, offer) ->
-            match Handshake.answer offer Handshake.coreOnly with
+            match Handshake.answer offer minimalRequirements with
             | EngineHandshake.Accepted _ as accepted -> respond (record "ready" state) [] (Some accepted)
             | EngineHandshake.Rejected _ as rejected -> respond Incompatible [] (Some rejected)
         | BrowserToEngineMessage.Event semanticEvent ->

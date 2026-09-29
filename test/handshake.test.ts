@@ -7,7 +7,7 @@ import { defineCapability, type CapabilityHost } from "../dist/kernel/capabiliti
 import type { DiagnosticEvent } from "../dist/kernel/diagnostics.js";
 import { verifyHandshake } from "../dist/kernel/handshake.js";
 import { answerHandshake } from "../dist/guest/handshake.js";
-import { CORE_CONTRACT_IDENTITY, type BrowserToEngineMessage, type CapabilityId, type CorrelationId, type EffectResult, type EngineHandshake, type EngineToBrowserMessage, type EngineTransport, type HostHandshake } from "../dist/protocol.js";
+import { CORE_CONTRACT_IDENTITY, PROTOCOL_MINOR, type BrowserToEngineMessage, type CapabilityId, type CorrelationId, type EffectResult, type EngineHandshake, type EngineToBrowserMessage, type EngineTransport, type HostHandshake } from "../dist/protocol.js";
 import { CAPABILITY_OFFER as ECHO, type EchoFact, type EchoRequest, type EchoResult } from "./fixtures/capabilities/generated/echo.ts";
 import { decodeEchoRequest, decodeEchoResult } from "./fixtures/capabilities/generated/echo.codec.ts";
 import { withDom } from "./dom-helpers.ts";
@@ -15,7 +15,7 @@ import { withDom } from "./dom-helpers.ts";
 const CORE = { unit: CORE_CONTRACT_IDENTITY.unit, version: CORE_CONTRACT_IDENTITY.version, fingerprint: CORE_CONTRACT_IDENTITY.fingerprint };
 const ECHO_ID = ECHO.id as CapabilityId;
 const echoOffer = { id: ECHO_ID, version: ECHO.version, fingerprint: ECHO.fingerprint };
-const hostOffer: HostHandshake = { protocol: { major: 1, minor: 1 }, contract: CORE, capabilities: [echoOffer] };
+const hostOffer: HostHandshake = { protocol: { major: 1, minor: PROTOCOL_MINOR }, contract: CORE, capabilities: [echoOffer] };
 const accepted = (capabilities = [echoOffer], contract = CORE, protocol = { major: 1, minor: 1 }): EngineHandshake =>
   ({ kind: "Accepted", protocol, contract, capabilities });
 
@@ -24,7 +24,7 @@ const accepted = (capabilities = [echoOffer], contract = CORE, protocol = { majo
 // ---------------------------------------------------------------------------
 
 test("an engine that accepts the offered contract and selects an offered capability is compatible", () => {
-  assert.deepEqual(verifyHandshake(hostOffer, accepted(), false), { kind: "Compatible", negotiation: { kind: "Negotiated", capabilities: [echoOffer] } });
+  assert.deepEqual(verifyHandshake(hostOffer, accepted(), false), { kind: "Compatible", negotiation: { kind: "Negotiated", protocol: { major: 1, minor: 1 }, capabilities: [echoOffer] } });
 });
 
 test("an engine that sends no handshake is a legacy engine, unless the host requires one", () => {
@@ -39,7 +39,8 @@ test("a contract fingerprint mismatch is incompatible, never optimistic", () => 
 
 test("a different protocol major, or a newer minor than the host speaks, is incompatible; an older minor is not", () => {
   assert.equal(verifyHandshake(hostOffer, accepted([], CORE, { major: 2, minor: 0 }), false).kind, "Incompatible");
-  assert.equal(verifyHandshake(hostOffer, accepted([], CORE, { major: 1, minor: 2 }), false).kind, "Incompatible");
+  assert.equal(verifyHandshake(hostOffer, accepted([], CORE, { major: 1, minor: PROTOCOL_MINOR + 1 }), false).kind, "Incompatible", "an engine newer than the host");
+  assert.equal(verifyHandshake(hostOffer, accepted([], CORE, { major: 1, minor: 1 }), false).kind, "Compatible", "a 1.1 engine on a 1.2 host");
   assert.equal(verifyHandshake(hostOffer, accepted([], CORE, { major: 1, minor: 0 }), false).kind, "Compatible");
 });
 

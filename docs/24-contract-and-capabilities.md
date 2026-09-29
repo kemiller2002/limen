@@ -134,17 +134,24 @@ Each contract unit's fingerprint is SHA-256 over its canonical JSON (keys
 sorted, whitespace and every `doc` removed). Rewording documentation never
 changes compatibility; any change to a name, field, variant or type does.
 
-## The handshake (protocol 1.1)
+## The handshake (protocol 1.1, current revision 1.2)
 
 `Initialize` now carries the host's offer:
 
 ```ts
 handshake?: {
-  protocol: { major: 1, minor: 1 },
+  protocol: { major: 1, minor: 2 },   // the revision this kernel implements
   contract: { unit: "limen.core", version: 1, fingerprint: "sha256:…" },
   capabilities: [ { id: "limen.focus", version: 1, fingerprint: "sha256:…" } ],
 }
 ```
+
+The engine answers with the revision *it* speaks, which may be older than the
+host's. The kernel then uses only what that revision defines. Revision 1.2
+adds form-control state to `SemanticEvent` (`checked`, `values`,
+`submitter`), and the kernel sends those fields only to an engine that
+answered 1.2 or later. A minor revision is additive by construction: a new
+field reaches only engines that said they understand it.
 
 The engine's response to `Initialize` may carry its answer:
 

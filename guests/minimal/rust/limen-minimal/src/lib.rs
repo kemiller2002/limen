@@ -14,6 +14,13 @@ use limen_contract::limen_core::{
 };
 use limen_guest::{answer, Requirements};
 
+/// The minimal engine speaks protocol 1.1, as its specification says
+/// (conformance/sessions/minimal-engine.md): it uses none of 1.2's
+/// form-control state, so a 1.2 kernel never sends it those fields.
+fn minimal_requirements() -> Requirements {
+    Requirements { protocol: limen_contract::limen_core::ProtocolRevision { major: 1, minor: 1 }, ..Requirements::core_only() }
+}
+
 const LOG_LIMIT: usize = 20;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -126,7 +133,7 @@ pub fn handle(state: State, message: &BrowserToEngineMessage) -> (State, EngineT
         return respond(State::Incompatible, Vec::new(), None);
     };
     match message {
-        BrowserToEngineMessage::Initialize { handshake, .. } => match answer(handshake.as_ref(), &Requirements::core_only()) {
+        BrowserToEngineMessage::Initialize { handshake, .. } => match answer(handshake.as_ref(), &minimal_requirements()) {
             accepted @ EngineHandshake::Accepted { .. } => respond(record(state, "ready".to_string()), Vec::new(), Some(accepted)),
             rejected @ EngineHandshake::Rejected { .. } => respond(State::Incompatible, Vec::new(), Some(rejected)),
         },

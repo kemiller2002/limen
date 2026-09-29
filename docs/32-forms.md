@@ -82,10 +82,22 @@ to show a field's first error only once it is touched.
 | Server field errors map correctly | the `rejected` steps, including an unmapped path |
 | Reset restores the original model | "reset restores the original model" |
 
-## Known gap
+## Browser controls (protocol 1.2)
 
-The kernel currently reports every form control's `.value`. A checkbox
-therefore reports its static value (`"on"`) rather than whether it is
-checked, and a multi-select reports only its first selection. Faithful
-checkbox, radio-group, multi-select and submitter reporting is a kernel
-mechanism change, tracked as WI-0061. It does not change these semantics.
+A checkbox's `.value` is its static value (`"on"`) whether or not it is
+checked, and a multi-select's `.value` is only its first selection. So
+protocol 1.2 adds three optional `SemanticEvent` fields that the kernel reads
+from the control itself:
+
+| Field | Carries |
+| --- | --- |
+| `checked` | a checkbox's or radio's checked state |
+| `values` | a multi-select's selected values, or the checked values of a checkbox group (same name, same form) |
+| `submitter` | the name of the button that submitted a form |
+
+The kernel sends them only to an engine that negotiated 1.2, so an older
+engine's strict decoder never sees a field it does not know
+([`test/form-controls.test.ts`](../test/form-controls.test.ts)). Chromium's
+own behaviour — real activation toggling a checkbox, a real submission
+naming its submitter — is proven by
+[`test/browser/packs/core-form-controls/`](../test/browser/packs/core-form-controls/).

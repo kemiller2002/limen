@@ -142,9 +142,7 @@ Per form:
 
 A checkbox reports `true`/`false`. A checkbox group or multi-select reports
 the selected values. A radio group reports its checked value. A submit
-reports its submitter.
-
-The kernel has to deliver those values faithfully. Its current
-`value`-only reading of form controls is recorded as WI-0061, a kernel
-mechanism change that is separate from these semantics. Files arrive through
-the file capability as references, not contents.
+reports its submitter. The kernel delivers these faithfully from protocol
+1.2 on (`checked`, `values`, `submitter`; see
+[docs/32-forms.md](../../docs/32-forms.md)). Files arrive through the file
+capability as references, not contents.

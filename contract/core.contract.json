@@ -5,7 +5,7 @@
   "doc": "The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.",
   "constants": [
     { "name": "PROTOCOL_VERSION", "type": "int", "value": 1, "doc": "The wire envelope major version. Revision 1.1 added the handshake and the generic capability envelope, both additive." },
-    { "name": "PROTOCOL_MINOR", "type": "int", "value": 1, "doc": "Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine." }
+    { "name": "PROTOCOL_MINOR", "type": "int", "value": 2, "doc": "Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine." }
   ],
   "types": [
     {
@@ -28,7 +28,10 @@
         { "name": "kind", "type": { "literal": "Event" } },
         { "name": "name", "type": "string" },
         { "name": "key", "type": "string", "optional": true },
-        { "name": "value", "type": "string", "optional": true }
+        { "name": "value", "type": "string", "optional": true },
+        { "name": "checked", "type": "bool", "optional": true, "doc": "Protocol 1.2: a checkbox's or radio button's checked state. Sent only to an engine that negotiated 1.2 or later." },
+        { "name": "values", "type": { "list": "string" }, "optional": true, "doc": "Protocol 1.2: every selected value of a multi-select, or every checked value of the checkbox group (same name, same form) the event came from. Sent only to an engine that negotiated 1.2 or later." },
+        { "name": "submitter", "type": "string", "optional": true, "doc": "Protocol 1.2: the name of the button that submitted a form, when it has one. Sent only to an engine that negotiated 1.2 or later." }
       ]
     },
     {
