@@ -48,6 +48,16 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **User-mediated file capability pack (#27).** `./capabilities/files`
+  (`filesCapability()`, contract unit `limen.files`, with bindings for
+  TypeScript, F#, C# and Rust):
+  - a native `<input type=file data-files-input>` selection arrives as a
+    `Selected` fact with opaque file ids and metadata, and a dismissal as
+    `PickerCancelled`; no `File` object or path crosses;
+  - `pick` opens a picker only during user activation, and answers
+    `NeedsGesture` otherwise;
+  - reads are slices of at most 1 MiB, so large files are read in chunks;
+  - `download` hands the browser a file through a revoked object URL.
 - **Realtime and streaming capability pack (#26).** `./capabilities/realtime`
   (`realtimeCapability()`, contract unit `limen.realtime`, with bindings for
   TypeScript, F#, C# and Rust):

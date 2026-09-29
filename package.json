@@ -47,6 +47,10 @@
       "types": "./dist/capabilities/realtime/index.d.ts",
       "import": "./dist/capabilities/realtime/index.js"
     },
+    "./capabilities/files": {
+      "types": "./dist/capabilities/files/index.d.ts",
+      "import": "./dist/capabilities/files/index.js"
+    },
     "./capability-support/handles": {
       "types": "./dist/capability-support/handles.d.ts",
       "import": "./dist/capability-support/handles.js"

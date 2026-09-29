@@ -23,11 +23,15 @@ type Page = {
   evaluate<T>(fn: string): Promise<T>;
   addInitScript(script: { content: string }): Promise<void>;
   on(event: "pageerror", handler: (error: { message?: string }) => void): void;
+  on(event: "download", handler: (download: Download) => void): void;
+  click(selector: string): Promise<void>;
+  setInputFiles(selector: string, files: readonly { name: string; mimeType: string; buffer: Buffer }[]): Promise<void>;
   focus(selector: string): Promise<void>;
   dragAndDrop(source: string, target: string): Promise<void>;
   keyboard: { press(key: string): Promise<void> };
   mouse: { move(x: number, y: number, options?: { steps: number }): Promise<void>; down(): Promise<void>; up(): Promise<void> };
 };
+type Download = { suggestedFilename(): string; path(): Promise<string | null> };
 type CdpSession = { send(method: string, params: Record<string, unknown>): Promise<unknown> };
 type Context = { newPage(): Promise<Page>; close(): Promise<void>; newCDPSession(page: Page): Promise<CdpSession> };
 type Browser = { newContext(): Promise<Context>; close(): Promise<void> };
@@ -74,7 +78,8 @@ const RECORD_VIOLATIONS = `
 // and trip Trusted Types itself. So the runner polls with page.evaluate.
 //
 // Some facts exist only for trusted input: a real key press, a pointer drag, a
-// native drag and drop, IME composition. A page asks for one by setting
+// native drag and drop, IME composition, a trusted click (user activation),
+// files chosen in a file input. A page asks for one by setting
 // window.__limenPackAction; the runner performs it with Playwright's real
 // input (IME through the DevTools protocol) and calls
 // window.__limenPackActionDone().
@@ -82,7 +87,14 @@ type Action =
   | { readonly kind: "press"; readonly selector: string; readonly key: string }
   | { readonly kind: "drag"; readonly from: readonly [number, number]; readonly to: readonly [number, number]; readonly steps: number }
   | { readonly kind: "dragAndDrop"; readonly source: string; readonly target: string }
-  | { readonly kind: "compose"; readonly selector: string; readonly steps: readonly string[]; readonly commit: string };
+  | { readonly kind: "compose"; readonly selector: string; readonly steps: readonly string[]; readonly commit: string }
+  | { readonly kind: "click"; readonly selector: string }
+  | { readonly kind: "setFiles"; readonly selector: string; readonly files: readonly { readonly name: string; readonly mimeType: string; readonly base64?: string; readonly size?: number }[] };
+
+// A file for setFiles: given bytes, or `size` bytes of the repeating pattern
+// index % 251, which a page can verify without the runner sending it.
+const fileBuffer = (file: { readonly base64?: string; readonly size?: number }): Buffer =>
+  file.base64 !== undefined ? Buffer.from(file.base64, "base64") : Buffer.from(Uint8Array.from({ length: file.size ?? 0 }, (_, index) => index % 251));
 
 const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Action): Promise<void> => {
   switch (action.kind) {
@@ -98,6 +110,12 @@ const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Actio
       return;
     case "dragAndDrop":
       await page.dragAndDrop(action.source, action.target);
+      return;
+    case "click":
+      await page.click(action.selector);
+      return;
+    case "setFiles":
+      await page.setInputFiles(action.selector, action.files.map((file) => ({ name: file.name, mimeType: file.mimeType, buffer: fileBuffer(file) })));
       return;
     case "compose": {
       await page.focus(action.selector);
@@ -133,6 +151,13 @@ const runPack = async (browser: Browser, pack: string): Promise<readonly string[
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => { errors.push(error.message ?? "page error"); });
+    // A download the page starts is handed back to it as window.__limenDownloads.
+    page.on("download", (download) => {
+      void download.path().then(async (path) => {
+        const text = path === null ? "" : await readFile(path, "utf8");
+        await page.evaluate(`(window.__limenDownloads ??= []).push(${JSON.stringify({ name: download.suggestedFilename(), text })})`);
+      });
+    });
     await page.addInitScript({ content: RECORD_VIOLATIONS });
     // A pack directory may point at a page elsewhere in the repository (an
     // example that runs its own checks) with page.json: { "url": "…" }.

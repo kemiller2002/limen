@@ -78,6 +78,7 @@ Then, for depth:
 | 37 | [Accessible interaction patterns](https://github.com/kemiller2002/limen/blob/main/docs/37-accessible-patterns.md) | Can tabs, menus, listboxes, comboboxes, trees, grids and dialogs be built accessibly with no widget logic in the kernel — and who owns such patterns? |
 | 38 | [Overlays and the top layer](https://github.com/kemiller2002/limen/blob/main/docs/38-overlays.md) | How does an engine open modal dialogs, popovers and anchored popups — top layer, inert background, focus return — and learn when the user dismissed one? |
 | 39 | [Realtime and streaming](https://github.com/kemiller2002/limen/blob/main/docs/39-realtime.md) | How does an engine hold WebSocket and Server-Sent Events connections — lifecycle, identity, stale messages — with every reconnect its own decision? |
+| 40 | [User-mediated files](https://github.com/kemiller2002/limen/blob/main/docs/40-files.md) | How does an engine learn what files the user chose and read them in bounded chunks — with no File object, no path, and no picker without a gesture? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 

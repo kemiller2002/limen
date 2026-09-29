@@ -1,0 +1,8 @@
+{
+  "doc": "The files pack's real-browser page (scripts/smoke-packs.ts). Its engine is main.js; nothing is bound.",
+  "view": {},
+  "events": {
+    "poke": {},
+    "choose": {}
+  }
+}

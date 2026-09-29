@@ -32,6 +32,10 @@
     {
       "workItem": "WI-0075",
       "change": "Added kernel-with-realtime (kemiller2002/limen#26): the realtime pack, with the shared handle table, adds 5841 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/realtime/."
+    },
+    {
+      "workItem": "WI-0077",
+      "change": "Added kernel-with-files (kemiller2002/limen#27): the files pack, with the shared handle table and target resolver, adds 6348 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/files/."
     }
   ],
   "profiles": [
@@ -92,7 +96,8 @@
         "dist/engine/",
         "dist/federation.js",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 92602,
@@ -117,7 +122,8 @@
         "dist/engine/",
         "dist/federation.js",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 92470,
@@ -142,7 +148,8 @@
         "dist/engine/",
         "dist/federation.js",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 95578,
@@ -167,7 +174,8 @@
         "dist/federation.js",
         "dist/capability-support/",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 112426,
@@ -193,7 +201,8 @@
         "dist/capability-support/",
         "dist/capabilities/focus/",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 107508,
@@ -219,7 +228,8 @@
         "dist/capabilities/focus/",
         "dist/capabilities/schedule/",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 124360,
@@ -247,7 +257,8 @@
         "dist/capabilities/schedule/",
         "dist/capabilities/measure/",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 123906,
@@ -274,7 +285,8 @@
         "dist/capabilities/schedule/",
         "dist/capabilities/measure/",
         "dist/capabilities/events/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 125294,
@@ -301,7 +313,8 @@
         "dist/capabilities/schedule/",
         "dist/capabilities/measure/",
         "dist/capabilities/events/",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/files/"
       ],
       "baseline": {
         "rawBytes": 126374,
@@ -309,6 +322,34 @@
       },
       "budget": {
         "rawBytes": 139264,
+        "gzipBytesBundled": 27648
+      }
+    },
+    {
+      "name": "kernel-with-files",
+      "doc": "The kernel plus the user-mediated file capability pack (./capabilities/files), with the capability-support libraries it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/files/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
+      ],
+      "baseline": {
+        "rawBytes": 127390,
+        "gzipBytesBundled": 24774
+      },
+      "budget": {
+        "rawBytes": 140288,
         "gzipBytesBundled": 27648
       }
     }
