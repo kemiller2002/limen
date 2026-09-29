@@ -83,6 +83,6 @@ test("the approved baseline must rest on an existing, unrejected admission set b
 });
 
 test("ids match file names and are unique", () => {
-  assert.deepEqual(rules([...records, variant({ id: "CA-0002" })]), ["admission-id"]);
+  assert.deepEqual(rules([...records, variant({ id: "CA-0999" })]), ["admission-id"]);
   assert.deepEqual(rules([...records, variant({}), variant({}, "architecture/core-admissions/CA-0901.json")]), ["admission-duplicate-id"]);
 });
