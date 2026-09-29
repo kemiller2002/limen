@@ -32,4 +32,4 @@
 | WI-0026 | Add federation failure isolation and diagnostics | complete | limen, wasm, federation, diagnostics, resilience | high |
 | WI-0027 | Ignore federation WASM publish outputs so ros validate passes after a build | complete | build,mechanical | medium |
 | WI-0028 | GH-16 LCP-002: versioned capability extension architecture (neutral contract source, TS generation, fingerprint handshake, generic capability envelope) | complete | limen,gh-16,lcp-002,core,contract | high |
-| WI-0029 | Repair ROS validation findings from WI-0028: DF identifier format and invalid telemetry classification | ready | ros,mechanical | medium |
+| WI-0029 | Repair ROS validation findings from WI-0028: DF identifier format and invalid telemetry classification | complete | ros,mechanical | medium |

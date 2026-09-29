@@ -577,13 +577,14 @@
     {
       "id": "WI-0029",
       "type": "mechanical",
-      "state": "active",
-      "semanticState": "active",
+      "state": "complete",
+      "semanticState": "complete",
       "evidence": [],
       "updatedAt": "2026-09-29T04:55:08Z",
       "telemetryExecutionIds": [
         "EXE-20260929T045508726Z-d5fe65e9"
-      ]
+      ],
+      "completedAt": "2026-09-29T04:55:08Z"
     }
   ]
 }
