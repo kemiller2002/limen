@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T05:38:11Z",
+  "updatedAt": "2026-09-29T05:56:12Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -717,13 +717,43 @@
     {
       "id": "WI-0037",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T05:38:11Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/minimal/fsharp/Limen.Minimal.Engine/Engine.fs"
+        },
+        {
+          "type": "implementation",
+          "path": "guests/minimal/csharp/Limen.Minimal.Engine/Engine.cs"
+        },
+        {
+          "type": "implementation",
+          "path": "guests/minimal/rust/limen-minimal/src/lib.rs"
+        },
+        {
+          "type": "implementation",
+          "path": "src/hosts/raw-wasm-transport.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-guests.ts"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/sessions/minimal.session.json"
+        },
+        {
+          "type": "decision",
+          "path": "research/decisions/DF-LIMEN-2026-0003--multi-language-wasm-guests.md"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:56:12Z",
       "telemetryExecutionIds": [
         "EXE-20260929T053811640Z-17cf6694"
-      ]
+      ],
+      "completedAt": "2026-09-29T05:56:12Z"
     }
   ]
 }

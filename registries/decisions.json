@@ -71,5 +71,42 @@
     "work_items": [
       "WI-0034"
     ]
+  },
+  {
+    "author_agent": "claude-code",
+    "created": "2026-09-29",
+    "external_references": [
+      "kemiller2002/limen#17",
+      "kemiller2002/limen#15"
+    ],
+    "id": "DF-LIMEN-2026-0003",
+    "path": "research/decisions/DF-LIMEN-2026-0003--multi-language-wasm-guests.md",
+    "related_documents": [
+      "conformance/sessions/minimal-engine.md",
+      "conformance/sessions/minimal.session.json",
+      "src/hosts/dotnet-wasm-transport.ts",
+      "src/hosts/raw-wasm-transport.ts"
+    ],
+    "related_projects": [
+      "limen"
+    ],
+    "status": "accepted",
+    "superseded_by": [],
+    "supersedes": [],
+    "tags": [
+      "wasm",
+      "fsharp",
+      "csharp",
+      "rust",
+      "conformance",
+      "lcp-001"
+    ],
+    "title": "F#, C# and Rust WebAssembly engines share one contract, one session spec and one kernel",
+    "type": "decision-record",
+    "updated": "2026-09-29",
+    "version": "1.0.0",
+    "work_items": [
+      "WI-0037"
+    ]
   }
 ]
