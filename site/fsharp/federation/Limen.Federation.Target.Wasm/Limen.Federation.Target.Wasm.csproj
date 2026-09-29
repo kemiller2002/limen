@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.WebAssembly">
   <PropertyGroup>
+    <!-- build:site:wasm publishes into ./publish; without this exclusion the next
+         publish copies the previous output into itself (publish/publish/...)
+         until MSB3030. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);publish/**</DefaultItemExcludes>
     <TargetFramework>net8.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Limen.Federation.Target.Wasm</RootNamespace>

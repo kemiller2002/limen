@@ -43,4 +43,4 @@
 | WI-0037 | GH-17 LCP-001: minimal F#, C# and Rust WASM engines on the generated contract — guest handshake, shared session vectors, generic .NET and raw-wasm host transports, real-browser proof of Http/Storage/Clipboard/Navigation per guest | complete | limen,gh-17,lcp-001,wasm,guests | high |
 | WI-0038 | GH-17 follow-up: move the product site's F# engine off its handwritten Protocol.fs onto the generated F# binding and guest handshake | complete | limen,gh-17,site,fsharp | high |
 | WI-0039 | GH-32 part 1 (LCP-029/031): fake host with deterministic clock/location/outcomes, and redacted trace + replay tooling outside Core | complete | limen,gh-32,tooling,conformance | high |
-| WI-0040 | Federation WASM projects publish into their own project directory, so repeated local builds nest publish/publish/... until MSB3030; exclude publish/** from their items | captured | build,site,federation | medium |
+| WI-0040 | Federation WASM projects publish into their own project directory, so repeated local builds nest publish/publish/... until MSB3030; exclude publish/** from their items | ready | build,site,federation | medium |
