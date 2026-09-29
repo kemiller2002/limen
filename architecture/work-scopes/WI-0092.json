@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0092",
+  "reference": "kemiller2002/limen#33 (LCP-024)",
+  "placement": "Optional Host — the federation runtime (src/federation.ts, federation-host layer). ModuleFederation gains reset() (an explicit Faulted → Unloaded step, the only way back); createLazyFederation drives the existing lifecycle on demand: a route or workflow asks for a module, its dependencies start first, failures stay isolated, released modules keep their snapshot for a deterministic restore, and a faulted module is retried only when the caller asks. No retry or business recovery in the runtime; no Core change.",
+  "guardrail": false,
+  "paths": ["src/federation.ts", "src/index.ts", "test/**", "docs/**", "CHANGELOG.md", "bench/budgets.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
