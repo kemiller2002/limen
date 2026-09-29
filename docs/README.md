@@ -86,6 +86,7 @@ Then, for depth:
 | 45 | [Resource hints and view transitions](https://github.com/kemiller2002/limen/blob/main/docs/45-hints-and-transitions.md) | How does an engine ask for a preload or a labelled view transition — idempotent, CSS-styled, and harmless where unsupported? |
 | 46 | [Environment evidence and formatting](https://github.com/kemiller2002/limen/blob/main/docs/46-environment-and-formatting.md) | How does an engine learn the user's locale, time zone and direction, and format numbers and dates correctly in any language, without reading browser globals? |
 | 47 | [State-safe hot reload](https://github.com/kemiller2002/limen/blob/main/docs/47-hot-reload.md) | How does the edit loop swap CSS, remount HTML and replace an engine — keeping state only when a versioned snapshot proves it safe? |
+| 48 | [Page, connectivity and lifecycle evidence](https://github.com/kemiller2002/limen/blob/main/docs/48-page-lifecycle.md) | How does an engine learn that the network went away, the page was hidden, frozen or restored from the back/forward cache — and decide what that means itself? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 

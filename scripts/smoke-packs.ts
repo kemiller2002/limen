@@ -21,6 +21,7 @@ import { serveRealtime, upgradeRealtime } from "../test/browser/servers/realtime
 
 type Page = {
   goto(url: string): Promise<unknown>;
+  goBack(options: { waitUntil: "commit" }): Promise<unknown>;
   evaluate<T>(fn: string): Promise<T>;
   addInitScript(script: { content: string }): Promise<void>;
   on(event: "pageerror", handler: (error: { message?: string }) => void): void;
@@ -35,9 +36,9 @@ type Page = {
 };
 type Download = { suggestedFilename(): string; path(): Promise<string | null> };
 type CdpSession = { send(method: string, params: Record<string, unknown>): Promise<unknown> };
-type Context = { newPage(): Promise<Page>; close(): Promise<void>; newCDPSession(page: Page): Promise<CdpSession> };
+type Context = { newPage(): Promise<Page>; close(): Promise<void>; newCDPSession(page: Page): Promise<CdpSession>; setOffline(offline: boolean): Promise<void> };
 type Browser = { newContext(): Promise<Context>; close(): Promise<void> };
-type Chromium = { launch(): Promise<Browser> };
+type Chromium = { launch(options?: { channel?: string; ignoreDefaultArgs?: readonly string[] }): Promise<Browser> };
 type Check = { readonly name: string; readonly ok: boolean; readonly detail: string };
 
 const ROOT = process.cwd();
@@ -81,7 +82,8 @@ const RECORD_VIOLATIONS = `
 //
 // Some facts exist only for trusted input: a real key press, a pointer drag, a
 // native drag and drop, IME composition, a trusted click (user activation),
-// files chosen in a file input, a reload. A page
+// files chosen in a file input, a reload, the network going away, a trip
+// through the back/forward cache. A page
 // asks for one by setting window.__limenPackAction; the runner performs it
 // with Playwright's real input (IME through the DevTools protocol)
 // and calls window.__limenPackActionDone().
@@ -94,6 +96,14 @@ type Action =
   // browser says something else would receive it (an inert page, a cover).
   | { readonly kind: "click"; readonly selector: string; readonly force?: boolean }
   | { readonly kind: "reload" }
+  // The browser's network: offline or online (real online/offline events), or
+  // emulated conditions (which change the Network Information API's estimate).
+  | { readonly kind: "offline"; readonly offline: boolean }
+  | { readonly kind: "network"; readonly latencyMs: number; readonly downloadBytesPerSecond: number; readonly connectionType: string }
+  // Navigate to url, then back without waiting for load: a page restored from
+  // the back/forward cache never fires load again. Needs a pack that asked for
+  // the cache (page.json: { "backForwardCache": true }).
+  | { readonly kind: "backForward"; readonly url: string }
   | { readonly kind: "setFiles"; readonly selector: string; readonly files: readonly { readonly name: string; readonly mimeType: string; readonly base64?: string; readonly size?: number }[] };
 
 // A file for setFiles: given bytes, or `size` bytes of the repeating pattern
@@ -101,7 +111,7 @@ type Action =
 const fileBuffer = (file: { readonly base64?: string; readonly size?: number }): Buffer =>
   file.base64 !== undefined ? Buffer.from(file.base64, "base64") : Buffer.from(Uint8Array.from({ length: file.size ?? 0 }, (_, index) => index % 251));
 
-const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Action): Promise<void> => {
+const perform = async (page: Page, context: Context, cdp: () => Promise<CdpSession>, action: Action): Promise<void> => {
   switch (action.kind) {
     case "press":
       await page.focus(action.selector);
@@ -122,6 +132,19 @@ const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Actio
     case "reload":
       await page.reload();
       return;
+    case "offline":
+      await context.setOffline(action.offline);
+      return;
+    case "network": {
+      const session = await cdp();
+      await session.send("Network.enable", {});
+      await session.send("Network.emulateNetworkConditions", { offline: false, latency: action.latencyMs, downloadThroughput: action.downloadBytesPerSecond, uploadThroughput: action.downloadBytesPerSecond, connectionType: action.connectionType });
+      return;
+    }
+    case "backForward":
+      await page.goto(`http://127.0.0.1:${PORT}/${action.url}`);
+      await page.goBack({ waitUntil: "commit" });
+      return;
     case "setFiles":
       await page.setInputFiles(action.selector, action.files.map((file) => ({ name: file.name, mimeType: file.mimeType, buffer: fileBuffer(file) })));
       return;
@@ -135,7 +158,7 @@ const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Actio
   }
 };
 
-const drive = async (page: Page, cdp: () => Promise<CdpSession>, timeoutMs: number): Promise<boolean> => {
+const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession>, timeoutMs: number): Promise<boolean> => {
   const deadline = Date.now() + timeoutMs;
   const step = async (): Promise<boolean> => {
     if (await page.evaluate<boolean>("Boolean(window.__limenPackResult)").catch(() => false)) return true;
@@ -144,7 +167,7 @@ const drive = async (page: Page, cdp: () => Promise<CdpSession>, timeoutMs: numb
       await page.evaluate("window.__limenPackAction = null");
       // A failed action is reported to the page (which decides whether that
       // is a failed check), never allowed to end the run.
-      const failure = await perform(page, cdp, action).then(() => null, (error: unknown) => (error instanceof Error ? error.name : "Error"));
+      const failure = await perform(page, context, cdp, action).then(() => null, (error: unknown) => (error instanceof Error ? error.name : "Error"));
       await page.evaluate(`window.__limenPackActionError = ${JSON.stringify(failure)}; window.__limenPackActionDone?.()`);
     } else {
       if (Date.now() > deadline) return false;
@@ -155,7 +178,18 @@ const drive = async (page: Page, cdp: () => Promise<CdpSession>, timeoutMs: numb
   return step();
 };
 
-const runPack = async (browser: Browser, pack: string): Promise<readonly string[]> => {
+// What a pack directory's optional page.json may say.
+type PageConfig = { readonly url?: string; readonly backForwardCache?: boolean };
+
+const configOf = (pack: string): Promise<PageConfig> =>
+  readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text): PageConfig => {
+    const value: unknown = JSON.parse(text);
+    const field = (name: string): unknown => (typeof value === "object" && value !== null ? Reflect.get(value, name) : undefined);
+    const url = field("url");
+    return { ...(typeof url === "string" ? { url } : {}), backForwardCache: field("backForwardCache") === true };
+  }, () => ({}));
+
+const runPack = async (browser: Browser, pack: string, config: PageConfig): Promise<readonly string[]> => {
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
@@ -171,9 +205,8 @@ const runPack = async (browser: Browser, pack: string): Promise<readonly string[
     await page.addInitScript({ content: RECORD_VIOLATIONS });
     // A pack directory may point at a page elsewhere in the repository (an
     // example that runs its own checks) with page.json: { "url": "…" }.
-    const pointer = await readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text) => (JSON.parse(text) as { url: string }).url, () => `${PACKS}/${pack}/index.html`);
-    await page.goto(`http://127.0.0.1:${PORT}/${pointer}`);
-    const reported = await drive(page, () => context.newCDPSession(page), 30000);
+    await page.goto(`http://127.0.0.1:${PORT}/${config.url ?? `${PACKS}/${pack}/index.html`}`);
+    const reported = await drive(page, context, () => context.newCDPSession(page), 30000);
     const checks = reported ? await page.evaluate<readonly Check[]>("window.__limenPackResult.checks") : [];
     const violations = await page.evaluate<readonly string[]>("window.__limenViolations.slice()");
     checks.forEach((check) => { console.log(`${check.ok ? "PASS" : "FAIL"}  ${pack}: ${check.name}`); });
@@ -209,8 +242,17 @@ if (chromium === undefined) {
 } else {
   const server = await serve();
   const browser = await chromium.launch();
+  // Playwright's default Chromium is the headless shell with the back/forward
+  // cache switched off. A pack that needs the cache gets full Chromium with the
+  // switch left out — launched only if one asks.
+  const cached: { browser?: Promise<Browser> } = {};
+  const withCache = (): Promise<Browser> => (cached.browser ??= chromium.launch({ channel: "chromium", ignoreDefaultArgs: ["--disable-back-forward-cache"] }));
   try {
-    const failures = await packs.reduce<Promise<readonly string[]>>(async (done, pack) => [...(await done), ...(await runPack(browser, pack))], Promise.resolve([]));
+    const failures = await packs.reduce<Promise<readonly string[]>>(async (done, pack) => {
+      const previous = await done;
+      const config = await configOf(pack);
+      return [...previous, ...(await runPack(config.backForwardCache === true ? await withCache() : browser, pack, config))];
+    }, Promise.resolve([]));
     if (failures.length > 0) {
       console.error(`\n${failures.length} capability pack check(s) failed:\n${failures.join("\n")}`);
       process.exitCode = 1;
@@ -219,6 +261,7 @@ if (chromium === undefined) {
     }
   } finally {
     await browser.close();
+    await (await cached.browser)?.close();
     server.close();
   }
 }

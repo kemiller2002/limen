@@ -64,6 +64,10 @@
     {
       "workItem": "WI-0095",
       "change": "Added kernel-with-environment (kemiller2002/limen#35): the environment evidence and formatting pack adds 4979 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/environment/."
+    },
+    {
+      "workItem": "WI-0100",
+      "change": "Added kernel-with-lifecycle (kemiller2002/limen#43): the page, connectivity and lifecycle evidence pack adds 5735 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/lifecycle/."
     }
   ],
   "profiles": [
@@ -130,7 +134,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 103024,
@@ -161,7 +166,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 102812,
@@ -192,7 +198,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 105920,
@@ -223,7 +230,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 122768,
@@ -255,7 +263,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 115285,
@@ -287,7 +296,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 132137,
@@ -321,7 +331,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 132375,
@@ -354,7 +365,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 131934,
@@ -387,7 +399,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 133014,
@@ -420,7 +433,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 134030,
@@ -454,7 +468,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 151216,
@@ -488,7 +503,8 @@
         "dist/capabilities/store/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 137357,
@@ -522,7 +538,8 @@
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 130595,
@@ -581,7 +598,8 @@
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
       ],
       "baseline": {
         "rawBytes": 127635,
@@ -624,6 +642,41 @@
       "budget": {
         "rawBytes": 151552,
         "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "name": "kernel-with-lifecycle",
+      "doc": "The kernel plus the page, connectivity and lifecycle evidence capability pack (./capabilities/lifecycle), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/lifecycle/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/"
+      ],
+      "baseline": {
+        "rawBytes": 135626,
+        "gzipBytesBundled": 25884
+      },
+      "budget": {
+        "rawBytes": 149504,
+        "gzipBytesBundled": 28672
       }
     }
   ]

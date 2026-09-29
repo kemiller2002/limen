@@ -59,6 +59,17 @@ exhaustive lists.
     reset); anything else reloads the page;
   - a dev server that streams file changes.
   Development only; nothing in Core imports it.
+- **Page, connectivity and lifecycle evidence pack (#43).**
+  `./capabilities/lifecycle` (`lifecycleCapability()`, contract unit
+  `limen.lifecycle`, with bindings for TypeScript, F#, C# and Rust):
+  - online/offline, visibility, pagehide/pageshow with the back/forward
+    cache's `persisted`, freeze/resume, prerender activation and advisory
+    connection quality, each a typed fact;
+  - cancellable, topic-filtered subscriptions, each fact tagged with its own;
+  - no `unload` or `beforeunload` listener, so pages stay cache-eligible;
+  - the engine decides what each fact means; the pack never pauses or retries.
+  The pack smoke runner gains offline, network-emulation and back/forward
+  actions, and launches full Chromium for a page that needs the cache.
 - **Localization engine library and semantics (#35).**
   `conformance/localization/` (34 cases) and `libraries/fsharp/Limen.Localization`:
   - BCP 47 negotiation;
