@@ -101,4 +101,4 @@
 | WI-0094 | Guardrail: register the limen.presentation contract unit and its generated bindings (GH-34) | complete |  | medium |
 | WI-0095 | Environment evidence and native formatting pack: locale, languages, time zone, direction, opt-in preferences, change facts, typed Intl formatting for a supplied locale and time zone (GH-35) | complete |  | medium |
 | WI-0096 | Guardrail: register the limen.environment contract unit and its generated bindings (GH-35) | complete |  | medium |
-| WI-0097 | Localization engine library: BCP 47 negotiation, direction from language or script, message catalogues with fallback, placeholders and plural categories; language-neutral vectors and F# reference (GH-35) | ready |  | medium |
+| WI-0097 | Localization engine library: BCP 47 negotiation, direction from language or script, message catalogues with fallback, placeholders and plural categories; language-neutral vectors and F# reference (GH-35) | complete |  | medium |
