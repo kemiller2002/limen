@@ -82,6 +82,18 @@
       ]
     },
     {
+      "name": "renderer",
+      "doc": "The optional server and static renderer (#38): reads template HTML, applies the same binding policy the kernel applies, and drives an engine on the server with browser-only capabilities explicitly absent. It may use the kernel's pure policy and handshake modules, never the BrowserKernel itself (test/renderer.test.ts holds its module closure to that). Never imported by Core.",
+      "paths": [
+        "src/renderer/**"
+      ],
+      "mayImport": [
+        "core-contract",
+        "core-kernel",
+        "renderer"
+      ]
+    },
+    {
       "name": "capability-pack",
       "doc": "An optional browser capability. One instance per directory; packs never import each other or any application.",
       "paths": [
