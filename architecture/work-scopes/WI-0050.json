@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0050",
+  "reference": "kemiller2002/limen#48 (LCP-042)",
+  "placement": "Guardrail — a new check script (scripts/check-*.ts is guardrail-owned), its wiring into npm test, and its registration as a required gate. Adds a gate; weakens none.",
+  "guardrail": true,
+  "paths": ["scripts/check-views.ts", "architecture/guardrails.json", "package.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
