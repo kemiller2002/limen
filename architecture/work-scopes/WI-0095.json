@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0095",
+  "reference": "kemiller2002/limen#35 (LCP-028)",
+  "placement": "Capability Pack — src/capabilities/environment/ with its own contract unit. Locale, language preferences, time zone and direction are browser facts the engine must not read from globals; the pack reports them on request and on change, and reports presentation preferences only when the engine explicitly asks (they otherwise stay CSS). Formatting uses the browser's own Intl for a locale and time zone the request states, so output is deterministic for the supplied facts; an engine language without CLDR data gets correct formatting without a second copy of it. The fact source is injectable, so a fake host fixes the environment. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/environment.contract.json", "src/capabilities/environment/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
