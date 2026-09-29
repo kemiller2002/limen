@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T11:59:44Z",
+  "updatedAt": "2026-09-29T12:15:42Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2246,24 +2246,52 @@
     {
       "id": "WI-0106",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T11:59:42Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/offline/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/offline.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/offline/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:15:42Z",
       "telemetryExecutionIds": [
         "EXE-20260929T115943167Z-13d718f1"
-      ]
+      ],
+      "completedAt": "2026-09-29T12:15:42Z"
     },
     {
       "id": "WI-0107",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T11:59:44Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/offline/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/offline.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/offline/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:15:41Z",
       "telemetryExecutionIds": [
         "EXE-20260929T115944531Z-86f940e5"
-      ]
+      ],
+      "completedAt": "2026-09-29T12:15:41Z"
     }
   ]
 }

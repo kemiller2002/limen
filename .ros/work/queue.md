@@ -110,5 +110,5 @@
 | WI-0103 | Core Http: a thrown fetch for a non-safe method is OutcomeUnknown(connection-lost), not a retryable Failure(network); protocol 1.4 (GH-40, found while proving the offline outbox) | complete |  | medium |
 | WI-0104 | Guardrail: compile-pressure consumers name OutcomeUnknownReason (protocol 1.4) (GH-40) | complete |  | medium |
 | WI-0105 | Re-baseline the minimal-consumer payload budget after protocol 1.4 (GH-40) | complete |  | medium |
-| WI-0106 | Offline and application-update pack with an optional service worker: host-declared workers, explicit update-ready/activate lifecycle, cached shell; offline reference page proving cold offline launch, persisted outbox reconciliation, conflict, unknown outcome and the update path (GH-40) | active |  | medium |
-| WI-0107 | Guardrail: register the limen.offline contract unit and its generated bindings (GH-40) | ready |  | medium |
+| WI-0106 | Offline and application-update pack with an optional service worker: host-declared workers, explicit update-ready/activate lifecycle, cached shell; offline reference page proving cold offline launch, persisted outbox reconciliation, conflict, unknown outcome and the update path (GH-40) | complete |  | medium |
+| WI-0107 | Guardrail: register the limen.offline contract unit and its generated bindings (GH-40) | complete |  | medium |
