@@ -72,6 +72,10 @@
     {
       "workItem": "WI-0105",
       "change": "Re-baselined minimal-consumer after protocol 1.4 (kemiller2002/limen#40): OutcomeUnknownReason in the generated Core codec and the kernel classifying a thrown fetch by method and connectivity. Measured on minimal-consumer against the commit before WI-0103: +497 bytes gzip (+1686 raw), which put it 80 bytes over its budget. Most of its growth since WI-0085 (29279 against a 26764 baseline, +2515 bytes gzip) came earlier and stayed within headroom: chiefly WI-0089 projection atomicity, WI-0090 kernel status and dispose, and WI-0092 lazy federation in the package root. Only that profile is re-baselined; every other profile stays within its existing budget and keeps its baseline."
+    },
+    {
+      "workItem": "WI-0106",
+      "change": "Added kernel-with-offline (kemiller2002/limen#40): the service-worker registration and update pack adds 4451 bytes gzip over the kernel (measured against kernel-only as it ships now), and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/offline/."
     }
   ],
   "profiles": [
@@ -139,7 +143,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 103024,
@@ -171,7 +176,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 102812,
@@ -203,7 +209,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 105920,
@@ -235,7 +242,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 122768,
@@ -268,7 +276,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 115285,
@@ -301,7 +310,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 132137,
@@ -336,7 +346,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 132375,
@@ -370,7 +381,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 131934,
@@ -404,7 +416,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 133014,
@@ -438,7 +451,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 134030,
@@ -473,7 +487,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 151216,
@@ -508,7 +523,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 137357,
@@ -543,7 +559,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 130595,
@@ -603,7 +620,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
       ],
       "baseline": {
         "rawBytes": 127635,
@@ -681,6 +699,42 @@
       "budget": {
         "rawBytes": 149504,
         "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "name": "kernel-with-offline",
+      "doc": "The kernel plus the service-worker registration and update capability pack (./capabilities/offline), as an application that registers it loads them. The worker module itself runs in the service worker, not the page.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/offline/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
+      ],
+      "baseline": {
+        "rawBytes": 136600,
+        "gzipBytesBundled": 26244
+      },
+      "budget": {
+        "rawBytes": 150528,
+        "gzipBytesBundled": 29696
       }
     }
   ]

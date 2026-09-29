@@ -72,6 +72,21 @@ exhaustive lists.
     reset); anything else reloads the page;
   - a dev server that streams file changes.
   Development only; nothing in Core imports it.
+- **Offline and application-update pack (#40).** `./capabilities/offline`
+  (`offlineCapability()`, contract unit `limen.offline`, with bindings for
+  TypeScript, F#, C# and Rust) and the optional service worker
+  `./capabilities/offline/worker`:
+  - the engine registers a worker the host declared (and vouched for under
+    Trusted Types), never a URL;
+  - `UpdateReady`, `ControllerChanged` and `UpdateFailed` facts; a new version
+    waits until the engine calls `activateUpdate`;
+  - the worker caches a declared, versioned shell, serves it when the network
+    fails, deletes only its own stale caches, and never touches a write;
+  - push and background sync are reported, not enabled.
+  The offline reference page proves a cold offline launch, a persisted outbox
+  reconciled after a reconnect (conflict and unknown outcome included) and the
+  update path in Chromium. The smoke runner lets a page name the Trusted Types
+  policies its host creates.
 - **Offline outbox engine library (#40).** `conformance/outbox/` (61 steps)
   and `libraries/fsharp/Limen.Outbox`:
   - pending domain operations in order, each with an engine-chosen

@@ -17,6 +17,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { serveHttp } from "../test/browser/servers/http.ts";
+import { serveOffline } from "../test/browser/servers/offline.ts";
 import { serveRealtime, upgradeRealtime } from "../test/browser/servers/realtime.ts";
 
 type Page = {
@@ -53,15 +54,23 @@ const POLICY = [
 
 const CONTENT_TYPES: Readonly<Record<string, string>> = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json" };
 
-const serve = (): Promise<Server> => {
+// A page whose host creates Trusted Types policies names them in page.json
+// (service-worker registration is a Trusted Types sink, so no policy means no
+// worker). Only those names are allowed, and only for that page's folder.
+const policyFor = (trustedTypes: ReadonlyMap<string, readonly string[]>, path: string): string => {
+  const names = [...trustedTypes].find(([pack]) => path.startsWith(`/${PACKS}/${pack}/`))?.[1];
+  return names === undefined ? POLICY : POLICY.replace("trusted-types 'none'", `trusted-types ${names.join(" ")}`);
+};
+
+const serve = (trustedTypes: ReadonlyMap<string, readonly string[]>): Promise<Server> => {
   const server = createServer((request, response) => {
-    // Same-origin test endpoints a pack page may need (realtime, HTTP); not files.
-    if (serveRealtime(request, response) || serveHttp(request, response)) return;
+    // Same-origin test endpoints a pack page may need (realtime, HTTP, offline); not files.
+    if (serveRealtime(request, response) || serveHttp(request, response) || serveOffline(request, response)) return;
     const path = normalize(decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname));
     const file = join(ROOT, path.endsWith("/") ? `${path}index.html` : path);
     if (!file.startsWith(ROOT)) { response.writeHead(403).end(); return; }
     readFile(file).then(
-      (body) => { response.writeHead(200, { "Content-Type": CONTENT_TYPES[extname(file)] ?? "application/octet-stream", "Content-Security-Policy": POLICY }).end(body); },
+      (body) => { response.writeHead(200, { "Content-Type": CONTENT_TYPES[extname(file)] ?? "application/octet-stream", "Content-Security-Policy": policyFor(trustedTypes, path) }).end(body); },
       () => { response.writeHead(404).end(); },
     );
   });
@@ -179,14 +188,16 @@ const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession
 };
 
 // What a pack directory's optional page.json may say.
-type PageConfig = { readonly url?: string; readonly backForwardCache?: boolean };
+type PageConfig = { readonly url?: string; readonly backForwardCache?: boolean; readonly trustedTypes?: readonly string[] };
 
 const configOf = (pack: string): Promise<PageConfig> =>
   readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text): PageConfig => {
     const value: unknown = JSON.parse(text);
     const field = (name: string): unknown => (typeof value === "object" && value !== null ? Reflect.get(value, name) : undefined);
     const url = field("url");
-    return { ...(typeof url === "string" ? { url } : {}), backForwardCache: field("backForwardCache") === true };
+    const trustedTypes = field("trustedTypes");
+    const names = Array.isArray(trustedTypes) ? trustedTypes.filter((name): name is string => typeof name === "string" && /^[A-Za-z0-9-]+$/.test(name)) : [];
+    return { ...(typeof url === "string" ? { url } : {}), backForwardCache: field("backForwardCache") === true, ...(names.length > 0 ? { trustedTypes: names } : {}) };
   }, () => ({}));
 
 const runPack = async (browser: Browser, pack: string, config: PageConfig): Promise<readonly string[]> => {
@@ -240,7 +251,8 @@ if (chromium === undefined) {
     console.log("Playwright is not installed, so the capability pack smoke was skipped.");
   }
 } else {
-  const server = await serve();
+  const configs = new Map(await Promise.all(packs.map(async (pack) => [pack, await configOf(pack)] as const)));
+  const server = await serve(new Map([...configs].flatMap(([pack, config]) => (config.trustedTypes !== undefined ? [[pack, config.trustedTypes] as const] : []))));
   const browser = await chromium.launch();
   // Playwright's default Chromium is the headless shell with the back/forward
   // cache switched off. A pack that needs the cache gets full Chromium with the
@@ -250,7 +262,7 @@ if (chromium === undefined) {
   try {
     const failures = await packs.reduce<Promise<readonly string[]>>(async (done, pack) => {
       const previous = await done;
-      const config = await configOf(pack);
+      const config = configs.get(pack) ?? {};
       return [...previous, ...(await runPack(config.backForwardCache === true ? await withCache() : browser, pack, config))];
     }, Promise.resolve([]));
     if (failures.length > 0) {

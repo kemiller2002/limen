@@ -7,6 +7,10 @@ scenarios, 61 steps. A library in any language conforms when every step
 produces the stated snapshot, emits exactly the stated sends, and ignores
 exactly the stated commands. The F# reference is
 [`libraries/fsharp/Limen.Outbox`](../../libraries/fsharp/Limen.Outbox/Outbox.fs).
+The offline reference page's JavaScript
+([`outbox.js`](../../test/browser/packs/offline/outbox.js)) runs the same
+steps in `test/outbox-reference.test.ts`, and drives a real reconnect in
+Chromium ([docs/49](../../docs/49-offline-and-updates.md)).
 
 The outbox holds the user's pending domain operations, in order. It is
 ordinary engine state:

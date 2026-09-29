@@ -79,6 +79,14 @@
       "types": "./dist/capabilities/lifecycle/index.d.ts",
       "import": "./dist/capabilities/lifecycle/index.js"
     },
+    "./capabilities/offline": {
+      "types": "./dist/capabilities/offline/index.d.ts",
+      "import": "./dist/capabilities/offline/index.js"
+    },
+    "./capabilities/offline/worker": {
+      "types": "./dist/capabilities/offline/worker.d.ts",
+      "import": "./dist/capabilities/offline/worker.js"
+    },
     "./hosts/fallback": {
       "types": "./dist/hosts/fallback.d.ts",
       "import": "./dist/hosts/fallback.js"

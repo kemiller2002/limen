@@ -1,0 +1,73 @@
+{
+  "unit": "limen.offline",
+  "role": "capability",
+  "version": 1,
+  "doc": "Service-worker registration and the application-update lifecycle (LCP-034). The host declares which workers exist and vouches for their script URLs; the engine names one and never supplies a URL. A new version of a worker installs and then waits: it takes over only when the engine asks, so update availability and activation are explicit facts and decisions, never something the browser does behind the engine's back. The worker caches a declared shell and serves it when the network fails; it never queues, retries or resolves anything, so synchronisation stays in the engine. Online and offline are the lifecycle pack's facts. Push and background sync are reported as supported or not, and are not enabled by this pack.",
+  "types": [
+    { "name": "OfflineStatus", "kind": "record", "fields": [
+      { "name": "supported", "type": "bool", "doc": "The browser has service workers and this is a secure context." },
+      { "name": "registered", "type": "bool" },
+      { "name": "controlled", "type": "bool", "doc": "A worker controls this page, so its requests go through the worker's cache." },
+      { "name": "activeVersion", "type": "string", "optional": true, "doc": "The version the active worker reports." },
+      { "name": "waitingVersion", "type": "string", "optional": true, "doc": "A new version that has installed and is waiting for the engine to activate it." },
+      { "name": "installing", "type": "bool" },
+      { "name": "push", "type": "bool", "doc": "The Push API exists; nothing here subscribes." },
+      { "name": "backgroundSync", "type": "bool", "doc": "Background Sync exists; nothing here registers a sync." } ] },
+    {
+      "name": "OfflineRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "register", "doc": "Registers the worker the host declared under this name.", "fields": [ { "name": "worker", "type": "string" } ] },
+        { "name": "status", "fields": [] },
+        { "name": "checkForUpdate", "doc": "Asks the browser to fetch the worker script again. A changed script installs and then waits; UpdateReady follows.", "fields": [] },
+        { "name": "activateUpdate", "doc": "Tells the waiting worker to take over. ControllerChanged follows; reloading, if the engine wants it, is the engine's navigation.", "fields": [] }
+      ]
+    },
+    {
+      "name": "OfflineResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Registered", "fields": [ { "name": "status", "type": "OfflineStatus" } ] },
+        { "name": "Described", "fields": [ { "name": "status", "type": "OfflineStatus" } ] },
+        { "name": "UpdateChecked", "doc": "The check finished; status says whether a version is installing or waiting.", "fields": [ { "name": "status", "type": "OfflineStatus" } ] },
+        { "name": "Activating", "fields": [ { "name": "version", "type": "string", "optional": true } ] },
+        { "name": "NothingWaiting", "fields": [] },
+        { "name": "NotRegistered", "fields": [] },
+        { "name": "UnknownWorker", "doc": "The host declared no worker by that name.", "fields": [] },
+        { "name": "Unsupported", "fields": [] },
+        { "name": "Failed", "doc": "The browser refused: the script failed to load or evaluate, the scope was not allowed, or the update check could not reach the server. problem is the browser's error name.", "fields": [ { "name": "problem", "type": "string" } ] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "OfflineFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "UpdateReady", "doc": "A new version installed while an older one controls the page, and is waiting for activateUpdate.", "fields": [ { "name": "version", "type": "string", "optional": true } ] },
+        { "name": "ControllerChanged", "doc": "A different worker now controls the page (the first activation, or an activated update).", "fields": [ { "name": "version", "type": "string", "optional": true } ] },
+        { "name": "UpdateFailed", "doc": "A new version failed to install and was discarded; the current one keeps control.", "fields": [] }
+      ]
+    },
+    {
+      "name": "WorkerCommand",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "What the pack posts to a worker. Internal to the pack and its worker; the engine never sees it.",
+      "variants": [
+        { "name": "version", "fields": [] },
+        { "name": "activate", "fields": [] }
+      ]
+    },
+    {
+      "name": "WorkerReply",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Version", "fields": [ { "name": "version", "type": "string" } ] }
+      ]
+    }
+  ]
+}
