@@ -107,6 +107,6 @@
 | WI-0100 | Page, connectivity and browser lifecycle evidence pack: online/offline, visibility, pagehide/pageshow with persisted (bfcache), freeze/resume, advisory connection facts, prerendering; cancellable subscriptions (GH-43) | complete |  | medium |
 | WI-0101 | Guardrail: register the limen.lifecycle contract unit and its generated bindings (GH-43) | complete |  | medium |
 | WI-0102 | Offline outbox engine library: persisted pending operations, connectivity-gated ordered dispatch, conflict and OutcomeUnknown requiring engine reconciliation, reload makes in-flight unknown; language-neutral vectors and F# reference (GH-40) | complete |  | medium |
-| WI-0103 | Core Http: a thrown fetch for a non-safe method is OutcomeUnknown(connection-lost), not a retryable Failure(network); protocol 1.4 (GH-40, found while proving the offline outbox) | active |  | medium |
-| WI-0104 | Guardrail: compile-pressure consumers name OutcomeUnknownReason (protocol 1.4) (GH-40) | active |  | medium |
-| WI-0105 | Re-baseline the minimal-consumer payload budget after protocol 1.4 (GH-40) | ready |  | medium |
+| WI-0103 | Core Http: a thrown fetch for a non-safe method is OutcomeUnknown(connection-lost), not a retryable Failure(network); protocol 1.4 (GH-40, found while proving the offline outbox) | complete |  | medium |
+| WI-0104 | Guardrail: compile-pressure consumers name OutcomeUnknownReason (protocol 1.4) (GH-40) | complete |  | medium |
+| WI-0105 | Re-baseline the minimal-consumer payload budget after protocol 1.4 (GH-40) | complete |  | medium |
