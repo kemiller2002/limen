@@ -71,6 +71,13 @@ Do this **first**, before editing:
 ./ros work start WI-####
 ```
 
+then, **before your first edit**, commit the work item's scope manifest —
+`architecture/work-scopes/WI-####.json` (placement + allowed paths) — and name
+the item in every commit subject, e.g. `feat(x): … (GH-23, WI-####)`. CI's
+`Work-item scope` job rejects commits outside the declared scope, and any
+change to a guardrail-owned path unless the item is declared
+`"guardrail": true`. See [docs/25-guardrails.md](docs/25-guardrails.md).
+
 and when the work is done and committed:
 
 ```sh

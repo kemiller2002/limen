@@ -56,6 +56,19 @@ exhaustive lists.
   and on the exact path of every rejection; each independently recomputes the
   contract fingerprint. `npm run test:guests`; CI job "Guest bindings".
 
+- **Dependency-direction and work-item-scope guardrails (#53).**
+  `architecture/layers.json` + `npm run check:layers` (in `npm test`) reject
+  Core → capability-pack/application imports, pack → pack imports, external
+  runtime dependencies, computed dynamic imports, engine-library host
+  authority, and browser runtime types in protocol code; the contract
+  generator refuses browser-object type names. Each work item declares its
+  placement and paths in `architecture/work-scopes/WI-####.json`;
+  `npm run check:scope` (CI job "Work-item scope") checks every commit
+  against it and requires `"guardrail": true` for guardrail-owned paths
+  (`architecture/guardrails.json`, mirrored in `.github/CODEOWNERS`).
+  `test/guardrails.test.ts` fails if a required gate leaves `npm test` or CI
+  or a strictness setting is weakened. See `docs/25-guardrails.md`.
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a

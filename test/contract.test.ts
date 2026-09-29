@@ -185,6 +185,7 @@ const copyGenerationInputs = async (): Promise<string> => {
   const targets = JSON.parse(await readFile(join(ROOT, "contract/targets.json"), "utf8")) as { units: string[]; outputs: { path: string }[] };
   await Promise.all([
     cp(join(ROOT, "contract"), join(scratch, "contract"), { recursive: true }),
+    cp(join(ROOT, "architecture/layers.json"), join(scratch, "architecture/layers.json")),
     ...targets.units.filter((unit) => !unit.startsWith("contract/")).map((unit) => cp(join(ROOT, unit), join(scratch, unit))),
     ...targets.outputs.map((output) => cp(join(ROOT, output.path), join(scratch, output.path))),
   ]);

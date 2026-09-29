@@ -1,0 +1,16 @@
+# Guardrail-owned paths (architecture/guardrails.json). A change here changes
+# what the repository enforces, so it needs the repository owner's review even
+# when every automated check passes. Feature work is not authority to change
+# its supervisor (kemiller2002/limen#51 §11).
+/architecture/                @kemiller2002
+/tools/guardrails/            @kemiller2002
+/tools/contract-gen/          @kemiller2002
+/contract/targets.json        @kemiller2002
+/scripts/check-*.ts           @kemiller2002
+/.github/workflows/           @kemiller2002
+/.github/CODEOWNERS           @kemiller2002
+/tsconfig*.json               @kemiller2002
+/guests/**/*.fsproj           @kemiller2002
+/guests/**/*.csproj           @kemiller2002
+/guests/**/Cargo.toml         @kemiller2002
+/guests/rust/*/src/lib.rs     @kemiller2002

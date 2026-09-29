@@ -1,13 +1,30 @@
 {
   "workItem": "WI-0034",
   "reference": "kemiller2002/limen#53",
-  "placement": "Tooling / Governance — guardrail-class",
+  "placement": "Tooling / Governance \u2014 guardrail-class",
   "guardrail": true,
   "paths": [
-    "architecture/**", "tools/guardrails/**", "scripts/check-*.ts", "test/**", "tools/contract-gen/model.ts",
-    ".github/workflows/ci.yml", ".github/CODEOWNERS", "package.json", "docs/**", "research/decisions/**",
-    "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"
+    "architecture/**",
+    "tools/guardrails/**",
+    "scripts/check-*.ts",
+    "test/**",
+    "tools/contract-gen/model.ts",
+    ".github/workflows/ci.yml",
+    ".github/CODEOWNERS",
+    "package.json",
+    "docs/**",
+    "research/decisions/**",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "AGENTS.md"
   ],
-  "expansions": [],
+  "expansions": [
+    {
+      "paths": [
+        "tools/contract-gen/main.ts"
+      ],
+      "reason": "The generator must load the forbidden browser type names from architecture/layers.json (the single list) and pass them to parseUnit; model.ts alone cannot read files."
+    }
+  ],
   "recordedAfterCompletion": false
 }

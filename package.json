@@ -103,7 +103,7 @@
     "build:cli:all": "node --experimental-strip-types scripts/build-cli.ts",
     "test:cli": "dotnet test cli/tests/Limen.Core.Tests/Limen.Core.Tests.fsproj --nologo -v q",
     "pretest": "npm run build && npm run build:examples && npm run build:site",
-    "test": "npm run contract:check && npm run check:architecture && npm run check:docs && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
+    "test": "npm run contract:check && npm run check:architecture && npm run check:layers && npm run check:docs && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
     "prepack": "npm run clean && npm run check && npm run build:cli:all",
     "check:site": "node --experimental-strip-types scripts/check-site.ts",
@@ -118,7 +118,9 @@
     "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust",
     "test:guests:fsharp": "dotnet run --project guests/fsharp/Limen.Contract.Conformance/Limen.Contract.Conformance.fsproj -c Release --nologo",
     "test:guests:csharp": "dotnet run --project guests/csharp/Limen.Contract.Conformance/Limen.Contract.Conformance.csproj -c Release --nologo",
-    "test:guests:rust": "cargo test --manifest-path guests/rust/limen-contract/Cargo.toml --locked"
+    "test:guests:rust": "cargo test --manifest-path guests/rust/limen-contract/Cargo.toml --locked",
+    "check:layers": "node --experimental-strip-types scripts/check-layers.ts",
+    "check:scope": "node --experimental-strip-types scripts/check-scope.ts"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",

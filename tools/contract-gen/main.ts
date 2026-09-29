@@ -94,8 +94,15 @@ export const describe = (finding: Finding): string => {
   }
 };
 
+const forbiddenTypeNames = async (root: string): Promise<readonly string[]> => {
+  const layers = JSON.parse(await readFile(join(root, "architecture/layers.json"), "utf8")) as { protocolForbiddenTypes?: { names?: unknown } };
+  const names = layers.protocolForbiddenTypes?.names;
+  return Array.isArray(names) ? names.filter((name): name is string => typeof name === "string") : [];
+};
+
 export const loadUnits = async (root: string, paths: readonly string[]): Promise<readonly ContractUnit[]> => {
-  const parsed = await Promise.all(paths.map(async (path) => parseUnit(JSON.parse(await readFile(join(root, path), "utf8")) as unknown, path)));
+  const forbidden = await forbiddenTypeNames(root);
+  const parsed = await Promise.all(paths.map(async (path) => parseUnit(JSON.parse(await readFile(join(root, path), "utf8")) as unknown, path, forbidden)));
   const errors = parsed.flatMap((result) => (result.ok ? [] : result.errors));
   if (errors.length > 0) throw new Error(`Contract is not well-formed:\n${errors.join("\n")}`);
   return parsed.flatMap((result) => (result.ok ? [result.value] : []));

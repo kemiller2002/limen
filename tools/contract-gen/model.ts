@@ -288,7 +288,10 @@ export const sha256 = (text: string): string => `sha256:${createHash("sha256").u
 
 export const fingerprintOf = (raw: unknown): string => sha256(canonicalize(raw));
 
-export const parseUnit = (raw: unknown, source: string): Parsed<ContractUnit> => {
+// `forbiddenTypeNames` comes from architecture/layers.json
+// (protocolForbiddenTypes): a contract type may not be named after a browser
+// runtime object, so "File" or "Element" can never appear to cross the wire.
+export const parseUnit = (raw: unknown, source: string, forbiddenTypeNames: readonly string[] = []): Parsed<ContractUnit> => {
   if (!isRecord(raw)) return fail(`${source}: a contract unit must be a JSON object`);
   if (typeof raw.unit !== "string" || !/^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$/.test(raw.unit)) return fail(`${source}: unit must be a dotted lower-case identity such as limen.core`);
   if (typeof raw.version !== "number" || !Number.isInteger(raw.version) || raw.version < 1) return fail(`${source}: version must be a positive integer`);
@@ -297,7 +300,10 @@ export const parseUnit = (raw: unknown, source: string): Parsed<ContractUnit> =>
   const constants = Array.isArray(raw.constants ?? []) ? collect(((raw.constants ?? []) as unknown[]).map((constant, index) => parseConstant(constant, `${source}.constants[${index}]`))) : fail<readonly Constant[]>(`${source}: constants must be an array`);
   const types = Array.isArray(raw.types) ? collect(raw.types.map((decl, index) => parseDecl(decl, `${source}.types[${index}]`))) : fail<readonly TypeDecl[]>(`${source}: types must be an array`);
   if (!constants.ok || !types.ok) return fail(...(constants.ok ? [] : constants.errors), ...(types.ok ? [] : types.errors));
-  const errors = wellFormednessErrors(types.value);
+  const errors = [
+    ...wellFormednessErrors(types.value),
+    ...types.value.filter((decl) => forbiddenTypeNames.includes(decl.name)).map((decl) => `${decl.name}: names a browser runtime object; carry serialized values or an opaque handle id instead`),
+  ];
   return errors.length > 0
     ? fail(...errors.map((error) => `${source}: ${error}`))
     : succeed({ unit: raw.unit, role, version: raw.version, doc: docOf(raw), constants: constants.value, types: types.value, source, fingerprint: fingerprintOf(raw) });

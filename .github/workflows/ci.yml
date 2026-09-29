@@ -67,6 +67,28 @@ jobs:
       - name: Clean-room install of the packed tarball
         run: npm run check:clean-room
 
+  # Architectural placement is checked per commit: each commit names one work
+  # item and stays inside that item's declared scope; guardrail-owned paths
+  # change only under a guardrail-scoped item (architecture/guardrails.json).
+  work-item-scope:
+    name: Work-item scope
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Every commit stays inside its work item's declared scope
+        run: npm run check:scope
+        env:
+          LIMEN_SCOPE_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+
   # One language-neutral contract, four generated bindings. Each guest
   # language compiles its binding under strict settings, independently
   # recomputes the contract fingerprint, and runs the same shared vectors as

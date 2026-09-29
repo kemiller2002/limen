@@ -21,7 +21,10 @@ or protocol type was renamed** — see
 
 CI's `validate` job rejects branches whose changes lack work-item attribution.
 Run `./ros add "…"` → `./ros work ready WI-####` → `./ros work start WI-####`
-**before** editing, and complete it with `ROS_BASE_REF=origin/main ./ros work
+**before** editing, commit its scope manifest
+(`architecture/work-scopes/WI-####.json`, see
+[docs/25-guardrails.md](docs/25-guardrails.md)) as the first change, and
+complete it with `ROS_BASE_REF=origin/main ./ros work
 complete WI-#### --evidence …` afterwards. See
 [AGENTS.md](AGENTS.md) Part 1 for the exact sequence.
 
@@ -245,6 +248,8 @@ npm test                   # pretest (build + build:examples) → architecture
                            #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)
 
+npm run check:layers       # dependency directions (architecture/layers.json)
+npm run check:scope        # commits vs. their work items' declared scopes
 npm run contract:generate  # regenerate every binding from contract/*.contract.json
 npm run contract:check     # fail on stale / hand-edited / missing / orphaned bindings
 npm run test:guests        # F#, C#, Rust bindings: strict build + shared vectors

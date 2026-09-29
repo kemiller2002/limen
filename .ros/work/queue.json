@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 34,
+  "nextSeq": 35,
   "items": [
     {
       "id": "WI-0001",
@@ -577,6 +577,22 @@
       "createdBy": "claude-code",
       "source": "github",
       "sourceReference": "kemiller2002/limen#52"
+    },
+    {
+      "id": "WI-0034",
+      "title": "GH-53: enforce dependency directions (layer map + import checker) and work-item path scope (scope manifests + commit-level check), guardrail self-modification protection",
+      "description": "Placement: Tooling / Governance (guardrail-class). Allowed paths: architecture/**, tools/guardrails/**, scripts/check-*.ts, test/**, tools/contract-gen/model.ts (reserved browser type names), .github/workflows/ci.yml, .github/CODEOWNERS, package.json, docs/**, research/decisions/**, CHANGELOG.md, CLAUDE.md, AGENTS.md. Prohibited: src/** runtime behavior, guests/** semantics.",
+      "tags": [
+        "limen,gh-53,guardrail,governance"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T05:12:57Z",
+      "updatedAt": "2026-09-29T05:12:57Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#53"
     }
   ]
 }
