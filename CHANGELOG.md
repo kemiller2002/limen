@@ -18,6 +18,9 @@ exhaustive lists.
 
 ### Changed
 
+- **`data-on="input"` no longer reports uncommitted IME composition text
+  (#29).** Input events fired during composition are skipped. The committed
+  value is reported once, at `compositionend`.
 - **Breaking for pages that relied on it: binding targets are policed (#18).**
   A page that binds a now-forbidden target no longer starts. It reports a
   `binding` BridgeError naming the target and why. A page that projected a

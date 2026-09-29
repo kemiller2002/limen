@@ -337,9 +337,14 @@ export class BrowserKernel {
     const fire = (): Promise<void> => this.#fire(el, name, itemKey, null);
     el.addEventListener(trigger, (domEvent) => {
       if (trigger === "submit") domEvent.preventDefault();
+      // An input event during IME composition carries text the user has not
+      // committed; reporting it would hand the engine half a character. The
+      // committed value is reported once, at compositionend, below.
+      if ("isComposing" in domEvent && domEvent.isComposing === true) return;
       const submitter = "submitter" in domEvent && domEvent.submitter instanceof HTMLElement ? domEvent.submitter : null;
       void this.#fire(el, name, itemKey, submitter);
     });
+    if (trigger === "input") el.addEventListener("compositionend", () => { void this.#fire(el, name, itemKey, null); });
     const form = "form" in el ? (el as HTMLInputElement).form : null;
     if (trigger !== "submit" && form !== null) {
       const pending = this.#flushable.get(form) ?? [];

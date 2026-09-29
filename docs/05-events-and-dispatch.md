@@ -135,6 +135,13 @@ kernel just calls `addEventListener(trigger, …)`:
 <video data-event="finished" data-on="ended">
 ```
 
+**IME composition.** With `data-on="input"`, an `input` event fired while an
+input method is composing (Japanese, Chinese, Korean, dead keys, and so on)
+carries text the user has not committed. The kernel does not report it. It
+reports the committed value once, at `compositionend`, and then every later
+ordinary `input` as usual. The engine never sees half a character
+([`test/ime.test.ts`](../test/ime.test.ts)).
+
 ### The `change` vs `input` distinction bites people
 
 `data-on="input"` fires per keystroke. The default `change` fires on blur. If
