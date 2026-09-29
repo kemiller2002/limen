@@ -1,0 +1,26 @@
+{
+  "workItem": "WI-0122",
+  "reference": "kemiller2002/limen#62",
+  "placement": "Tooling / Conformance (guardrail) — tools/guardrails/core-metrics.ts computes a deterministic Core complexity report (pure); scripts/check-core-budget.ts measures the repository (sources, emitted dist/, contract, package.json), compares it to architecture/core-baseline.json and fails on the hard gates and the 10% review triggers, and can recompute the #59 reference metrics at 9a835cc from Git. The baseline is guardrail-owned, so feature work cannot move it. Wired into npm test and CI. #19's payload profiles consume the same emitted-module measure rather than duplicating it. No runtime source change.",
+  "guardrail": true,
+  "paths": [
+    "tools/guardrails/core-metrics.ts",
+    "tools/guardrails/core.ts",
+    "scripts/check-core-budget.ts",
+    "architecture/core-baseline.json",
+    "architecture/guardrails.json",
+    "architecture/core.json",
+    ".github/workflows/**",
+    ".github/CODEOWNERS",
+    "package.json",
+    "test/core-budget.test.ts",
+    "test/guardrails.test.ts",
+    "bench/size.ts",
+    "docs/**",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
