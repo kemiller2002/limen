@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T18:27:14Z",
+  "updatedAt": "2026-09-29T18:30:04Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2931,24 +2931,48 @@
     {
       "id": "WI-0043",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T18:17:48Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        },
+        {
+          "type": "benchmark",
+          "path": "docs/27-performance-baseline.md"
+        }
+      ],
+      "updatedAt": "2026-09-29T18:30:03Z",
       "telemetryExecutionIds": [
         "EXE-20260929T181748637Z-125c651d"
-      ]
+      ],
+      "completedAt": "2026-09-29T18:30:03Z"
     },
     {
       "id": "WI-0135",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T18:27:14Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/budgets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T18:30:04Z",
       "telemetryExecutionIds": [
         "EXE-20260929T182715223Z-faa15325"
-      ]
+      ],
+      "completedAt": "2026-09-29T18:30:04Z"
     }
   ]
 }
