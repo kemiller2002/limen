@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 90,
+  "nextSeq": 91,
   "items": [
     {
       "id": "WI-0001",
@@ -1374,6 +1374,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T10:19:34Z",
       "updatedAt": "2026-09-29T10:24:55Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0090",
+      "title": "Kernel lifecycle: read-only status and dispose() (removes every kernel listener, aborts in-flight effects, silences the kernel) so a host can restart safely (GH-50)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:25:19Z",
+      "updatedAt": "2026-09-29T10:25:19Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
