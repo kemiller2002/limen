@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T18:02:22Z",
+  "updatedAt": "2026-09-29T18:12:58Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2864,24 +2864,48 @@
     {
       "id": "WI-0132",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T18:02:21Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/peer/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/peer.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/peer/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T18:12:57Z",
       "telemetryExecutionIds": [
         "EXE-20260929T180222051Z-d1df59dd"
-      ]
+      ],
+      "completedAt": "2026-09-29T18:12:57Z"
     },
     {
       "id": "WI-0133",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T18:02:22Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/peer.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T18:12:58Z",
       "telemetryExecutionIds": [
         "EXE-20260929T180222752Z-11cffc88"
-      ]
+      ],
+      "completedAt": "2026-09-29T18:12:58Z"
     }
   ]
 }
