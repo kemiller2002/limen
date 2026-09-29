@@ -24,5 +24,6 @@
     <Compile Include="Generated/Adapters.fs" />
     <Compile Include="Generated/Transfer.fs" />
     <Compile Include="Generated/Presentation.fs" />
+    <Compile Include="Generated/Environment.fs" />
   </ItemGroup>
 </Project>

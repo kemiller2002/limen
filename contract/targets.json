@@ -13,7 +13,8 @@
     "contract/store.contract.json",
     "contract/adapters.contract.json",
     "contract/transfer.contract.json",
-    "contract/presentation.contract.json"
+    "contract/presentation.contract.json",
+    "contract/environment.contract.json"
   ],
   "outputs": [
     {
@@ -376,6 +377,32 @@
       "unit": "limen.presentation",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_presentation.rs"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "typescript-types",
+      "path": "src/capabilities/environment/generated/environment.ts"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/environment/generated/environment.codec.ts",
+      "typesModule": "./environment.js"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Environment.fs"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Environment.cs"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_environment.rs"
     }
   ]
 }
