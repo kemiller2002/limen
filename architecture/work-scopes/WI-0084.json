@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0084",
+  "reference": "kemiller2002/limen#47",
+  "placement": "Guardrail — the F#, C# and Rust compile-pressure consumers are guardrail-owned: they prove an added variant breaks every language's build. Protocol 1.3 added HttpFailureReason too-large, so each consumer names it; the pressure check itself is unchanged and still demands exhaustive matching.",
+  "guardrail": true,
+  "paths": ["guests/csharp/Limen.Contract.Pressure/Consumer.cs", "guests/fsharp/Limen.Contract.Pressure/Consumer.fs", "guests/rust/limen-contract/examples/consumer.rs"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
