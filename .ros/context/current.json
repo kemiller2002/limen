@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T06:46:56Z",
+  "updatedAt": "2026-09-29T06:49:14Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -912,24 +912,48 @@
     {
       "id": "WI-0049",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T06:35:26Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/tooling/view-contract.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/view-contracts.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:49:13Z",
       "telemetryExecutionIds": [
         "EXE-20260929T063526574Z-84ae9d30"
-      ]
+      ],
+      "completedAt": "2026-09-29T06:49:13Z"
     },
     {
       "id": "WI-0050",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T06:46:56Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/check-views.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:49:14Z",
       "telemetryExecutionIds": [
         "EXE-20260929T064657245Z-559644b8"
-      ]
+      ],
+      "completedAt": "2026-09-29T06:49:14Z"
     }
   ]
 }

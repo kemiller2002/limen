@@ -52,5 +52,5 @@
 | WI-0046 | F# guest payload: 26 MB and 188 requests vs C# 5.4 MB because FSharp.Core is published untrimmed; find a trim-clean path with no warning suppression (GH-19) | captured |  | medium |
 | WI-0047 | Minimal-consumer import surface: package root loads the reference engine and federation; the kernel loads the whole core codec to decode one handshake (GH-19) | captured |  | medium |
 | WI-0048 | Guardrail: strict compiler config for the benchmark page (tsconfig.bench.json) (GH-19) | complete |  | medium |
-| WI-0049 | Static HTML/projection/event contract validation: adjacent view contracts, checker, engine conformance (GH-48) | active |  | medium |
-| WI-0050 | Guardrail: check:views — every bound page against its view contract, a required npm test gate (GH-48) | ready |  | medium |
+| WI-0049 | Static HTML/projection/event contract validation: adjacent view contracts, checker, engine conformance (GH-48) | complete |  | medium |
+| WI-0050 | Guardrail: check:views — every bound page against its view contract, a required npm test gate (GH-48) | complete |  | medium |
