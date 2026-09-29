@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 56,
+  "nextSeq": 58,
   "items": [
     {
       "id": "WI-0001",
@@ -898,6 +898,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T07:03:11Z",
       "updatedAt": "2026-09-29T07:03:26Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0056",
+      "title": "Focus, selection and scroll capability pack: contract, provider, conformance, real-browser proof (GH-23)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:08:03Z",
+      "updatedAt": "2026-09-29T07:08:03Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0057",
+      "title": "Guardrail: register the limen.focus contract unit and its generated TS/F#/C#/Rust bindings (GH-23)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:08:04Z",
+      "updatedAt": "2026-09-29T07:08:04Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

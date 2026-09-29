@@ -2,6 +2,7 @@
 
 | ID | Work | Status | Tags | Priority |
 |---|---|---|---|---|
+| GH-57 | GH-57 | complete |  |  |
 | LIMEN-UPGRADE-2026-09-21 | Reconcile Limen self-hosting with current Echelon capabilities | complete | tooling,limen,ordo,ros | high |
 | ROS-INSTALL-1-2-1 | ROS-INSTALL-1-2-1 | complete |  |  |
 | WI-0001 | Release npm version 0.4.1 with ROS attribution | complete | npm, release | high |
@@ -59,3 +60,5 @@
 | WI-0053 | Raise kernel payload budgets for the binding security policy (+2.1 KB gzip, GH-18) | complete |  | medium |
 | WI-0054 | Guardrail: build-guests-site copies the guest host stylesheet (strict CSP, GH-18) | complete |  | medium |
 | WI-0055 | Guardrail: CI runs smoke:security (strict CSP + Trusted Types, kernel and guests) as a required step (GH-18) | complete |  | medium |
+| WI-0056 | Focus, selection and scroll capability pack: contract, provider, conformance, real-browser proof (GH-23) | active |  | medium |
+| WI-0057 | Guardrail: register the limen.focus contract unit and its generated TS/F#/C#/Rust bindings (GH-23) | ready |  | medium |

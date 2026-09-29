@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0056",
+  "reference": "kemiller2002/limen#23 (LCP-007)",
+  "placement": "Capability Pack — src/capabilities/focus/ with its own contract unit; imports only core-contract, core-kernel and capability-support. Core is unchanged: the pack is absent unless an application registers it.",
+  "guardrail": false,
+  "paths": ["contract/focus.contract.json", "src/capabilities/focus/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "architecture/typescript-boundary.json", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
