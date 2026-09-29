@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 106,
+  "nextSeq": 108,
   "items": [
     {
       "id": "WI-0001",
@@ -1598,6 +1598,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T11:55:54Z",
       "updatedAt": "2026-09-29T11:56:20Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0106",
+      "title": "Offline and application-update pack with an optional service worker: host-declared workers, explicit update-ready/activate lifecycle, cached shell; offline reference page proving cold offline launch, persisted outbox reconciliation, conflict, unknown outcome and the update path (GH-40)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:59:42Z",
+      "updatedAt": "2026-09-29T11:59:42Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0107",
+      "title": "Guardrail: register the limen.offline contract unit and its generated bindings (GH-40)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:59:43Z",
+      "updatedAt": "2026-09-29T11:59:43Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
