@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T10:31:01Z",
+  "updatedAt": "2026-09-29T10:39:00Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1903,13 +1903,27 @@
     {
       "id": "WI-0091",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T10:31:01Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/hosts/fallback.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/fallback-host.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/core-fallback/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:39:00Z",
       "telemetryExecutionIds": [
         "EXE-20260929T103102247Z-23ccd1fa"
-      ]
+      ],
+      "completedAt": "2026-09-29T10:39:00Z"
     }
   ]
 }
