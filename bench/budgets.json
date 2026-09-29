@@ -112,6 +112,10 @@
     {
       "workItem": "WI-0135",
       "change": "Re-baselined kernel-only after WI-0043 (projection compares with the live DOM before writing): +80 bytes gzip (22504 -> 22584), which put it 56 bytes over a budget last set in WI-0085. Most of the headroom had gone to growth that stayed within budget since then (protocol 1.4, the head-binding policy of WI-0116). Measured with an absolute root."
+    },
+    {
+      "workItem": "WI-0136",
+      "change": "Re-baselined every profile that loads the kernel (absolute root). kernel-with-files had gone 31 bytes over after WI-0043 (compare-before-write) and WI-0044 (remove before reorder); its baseline, like most, predated in-budget kernel growth since WI-0085: protocol 1.4 (WI-0103), head binding and the metadata policy (WI-0116), and those two. Every budget again keeps 10% headroom over what ships. Gzip bundled, old baseline -> new: kernel-only 22584->22677; kernel-with-handles 23561->23729; kernel-with-dotnet-host 20967->23459; kernel-with-raw-host 21780->24278; kernel-with-worker-host 24619->24792; kernel-with-focus 24028->26553; kernel-with-schedule 22850->25375; kernel-with-measure 25765->28320; kernel-with-events 26679->29198; kernel-with-overlay 25769->28324; kernel-with-realtime 25994->28545; kernel-with-files 26528->29727; kernel-with-store 29607->32118; kernel-with-adapters 27612->30132; kernel-with-transfer 25489->28047; kernel-with-fallback-host 23831->25021; kernel-with-presentation 25551->26763; kernel-with-environment 26470->27693; kernel-with-lifecycle 26916->27099; kernel-with-offline 26831->27013; kernel-with-geolocation 27434->27601; kernel-with-credentials 29804->29966; kernel-with-coordination 29992->30152; kernel-with-media 34341->34535; kernel-with-peer 30371->30533."
     }
   ],
   "profiles": [
@@ -154,8 +158,8 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 110122,
-        "gzipBytesBundled": 22584
+        "rawBytes": 110346,
+        "gzipBytesBundled": 22677
       },
       "budget": {
         "rawBytes": 121856,
@@ -191,11 +195,11 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 112498,
-        "gzipBytesBundled": 23561
+        "rawBytes": 113110,
+        "gzipBytesBundled": 23729
       },
       "budget": {
-        "rawBytes": 123904,
+        "rawBytes": 124928,
         "gzipBytesBundled": 26624
       }
     },
@@ -229,12 +233,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 102812,
-        "gzipBytesBundled": 20967
+        "rawBytes": 112898,
+        "gzipBytesBundled": 23459
       },
       "budget": {
-        "rawBytes": 113664,
-        "gzipBytesBundled": 23552
+        "rawBytes": 124928,
+        "gzipBytesBundled": 26624
       }
     },
     {
@@ -267,12 +271,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 105920,
-        "gzipBytesBundled": 21780
+        "rawBytes": 116006,
+        "gzipBytesBundled": 24278
       },
       "budget": {
-        "rawBytes": 116736,
-        "gzipBytesBundled": 24576
+        "rawBytes": 128000,
+        "gzipBytesBundled": 27648
       }
     },
     {
@@ -306,8 +310,8 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 117456,
-        "gzipBytesBundled": 24619
+        "rawBytes": 118068,
+        "gzipBytesBundled": 24792
       },
       "budget": {
         "rawBytes": 130048,
@@ -344,12 +348,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 122768,
-        "gzipBytesBundled": 24028
+        "rawBytes": 132854,
+        "gzipBytesBundled": 26553
       },
       "budget": {
-        "rawBytes": 135168,
-        "gzipBytesBundled": 26624
+        "rawBytes": 146432,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -383,12 +387,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 115285,
-        "gzipBytesBundled": 22850
+        "rawBytes": 125371,
+        "gzipBytesBundled": 25375
       },
       "budget": {
-        "rawBytes": 126976,
-        "gzipBytesBundled": 25600
+        "rawBytes": 138240,
+        "gzipBytesBundled": 28672
       }
     },
     {
@@ -422,12 +426,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 132137,
-        "gzipBytesBundled": 25765
+        "rawBytes": 142223,
+        "gzipBytesBundled": 28320
       },
       "budget": {
-        "rawBytes": 145408,
-        "gzipBytesBundled": 28672
+        "rawBytes": 156672,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -463,12 +467,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 132375,
-        "gzipBytesBundled": 26679
+        "rawBytes": 142461,
+        "gzipBytesBundled": 29198
       },
       "budget": {
-        "rawBytes": 146432,
-        "gzipBytesBundled": 29696
+        "rawBytes": 157696,
+        "gzipBytesBundled": 32768
       }
     },
     {
@@ -503,12 +507,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 131934,
-        "gzipBytesBundled": 25769
+        "rawBytes": 142020,
+        "gzipBytesBundled": 28324
       },
       "budget": {
-        "rawBytes": 145408,
-        "gzipBytesBundled": 28672
+        "rawBytes": 156672,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -543,12 +547,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 133014,
-        "gzipBytesBundled": 25994
+        "rawBytes": 143100,
+        "gzipBytesBundled": 28545
       },
       "budget": {
-        "rawBytes": 146432,
-        "gzipBytesBundled": 28672
+        "rawBytes": 157696,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -583,12 +587,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 134030,
-        "gzipBytesBundled": 26528
+        "rawBytes": 144273,
+        "gzipBytesBundled": 29727
       },
       "budget": {
-        "rawBytes": 147456,
-        "gzipBytesBundled": 29696
+        "rawBytes": 158720,
+        "gzipBytesBundled": 32768
       }
     },
     {
@@ -624,12 +628,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 151216,
-        "gzipBytesBundled": 29607
+        "rawBytes": 161302,
+        "gzipBytesBundled": 32118
       },
       "budget": {
-        "rawBytes": 166912,
-        "gzipBytesBundled": 32768
+        "rawBytes": 178176,
+        "gzipBytesBundled": 35840
       }
     },
     {
@@ -665,12 +669,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 137357,
-        "gzipBytesBundled": 27612
+        "rawBytes": 147443,
+        "gzipBytesBundled": 30132
       },
       "budget": {
-        "rawBytes": 151552,
-        "gzipBytesBundled": 30720
+        "rawBytes": 162816,
+        "gzipBytesBundled": 33792
       }
     },
     {
@@ -706,12 +710,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 130595,
-        "gzipBytesBundled": 25489
+        "rawBytes": 140681,
+        "gzipBytesBundled": 28047
       },
       "budget": {
-        "rawBytes": 144384,
-        "gzipBytesBundled": 28672
+        "rawBytes": 155648,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -733,12 +737,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 114331,
-        "gzipBytesBundled": 23831
+        "rawBytes": 118132,
+        "gzipBytesBundled": 25021
       },
       "budget": {
-        "rawBytes": 125952,
-        "gzipBytesBundled": 26624
+        "rawBytes": 130048,
+        "gzipBytesBundled": 27648
       }
     },
     {
@@ -774,12 +778,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 127635,
-        "gzipBytesBundled": 25551
+        "rawBytes": 131436,
+        "gzipBytesBundled": 26763
       },
       "budget": {
-        "rawBytes": 141312,
-        "gzipBytesBundled": 28672
+        "rawBytes": 145408,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -810,12 +814,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 137009,
-        "gzipBytesBundled": 26470
+        "rawBytes": 140810,
+        "gzipBytesBundled": 27693
       },
       "budget": {
-        "rawBytes": 151552,
-        "gzipBytesBundled": 29696
+        "rawBytes": 155648,
+        "gzipBytesBundled": 30720
       }
     },
     {
@@ -847,12 +851,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 138815,
-        "gzipBytesBundled": 26916
+        "rawBytes": 139427,
+        "gzipBytesBundled": 27099
       },
       "budget": {
         "rawBytes": 153600,
-        "gzipBytesBundled": 29696
+        "gzipBytesBundled": 30720
       }
     },
     {
@@ -885,12 +889,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 138103,
-        "gzipBytesBundled": 26831
+        "rawBytes": 138715,
+        "gzipBytesBundled": 27013
       },
       "budget": {
-        "rawBytes": 152576,
-        "gzipBytesBundled": 29696
+        "rawBytes": 153600,
+        "gzipBytesBundled": 30720
       }
     },
     {
@@ -926,8 +930,8 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 136850,
-        "gzipBytesBundled": 27434
+        "rawBytes": 137462,
+        "gzipBytesBundled": 27601
       },
       "budget": {
         "rawBytes": 151552,
@@ -967,11 +971,11 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 145686,
-        "gzipBytesBundled": 29804
+        "rawBytes": 146298,
+        "gzipBytesBundled": 29966
       },
       "budget": {
-        "rawBytes": 160768,
+        "rawBytes": 161792,
         "gzipBytesBundled": 33792
       }
     },
@@ -1006,11 +1010,11 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 153406,
-        "gzipBytesBundled": 29992
+        "rawBytes": 154018,
+        "gzipBytesBundled": 30152
       },
       "budget": {
-        "rawBytes": 168960,
+        "rawBytes": 169984,
         "gzipBytesBundled": 33792
       }
     },
@@ -1070,12 +1074,12 @@
         "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 174295,
-        "gzipBytesBundled": 34341
+        "rawBytes": 175196,
+        "gzipBytesBundled": 34535
       },
       "budget": {
-        "rawBytes": 192512,
-        "gzipBytesBundled": 37888
+        "rawBytes": 193536,
+        "gzipBytesBundled": 38912
       }
     },
     {
@@ -1111,11 +1115,11 @@
         "dist/capability-support/permissions.js"
       ],
       "baseline": {
-        "rawBytes": 152587,
-        "gzipBytesBundled": 30371
+        "rawBytes": 153199,
+        "gzipBytesBundled": 30533
       },
       "budget": {
-        "rawBytes": 167936,
+        "rawBytes": 168960,
         "gzipBytesBundled": 33792
       }
     }
