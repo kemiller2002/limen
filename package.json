@@ -174,7 +174,7 @@
     "test:guests:pressure": "node --experimental-strip-types scripts/guest-pressure.ts",
     "build:guests": "node --experimental-strip-types scripts/build-guests-site.ts",
     "smoke:guests": "node --experimental-strip-types scripts/smoke-guests.ts",
-    "smoke:packs": "npm run build && node --experimental-strip-types scripts/smoke-packs.ts",
+    "smoke:packs": "npm run build && npm run build:examples && node --experimental-strip-types scripts/smoke-packs.ts",
     "smoke:security": "npm run build && node --experimental-strip-types scripts/smoke-security.ts",
     "check:views": "node --experimental-strip-types scripts/check-views.ts",
     "build:bench": "tsc -p tsconfig.bench.json",
