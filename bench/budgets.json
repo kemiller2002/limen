@@ -16,6 +16,10 @@
     {
       "workItem": "WI-0063",
       "change": "Added kernel-with-schedule (kemiller2002/limen#24): the scheduling pack adds 2689 bytes gzip over the kernel, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0065",
+      "change": "Added kernel-with-measure (kemiller2002/limen#25): the measurement pack adds 5605 bytes gzip over the kernel, and only to applications that register it."
     }
   ],
   "profiles": [
@@ -176,6 +180,30 @@
       "budget": {
         "rawBytes": 118784,
         "gzipBytesBundled": 23552
+      }
+    },
+    {
+      "name": "kernel-with-measure",
+      "doc": "The kernel plus the measurement and observer capability pack (./capabilities/measure), with the capability-support libraries it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/measure/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/"
+      ],
+      "baseline": {
+        "rawBytes": 124360,
+        "gzipBytesBundled": 23674
+      },
+      "budget": {
+        "rawBytes": 137216,
+        "gzipBytesBundled": 26624
       }
     }
   ]

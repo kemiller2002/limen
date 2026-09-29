@@ -1,0 +1,5 @@
+{
+  "doc": "The measurement pack's real-browser page (scripts/smoke-packs.ts). Its engine is main.js.",
+  "view": { "rows": { "list": { "id": "string" } } },
+  "events": { "next": {} }
+}

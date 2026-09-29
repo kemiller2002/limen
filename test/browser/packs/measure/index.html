@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen measurement pack in a real browser</title>
+  <link rel="stylesheet" href="./page.css">
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types. -->
+  <div id="box" data-measure-target="box">box</div>
+  <ul>
+    <template data-each="rows" data-key="id"><li data-bind-data-measure-key="id" data-measure-target="row" data-text="id"></li></template>
+  </ul>
+  <button id="next" data-event="next">Next</button>
+  <div class="spacer"></div>
+  <p id="far" data-measure-target="far">far below the fold</p>
+  <div class="spacer"></div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

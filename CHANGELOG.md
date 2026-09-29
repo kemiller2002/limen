@@ -31,6 +31,16 @@ exhaustive lists.
 
 ### Added
 
+- **Measurement and observer capability pack (#25).** `./capabilities/measure`
+  (`measureCapability()`, contract unit `limen.measure`, with bindings for
+  TypeScript, F#, C# and Rust):
+  - bounding rectangles and viewport and scroll facts as plain JSON;
+  - resize and visibility subscriptions with opaque ids, delivered as
+    capability facts;
+  - a removed target ends its subscription with exactly one `TargetRemoved`,
+    then silence.
+  `capability-support` gains a shared named-target resolver and handle
+  enumeration.
 - **Scheduling capability pack (#24).** `./capabilities/schedule`
   (`scheduleCapability()`, contract unit `limen.schedule`, with bindings for
   TypeScript, F#, C# and Rust) offers timeout, animation frame and idle

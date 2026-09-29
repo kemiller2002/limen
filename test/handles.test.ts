@@ -51,6 +51,13 @@ test("host teardown disposes everything still live, and nothing leaks", () => {
   assert.deepEqual(cleaned.sort(), ["a", "b", "c", "d"]);
 });
 
+test("entries lists every live handle in creation order, and never a disposed one", () => {
+  const table = createHandleTable<string>("s1");
+  const ids = ["a", "b", "c"].map((resource) => table.create(resource, () => {}));
+  table.dispose(ids[1] ?? "");
+  assert.deepEqual(table.entries(), [[ids[0], "a"], [ids[2], "c"]]);
+});
+
 // ---------------------------------------------------------------------------
 // A handle-returning capability, end to end through the kernel
 // ---------------------------------------------------------------------------

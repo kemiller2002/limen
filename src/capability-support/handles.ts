@@ -30,6 +30,9 @@ export type HandleTable<T> = {
   // Host teardown: disposes everything still live. Returns how many were.
   readonly disposeAll: () => number;
   readonly size: () => number;
+  // Every live handle, in creation order — for a pack that must notice when a
+  // resource's own browser object has gone away (a removed target).
+  readonly entries: () => readonly (readonly [string, T])[];
 };
 
 type Entry<T> = { readonly resource: T; readonly dispose: (resource: T) => void };
@@ -73,5 +76,6 @@ export const createHandleTable = <T>(session: string = randomSession()): HandleT
       return entries.length;
     },
     size: () => live.size,
+    entries: () => Array.from(live, ([id, entry]) => [id, entry.resource] as const),
   };
 };

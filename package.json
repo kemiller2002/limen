@@ -31,6 +31,10 @@
       "types": "./dist/capabilities/schedule/index.d.ts",
       "import": "./dist/capabilities/schedule/index.js"
     },
+    "./capabilities/measure": {
+      "types": "./dist/capabilities/measure/index.d.ts",
+      "import": "./dist/capabilities/measure/index.js"
+    },
     "./capability-support/handles": {
       "types": "./dist/capability-support/handles.d.ts",
       "import": "./dist/capability-support/handles.js"
