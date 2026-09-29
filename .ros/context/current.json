@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T17:54:24Z",
+  "updatedAt": "2026-09-29T18:01:25Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2797,24 +2797,48 @@
     {
       "id": "WI-0129",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T17:41:37Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/media/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/media.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/media/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T18:01:24Z",
       "telemetryExecutionIds": [
         "EXE-20260929T174137954Z-b8f3f680"
-      ]
+      ],
+      "completedAt": "2026-09-29T18:01:24Z"
     },
     {
       "id": "WI-0130",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T17:41:38Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/media.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T18:01:25Z",
       "telemetryExecutionIds": [
         "EXE-20260929T174138630Z-a1438652"
-      ]
+      ],
+      "completedAt": "2026-09-29T18:01:25Z"
     },
     {
       "id": "WI-0131",
