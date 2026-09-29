@@ -48,7 +48,7 @@
 | WI-0041 | GH-32 part 2 / GH-51 §7: opaque-handle lifecycle support for capability packs, a handle fixture capability, and a generic provider conformance suite with negative cases | complete | limen,gh-32,gh-51,conformance,handles | high |
 | WI-0042 | Performance baselines: projection, lists, forms, guests, minimal-consumer size (GH-19) | complete |  | medium |
 | WI-0043 | Projection: skip writes to bindings whose value is unchanged (evidence: list-10k noop = 10000 DOM mutations, 22.8ms; bench baseline 2026-09-29, GH-19) | complete |  | medium |
-| WI-0044 | Keyed lists: removing a row must not move every following row (evidence: list remove = 2x mutations of insert; GH-19) | active |  | medium |
+| WI-0044 | Keyed lists: removing a row must not move every following row (evidence: list remove = 2x mutations of insert; GH-19) | complete |  | medium |
 | WI-0045 | Generated TS decoder throughput: strict decode is 10x JSON.parse for a 10k-row view (17.1ms vs 1.7ms) without weakening strictness (GH-19) | captured |  | medium |
 | WI-0046 | F# guest payload: 26 MB and 188 requests vs C# 5.4 MB because FSharp.Core is published untrimmed; find a trim-clean path with no warning suppression (GH-19) | captured |  | medium |
 | WI-0047 | Minimal-consumer import surface: package root loads the reference engine and federation; the kernel loads the whole core codec to decode one handshake (GH-19) | captured |  | medium |
@@ -140,4 +140,4 @@
 | WI-0133 | Guardrail: register the limen.peer contract unit and its F#, C# and Rust bindings (kemiller2002/limen#44) | complete |  | medium |
 | WI-0134 | Guardrail: contract-gen rejects a union field named like another variant of the same union, which generates C# that does not compile (found with limen.media under kemiller2002/limen#44) | complete |  | medium |
 | WI-0135 | Re-baseline the kernel-only payload budget after WI-0043 (compare-before-write, +80 B gzip) put it 56 bytes over (GH-19) | complete |  | medium |
-| WI-0136 | Re-baseline every kernel-loading payload profile after WI-0043/WI-0044 put kernel-with-files 31 bytes over a budget recorded before ~3 KB of in-budget kernel growth (GH-19) | ready |  | medium |
+| WI-0136 | Re-baseline every kernel-loading payload profile after WI-0043/WI-0044 put kernel-with-files 31 bytes over a budget recorded before ~3 KB of in-budget kernel growth (GH-19) | complete |  | medium |
