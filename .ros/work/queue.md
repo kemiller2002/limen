@@ -39,4 +39,4 @@
 | WI-0033 | GH-52: deterministic F#/C#/Rust contract generation, cross-language fingerprint agreement, shared semantic vectors | complete | limen,gh-52,contract,guardrail | high |
 | WI-0034 | GH-53: enforce dependency directions (layer map + import checker) and work-item path scope (scope manifests + commit-level check), guardrail self-modification protection | complete | limen,gh-53,guardrail,governance | high |
 | WI-0035 | GH-54: restricted handwritten TypeScript boundary checker (compiler-API based) with failing fixtures; remove existing escape hatches from Core and the core WASM transport | complete | limen,gh-54,guardrail | high |
-| WI-0036 | GH-55: guest compiler enforcement — added-variant compile pressure in F#/C#/Rust, Roslyn analyzer for C# closed-union handling and escape hatches, C# enum Match | ready | limen,gh-55,guardrail,guests | high |
+| WI-0036 | GH-55: guest compiler enforcement — added-variant compile pressure in F#/C#/Rust, Roslyn analyzer for C# closed-union handling and escape hatches, C# enum Match | complete | limen,gh-55,guardrail,guests | high |

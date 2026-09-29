@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T05:30:34Z",
+  "updatedAt": "2026-09-29T05:37:18Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -692,13 +692,27 @@
     {
       "id": "WI-0036",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T05:30:34Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/csharp/Limen.Contract.Analyzers/LimenAnalyzer.cs"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-csharp.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/guest-pressure.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:37:18Z",
       "telemetryExecutionIds": [
         "EXE-20260929T053035005Z-9eee5fe1"
-      ]
+      ],
+      "completedAt": "2026-09-29T05:37:18Z"
     }
   ]
 }
