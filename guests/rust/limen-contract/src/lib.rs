@@ -24,6 +24,7 @@ pub mod limen_measure;
 pub mod limen_events;
 pub mod limen_overlay;
 pub mod limen_realtime;
+pub mod limen_files;
 
 /// A test-only capability unit, compiled only for the conformance tests.
 #[cfg(test)]

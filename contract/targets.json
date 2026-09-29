@@ -8,7 +8,8 @@
     "contract/measure.contract.json",
     "contract/events.contract.json",
     "contract/overlay.contract.json",
-    "contract/realtime.contract.json"
+    "contract/realtime.contract.json",
+    "contract/files.contract.json"
   ],
   "outputs": [
     {
@@ -241,6 +242,32 @@
       "unit": "limen.realtime",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_realtime.rs"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "typescript-types",
+      "path": "src/capabilities/files/generated/files.ts"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/files/generated/files.codec.ts",
+      "typesModule": "./files.js"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Files.fs"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Files.cs"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_files.rs"
     }
   ]
 }

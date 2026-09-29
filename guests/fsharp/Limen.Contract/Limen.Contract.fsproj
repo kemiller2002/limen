@@ -19,5 +19,6 @@
     <Compile Include="Generated/Events.fs" />
     <Compile Include="Generated/Overlay.fs" />
     <Compile Include="Generated/Realtime.fs" />
+    <Compile Include="Generated/Files.fs" />
   </ItemGroup>
 </Project>
