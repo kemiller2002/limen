@@ -298,6 +298,30 @@ fallback behavior.
 A module should treat its snapshot as its own versioned persistence format.
 Cross-module references should be stable identifiers, not object identity.
 
+### Lazy, route- or workflow-driven loading
+
+`createLazyFederation(federation)` drives that lifecycle on demand
+(kemiller2002/limen#33, LCP-024). Nothing loads at startup.
+
+| Call | What it does |
+| --- | --- |
+| `forRoute(path)` | ensures every module whose manifest `routes` match: exactly, or as a prefix for a route ending in `/*` |
+| `ensure(id)` | `Ready`. Dependencies start first, one after another. Concurrent requests share one load. |
+| | `Blocked { dependency }` when a dependency is not ready. The blocked module never loads. |
+| | `Faulted` when the module itself failed. Asking again **does not retry**. |
+| `release(id)` | stops the module and **keeps its snapshot**. The next `ensure` restores exactly that snapshot, so a restore is deterministic. `InUse` while an active dependent needs it. |
+| `retry(id)` | the only retry: `ModuleFederation.reset(id)` takes the faulted module back to `Unloaded` (reported as `ModuleReset`), then `ensure` starts it again |
+| `status(id)` | `idle`, `loading`, `ready`, `faulted`, `released` or `unavailable` |
+
+A failure stays with the module that failed. Independent modules load and
+stay active, and only dependents are blocked.
+
+Deciding **when** to load is the caller's job. Typically that is an engine
+reacting to `LocationChanged`, or a workflow step. `test/federation-lazy.test.ts`
+drives it through the real kernel with a real `popstate`. Retrying, falling
+back and recovering business state stay with the owning workflow. The runtime
+only performs the lifecycle.
+
 ---
 
 ## Cross-module workflows

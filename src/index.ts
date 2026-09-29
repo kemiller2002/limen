@@ -1,5 +1,7 @@
 export {
   ModuleFederation,
+  createLazyFederation,
+  routeMatches,
   FederationError,
   FEDERATION_PROTOCOL_VERSION,
   noopFederationDiagnostics,
@@ -82,6 +84,10 @@ export type {
   FederationStartReport,
   FederationStartupBlock,
   JsonPrimitive,
+  LazyFederation,
+  LazyOutcome,
+  LazyRelease,
+  LazyStatus,
   JsonValue,
   ModuleDispatchResult,
   ModuleId,

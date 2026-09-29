@@ -48,6 +48,13 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Lazy federation loading (#33).** `createLazyFederation(federation)` loads
+  modules when a route or workflow asks:
+  - dependencies start first, and failures stay isolated;
+  - a released module keeps its snapshot and is restored from it
+    deterministically;
+  - a faulted module is retried only through `retry()`.
+  `ModuleFederation.reset()` is the explicit `Faulted` → `Unloaded` step.
 - **Optional fatal-fallback host (#50).** `./hosts/fallback`
   (`startWithFallback`):
   - mechanical host health (`starting`, `available`, `unavailable`);
