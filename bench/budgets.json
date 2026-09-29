@@ -68,6 +68,10 @@
     {
       "workItem": "WI-0100",
       "change": "Added kernel-with-lifecycle (kemiller2002/limen#43): the page, connectivity and lifecycle evidence pack adds 5735 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/lifecycle/."
+    },
+    {
+      "workItem": "WI-0105",
+      "change": "Re-baselined minimal-consumer after protocol 1.4 (kemiller2002/limen#40): OutcomeUnknownReason in the generated Core codec and the kernel classifying a thrown fetch by method and connectivity. Measured on minimal-consumer against the commit before WI-0103: +497 bytes gzip (+1686 raw), which put it 80 bytes over its budget. Most of its growth since WI-0085 (29279 against a 26764 baseline, +2515 bytes gzip) came earlier and stayed within headroom: chiefly WI-0089 projection atomicity, WI-0090 kernel status and dispose, and WI-0092 lazy federation in the package root. Only that profile is re-baselined; every other profile stays within its existing budget and keeps its baseline."
     }
   ],
   "profiles": [
@@ -84,12 +88,12 @@
         "dist/capabilities/"
       ],
       "baseline": {
-        "rawBytes": 129877,
-        "gzipBytesBundled": 26764
+        "rawBytes": 143076,
+        "gzipBytesBundled": 29776
       },
       "budget": {
-        "rawBytes": 143360,
-        "gzipBytesBundled": 29696
+        "rawBytes": 157696,
+        "gzipBytesBundled": 32768
       }
     },
     {
