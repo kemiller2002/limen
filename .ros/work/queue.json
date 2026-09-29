@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 63,
+  "nextSeq": 65,
   "items": [
     {
       "id": "WI-0001",
@@ -996,6 +996,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T07:48:37Z",
       "updatedAt": "2026-09-29T07:54:00Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0063",
+      "title": "Scheduling capability pack: timeout, animation frame, idle; typed, cancellable, exactly-once (GH-24)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:54:30Z",
+      "updatedAt": "2026-09-29T07:54:30Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0064",
+      "title": "Guardrail: register the limen.schedule contract unit and its generated bindings (GH-24)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:54:31Z",
+      "updatedAt": "2026-09-29T07:54:31Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
