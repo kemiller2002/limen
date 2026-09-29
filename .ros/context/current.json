@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T17:10:33Z",
+  "updatedAt": "2026-09-29T17:11:17Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2720,13 +2720,23 @@
     {
       "id": "WI-0126",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T17:10:33Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/architecture/core-boundary-v1.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/core-boundary.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T17:11:17Z",
       "telemetryExecutionIds": [
         "EXE-20260929T171034029Z-921daff9"
-      ]
+      ],
+      "completedAt": "2026-09-29T17:11:17Z"
     }
   ]
 }
