@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 131,
+  "nextSeq": 132,
   "items": [
     {
       "id": "WI-0001",
@@ -1948,6 +1948,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T17:41:22.196Z",
       "updatedAt": "2026-09-29T17:41:37Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0131",
+      "title": "Guardrail: the Core Admission test's mismatched-id fixture used CA-0002, which is now a real record; use an id no record will take (kemiller2002/limen#63)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T17:53:57.924Z",
+      "updatedAt": "2026-09-29T17:54:08Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
