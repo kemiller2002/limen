@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0063",
+  "reference": "kemiller2002/limen#24 (LCP-010)",
+  "placement": "Capability Pack — src/capabilities/schedule/ with its own contract unit; timing is browser mechanism the engine asks for explicitly. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/schedule.contract.json", "src/capabilities/schedule/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
