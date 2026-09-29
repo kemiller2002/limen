@@ -102,6 +102,7 @@ Then, for depth:
 | 53 | [Cross-context coordination](https://github.com/kemiller2002/limen/blob/main/docs/53-cross-context-coordination.md) | How do tabs, frames and workers of one application exchange validated messages, elect a leader and trust only an exact origin, with no shared state? |
 | 54 | [Server and static rendering](https://github.com/kemiller2002/limen/blob/main/docs/54-server-rendering.md) | How does the same engine render a route to semantic HTML on a server or at build time, with browser-only capabilities explicitly absent? |
 | 55 | [Camera, microphone and recording](https://github.com/kemiller2002/limen/blob/main/docs/55-media.md) | How does an engine capture, preview and record camera and microphone without holding a stream, with denial, missing devices and cleanup explicit? |
+| 56 | [Peer connections (WebRTC)](https://github.com/kemiller2002/limen/blob/main/docs/56-peer-connections.md) | How does an engine run a WebRTC call — relaying offers, answers and candidates itself — without holding a connection, with state and cleanup explicit? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 

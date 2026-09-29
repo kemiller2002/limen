@@ -99,10 +99,10 @@ Measured along the way:
 
 ## Peer connections
 
-WebRTC is the other half of #44 and is a separate pack. A peer connection is
-not the same resource as a capture, and packs never import each other: an
-application gives the peer pack access to its captures explicitly, the way
-the transfer profile is given the files pack's files.
+Sending a capture to a peer is the [peer connection pack](56-peer-connections.md).
+The application hands it this pack's captures explicitly
+(`peerCapability({ captures: media })`), using `streamFor`. A peer connection
+is not the same resource as a capture, and packs never import each other.
 
 ## Size
 

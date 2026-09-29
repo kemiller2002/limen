@@ -102,7 +102,12 @@ const toBase64 = (view: View, bytes: Uint8Array): string => {
 // every capture and recording this provider still owns. Returns how many.
 export type MediaTeardown = { readonly dispose: () => number };
 
-export const mediaCapability = (): CapabilityProvider & MediaTeardown => {
+// What another pack may be given, explicitly, by the application: the stream
+// behind a live capture id this pack issued (the peer pack sends it). Nothing
+// is shared implicitly, and the stream never crosses to the engine.
+export type CaptureSource = { readonly streamFor: (id: string) => MediaStream | undefined };
+
+export const mediaCapability = (): CapabilityProvider & MediaTeardown & CaptureSource => {
   const captures = createHandleTable<Captured>();
   const recordings = createHandleTable<Recorded>();
   const wiring: { host?: CapabilityHost<MediaFact>; readonly watchers: Map<MediaDevice, () => void> } = { watchers: new Map() };
@@ -332,5 +337,10 @@ export const mediaCapability = (): CapabilityProvider & MediaTeardown => {
     return recordings.disposeAll() + captures.disposeAll();
   };
 
-  return { ...defineCapability<MediaRequest, MediaResult, MediaFact>({ offer: CAPABILITY_OFFER, decodeRequest: decodeMediaRequest, execute, activate }), dispose };
+  const streamFor = (id: string): MediaStream | undefined => {
+    const found = captures.use(id);
+    return found.kind === "Live" && !found.resource.state.ended ? found.resource.stream : undefined;
+  };
+
+  return { ...defineCapability<MediaRequest, MediaResult, MediaFact>({ offer: CAPABILITY_OFFER, decodeRequest: decodeMediaRequest, execute, activate }), dispose, streamFor };
 };

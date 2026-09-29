@@ -1,0 +1,69 @@
+{
+  "unit": "limen.peer",
+  "role": "capability",
+  "version": 1,
+  "doc": "WebRTC peer connections (LCP-038). An RTCPeerConnection, a track or a stream never crosses the boundary: the engine holds an opaque connection id. Offers, answers and ICE candidates are plain data the engine relays itself, by whatever channel it chooses, because who the peer is and how to reach it is signaling meaning, the application's. Local media comes from captures the media pack issued, handed to this pack explicitly by the application; remote media is shown in a <video data-peer-remote> the HTML names. Connection state, local candidates, remote tracks and renegotiation are facts. close, and the provider's own disposal, end every connection.",
+  "types": [
+    { "name": "ConnectionId", "kind": "brand", "of": "string", "doc": "Opaque; issued by this page's pack and meaningless anywhere else." },
+    { "name": "PeerStaleReason", "kind": "enum", "values": ["unknown", "disposed", "other-session"] },
+    { "name": "SdpType", "kind": "enum", "values": ["offer", "answer", "pranswer", "rollback"] },
+    { "name": "SessionDescription", "kind": "record", "doc": "What one side sends the other: the browser's own session description, unchanged.", "fields": [ { "name": "type", "type": "SdpType" }, { "name": "sdp", "type": "string" } ] },
+    { "name": "IceCandidate", "kind": "record", "doc": "One ICE candidate, as the browser produced it, for the engine to relay.", "fields": [
+      { "name": "candidate", "type": "string" }, { "name": "sdpMid", "type": "string", "optional": true }, { "name": "sdpMLineIndex", "type": "int", "optional": true }, { "name": "usernameFragment", "type": "string", "optional": true } ] },
+    { "name": "IceServer", "kind": "record", "doc": "A STUN or TURN server the application chose. Credentials are the application's to supply and are never reported back.", "fields": [
+      { "name": "urls", "type": { "list": "string" } }, { "name": "username", "type": "string", "optional": true }, { "name": "credential", "type": "string", "optional": true } ] },
+    { "name": "PeerState", "kind": "enum", "doc": "The browser's RTCPeerConnectionState.", "values": ["new", "connecting", "connected", "disconnected", "failed", "closed"] },
+    { "name": "RemoteKind", "kind": "enum", "values": ["audio", "video"] },
+    { "name": "RemoteTarget", "kind": "record", "doc": "A <video> named in HTML by data-peer-remote; key selects a row by the nearest data-peer-key ancestor.", "fields": [ { "name": "name", "type": "string" }, { "name": "key", "type": "string", "optional": true } ] },
+    {
+      "name": "PeerRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "open", "doc": "A new connection. No network activity starts until tracks are added and descriptions exchanged.", "fields": [ { "name": "iceServers", "type": { "list": "IceServer" } } ] },
+        { "name": "addCapture", "doc": "Send every live track of a capture the media pack issued. The application gave this pack access to those captures; without it every capture id is UnknownCapture.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "capture", "type": "string" } ] },
+        { "name": "createOffer", "fields": [ { "name": "connection", "type": "ConnectionId" } ] },
+        { "name": "createAnswer", "fields": [ { "name": "connection", "type": "ConnectionId" } ] },
+        { "name": "setLocal", "doc": "Apply a description this connection created.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "description", "type": "SessionDescription" } ] },
+        { "name": "setRemote", "doc": "Apply the other side's description, as the engine received it.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "description", "type": "SessionDescription" } ] },
+        { "name": "addCandidate", "doc": "Apply the other side's ICE candidate, as the engine received it.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "candidate", "type": "IceCandidate" } ] },
+        { "name": "showRemote", "doc": "Show the connection's remote media in the named <video>. Remote audio plays; the page's autoplay policy may hold it until the user interacts.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "target", "type": "RemoteTarget" } ] },
+        { "name": "close", "doc": "End the connection and release the id.", "fields": [ { "name": "connection", "type": "ConnectionId" } ] }
+      ]
+    },
+    {
+      "name": "PeerResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Opened", "fields": [ { "name": "connection", "type": "ConnectionId" } ] },
+        { "name": "TracksAdded", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "Described", "doc": "The description this connection created, to be applied with setLocal and relayed by the engine.", "fields": [ { "name": "description", "type": "SessionDescription" } ] },
+        { "name": "Applied", "fields": [] },
+        { "name": "Showing", "fields": [] },
+        { "name": "NotFound", "doc": "No element carries that remote name (and key).", "fields": [] },
+        { "name": "Ambiguous", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "WrongElement", "doc": "The named element is not a <video>.", "fields": [] },
+        { "name": "Closed", "fields": [] },
+        { "name": "UnknownCapture", "doc": "No live capture has that id, or this pack was not given access to captures.", "fields": [] },
+        { "name": "Rejected", "doc": "The browser refused the description or candidate in this state (its error name), e.g. an answer before an offer.", "fields": [ { "name": "reason", "type": "string" } ] },
+        { "name": "Stale", "fields": [ { "name": "reason", "type": "PeerStaleReason" } ] },
+        { "name": "NotSupported", "doc": "This browser has no RTCPeerConnection.", "fields": [] },
+        { "name": "Cancelled", "fields": [] },
+        { "name": "Failed", "doc": "The browser failed in a way none of the above names. reason is its error name.", "fields": [ { "name": "reason", "type": "string" } ] }
+      ]
+    },
+    {
+      "name": "PeerFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "LocalCandidate", "doc": "A candidate for the engine to relay to the other side.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "candidate", "type": "IceCandidate" } ] },
+        { "name": "GatheringComplete", "fields": [ { "name": "connection", "type": "ConnectionId" } ] },
+        { "name": "StateChanged", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "state", "type": "PeerState" } ] },
+        { "name": "RemoteTrackArrived", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "track", "type": "RemoteKind" } ] },
+        { "name": "NegotiationNeeded", "doc": "The browser needs a new offer (a track was added after the first exchange).", "fields": [ { "name": "connection", "type": "ConnectionId" } ] }
+      ]
+    }
+  ]
+}

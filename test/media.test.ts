@@ -325,3 +325,19 @@ test("no id of one kind is accepted as the other", async () => {
     assert.equal((await ask({ operation: "finish", recording: id as unknown as RecordingId })).kind, "Stale");
   });
 });
+
+test("streamFor gives another pack a live capture's stream, as the application granted — never an ended or stopped one", async () => {
+  await withDom(BODY, async (document) => {
+    const browser = browserWith();
+    install(document.defaultView as Window, browser);
+    const { ask, provider } = pack(document);
+    const live = capturing(await ask({ operation: "startCapture", audio: false, video: true }));
+    const ending = capturing(await ask({ operation: "startCapture", audio: true, video: false }));
+    assert.equal(provider.streamFor(live), browser.streams[0] as unknown as MediaStream);
+    browser.streams[1]?.tracks[0]?.end();
+    assert.equal(provider.streamFor(ending), undefined, "an ended capture");
+    await ask({ operation: "stop", capture: live });
+    assert.equal(provider.streamFor(live), undefined, "a stopped capture");
+    assert.equal(provider.streamFor("invented"), undefined);
+  });
+});

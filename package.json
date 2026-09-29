@@ -91,6 +91,10 @@
       "types": "./dist/capabilities/media/index.d.ts",
       "import": "./dist/capabilities/media/index.js"
     },
+    "./capabilities/peer": {
+      "types": "./dist/capabilities/peer/index.d.ts",
+      "import": "./dist/capabilities/peer/index.js"
+    },
     "./capabilities/geolocation": {
       "types": "./dist/capabilities/geolocation/index.d.ts",
       "import": "./dist/capabilities/geolocation/index.js"

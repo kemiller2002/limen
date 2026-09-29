@@ -99,6 +99,21 @@ exhaustive lists.
 
 ### Added
 
+- **WebRTC peer connection pack (#44), `…/capabilities/peer`.**
+  - Connections are opaque ids.
+  - Offers, answers and ICE candidates are data the engine relays: signaling
+    is the application's.
+  - Local media comes from media-pack captures, and only through the
+    `CaptureSource` the application passes in (`peerCapability({ captures:
+    media })`).
+  - Remote media plays in a named `<video data-peer-remote>`.
+  - Connection state and remote tracks are facts.
+  - `Rejected` (a refusal in the current state) is distinct from `Failed`.
+  - `close` and `dispose()` end everything.
+  - Verified in Chromium: two connections in one page connect with the
+    engine relaying, and one plays the other's fake camera (8 checks).
+  - The media pack gained `streamFor`.
+  - See [docs/56](https://github.com/kemiller2002/limen/blob/main/docs/56-peer-connections.md).
 - **Media capture and recording pack (#44), `…/capabilities/media`.**
   - Camera and microphone follow the permission pattern: availability,
     permission and each capture's outcome are kept apart.

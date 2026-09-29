@@ -104,6 +104,10 @@
     {
       "workItem": "WI-0129",
       "change": "Added kernel-with-media (kemiller2002/limen#44): the capture and recording pack, with the shared permission, handle and target support, adds 11837 bytes gzip over the kernel (measured with an absolute root), and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/media/."
+    },
+    {
+      "workItem": "WI-0132",
+      "change": "Added kernel-with-peer (kemiller2002/limen#44): the WebRTC peer connection pack adds 7867 bytes gzip over the kernel (absolute root), and only to applications that register it; it never loads the media pack or the permission support. Earlier kernel-with-* profiles now also forbid dist/capabilities/peer/. kernel-with-media grew 31 bytes gzip with the streamFor accessor, within its budget."
     }
   ],
   "profiles": [
@@ -179,7 +183,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 112498,
@@ -216,7 +221,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 102812,
@@ -253,7 +259,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 105920,
@@ -291,7 +298,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 117456,
@@ -328,7 +336,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 122768,
@@ -366,7 +375,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 115285,
@@ -404,7 +414,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 132137,
@@ -444,7 +455,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 132375,
@@ -483,7 +495,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 131934,
@@ -522,7 +535,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 133014,
@@ -561,7 +575,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 134030,
@@ -601,7 +616,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 151216,
@@ -641,7 +657,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 137357,
@@ -681,7 +698,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 130595,
@@ -707,7 +725,8 @@
         "dist/capabilities/",
         "dist/hosts/dotnet-wasm-transport.js",
         "dist/hosts/raw-wasm-transport.js",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 114331,
@@ -747,7 +766,8 @@
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 127635,
@@ -782,7 +802,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 137009,
@@ -818,7 +839,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 138815,
@@ -855,7 +877,8 @@
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
         "dist/capabilities/lifecycle/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 138103,
@@ -895,7 +918,8 @@
         "dist/capabilities/credentials/",
         "dist/capability-support/handles.js",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 136850,
@@ -935,7 +959,8 @@
         "dist/capabilities/geolocation/",
         "dist/capability-support/handles.js",
         "dist/capabilities/coordination/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 145686,
@@ -973,7 +998,8 @@
         "dist/capabilities/environment/",
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
-        "dist/capabilities/media/"
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 153406,
@@ -1036,7 +1062,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/credentials/",
         "dist/capabilities/coordination/",
-        "dist/capabilities/geolocation/"
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
         "rawBytes": 174295,
@@ -1045,6 +1072,47 @@
       "budget": {
         "rawBytes": 192512,
         "gzipBytesBundled": 37888
+      }
+    },
+    {
+      "name": "kernel-with-peer",
+      "doc": "The kernel plus the WebRTC peer connection pack (./capabilities/peer) and the shared handle and target support it imports, as an application that registers it loads them. It does not load the media pack: an application that sends a camera registers both and hands the peer pack the media pack's captures.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/peer/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/media/",
+        "dist/capability-support/permissions.js"
+      ],
+      "baseline": {
+        "rawBytes": 152587,
+        "gzipBytesBundled": 30371
+      },
+      "budget": {
+        "rawBytes": 167936,
+        "gzipBytesBundled": 33792
       }
     }
   ]
