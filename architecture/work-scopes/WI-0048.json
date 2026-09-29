@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0048",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Guardrail — a new compiler configuration (tsconfig.*.json is guardrail-owned). It adds a program under the same strict options every tsconfig must keep (test/guardrails.test.ts) and weakens nothing.",
+  "guardrail": true,
+  "paths": ["tsconfig.bench.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
