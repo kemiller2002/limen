@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 100,
+  "nextSeq": 102,
   "items": [
     {
       "id": "WI-0001",
@@ -1514,6 +1514,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T11:19:27Z",
       "updatedAt": "2026-09-29T11:19:42Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0100",
+      "title": "Page, connectivity and browser lifecycle evidence pack: online/offline, visibility, pagehide/pageshow with persisted (bfcache), freeze/resume, advisory connection facts, prerendering; cancellable subscriptions (GH-43)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:20:12Z",
+      "updatedAt": "2026-09-29T11:20:13Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0101",
+      "title": "Guardrail: register the limen.lifecycle contract unit and its generated bindings (GH-43)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:20:14Z",
+      "updatedAt": "2026-09-29T11:20:14Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
