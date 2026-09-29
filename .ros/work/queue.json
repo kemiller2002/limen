@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 134,
+  "nextSeq": 135,
   "items": [
     {
       "id": "WI-0001",
@@ -1990,6 +1990,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T18:02:07.044Z",
       "updatedAt": "2026-09-29T18:12:58Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0134",
+      "title": "Guardrail: contract-gen rejects a union field named like another variant of the same union, which generates C# that does not compile (found with limen.media under kemiller2002/limen#44)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T18:13:42.553Z",
+      "updatedAt": "2026-09-29T18:13:59Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
