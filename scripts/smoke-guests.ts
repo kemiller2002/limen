@@ -2,8 +2,12 @@
 // minimal engines, compiled to WebAssembly, each drive every built-in Limen
 // capability through the same unmodified kernel — a success and a failure
 // path per capability where a real browser can produce one — with the
-// contract-fingerprint handshake required. Run scripts/build-guests-site.ts
-// first. Needs Playwright (Chromium).
+// contract-fingerprint handshake required. Each engine runs twice: in the
+// page, and in a dedicated worker behind WorkerTransport (kemiller2002/limen#41)
+// with the same page and kernel; the worker run also proves the main thread
+// loaded no engine code, and that a terminated or unstartable worker is an
+// explicit fault. Run scripts/build-guests-site.ts first. Needs Playwright
+// (Chromium).
 
 import { spawn } from "node:child_process";
 import { join } from "node:path";
@@ -59,14 +63,15 @@ if (chromium === undefined) {
 } else {
   const browser = await chromium.launch();
   try {
-    for (const engine of ["fsharp", "csharp", "rust"]) {
+    for (const [language, host] of ["fsharp", "csharp", "rust"].flatMap((name) => [[name, "page"], [name, "worker"]] as const)) {
+      const engine = host === "worker" ? `${language} (worker)` : language;
       // Clipboard writes are permission-gated; this context grants the
       // permission so the success path is observable. The denied path is
       // exercised below without it.
       const context = await browser.newContext({ permissions: ["clipboard-read", "clipboard-write"] });
       const page = await context.newPage();
       page.on("pageerror", (error) => { failures.push(`${engine}: uncaught page error ${error.message}`); });
-      await page.goto(`http://127.0.0.1:${PORT}/guests/minimal/host/index.html?engine=${engine}`);
+      await page.goto(`http://127.0.0.1:${PORT}/guests/minimal/host/index.html?engine=${language}${host === "worker" ? "&host=worker" : ""}`);
       try {
         await page.waitForFunction("document.querySelector('[data-text=status]')?.textContent === 'ready'", undefined, { timeout: 60000 });
         await waitForLog(page, /^ready$/);
@@ -85,6 +90,20 @@ if (chromium === undefined) {
         else results.push(`PASS  ${engine}: contract fingerprint handshake negotiated (requireHandshake)`);
         const pushes = await page.evaluate<number>("window.limenDiagnostics.filter((event) => event.kind === 'BridgeError').length");
         if (pushes !== 0) failures.push(`${engine}: ${pushes} bridge error(s)`);
+        // The page's own resource timeline: a worker's loads are its own.
+        const engineOnMain = await page.evaluate<readonly string[]>("performance.getEntriesByType('resource').map((entry) => entry.name).filter((name) => /_framework\\/|\\.wasm$/.test(name))");
+        // In the page the probe must see the engine load, or its silence in
+        // the worker run would prove nothing.
+        if (host === "page" && engineOnMain.length === 0) failures.push(`${engine}: the resource probe saw no engine code even in the page`);
+        if (host === "worker") {
+          if (engineOnMain.length > 0) failures.push(`${engine}: the main thread loaded engine code: ${engineOnMain.join(", ")}`);
+          else results.push(`PASS  ${engine}: the engine ran in the worker; the main thread loaded no engine code`);
+          await page.evaluate("window.limenTransport.terminate()");
+          await page.click('button[data-event="storage-get"]');
+          const fault = await page.waitForFunction("window.limenDiagnostics.some((event) => event.kind === 'BridgeError' && event.phase === 'dispatch' && event.detail.includes('WorkerTerminated'))", undefined, { timeout: 5000 }).then(() => true, () => false);
+          if (fault) results.push(`PASS  ${engine}: a terminated worker is an explicit dispatch fault (WorkerTerminated), not a hang`);
+          else failures.push(`${engine}: terminating the worker did not surface as a WorkerTerminated fault`);
+        }
       } catch (error) {
         failures.push(`${engine}: did not start — ${String(error)}`);
       }
@@ -92,7 +111,7 @@ if (chromium === undefined) {
 
       const denied = await browser.newContext();
       const deniedPage = await denied.newPage();
-      await deniedPage.goto(`http://127.0.0.1:${PORT}/guests/minimal/host/index.html?engine=${engine}`);
+      await deniedPage.goto(`http://127.0.0.1:${PORT}/guests/minimal/host/index.html?engine=${language}${host === "worker" ? "&host=worker" : ""}`);
       await deniedPage.waitForFunction("document.querySelector('[data-text=status]')?.textContent === 'ready'", undefined, { timeout: 60000 });
       await deniedPage.click('button[data-event="clipboard"]');
       try {
@@ -103,6 +122,14 @@ if (chromium === undefined) {
       }
       await denied.close();
     }
+    // A worker whose engine cannot load: start fails, explicitly.
+    const broken = await browser.newContext();
+    const brokenPage = await broken.newPage();
+    await brokenPage.goto(`http://127.0.0.1:${PORT}/guests/minimal/host/index.html?engine=broken&host=worker`);
+    const startFault = await brokenPage.waitForFunction("window.limenDiagnostics.some((event) => event.kind === 'BridgeError' && event.detail.includes('WorkerStartFailed'))", undefined, { timeout: 30000 }).then(() => true, () => false);
+    if (startFault) results.push("PASS  broken (worker): an engine that cannot load is an explicit WorkerStartFailed diagnostic, not a hang");
+    else failures.push(`broken (worker): expected a WorkerStartFailed diagnostic — got ${await brokenPage.evaluate<string>("JSON.stringify(window.limenDiagnostics)")}`);
+    await broken.close();
   } finally {
     await browser.close();
   }

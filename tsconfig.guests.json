@@ -1,6 +1,6 @@
 {
   // Type-checks and emits the minimal-engine host page
-  // (guests/minimal/host/main.ts → main.js, in place), importing the package
+  // (guests/minimal/host/main.ts → main.js and its worker, worker.ts → worker.js, in place), importing the package
   // from dist/ exactly as a consumer would. scripts/build-guests-site.ts
   // assembles the served tree so the ../../../dist specifiers resolve there.
   "compilerOptions": {
@@ -18,5 +18,5 @@
     "rootDir": "guests/minimal/host",
     "outDir": "guests/minimal/host"
   },
-  "files": ["guests/minimal/host/main.ts", "guests/minimal/host/runtime-modules.d.ts"]
+  "files": ["guests/minimal/host/main.ts", "guests/minimal/host/worker.ts", "guests/minimal/host/runtime-modules.d.ts"]
 }
