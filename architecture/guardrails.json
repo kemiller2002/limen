@@ -1,0 +1,36 @@
+{
+  "doc": "Guardrail-owned paths and required gates. A commit that changes a guardrail path must belong to a work item whose scope manifest (architecture/work-scopes/WI-####.json) declares \"guardrail\": true. Feature work is not authority to change its supervisor (kemiller2002/limen#51 §11). Checked by scripts/check-scope.ts; required gates are checked by test/guardrails.test.ts.",
+  "paths": [
+    "architecture/layers.json",
+    "architecture/guardrails.json",
+    "tools/guardrails/**",
+    "tools/contract-gen/**",
+    "scripts/check-*.ts",
+    ".github/workflows/**",
+    ".github/CODEOWNERS",
+    "tsconfig.json",
+    "tsconfig.*.json",
+    "contract/targets.json",
+    "guests/**/*.fsproj",
+    "guests/**/*.csproj",
+    "guests/**/Cargo.toml",
+    "guests/rust/*/src/lib.rs",
+    "test/guardrails.test.ts",
+    "test/layers.test.ts",
+    "test/scope.test.ts"
+  ],
+  "exemptPaths": [".ros/**", "registries/**"],
+  "workScopes": "architecture/work-scopes",
+  "legacyWorkItems": {
+    "doc": "Work items completed on this branch before scope manifests existed. Their manifests were recorded after the fact from the scope each declared in its ROS work-item description; no later work item may use this exemption.",
+    "ids": ["WI-0027", "WI-0028", "WI-0029", "WI-0033"]
+  },
+  "requiredGates": {
+    "testScript": ["contract:check", "check:architecture", "check:layers", "check:docs", "check:site", "check:package"],
+    "ciSteps": ["npm run check", "npm run contract:check", "npm run test:guests", "npm run check:scope"],
+    "tsconfigCompilerOptions": { "strict": true, "noUncheckedIndexedAccess": true, "exactOptionalPropertyTypes": true, "noEmitOnError": true },
+    "fsprojProperties": { "TreatWarningsAsErrors": "true" },
+    "csprojProperties": { "TreatWarningsAsErrors": "true", "Nullable": "enable" },
+    "rustLibAttributes": ["#![forbid(unsafe_code)]", "#![deny(warnings)]"]
+  }
+}

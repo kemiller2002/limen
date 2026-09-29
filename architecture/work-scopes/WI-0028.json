@@ -1,0 +1,26 @@
+{
+  "workItem": "WI-0028",
+  "reference": "kemiller2002/limen#16",
+  "placement": "Core (protocol envelope, kernel extension seam) + Tooling (contract source, generator) — a #16/#51-class Core and guardrail work item",
+  "guardrail": true,
+  "paths": [
+    "contract/**", "tools/contract-gen/**", "src/protocol.ts", "src/generated/**", "src/kernel/**", "src/guest/**", "src/index.ts",
+    "test/**", "docs/**", "research/decisions/**", "package.json", "architecture.yaml", "scripts/check-*.ts",
+    "README.md", "CHANGELOG.md", "AGENTS.md", "CLAUDE.md"
+  ],
+  "expansions": [
+    {
+      "paths": ["src/engine/engine.ts", "examples/0*/engine.ts"],
+      "reason": "Compiler-directed propagation: the new BrowserToEngineMessage.CapabilityFact member made every exhaustive switch in the reference and example engines fail to compile; each gained one case treating the fact as a contract violation. No semantic decision beyond the existing one for unrequested results."
+    },
+    {
+      "paths": ["examples/kitchen-sink.js", "site/app/main.ts"],
+      "reason": "Real-browser smoke failure: both diagnostics sinks assumed DiagnosticEvent had two kinds and threw on the new Handshake event; each now switches on kind."
+    },
+    {
+      "paths": ["site/pages/architecture.html"],
+      "reason": "scripts/check-docs.ts cross-checks the website's quoted BrowserToEngineMessage against the source; the new member made it stale."
+    }
+  ],
+  "recordedAfterCompletion": true
+}

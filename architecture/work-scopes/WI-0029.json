@@ -1,0 +1,14 @@
+{
+  "workItem": "WI-0029",
+  "reference": "ROS validation findings raised by WI-0028",
+  "placement": "Repository governance (mechanical)",
+  "guardrail": false,
+  "paths": ["research/decisions/**"],
+  "expansions": [
+    {
+      "paths": ["docs/**", "src/**"],
+      "reason": "The decision-record rename (DF-LIMEN-2026-001 to DF-LIMEN-2026-0001, the identifier format ROS requires) updated references in documentation and code comments only."
+    }
+  ],
+  "recordedAfterCompletion": true
+}

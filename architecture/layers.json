@@ -1,0 +1,60 @@
+{
+  "doc": "Which layer owns which paths, and which layers each may import. Checked by scripts/check-layers.ts (npm test). Guardrail-owned: change only under a guardrail-scoped work item (architecture/guardrails.json).",
+  "layers": [
+    {
+      "name": "core-contract",
+      "doc": "The wire contract as the host sees it, plus guest-side protocol support. Pure data and pure functions.",
+      "paths": ["src/protocol.ts", "src/generated/**", "src/guest/**"],
+      "mayImport": ["core-contract"]
+    },
+    {
+      "name": "core-kernel",
+      "doc": "The browser bridge. Browser mechanism only; knows no capability pack and no application.",
+      "paths": ["src/kernel/**"],
+      "mayImport": ["core-contract", "core-kernel"]
+    },
+    {
+      "name": "federation-host",
+      "doc": "Optional host: multi-engine federation runtime.",
+      "paths": ["src/federation.ts"],
+      "mayImport": ["core-contract"]
+    },
+    {
+      "name": "reference-engine",
+      "doc": "The TypeScript reference application engine. Application meaning; no browser mechanism.",
+      "paths": ["src/engine/**"],
+      "mayImport": ["core-contract", "reference-engine"]
+    },
+    {
+      "name": "package-facade",
+      "doc": "The npm package's root exports and demo entry point. Capability packs are exported from their own subpaths, never from here.",
+      "paths": ["src/index.ts", "src/main.ts"],
+      "mayImport": ["core-contract", "core-kernel", "federation-host", "reference-engine"]
+    },
+    {
+      "name": "capability-pack",
+      "doc": "An optional browser capability. One instance per directory; packs never import each other or any application.",
+      "paths": ["src/capabilities/*/**"],
+      "instance": "src/capabilities/*",
+      "mayImport": ["core-contract", "core-kernel", "same-instance"]
+    }
+  ],
+  "externalImports": {
+    "doc": "Every layer above is in the published package, which has zero runtime dependencies: a bare or node: specifier is a violation.",
+    "allowed": []
+  },
+  "engineLibraries": {
+    "doc": "Pure application-side libraries in any guest language. They may not acquire browser, JavaScript-interop, network, filesystem or process authority. A library that genuinely needs one is a host adapter and belongs elsewhere.",
+    "paths": ["libraries/**"],
+    "forbidden": {
+      ".fs": ["System.Runtime.InteropServices.JavaScript", "Microsoft.JSInterop", "Fable.Core", "Browser.Dom", "JSImport", "JSExport", "JSHost", "JSObject", "System.Net.Http", "HttpClient", "System.IO", "System.Diagnostics.Process", "System.Net.WebSockets"],
+      ".cs": ["System.Runtime.InteropServices.JavaScript", "Microsoft.JSInterop", "JSImport", "JSExport", "JSHost", "JSObject", "System.Net.Http", "HttpClient", "System.IO", "System.Diagnostics.Process", "System.Net.WebSockets"],
+      ".rs": ["wasm_bindgen", "web_sys", "js_sys", "std::fs", "std::net", "std::process", "std::env"],
+      ".ts": ["document", "window", "fetch(", "localStorage", "sessionStorage", "navigator", "XMLHttpRequest", "WebSocket", "node:"]
+    }
+  },
+  "protocolForbiddenTypes": {
+    "doc": "Browser runtime objects never cross the boundary. No contract type may take one of these names, and no core-contract source may mention one.",
+    "names": ["Node", "Element", "HTMLElement", "Document", "Window", "Event", "File", "Blob", "FileList", "Response", "Request", "ReadableStream", "MediaStream", "MediaStreamTrack", "WebSocket", "MessagePort", "RTCPeerConnection", "IDBDatabase", "IDBTransaction", "IDBObjectStore", "ResizeObserver", "IntersectionObserver", "MutationObserver", "CanvasRenderingContext2D", "WebGLRenderingContext", "GPUDevice", "AbortSignal"]
+  }
+}
