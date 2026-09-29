@@ -4,7 +4,9 @@
     "architecture/layers.json",
     "architecture/guardrails.json",
     "architecture/core.json",
+    "architecture/core-baseline.json",
     "test/core-boundary.test.ts",
+    "test/core-budget.test.ts",
     "tools/guardrails/**",
     "tools/contract-gen/**",
     "scripts/check-*.ts",
@@ -52,6 +54,7 @@
     "testScript": [
       "contract:check",
       "check:architecture",
+      "check:core-budget",
       "check:layers",
       "check:docs",
       "check:site",
@@ -64,6 +67,7 @@
       "npm run contract:check",
       "npm run test:guests",
       "npm run check:scope",
+      "npm run check:core-budget -- --verify-reference",
       "npm run smoke:guests",
       "npm run smoke:security",
       "npm run smoke:packs"

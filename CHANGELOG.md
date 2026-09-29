@@ -37,6 +37,28 @@ exhaustive lists.
   - The demo composition root (`src/main.ts`, `src/styles.css`) is now its own
     `reference-demo` layer.
 
+- **A Core complexity budget gates every change (#62).**
+  - `npm run check:core-budget` (in `npm test`) reports Core deterministically:
+    - handwritten lines, bytes and normalized bytes;
+    - generated code, reported separately;
+    - emitted and gzip bytes;
+    - root exports by family and protocol variants;
+    - binding primitives, capability families, dependencies and concepts;
+    - each Core entrypoint's module graph, and the optional groups.
+  - It compares that report with `architecture/core-baseline.json`.
+  - Hard gates fail outright:
+    - a runtime dependency;
+    - a seventh primitive or a fifth family;
+    - an eighth concept or a new root export family;
+    - optional code in the minimal graph, or Core importing an optional layer.
+  - More than 10% growth in handwritten lines, normalized bytes, emitted Core
+    or root exports needs a Core Admission.
+  - The baseline records the #59 reference (9a835cc) as measured from Git,
+    which CI re-verifies: 675 handwritten lines in 3 files.
+  - The freeze point it approves is 1341 lines in 7 files (plus 1031
+    generated). That growth predates the freeze and is recorded for the
+    owner's decision in CA-0001.
+
 ### Breaking
 
 - **The package root exports Limen Core only (#61).**

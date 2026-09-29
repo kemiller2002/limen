@@ -249,6 +249,7 @@ npm test                   # pretest (build + build:examples) → architecture
                            #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)
 
+npm run check:core-budget  # Core size/exports/primitives/families vs architecture/core-baseline.json
 npm run check:layers       # dependency directions (architecture/layers.json)
 npm run check:scope        # commits vs. their work items' declared scopes
 npm run check:typescript   # restricted handwritten TypeScript (compiler API)

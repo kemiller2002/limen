@@ -23,6 +23,7 @@
 /test/guardrails.test.ts      @kemiller2002
 /test/layers.test.ts          @kemiller2002
 /test/core-boundary.test.ts   @kemiller2002
+/test/core-budget.test.ts     @kemiller2002
 /test/scope.test.ts           @kemiller2002
 /test/typescript-boundary.test.ts @kemiller2002
 /guests/minimal/rust/limen-minimal-wasm/ @kemiller2002

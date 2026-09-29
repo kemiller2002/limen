@@ -1,0 +1,588 @@
+{
+  "doc": "The Core complexity baseline (kemiller2002/limen#62). npm run check:core-budget compares the working copy with approved.report and fails on a hard gate or on more than 10% growth in handwritten Core lines, handwritten normalized bytes, emitted Core gzip or normalized bytes, or root exports. reference is the #59 baseline, measured from Git by `npm run check:core-budget -- --reference` and re-verified in CI by `-- --verify-reference`; it is never edited by hand. This file is guardrail-owned (architecture/guardrails.json): a feature work item cannot change it. approved changes only under a guardrail work item carrying an approved Core Admission record (docs/core-admission.md), or a dedicated architecture/governance work item that says why.",
+  "reference": {
+    "commit": "9a835cccaa57ef44899b27dba5d31a22bf23bb49",
+    "note": "Core then was src/protocol.ts, src/kernel/browser-kernel.ts and src/kernel/diagnostics.ts: 486 + 175 + 14 = 675 lines (the #59 review quoted 487/176/15 = 678 by also counting the empty string after each final newline). Emitted with TypeScript 5.9.3 (package-lock.json). There was no contract file, so protocol-variant and contract capability-family counts are not measurable at this commit (contractPresent: false); the TypeScript protocol then declared the same four families. Its root entrypoint exported 35 names outside today’s approved families, and its minimal graph loaded federation and the reference engine.",
+    "report": {
+      "architectureVersion": "1.0.0",
+      "core": {
+        "handwritten": {
+          "files": 3,
+          "rawLines": 675,
+          "lines": 435,
+          "bytes": 34853,
+          "normalizedBytes": 20320
+        },
+        "generated": {
+          "files": 0,
+          "rawLines": 0,
+          "lines": 0,
+          "bytes": 0,
+          "normalizedBytes": 0
+        },
+        "perFile": [
+          {
+            "path": "src/kernel/browser-kernel.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 486,
+            "lines": 348,
+            "bytes": 23959,
+            "normalizedBytes": 15572
+          },
+          {
+            "path": "src/kernel/diagnostics.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 14,
+            "lines": 8,
+            "bytes": 673,
+            "normalizedBytes": 459
+          },
+          {
+            "path": "src/protocol.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 175,
+            "lines": 79,
+            "bytes": 10221,
+            "normalizedBytes": 4289
+          }
+        ],
+        "emitted": {
+          "files": 3,
+          "bytes": 23365,
+          "normalizedBytes": 12725,
+          "gzipBytes": 7112
+        }
+      },
+      "rootExports": {
+        "total": 59,
+        "families": [
+          {
+            "id": "boundary-messages",
+            "names": 9
+          },
+          {
+            "id": "browser-kernel",
+            "names": 1
+          },
+          {
+            "id": "built-in-effects",
+            "names": 12
+          },
+          {
+            "id": "compatibility",
+            "names": 1
+          },
+          {
+            "id": "correlation",
+            "names": 1
+          }
+        ],
+        "unassigned": [
+          "Command",
+          "ContractId",
+          "ContractRange",
+          "DirectTypeScriptTransport",
+          "EmailAddress",
+          "ExchangeResult",
+          "FEDERATION_PROTOCOL_VERSION",
+          "FederatedModuleTransport",
+          "FederationCorrelationId",
+          "FederationDiagnosticEvent",
+          "FederationDiagnosticsSink",
+          "FederationEnvelope",
+          "FederationEnvelopeDiagnostic",
+          "FederationError",
+          "FederationErrorCode",
+          "FederationMessageKind",
+          "FederationOperation",
+          "FederationOptions",
+          "FederationStartReport",
+          "FederationStartupBlock",
+          "JsonPrimitive",
+          "JsonValue",
+          "ModuleDispatchResult",
+          "ModuleFederation",
+          "ModuleId",
+          "ModuleInitialization",
+          "ModuleLifecycleState",
+          "ModuleManifest",
+          "ModulePeer",
+          "ReferenceEngine",
+          "State",
+          "TransitionError",
+          "TransitionResult",
+          "noopFederationDiagnostics",
+          "project"
+        ]
+      },
+      "contractPresent": false,
+      "protocol": {
+        "unions": [],
+        "totalVariants": 0,
+        "browserToEngineMessages": 0,
+        "effectRequests": 0,
+        "effectResults": 0
+      },
+      "bindingPrimitives": {
+        "count": 6,
+        "names": [
+          "data-bind-*",
+          "data-each",
+          "data-event",
+          "data-if",
+          "data-on",
+          "data-text"
+        ]
+      },
+      "capabilityFamilies": {
+        "count": 0,
+        "names": []
+      },
+      "runtimeDependencies": {
+        "count": 0,
+        "names": []
+      },
+      "concepts": {
+        "count": 7,
+        "ids": [
+          "engine-owns-meaning",
+          "html-owns-structure",
+          "css-owns-presentation",
+          "semantic-input",
+          "projection-output",
+          "typed-capabilities",
+          "correlation-compatibility"
+        ]
+      },
+      "coreImportsOptional": [],
+      "minimalGraph": {
+        ".": [
+          "src/engine/domain.ts",
+          "src/engine/engine.ts",
+          "src/engine/transport.ts",
+          "src/federation.ts",
+          "src/index.ts",
+          "src/kernel/browser-kernel.ts",
+          "src/kernel/diagnostics.ts",
+          "src/protocol.ts"
+        ],
+        "./capabilities": [
+          "src/kernel/capabilities.ts"
+        ],
+        "./contract": [
+          "src/generated/core.codec.ts"
+        ],
+        "./kernel": [
+          "src/kernel/browser-kernel.ts",
+          "src/kernel/diagnostics.ts",
+          "src/protocol.ts"
+        ],
+        "./protocol": [
+          "src/protocol.ts"
+        ]
+      },
+      "optionalModules": [
+        {
+          "group": "capability-packs",
+          "layers": [
+            "capability-pack",
+            "capability-support"
+          ],
+          "present": false,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "federation",
+          "layers": [
+            "federation-host"
+          ],
+          "present": true,
+          "inMinimalGraph": true
+        },
+        {
+          "group": "hosts-renderers",
+          "layers": [
+            "host-adapter",
+            "renderer"
+          ],
+          "present": false,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "package-facade",
+          "layers": [
+            "package-facade"
+          ],
+          "present": true,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "reference-demo",
+          "layers": [
+            "reference-demo",
+            "reference-engine"
+          ],
+          "present": true,
+          "inMinimalGraph": true
+        },
+        {
+          "group": "tooling-conformance",
+          "layers": [
+            "tooling"
+          ],
+          "present": false,
+          "inMinimalGraph": false
+        }
+      ],
+      "minimalConsumer": {
+        "modules": 8,
+        "rawBytes": 48626,
+        "gzipBytesBundled": 12235
+      }
+    }
+  },
+  "approved": {
+    "authority": {
+      "workItem": "WI-0122",
+      "kind": "governance",
+      "admission": "CA-0001",
+      "note": "The freeze point: Core as it stands after #60 and #61, before any further capability work. It is 99% more handwritten raw lines (675 -> 1341), 112% more handwritten code lines (435 -> 922) and 231% more emitted gzip (7112 -> 23540, of which the generated codec is the largest part) than the #59 reference. That growth happened on this branch before the boundary was frozen: the contract-fingerprint handshake (#52), the generic optional-capability seam (#16), the binding security policy (#18), protocol 1.2-1.4 Http and form-control semantics (#47) and head binding (#38). CA-0001 records it for the repository owner to ratify or reject; until then this baseline freezes Core where it is, so nothing grows further without an admission."
+    },
+    "report": {
+      "architectureVersion": "1.0.0",
+      "core": {
+        "handwritten": {
+          "files": 7,
+          "rawLines": 1341,
+          "lines": 922,
+          "bytes": 71052,
+          "normalizedBytes": 46922
+        },
+        "generated": {
+          "files": 2,
+          "rawLines": 1031,
+          "lines": 843,
+          "bytes": 67663,
+          "normalizedBytes": 59755
+        },
+        "perFile": [
+          {
+            "path": "src/generated/core.codec.ts",
+            "generated": true,
+            "files": 1,
+            "rawLines": 865,
+            "lines": 757,
+            "bytes": 54444,
+            "normalizedBytes": 52138
+          },
+          {
+            "path": "src/generated/core.ts",
+            "generated": true,
+            "files": 1,
+            "rawLines": 166,
+            "lines": 86,
+            "bytes": 13219,
+            "normalizedBytes": 7617
+          },
+          {
+            "path": "src/guest/handshake.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 43,
+            "lines": 24,
+            "bytes": 2732,
+            "normalizedBytes": 1787
+          },
+          {
+            "path": "src/kernel/binding-policy.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 112,
+            "lines": 62,
+            "bytes": 6549,
+            "normalizedBytes": 4213
+          },
+          {
+            "path": "src/kernel/browser-kernel.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 942,
+            "lines": 683,
+            "bytes": 49630,
+            "normalizedBytes": 33230
+          },
+          {
+            "path": "src/kernel/capabilities.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 71,
+            "lines": 39,
+            "bytes": 3686,
+            "normalizedBytes": 2164
+          },
+          {
+            "path": "src/kernel/diagnostics.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 20,
+            "lines": 10,
+            "bytes": 1041,
+            "normalizedBytes": 597
+          },
+          {
+            "path": "src/kernel/handshake.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 74,
+            "lines": 51,
+            "bytes": 4811,
+            "normalizedBytes": 3790
+          },
+          {
+            "path": "src/protocol.ts",
+            "generated": false,
+            "files": 1,
+            "rawLines": 79,
+            "lines": 53,
+            "bytes": 2603,
+            "normalizedBytes": 1141
+          }
+        ],
+        "emitted": {
+          "files": 9,
+          "bytes": 113456,
+          "normalizedBytes": 82451,
+          "gzipBytes": 23540
+        }
+      },
+      "rootExports": {
+        "total": 59,
+        "families": [
+          {
+            "id": "boundary-messages",
+            "names": 9
+          },
+          {
+            "id": "browser-kernel",
+            "names": 5
+          },
+          {
+            "id": "built-in-effects",
+            "names": 17
+          },
+          {
+            "id": "compatibility",
+            "names": 14
+          },
+          {
+            "id": "correlation",
+            "names": 1
+          },
+          {
+            "id": "optional-capability-seam",
+            "names": 13
+          }
+        ],
+        "unassigned": []
+      },
+      "contractPresent": true,
+      "protocol": {
+        "unions": [
+          {
+            "name": "BrowserToEngineMessage",
+            "variants": 5
+          },
+          {
+            "name": "CapabilityOutcome",
+            "variants": 3
+          },
+          {
+            "name": "ClipboardOutcome",
+            "variants": 2
+          },
+          {
+            "name": "EffectOutcome",
+            "variants": 4
+          },
+          {
+            "name": "EffectRequest",
+            "variants": 5
+          },
+          {
+            "name": "EffectResult",
+            "variants": 5
+          },
+          {
+            "name": "EngineHandshake",
+            "variants": 2
+          },
+          {
+            "name": "HandshakeRejection",
+            "variants": 4
+          },
+          {
+            "name": "NavigationEffectRequest",
+            "variants": 4
+          },
+          {
+            "name": "NavigationOutcome",
+            "variants": 3
+          },
+          {
+            "name": "StorageEffectRequest",
+            "variants": 3
+          },
+          {
+            "name": "StorageOutcome",
+            "variants": 2
+          }
+        ],
+        "totalVariants": 42,
+        "browserToEngineMessages": 5,
+        "effectRequests": 5,
+        "effectResults": 5
+      },
+      "bindingPrimitives": {
+        "count": 6,
+        "names": [
+          "data-bind-*",
+          "data-each",
+          "data-event",
+          "data-if",
+          "data-on",
+          "data-text"
+        ]
+      },
+      "capabilityFamilies": {
+        "count": 4,
+        "names": [
+          "Clipboard",
+          "Http",
+          "Navigation",
+          "Storage"
+        ]
+      },
+      "runtimeDependencies": {
+        "count": 0,
+        "names": []
+      },
+      "concepts": {
+        "count": 7,
+        "ids": [
+          "engine-owns-meaning",
+          "html-owns-structure",
+          "css-owns-presentation",
+          "semantic-input",
+          "projection-output",
+          "typed-capabilities",
+          "correlation-compatibility"
+        ]
+      },
+      "coreImportsOptional": [],
+      "minimalGraph": {
+        ".": [
+          "src/generated/core.codec.ts",
+          "src/generated/core.ts",
+          "src/guest/handshake.ts",
+          "src/index.ts",
+          "src/kernel/binding-policy.ts",
+          "src/kernel/browser-kernel.ts",
+          "src/kernel/capabilities.ts",
+          "src/kernel/diagnostics.ts",
+          "src/kernel/handshake.ts",
+          "src/protocol.ts"
+        ],
+        "./capabilities": [
+          "src/generated/core.ts",
+          "src/kernel/capabilities.ts",
+          "src/protocol.ts"
+        ],
+        "./contract": [
+          "src/generated/core.codec.ts",
+          "src/generated/core.ts"
+        ],
+        "./kernel": [
+          "src/generated/core.codec.ts",
+          "src/generated/core.ts",
+          "src/kernel/binding-policy.ts",
+          "src/kernel/browser-kernel.ts",
+          "src/kernel/capabilities.ts",
+          "src/kernel/diagnostics.ts",
+          "src/kernel/handshake.ts",
+          "src/protocol.ts"
+        ],
+        "./protocol": [
+          "src/generated/core.ts",
+          "src/protocol.ts"
+        ]
+      },
+      "optionalModules": [
+        {
+          "group": "capability-packs",
+          "layers": [
+            "capability-pack",
+            "capability-support"
+          ],
+          "present": true,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "federation",
+          "layers": [
+            "federation-host"
+          ],
+          "present": true,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "hosts-renderers",
+          "layers": [
+            "host-adapter",
+            "renderer"
+          ],
+          "present": true,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "package-facade",
+          "layers": [
+            "package-facade"
+          ],
+          "present": true,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "reference-demo",
+          "layers": [
+            "reference-demo",
+            "reference-engine"
+          ],
+          "present": true,
+          "inMinimalGraph": false
+        },
+        {
+          "group": "tooling-conformance",
+          "layers": [
+            "tooling"
+          ],
+          "present": true,
+          "inMinimalGraph": false
+        }
+      ],
+      "minimalConsumer": {
+        "modules": 10,
+        "rawBytes": 114362,
+        "gzipBytesBundled": 23819
+      }
+    }
+  },
+  "history": [
+    {
+      "workItem": "WI-0122",
+      "change": "Recorded the #59 reference (9a835cc) from Git and approved the freeze-point baseline; see approved.authority."
+    }
+  ]
+}

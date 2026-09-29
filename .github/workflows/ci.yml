@@ -89,6 +89,16 @@ jobs:
         env:
           LIMEN_SCOPE_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
 
+      # The Core complexity reference (kemiller2002/limen#62) is measured from
+      # Git at the #59 commit; this job has the full history to re-measure it,
+      # so architecture/core-baseline.json's reference cannot drift from what
+      # the commit actually contained.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: The recorded Core reference reproduces from Git
+        run: npm run check:core-budget -- --verify-reference
+
   # One language-neutral contract, four generated bindings. Each guest
   # language compiles its binding under strict settings, independently
   # recomputes the contract fingerprint, and runs the same shared vectors as

@@ -10,6 +10,12 @@ changed a contract or added a mechanism. Binary codecs, shared memory, delta
 protocols and virtualization are all still unjustified: the numbers below do
 not call for any of them.
 
+The Core's own size and conceptual surface are gated separately, by
+`npm run check:core-budget` ([guardrails](25-guardrails.md#the-core-complexity-budget),
+kemiller2002/limen#62). That report measures the minimal consumer's payload
+with the same code as the `minimal-consumer` profile here (`bench/size.ts`),
+so the two never disagree.
+
 ## Reproducing it
 
 ```bash
