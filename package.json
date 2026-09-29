@@ -87,6 +87,14 @@
       "types": "./dist/capabilities/offline/worker.d.ts",
       "import": "./dist/capabilities/offline/worker.js"
     },
+    "./capabilities/geolocation": {
+      "types": "./dist/capabilities/geolocation/index.d.ts",
+      "import": "./dist/capabilities/geolocation/index.js"
+    },
+    "./capabilities/credentials": {
+      "types": "./dist/capabilities/credentials/index.d.ts",
+      "import": "./dist/capabilities/credentials/index.js"
+    },
     "./hosts/fallback": {
       "types": "./dist/hosts/fallback.d.ts",
       "import": "./dist/hosts/fallback.js"

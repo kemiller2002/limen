@@ -72,6 +72,24 @@ exhaustive lists.
     reset); anything else reloads the page;
   - a dev server that streams file changes.
   Development only; nothing in Core imports it.
+- **Permission-sensitive capability pattern (#42).**
+  `capability-support/permissions` and two packs, each with a contract unit
+  and bindings for TypeScript, F#, C# and Rust:
+  - `./capabilities/geolocation` (`limen.geolocation`), the device reference;
+  - `./capabilities/credentials` (`limen.credentials`), for WebAuthn passkeys.
+
+  The shared rules:
+  - `Unavailable { reason }` is never a denial;
+  - permission state is read without prompting, and `PermissionChanged`
+    facts make a revocation visible;
+  - nothing is asked at initialization;
+  - gesture-bound operations are `NeedsGesture` without activation;
+  - credentials are carried as base64url and never verified by the pack.
+
+  The pack smoke runner now polls without granting user activation. Playwright's
+  `page.evaluate` grants activation on every call, which could make gesture
+  checks pass vacuously. The runner also gains permission, geolocation,
+  virtual-authenticator and `localhost` support.
 - **Worker-hosted engines (#41).** `./hosts/worker` (`WorkerTransport`) and
   `./hosts/worker-engine` (`serveEngine`):
   - any engine runs in a dedicated worker behind the same serialized contract;
