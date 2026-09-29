@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T08:34:59Z",
+  "updatedAt": "2026-09-29T08:48:44Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1476,24 +1476,48 @@
     {
       "id": "WI-0072",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T08:34:58Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/overlay/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/overlay.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/overlay/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:48:44Z",
       "telemetryExecutionIds": [
         "EXE-20260929T083458543Z-96738063"
-      ]
+      ],
+      "completedAt": "2026-09-29T08:48:44Z"
     },
     {
       "id": "WI-0073",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T08:34:59Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_overlay.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:48:43Z",
       "telemetryExecutionIds": [
         "EXE-20260929T083459679Z-7ff42d62"
-      ]
+      ],
+      "completedAt": "2026-09-29T08:48:43Z"
     }
   ]
 }

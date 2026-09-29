@@ -76,5 +76,5 @@
 | WI-0069 | Guardrail: register the limen.events contract unit and its generated bindings (GH-29) | complete |  | medium |
 | WI-0070 | Accessible interaction reference patterns (Forma proofs): tabs, menu, listbox, combobox, tree, grid, dialog over generic focus and event mechanics (GH-31) | complete |  | medium |
 | WI-0071 | Kernel: HTML boolean attributes (inert, required, readonly, multiple, ...) are toggled by presence, never set to the string "false" (GH-31, found building the dialog pattern) | complete |  | medium |
-| WI-0072 | Overlay and top-layer capability pack, native-first: dialog showModal/close, popover show/hide, dismissal facts, anchored placement fallback (GH-49) | active |  | medium |
-| WI-0073 | Guardrail: register the limen.overlay contract unit and its generated bindings (GH-49) | ready |  | medium |
+| WI-0072 | Overlay and top-layer capability pack, native-first: dialog showModal/close, popover show/hide, dismissal facts, anchored placement fallback (GH-49) | complete |  | medium |
+| WI-0073 | Guardrail: register the limen.overlay contract unit and its generated bindings (GH-49) | complete |  | medium |
