@@ -94,7 +94,12 @@ escaped.
 - **Streaming output.** No measured use case yet, as #38 requires before
   building it.
 - **Hydration.** Adopting rendered markup without recreating it, and replaying
-  early events, is #39.
+  early events, is #39. Adoption needs the kernel to take a marked element
+  instead of cloning its template, and hydration is outside Core. So it waits
+  on the owner's Core Admission decision, CA-0002
+  (`architecture/core-admissions/CA-0002.json`). Until then, start the kernel
+  on a page built for the client, not on renderer output: the kernel would
+  mount its own copy beside every rendered section.
 
 ## Size
 
