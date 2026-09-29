@@ -48,6 +48,11 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Localization engine library and semantics (#35).**
+  `conformance/localization/` (34 cases) and `libraries/fsharp/Limen.Localization`:
+  - BCP 47 negotiation;
+  - direction from language or script;
+  - message catalogues with fallback, placeholders and CLDR plural categories.
 - **Environment evidence and formatting pack (#35).**
   `./capabilities/environment` (`environmentCapability()`, contract unit
   `limen.environment`, with bindings for TypeScript, F#, C# and Rust):
