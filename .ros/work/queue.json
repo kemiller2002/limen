@@ -992,10 +992,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T07:48:37Z",
-      "updatedAt": "2026-09-29T07:48:38Z",
+      "updatedAt": "2026-09-29T07:54:00Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
