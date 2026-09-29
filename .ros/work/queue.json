@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 72,
+  "nextSeq": 74,
   "items": [
     {
       "id": "WI-0001",
@@ -1122,6 +1122,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T08:22:26Z",
       "updatedAt": "2026-09-29T08:25:12Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0072",
+      "title": "Overlay and top-layer capability pack, native-first: dialog showModal/close, popover show/hide, dismissal facts, anchored placement fallback (GH-49)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:34:57Z",
+      "updatedAt": "2026-09-29T08:34:57Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0073",
+      "title": "Guardrail: register the limen.overlay contract unit and its generated bindings (GH-49)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:34:58Z",
+      "updatedAt": "2026-09-29T08:34:59Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
