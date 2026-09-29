@@ -1860,10 +1860,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T16:58:14.326Z",
-      "updatedAt": "2026-09-29T16:58:23Z",
+      "updatedAt": "2026-09-29T16:59:09Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
