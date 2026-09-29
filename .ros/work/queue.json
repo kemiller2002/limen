@@ -1846,10 +1846,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T16:18:56.896Z",
-      "updatedAt": "2026-09-29T16:20:16Z",
+      "updatedAt": "2026-09-29T16:57:41Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

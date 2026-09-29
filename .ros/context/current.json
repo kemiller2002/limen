@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T16:49:00Z",
+  "updatedAt": "2026-09-29T16:57:41Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2653,13 +2653,27 @@
     {
       "id": "WI-0123",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T16:49:00Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/learning.ts"
+        },
+        {
+          "type": "admission",
+          "path": "tools/guardrails/admission.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/learning-contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:57:41Z",
       "telemetryExecutionIds": [
         "EXE-20260929T164900374Z-0b200ad2"
-      ]
+      ],
+      "completedAt": "2026-09-29T16:57:41Z"
     }
   ]
 }
