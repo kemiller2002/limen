@@ -31,7 +31,7 @@ run("cargo", ["build", "--release", "--target", "wasm32-unknown-unknown", "--man
 await rm(OUT, { recursive: true, force: true });
 await mkdir(join(HOST, "rust"), { recursive: true });
 await cp(join(ROOT, "dist"), join(OUT, "dist"), { recursive: true });
-await Promise.all(["index.html", "main.js"].map((file) => cp(join(ROOT, "guests/minimal/host", file), join(HOST, file))));
+await Promise.all(["index.html", "main.js", "host.css"].map((file) => cp(join(ROOT, "guests/minimal/host", file), join(HOST, file))));
 await cp(join(ROOT, "guests/minimal/out/fsharp/wwwroot"), join(HOST, "fsharp"), { recursive: true });
 await cp(join(ROOT, "guests/minimal/out/csharp/wwwroot"), join(HOST, "csharp"), { recursive: true });
 await cp(join(ROOT, "guests/minimal/rust/limen-minimal-wasm/target/wasm32-unknown-unknown/release/limen_minimal_wasm.wasm"), join(HOST, "rust/limen_minimal.wasm"));
