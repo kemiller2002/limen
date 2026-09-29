@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0054",
+  "reference": "kemiller2002/limen#18",
+  "placement": "Guardrail — scripts/build-guests-site.ts is guardrail-owned. It now also copies guests/minimal/host/host.css, the stylesheet that replaced the host page's inline <style> so the page runs under style-src 'self'. One file added to the copy list; nothing else changes.",
+  "guardrail": true,
+  "paths": ["scripts/build-guests-site.ts"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
