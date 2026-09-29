@@ -34,7 +34,7 @@
 | WI-0028 | GH-16 LCP-002: versioned capability extension architecture (neutral contract source, TS generation, fingerprint handshake, generic capability envelope) | complete | limen,gh-16,lcp-002,core,contract | high |
 | WI-0029 | Repair ROS validation findings from WI-0028: DF identifier format and invalid telemetry classification | complete | ros,mechanical | medium |
 | WI-0030 | Bring the federation envelope protocol (src/federation.ts) under the language-neutral contract; it is a second wire protocol defined only in TypeScript (carried from GH-16 / DF-LIMEN-2026-0001) | captured | carried-obligation | medium |
-| WI-0031 | Duplicate in-flight correlation id overwrites the kernel's AbortController (Http and Capability effects); add a negative conformance vector and a defined outcome (GH-32) | ready | carried-obligation | medium |
+| WI-0031 | Duplicate in-flight correlation id overwrites the kernel's AbortController (Http and Capability effects); add a negative conformance vector and a defined outcome (GH-32) | complete | carried-obligation | medium |
 | WI-0032 | ROS 3.1.3 'work start --classification' accepts values that 'validate' rejects (e.g. boundary-change); report upstream to repository-operating-system | captured | carried-obligation | medium |
 | WI-0033 | GH-52: deterministic F#/C#/Rust contract generation, cross-language fingerprint agreement, shared semantic vectors | complete | limen,gh-52,contract,guardrail | high |
 | WI-0034 | GH-53: enforce dependency directions (layer map + import checker) and work-item path scope (scope manifests + commit-level check), guardrail self-modification protection | complete | limen,gh-53,guardrail,governance | high |

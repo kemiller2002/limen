@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T06:01:34Z",
+  "updatedAt": "2026-09-29T06:03:54Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -779,13 +779,23 @@
     {
       "id": "WI-0031",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T06:01:34Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:03:54Z",
       "telemetryExecutionIds": [
         "EXE-20260929T060135152Z-2c9b16f5"
-      ]
+      ],
+      "completedAt": "2026-09-29T06:03:54Z"
     }
   ]
 }
