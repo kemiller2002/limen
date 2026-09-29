@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0068",
+  "reference": "kemiller2002/limen#29 (LCP-020)",
+  "placement": "Capability Pack — src/capabilities/events/ with its own contract unit and its own data-rich-* attributes, so the simple SemanticEvent path is untouched; listener mechanics are declared in HTML, never decided synchronously by the engine. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/events.contract.json", "src/capabilities/events/**", "src/capability-support/**", "scripts/smoke-packs.ts", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
