@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0097",
+  "reference": "kemiller2002/limen#35 (LCP-028, engine-side localization)",
+  "placement": "Engine Library — choosing a locale, a message and its text is application meaning, so it is pure engine-side code: language-neutral semantics (conformance/localization/) and an F# reference (libraries/fsharp/Limen.Localization). It consumes the environment pack's facts (locale, languages) and its plural category; it reads nothing from the browser.",
+  "guardrail": false,
+  "paths": ["conformance/localization/**", "libraries/**", "package.json", "test/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
