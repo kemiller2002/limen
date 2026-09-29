@@ -252,11 +252,21 @@ pre .hl { background: color-mix(in srgb, var(--ef-oxide-bronze) 35%, transparent
 .note { font-family: var(--mono); font-size: .7rem; color: var(--ef-text-secondary); }
 .no-js { padding: 1rem 1.15rem; border-left: 4px solid var(--ef-accent-primary); background: var(--ef-surface-secondary); font-size: .9rem; }
 
+/* Nine primary destinations do not fit on one line beside the brand below
+   about 1120px; let the navigation wrap under it rather than push the page
+   sideways. Source order, and so focus order, is unchanged. */
+@media (max-width: 1120px) {
+  .nav-shell { flex-wrap: wrap; align-items: flex-start; gap: .5rem 2rem; }
+  nav { flex-wrap: wrap; justify-content: flex-start; }
+}
 @media (max-width: 900px) {
   .brand-subtitle { display: none; }
   .hero-grid, .method-band, .split { grid-template-columns: 1fr; }
 }
 @media (max-width: 680px) {
+  /* The wrapped navigation is several rows tall here; a sticky header would
+     cover a fifth of the viewport and could hide the focused element. */
+  .site-header { position: static; }
   .nav-shell { align-items: flex-start; flex-wrap: wrap; }
   nav { flex-wrap: wrap; justify-content: flex-start; }
   nav a { padding: .4rem; font-size: .72rem; }
@@ -345,7 +355,9 @@ pre .hl { background: color-mix(in srgb, var(--ef-oxide-bronze) 35%, transparent
 }
 .architecture-node code {
   display: inline-block;
+  max-width: 100%;
   margin-top: .45rem;
+  overflow-wrap: anywhere;
 }
 .architecture-node + .architecture-node::before {
   content: "→";
