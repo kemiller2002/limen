@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 118,
+  "nextSeq": 120,
   "items": [
     {
       "id": "WI-0001",
@@ -1766,6 +1766,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T14:42:13Z",
       "updatedAt": "2026-09-29T14:43:45Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0118",
+      "title": "Guardrail: a renderer layer (src/renderer) that may import the contract and the kernel's pure binding policy, never the BrowserKernel (GH-38)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T14:50:03Z",
+      "updatedAt": "2026-09-29T14:50:04Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0119",
+      "title": "Optional server and static renderer: the same engine and projection render semantic HTML (head metadata included) for SSR and SSG, with browser-only capabilities explicitly absent on the server (GH-38)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T14:50:03Z",
+      "updatedAt": "2026-09-29T14:50:04Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
