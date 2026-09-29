@@ -83,3 +83,5 @@
 | WI-0076 | Guardrail: register the limen.realtime contract unit and its generated bindings (GH-26) | complete |  | medium |
 | WI-0077 | User-mediated file capability pack: native input selection as facts, opaque file ids, bounded chunked reads, gesture-gated picker, download (GH-27) | complete |  | medium |
 | WI-0078 | Guardrail: register the limen.files contract unit and its generated bindings (GH-27) | complete |  | medium |
+| WI-0079 | IndexedDB structured-storage capability pack: engine-declared versioned schema, atomic transactions with typed outcomes, compare-and-put, version/schema/quota/unavailable outcomes (GH-28) | active |  | medium |
+| WI-0080 | Guardrail: register the limen.store contract unit and its generated bindings (GH-28) | ready |  | medium |

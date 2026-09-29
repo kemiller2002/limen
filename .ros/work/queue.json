@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 79,
+  "nextSeq": 81,
   "items": [
     {
       "id": "WI-0001",
@@ -1220,6 +1220,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T09:02:06Z",
       "updatedAt": "2026-09-29T09:14:10Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0079",
+      "title": "IndexedDB structured-storage capability pack: engine-declared versioned schema, atomic transactions with typed outcomes, compare-and-put, version/schema/quota/unavailable outcomes (GH-28)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T09:15:17Z",
+      "updatedAt": "2026-09-29T09:15:18Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0080",
+      "title": "Guardrail: register the limen.store contract unit and its generated bindings (GH-28)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T09:15:19Z",
+      "updatedAt": "2026-09-29T09:15:19Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
