@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 77,
+  "nextSeq": 79,
   "items": [
     {
       "id": "WI-0001",
@@ -1192,6 +1192,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T08:51:46Z",
       "updatedAt": "2026-09-29T09:01:08Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0077",
+      "title": "User-mediated file capability pack: native input selection as facts, opaque file ids, bounded chunked reads, gesture-gated picker, download (GH-27)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T09:02:05Z",
+      "updatedAt": "2026-09-29T09:02:05Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0078",
+      "title": "Guardrail: register the limen.files contract unit and its generated bindings (GH-27)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T09:02:06Z",
+      "updatedAt": "2026-09-29T09:02:06Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
