@@ -96,3 +96,4 @@
 | WI-0089 | Fix: a malformed projection partially mutated the view (texts applied before a later data-each/data-if/value error threw); validate the whole projection, including templates not yet mounted, before applying any of it (GH-50) | complete |  | medium |
 | WI-0090 | Kernel lifecycle: read-only status and dispose() (removes every kernel listener, aborts in-flight effects, silences the kernel) so a host can restart safely (GH-50) | complete |  | medium |
 | WI-0091 | Optional fatal-fallback host: mechanical host health, a static generic failure surface with a stable redacted error id, explicit restart and reload, bounded repeated restarts, federation unchanged (GH-50) | complete |  | medium |
+| WI-0092 | Route/workflow-driven lazy federation loading: ensure with dependencies, explicit loading/ready/faulted/blocked, release with snapshot and deterministic restore, retry only on request (GH-33) | ready |  | medium |

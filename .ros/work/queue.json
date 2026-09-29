@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 92,
+  "nextSeq": 93,
   "items": [
     {
       "id": "WI-0001",
@@ -1402,6 +1402,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T10:31:01Z",
       "updatedAt": "2026-09-29T10:39:00Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0092",
+      "title": "Route/workflow-driven lazy federation loading: ensure with dependencies, explicit loading/ready/faulted/blocked, release with snapshot and deterministic restore, retry only on request (GH-33)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:41:25Z",
+      "updatedAt": "2026-09-29T10:41:25Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
