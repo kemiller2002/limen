@@ -92,4 +92,4 @@
 | WI-0085 | Re-baseline payload budgets after the Core HTTP profile (protocol 1.3): about 1.7 KB gzip on every profile that loads the kernel (GH-47, GH-19) | complete |  | medium |
 | WI-0086 | HTTP transfer profile pack: opt-in upload/download progress facts, uploads of picked files by opaque id and multipart, four-outcome semantics with OutcomeUnknown intact (GH-47) | complete |  | medium |
 | WI-0087 | Guardrail: register the limen.transfer contract unit and its generated bindings (GH-47) | complete |  | medium |
-| WI-0088 | HTTP engine library: pure interceptor composition, retry decisions that never blind-retry non-idempotent unknown outcomes, ETag revalidation cache, polling decisions; language-neutral vectors and F# reference (GH-47) | ready |  | medium |
+| WI-0088 | HTTP engine library: pure interceptor composition, retry decisions that never blind-retry non-idempotent unknown outcomes, ETag revalidation cache, polling decisions; language-neutral vectors and F# reference (GH-47) | complete |  | medium |

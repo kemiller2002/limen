@@ -1356,10 +1356,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T10:11:28Z",
-      "updatedAt": "2026-09-29T10:11:28Z",
+      "updatedAt": "2026-09-29T10:18:02Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
