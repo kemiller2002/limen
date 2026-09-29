@@ -62,7 +62,8 @@
       "npm run contract:check",
       "npm run test:guests",
       "npm run check:scope",
-      "npm run smoke:guests"
+      "npm run smoke:guests",
+      "npm run smoke:security"
     ],
     "tsconfigCompilerOptions": {
       "strict": true,

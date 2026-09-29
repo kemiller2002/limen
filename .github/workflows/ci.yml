@@ -163,6 +163,13 @@ jobs:
         env:
           LIMEN_REQUIRE_BROWSER: "1"
 
+      # LCP-027: the kernel and all three guests under a strict CSP with
+      # Trusted Types enforced and no policy — zero violations, no payload runs.
+      - name: Binding security under strict CSP and Trusted Types
+        run: npm run smoke:security
+        env:
+          LIMEN_REQUIRE_BROWSER: "1"
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.

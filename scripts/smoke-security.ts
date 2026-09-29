@@ -158,7 +158,9 @@ const smokePage = async (browser: Browser, failures: string[], passes: string[])
 
 const smokeGuests = async (browser: Browser, failures: string[], passes: string[]): Promise<void> => {
   if (!existsSync(join(ROOT, "dist-guests/guests/minimal/host/index.html"))) {
-    passes.push("SKIP  guest engines under strict CSP: dist-guests/ is not built (npm run build:guests)");
+    // CI builds the guests first; there a missing tree is a failure, not a skip.
+    if (process.env.LIMEN_REQUIRE_BROWSER === "1") failures.push("guest engines under strict CSP: dist-guests/ is not built, and LIMEN_REQUIRE_BROWSER=1 forbids skipping");
+    else passes.push("SKIP  guest engines under strict CSP: dist-guests/ is not built (npm run build:guests)");
     return;
   }
   const server = await serve(join(ROOT, "dist-guests"), GUEST_PORT, GUEST_POLICY);
