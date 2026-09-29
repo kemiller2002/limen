@@ -24,7 +24,7 @@ type Kind =
     | Date
     | Time
 
-type Condition = { Field: string; Equals: string }
+type Condition = { Field: string; Value: string }
 
 type FieldSpec =
     { Name: string
@@ -191,7 +191,7 @@ module Form =
         form.Fields |> Map.tryFind name |> Option.map (fun state -> text state.Value) |> Option.defaultValue ""
 
     let private holds (form: Form) (condition: Condition option) =
-        condition |> Option.map (fun c -> topValue form c.Field = c.Equals)
+        condition |> Option.map (fun c -> topValue form c.Field = c.Value)
 
     let private visible (form: Form) (spec: FieldSpec) = holds form spec.VisibleWhen |> Option.defaultValue true
 

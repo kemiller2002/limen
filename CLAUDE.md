@@ -67,6 +67,7 @@ Measured, not assumed — each of these cost real time to rediscover.
 | Capability | Reality |
 | --- | --- |
 | .NET SDK 8 | **Available.** `apt-get install dotnet-sdk-8.0` works. Microsoft's own CDN (`builds.dotnet.microsoft.com`) is proxy-blocked, but the Ubuntu archive is not — do not conclude from the CDN failure that F# is unavailable. |
+| .NET SDK version | **Not CI's.** The Ubuntu archive gives an older 8.0 feature band (8.0.1xx) than CI's `setup-dotnet 8.0.x`, and their F# compilers resolve some names differently: a record field named `Equals` compiled here and failed in CI as `Object.Equals`. Avoid member names that shadow `Object` members, and treat a green local F# build as necessary, not sufficient. |
 | Pushing a branch | **Allowed** — create and update both work. |
 | Pushing a tag | **Blocked.** Every form fails identically: annotated, lightweight, explicit refspec. The error is `send-pack: unexpected disconnect`, which looks transient and is not. |
 | Deleting any ref | **Blocked**, branches included. |

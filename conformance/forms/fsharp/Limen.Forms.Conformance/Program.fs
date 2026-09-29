@@ -28,7 +28,7 @@ let kindOf name =
     | "choice" -> Kind.Choice | "choices" -> Kind.Choices | "date" -> Kind.Date | "time" -> Kind.Time
     | other -> failwith $"unknown kind {other}"
 
-let condition (node: JsonNode) = match node with | null -> None | c -> Some { Field = text c["field"]; Equals = text c["equals"] }
+let condition (node: JsonNode) = match node with | null -> None | c -> Some { Field = text c["field"]; Value = text c["equals"] }
 let flag (node: JsonNode) = match node with | null -> false | node -> node.GetValue<bool>()
 
 let fieldSpec (node: JsonNode) : FieldSpec =
