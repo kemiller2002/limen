@@ -143,6 +143,15 @@ exhaustive lists.
 
 ### Changed
 
+- **Strict decoding is 3.5 times faster, and exactly as strict (WI-0045, #19).**
+  - Every generated TypeScript codec decodes lists and maps in one pass that
+    stops at the first failure, and renders an error path only when decoding
+    fails there.
+  - Decoding a 10k-row view in Chromium went from 14.0 ms to 4.0 ms, and a
+    1k-row view from 1.6 ms to 0.5 ms.
+  - What is accepted and rejected, and every `DecodeError`, is unchanged. The
+    optional `path` argument of a generated decoder also accepts a function
+    that returns the path, so a caller's prefix is rendered only on failure.
 - **Removing a keyed row moves no other row (WI-0044, #19).**
   - Rows whose keys left the list are removed before the reorder pass.
   - A middle removal from a 10k-row list went from 10,001 DOM mutations to

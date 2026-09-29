@@ -4,7 +4,7 @@
 // unit: limen.environment@1
 // contract-fingerprint: sha256:1b206aa0bd7b72688e47f8034166128078a168a42ef9b52cf4a93499b00782f7
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:17f6b0c4339d2e00ef5884aa067320f0f1f061dbfe6567d9b2edbb1a1201040a
+// content-hash: sha256:c52c7d03d6eeb5e781f657ba445c5411592a793c2f83c3fdca8df8b13005c174
 // </auto-generated>
 import type { Direction, Preference, PreferenceValue, Environment, NumberStyle, DateStyle, RelativeUnit, ListType, FormatItem, EnvironmentRequest, EnvironmentResult, EnvironmentFact } from "./environment.js";
 
@@ -12,36 +12,47 @@ import type { Direction, Preference, PreferenceValue, Environment, NumberStyle, 
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,67 +66,81 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeDirection = (value: unknown, path = "$"): Decoded<Direction> => enumValue(value, path, ["ltr","rtl"] as const);
+export const decodeDirection = (value: unknown, path: Path = "$"): Decoded<Direction> => enumValue(value, path, ["ltr","rtl"] as const);
 
-export const decodePreference = (value: unknown, path = "$"): Decoded<Preference> => enumValue(value, path, ["reducedMotion","colorScheme","contrast","forcedColors"] as const);
+export const decodePreference = (value: unknown, path: Path = "$"): Decoded<Preference> => enumValue(value, path, ["reducedMotion","colorScheme","contrast","forcedColors"] as const);
 
-export const decodePreferenceValue = (value: unknown, path = "$"): Decoded<PreferenceValue> => {
+export const decodePreferenceValue = (value: unknown, path: Path = "$"): Decoded<PreferenceValue> => {
   const object = objectValue(value, path, ["preference","value"]);
   if (!object.ok) return object;
-  const field_preference = decodePreference(object.value["preference"], `${path}.preference`);
+  const field_preference = decodePreference(object.value["preference"], at(path, ".preference"));
   if (!field_preference.ok) return field_preference;
-  const field_value = stringValue(object.value["value"], `${path}.value`);
+  const field_value = stringValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
   return ok<PreferenceValue>({ preference: field_preference.value, value: field_value.value });
 };
 
-export const decodeEnvironment = (value: unknown, path = "$"): Decoded<Environment> => {
+export const decodeEnvironment = (value: unknown, path: Path = "$"): Decoded<Environment> => {
   const object = objectValue(value, path, ["locale","languages","timeZone","direction","preferences"]);
   if (!object.ok) return object;
-  const field_locale = stringValue(object.value["locale"], `${path}.locale`);
+  const field_locale = stringValue(object.value["locale"], at(path, ".locale"));
   if (!field_locale.ok) return field_locale;
-  const field_languages = listOf(object.value["languages"], `${path}.languages`, (item, at) => stringValue(item, at));
+  const field_languages = listOf(object.value["languages"], at(path, ".languages"), (item, at) => stringValue(item, at));
   if (!field_languages.ok) return field_languages;
-  const field_timeZone = stringValue(object.value["timeZone"], `${path}.timeZone`);
+  const field_timeZone = stringValue(object.value["timeZone"], at(path, ".timeZone"));
   if (!field_timeZone.ok) return field_timeZone;
-  const field_direction = decodeDirection(object.value["direction"], `${path}.direction`);
+  const field_direction = decodeDirection(object.value["direction"], at(path, ".direction"));
   if (!field_direction.ok) return field_direction;
-  const field_preferences = listOf(object.value["preferences"], `${path}.preferences`, (item, at) => decodePreferenceValue(item, at));
+  const field_preferences = listOf(object.value["preferences"], at(path, ".preferences"), (item, at) => decodePreferenceValue(item, at));
   if (!field_preferences.ok) return field_preferences;
   return ok<Environment>({ locale: field_locale.value, languages: field_languages.value, timeZone: field_timeZone.value, direction: field_direction.value, preferences: field_preferences.value });
 };
 
-export const decodeNumberStyle = (value: unknown, path = "$"): Decoded<NumberStyle> => enumValue(value, path, ["decimal","percent","currency"] as const);
+export const decodeNumberStyle = (value: unknown, path: Path = "$"): Decoded<NumberStyle> => enumValue(value, path, ["decimal","percent","currency"] as const);
 
-export const decodeDateStyle = (value: unknown, path = "$"): Decoded<DateStyle> => enumValue(value, path, ["full","long","medium","short"] as const);
+export const decodeDateStyle = (value: unknown, path: Path = "$"): Decoded<DateStyle> => enumValue(value, path, ["full","long","medium","short"] as const);
 
-export const decodeRelativeUnit = (value: unknown, path = "$"): Decoded<RelativeUnit> => enumValue(value, path, ["second","minute","hour","day","week","month","year"] as const);
+export const decodeRelativeUnit = (value: unknown, path: Path = "$"): Decoded<RelativeUnit> => enumValue(value, path, ["second","minute","hour","day","week","month","year"] as const);
 
-export const decodeListType = (value: unknown, path = "$"): Decoded<ListType> => enumValue(value, path, ["conjunction","disjunction","unit"] as const);
+export const decodeListType = (value: unknown, path: Path = "$"): Decoded<ListType> => enumValue(value, path, ["conjunction","disjunction","unit"] as const);
 
-export const decodeFormatItem = (value: unknown, path = "$"): Decoded<FormatItem> => {
+export const decodeFormatItem = (value: unknown, path: Path = "$"): Decoded<FormatItem> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -125,77 +150,77 @@ export const decodeFormatItem = (value: unknown, path = "$"): Decoded<FormatItem
     case "relative": return decodeFormatItem_relative(value, path);
     case "list": return decodeFormatItem_list(value, path);
     case "plural": return decodeFormatItem_plural(value, path);
-    default: return unknownVariant(`${path}.kind`, ["number","date","relative","list","plural"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["number","date","relative","list","plural"], tag);
   }
 };
 
-const decodeFormatItem_number = (value: unknown, path: string): Decoded<FormatItem> => {
+const decodeFormatItem_number = (value: unknown, path: Path): Decoded<FormatItem> => {
   const object = objectValue(value, path, ["kind","value","style","currency","maximumFractionDigits"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "number");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "number");
   if (!kindTag.ok) return kindTag;
-  const field_value = numberValue(object.value["value"], `${path}.value`);
+  const field_value = numberValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
-  const field_style = decodeNumberStyle(object.value["style"], `${path}.style`);
+  const field_style = decodeNumberStyle(object.value["style"], at(path, ".style"));
   if (!field_style.ok) return field_style;
-  const field_currency = object.value["currency"] === undefined ? ok(undefined) : stringValue(object.value["currency"], `${path}.currency`);
+  const field_currency = object.value["currency"] === undefined ? ok(undefined) : stringValue(object.value["currency"], at(path, ".currency"));
   if (!field_currency.ok) return field_currency;
-  const field_maximumFractionDigits = object.value["maximumFractionDigits"] === undefined ? ok(undefined) : intValue(object.value["maximumFractionDigits"], `${path}.maximumFractionDigits`);
+  const field_maximumFractionDigits = object.value["maximumFractionDigits"] === undefined ? ok(undefined) : intValue(object.value["maximumFractionDigits"], at(path, ".maximumFractionDigits"));
   if (!field_maximumFractionDigits.ok) return field_maximumFractionDigits;
   return ok<FormatItem>({ kind: "number", value: field_value.value, style: field_style.value, ...(field_currency.value !== undefined ? { currency: field_currency.value } : {}), ...(field_maximumFractionDigits.value !== undefined ? { maximumFractionDigits: field_maximumFractionDigits.value } : {}) });
 };
 
-const decodeFormatItem_date = (value: unknown, path: string): Decoded<FormatItem> => {
+const decodeFormatItem_date = (value: unknown, path: Path): Decoded<FormatItem> => {
   const object = objectValue(value, path, ["kind","epochMs","dateStyle","timeStyle"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "date");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "date");
   if (!kindTag.ok) return kindTag;
-  const field_epochMs = numberValue(object.value["epochMs"], `${path}.epochMs`);
+  const field_epochMs = numberValue(object.value["epochMs"], at(path, ".epochMs"));
   if (!field_epochMs.ok) return field_epochMs;
-  const field_dateStyle = object.value["dateStyle"] === undefined ? ok(undefined) : decodeDateStyle(object.value["dateStyle"], `${path}.dateStyle`);
+  const field_dateStyle = object.value["dateStyle"] === undefined ? ok(undefined) : decodeDateStyle(object.value["dateStyle"], at(path, ".dateStyle"));
   if (!field_dateStyle.ok) return field_dateStyle;
-  const field_timeStyle = object.value["timeStyle"] === undefined ? ok(undefined) : decodeDateStyle(object.value["timeStyle"], `${path}.timeStyle`);
+  const field_timeStyle = object.value["timeStyle"] === undefined ? ok(undefined) : decodeDateStyle(object.value["timeStyle"], at(path, ".timeStyle"));
   if (!field_timeStyle.ok) return field_timeStyle;
   return ok<FormatItem>({ kind: "date", epochMs: field_epochMs.value, ...(field_dateStyle.value !== undefined ? { dateStyle: field_dateStyle.value } : {}), ...(field_timeStyle.value !== undefined ? { timeStyle: field_timeStyle.value } : {}) });
 };
 
-const decodeFormatItem_relative = (value: unknown, path: string): Decoded<FormatItem> => {
+const decodeFormatItem_relative = (value: unknown, path: Path): Decoded<FormatItem> => {
   const object = objectValue(value, path, ["kind","value","unit"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "relative");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "relative");
   if (!kindTag.ok) return kindTag;
-  const field_value = numberValue(object.value["value"], `${path}.value`);
+  const field_value = numberValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
-  const field_unit = decodeRelativeUnit(object.value["unit"], `${path}.unit`);
+  const field_unit = decodeRelativeUnit(object.value["unit"], at(path, ".unit"));
   if (!field_unit.ok) return field_unit;
   return ok<FormatItem>({ kind: "relative", value: field_value.value, unit: field_unit.value });
 };
 
-const decodeFormatItem_list = (value: unknown, path: string): Decoded<FormatItem> => {
+const decodeFormatItem_list = (value: unknown, path: Path): Decoded<FormatItem> => {
   const object = objectValue(value, path, ["kind","items","type"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "list");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "list");
   if (!kindTag.ok) return kindTag;
-  const field_items = listOf(object.value["items"], `${path}.items`, (item, at) => stringValue(item, at));
+  const field_items = listOf(object.value["items"], at(path, ".items"), (item, at) => stringValue(item, at));
   if (!field_items.ok) return field_items;
-  const field_type = decodeListType(object.value["type"], `${path}.type`);
+  const field_type = decodeListType(object.value["type"], at(path, ".type"));
   if (!field_type.ok) return field_type;
   return ok<FormatItem>({ kind: "list", items: field_items.value, type: field_type.value });
 };
 
-const decodeFormatItem_plural = (value: unknown, path: string): Decoded<FormatItem> => {
+const decodeFormatItem_plural = (value: unknown, path: Path): Decoded<FormatItem> => {
   const object = objectValue(value, path, ["kind","value","ordinal"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "plural");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "plural");
   if (!kindTag.ok) return kindTag;
-  const field_value = numberValue(object.value["value"], `${path}.value`);
+  const field_value = numberValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
-  const field_ordinal = boolValue(object.value["ordinal"], `${path}.ordinal`);
+  const field_ordinal = boolValue(object.value["ordinal"], at(path, ".ordinal"));
   if (!field_ordinal.ok) return field_ordinal;
   return ok<FormatItem>({ kind: "plural", value: field_value.value, ordinal: field_ordinal.value });
 };
 
-export const decodeEnvironmentRequest = (value: unknown, path = "$"): Decoded<EnvironmentRequest> => {
+export const decodeEnvironmentRequest = (value: unknown, path: Path = "$"): Decoded<EnvironmentRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -204,53 +229,53 @@ export const decodeEnvironmentRequest = (value: unknown, path = "$"): Decoded<En
     case "watch": return decodeEnvironmentRequest_watch(value, path);
     case "unwatch": return decodeEnvironmentRequest_unwatch(value, path);
     case "format": return decodeEnvironmentRequest_format(value, path);
-    default: return unknownVariant(`${path}.operation`, ["describe","watch","unwatch","format"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["describe","watch","unwatch","format"], tag);
   }
 };
 
-const decodeEnvironmentRequest_describe = (value: unknown, path: string): Decoded<EnvironmentRequest> => {
+const decodeEnvironmentRequest_describe = (value: unknown, path: Path): Decoded<EnvironmentRequest> => {
   const object = objectValue(value, path, ["operation","preferences"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "describe");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "describe");
   if (!operationTag.ok) return operationTag;
-  const field_preferences = listOf(object.value["preferences"], `${path}.preferences`, (item, at) => decodePreference(item, at));
+  const field_preferences = listOf(object.value["preferences"], at(path, ".preferences"), (item, at) => decodePreference(item, at));
   if (!field_preferences.ok) return field_preferences;
   return ok<EnvironmentRequest>({ operation: "describe", preferences: field_preferences.value });
 };
 
-const decodeEnvironmentRequest_watch = (value: unknown, path: string): Decoded<EnvironmentRequest> => {
+const decodeEnvironmentRequest_watch = (value: unknown, path: Path): Decoded<EnvironmentRequest> => {
   const object = objectValue(value, path, ["operation","preferences"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "watch");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "watch");
   if (!operationTag.ok) return operationTag;
-  const field_preferences = listOf(object.value["preferences"], `${path}.preferences`, (item, at) => decodePreference(item, at));
+  const field_preferences = listOf(object.value["preferences"], at(path, ".preferences"), (item, at) => decodePreference(item, at));
   if (!field_preferences.ok) return field_preferences;
   return ok<EnvironmentRequest>({ operation: "watch", preferences: field_preferences.value });
 };
 
-const decodeEnvironmentRequest_unwatch = (value: unknown, path: string): Decoded<EnvironmentRequest> => {
+const decodeEnvironmentRequest_unwatch = (value: unknown, path: Path): Decoded<EnvironmentRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "unwatch");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "unwatch");
   if (!operationTag.ok) return operationTag;
   return ok<EnvironmentRequest>({ operation: "unwatch" });
 };
 
-const decodeEnvironmentRequest_format = (value: unknown, path: string): Decoded<EnvironmentRequest> => {
+const decodeEnvironmentRequest_format = (value: unknown, path: Path): Decoded<EnvironmentRequest> => {
   const object = objectValue(value, path, ["operation","locale","timeZone","items"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "format");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "format");
   if (!operationTag.ok) return operationTag;
-  const field_locale = stringValue(object.value["locale"], `${path}.locale`);
+  const field_locale = stringValue(object.value["locale"], at(path, ".locale"));
   if (!field_locale.ok) return field_locale;
-  const field_timeZone = stringValue(object.value["timeZone"], `${path}.timeZone`);
+  const field_timeZone = stringValue(object.value["timeZone"], at(path, ".timeZone"));
   if (!field_timeZone.ok) return field_timeZone;
-  const field_items = listOf(object.value["items"], `${path}.items`, (item, at) => decodeFormatItem(item, at));
+  const field_items = listOf(object.value["items"], at(path, ".items"), (item, at) => decodeFormatItem(item, at));
   if (!field_items.ok) return field_items;
   return ok<EnvironmentRequest>({ operation: "format", locale: field_locale.value, timeZone: field_timeZone.value, items: field_items.value });
 };
 
-export const decodeEnvironmentResult = (value: unknown, path = "$"): Decoded<EnvironmentResult> => {
+export const decodeEnvironmentResult = (value: unknown, path: Path = "$"): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -262,92 +287,92 @@ export const decodeEnvironmentResult = (value: unknown, path = "$"): Decoded<Env
     case "InvalidRequest": return decodeEnvironmentResult_InvalidRequest(value, path);
     case "Unsupported": return decodeEnvironmentResult_Unsupported(value, path);
     case "Cancelled": return decodeEnvironmentResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Described","Watching","Unwatched","Formatted","InvalidRequest","Unsupported","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Described","Watching","Unwatched","Formatted","InvalidRequest","Unsupported","Cancelled"], tag);
   }
 };
 
-const decodeEnvironmentResult_Described = (value: unknown, path: string): Decoded<EnvironmentResult> => {
+const decodeEnvironmentResult_Described = (value: unknown, path: Path): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, ["kind","environment"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Described");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Described");
   if (!kindTag.ok) return kindTag;
-  const field_environment = decodeEnvironment(object.value["environment"], `${path}.environment`);
+  const field_environment = decodeEnvironment(object.value["environment"], at(path, ".environment"));
   if (!field_environment.ok) return field_environment;
   return ok<EnvironmentResult>({ kind: "Described", environment: field_environment.value });
 };
 
-const decodeEnvironmentResult_Watching = (value: unknown, path: string): Decoded<EnvironmentResult> => {
+const decodeEnvironmentResult_Watching = (value: unknown, path: Path): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, ["kind","environment"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Watching");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Watching");
   if (!kindTag.ok) return kindTag;
-  const field_environment = decodeEnvironment(object.value["environment"], `${path}.environment`);
+  const field_environment = decodeEnvironment(object.value["environment"], at(path, ".environment"));
   if (!field_environment.ok) return field_environment;
   return ok<EnvironmentResult>({ kind: "Watching", environment: field_environment.value });
 };
 
-const decodeEnvironmentResult_Unwatched = (value: unknown, path: string): Decoded<EnvironmentResult> => {
+const decodeEnvironmentResult_Unwatched = (value: unknown, path: Path): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unwatched");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unwatched");
   if (!kindTag.ok) return kindTag;
   return ok<EnvironmentResult>({ kind: "Unwatched" });
 };
 
-const decodeEnvironmentResult_Formatted = (value: unknown, path: string): Decoded<EnvironmentResult> => {
+const decodeEnvironmentResult_Formatted = (value: unknown, path: Path): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, ["kind","texts"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Formatted");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Formatted");
   if (!kindTag.ok) return kindTag;
-  const field_texts = listOf(object.value["texts"], `${path}.texts`, (item, at) => stringValue(item, at));
+  const field_texts = listOf(object.value["texts"], at(path, ".texts"), (item, at) => stringValue(item, at));
   if (!field_texts.ok) return field_texts;
   return ok<EnvironmentResult>({ kind: "Formatted", texts: field_texts.value });
 };
 
-const decodeEnvironmentResult_InvalidRequest = (value: unknown, path: string): Decoded<EnvironmentResult> => {
+const decodeEnvironmentResult_InvalidRequest = (value: unknown, path: Path): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, ["kind","problem","item"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidRequest");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidRequest");
   if (!kindTag.ok) return kindTag;
-  const field_problem = stringValue(object.value["problem"], `${path}.problem`);
+  const field_problem = stringValue(object.value["problem"], at(path, ".problem"));
   if (!field_problem.ok) return field_problem;
-  const field_item = object.value["item"] === undefined ? ok(undefined) : intValue(object.value["item"], `${path}.item`);
+  const field_item = object.value["item"] === undefined ? ok(undefined) : intValue(object.value["item"], at(path, ".item"));
   if (!field_item.ok) return field_item;
   return ok<EnvironmentResult>({ kind: "InvalidRequest", problem: field_problem.value, ...(field_item.value !== undefined ? { item: field_item.value } : {}) });
 };
 
-const decodeEnvironmentResult_Unsupported = (value: unknown, path: string): Decoded<EnvironmentResult> => {
+const decodeEnvironmentResult_Unsupported = (value: unknown, path: Path): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
   return ok<EnvironmentResult>({ kind: "Unsupported" });
 };
 
-const decodeEnvironmentResult_Cancelled = (value: unknown, path: string): Decoded<EnvironmentResult> => {
+const decodeEnvironmentResult_Cancelled = (value: unknown, path: Path): Decoded<EnvironmentResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<EnvironmentResult>({ kind: "Cancelled" });
 };
 
-export const decodeEnvironmentFact = (value: unknown, path = "$"): Decoded<EnvironmentFact> => {
+export const decodeEnvironmentFact = (value: unknown, path: Path = "$"): Decoded<EnvironmentFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "EnvironmentChanged": return decodeEnvironmentFact_EnvironmentChanged(value, path);
-    default: return unknownVariant(`${path}.kind`, ["EnvironmentChanged"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["EnvironmentChanged"], tag);
   }
 };
 
-const decodeEnvironmentFact_EnvironmentChanged = (value: unknown, path: string): Decoded<EnvironmentFact> => {
+const decodeEnvironmentFact_EnvironmentChanged = (value: unknown, path: Path): Decoded<EnvironmentFact> => {
   const object = objectValue(value, path, ["kind","environment"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "EnvironmentChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "EnvironmentChanged");
   if (!kindTag.ok) return kindTag;
-  const field_environment = decodeEnvironment(object.value["environment"], `${path}.environment`);
+  const field_environment = decodeEnvironment(object.value["environment"], at(path, ".environment"));
   if (!field_environment.ok) return field_environment;
   return ok<EnvironmentFact>({ kind: "EnvironmentChanged", environment: field_environment.value });
 };

@@ -4,7 +4,7 @@
 // unit: limen.peer@1
 // contract-fingerprint: sha256:9679d9b1e15dcf93accf6e66137c46106ad8bca343c6225e454d3fc51f730443
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:20c4766ea6caee25f65f01a7b4d351998428ec2f44f1a9912737e3250873b9f0
+// content-hash: sha256:ce0110d895eb38267a1b46e4b2a5e1f053b08e5ab492a45e5f61710bb0f7df2f
 // </auto-generated>
 import type { ConnectionId, PeerStaleReason, SdpType, SessionDescription, IceCandidate, IceServer, PeerState, RemoteKind, RemoteTarget, PeerRequest, PeerResult, PeerFact } from "./peer.js";
 
@@ -12,36 +12,47 @@ import type { ConnectionId, PeerStaleReason, SdpType, SessionDescription, IceCan
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,85 +66,99 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeConnectionId = (value: unknown, path = "$"): Decoded<ConnectionId> => brand<ConnectionId>(stringValue(value, path));
+export const decodeConnectionId = (value: unknown, path: Path = "$"): Decoded<ConnectionId> => brand<ConnectionId>(stringValue(value, path));
 
-export const decodePeerStaleReason = (value: unknown, path = "$"): Decoded<PeerStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
+export const decodePeerStaleReason = (value: unknown, path: Path = "$"): Decoded<PeerStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
 
-export const decodeSdpType = (value: unknown, path = "$"): Decoded<SdpType> => enumValue(value, path, ["offer","answer","pranswer","rollback"] as const);
+export const decodeSdpType = (value: unknown, path: Path = "$"): Decoded<SdpType> => enumValue(value, path, ["offer","answer","pranswer","rollback"] as const);
 
-export const decodeSessionDescription = (value: unknown, path = "$"): Decoded<SessionDescription> => {
+export const decodeSessionDescription = (value: unknown, path: Path = "$"): Decoded<SessionDescription> => {
   const object = objectValue(value, path, ["type","sdp"]);
   if (!object.ok) return object;
-  const field_type = decodeSdpType(object.value["type"], `${path}.type`);
+  const field_type = decodeSdpType(object.value["type"], at(path, ".type"));
   if (!field_type.ok) return field_type;
-  const field_sdp = stringValue(object.value["sdp"], `${path}.sdp`);
+  const field_sdp = stringValue(object.value["sdp"], at(path, ".sdp"));
   if (!field_sdp.ok) return field_sdp;
   return ok<SessionDescription>({ type: field_type.value, sdp: field_sdp.value });
 };
 
-export const decodeIceCandidate = (value: unknown, path = "$"): Decoded<IceCandidate> => {
+export const decodeIceCandidate = (value: unknown, path: Path = "$"): Decoded<IceCandidate> => {
   const object = objectValue(value, path, ["candidate","sdpMid","sdpMLineIndex","usernameFragment"]);
   if (!object.ok) return object;
-  const field_candidate = stringValue(object.value["candidate"], `${path}.candidate`);
+  const field_candidate = stringValue(object.value["candidate"], at(path, ".candidate"));
   if (!field_candidate.ok) return field_candidate;
-  const field_sdpMid = object.value["sdpMid"] === undefined ? ok(undefined) : stringValue(object.value["sdpMid"], `${path}.sdpMid`);
+  const field_sdpMid = object.value["sdpMid"] === undefined ? ok(undefined) : stringValue(object.value["sdpMid"], at(path, ".sdpMid"));
   if (!field_sdpMid.ok) return field_sdpMid;
-  const field_sdpMLineIndex = object.value["sdpMLineIndex"] === undefined ? ok(undefined) : intValue(object.value["sdpMLineIndex"], `${path}.sdpMLineIndex`);
+  const field_sdpMLineIndex = object.value["sdpMLineIndex"] === undefined ? ok(undefined) : intValue(object.value["sdpMLineIndex"], at(path, ".sdpMLineIndex"));
   if (!field_sdpMLineIndex.ok) return field_sdpMLineIndex;
-  const field_usernameFragment = object.value["usernameFragment"] === undefined ? ok(undefined) : stringValue(object.value["usernameFragment"], `${path}.usernameFragment`);
+  const field_usernameFragment = object.value["usernameFragment"] === undefined ? ok(undefined) : stringValue(object.value["usernameFragment"], at(path, ".usernameFragment"));
   if (!field_usernameFragment.ok) return field_usernameFragment;
   return ok<IceCandidate>({ candidate: field_candidate.value, ...(field_sdpMid.value !== undefined ? { sdpMid: field_sdpMid.value } : {}), ...(field_sdpMLineIndex.value !== undefined ? { sdpMLineIndex: field_sdpMLineIndex.value } : {}), ...(field_usernameFragment.value !== undefined ? { usernameFragment: field_usernameFragment.value } : {}) });
 };
 
-export const decodeIceServer = (value: unknown, path = "$"): Decoded<IceServer> => {
+export const decodeIceServer = (value: unknown, path: Path = "$"): Decoded<IceServer> => {
   const object = objectValue(value, path, ["urls","username","credential"]);
   if (!object.ok) return object;
-  const field_urls = listOf(object.value["urls"], `${path}.urls`, (item, at) => stringValue(item, at));
+  const field_urls = listOf(object.value["urls"], at(path, ".urls"), (item, at) => stringValue(item, at));
   if (!field_urls.ok) return field_urls;
-  const field_username = object.value["username"] === undefined ? ok(undefined) : stringValue(object.value["username"], `${path}.username`);
+  const field_username = object.value["username"] === undefined ? ok(undefined) : stringValue(object.value["username"], at(path, ".username"));
   if (!field_username.ok) return field_username;
-  const field_credential = object.value["credential"] === undefined ? ok(undefined) : stringValue(object.value["credential"], `${path}.credential`);
+  const field_credential = object.value["credential"] === undefined ? ok(undefined) : stringValue(object.value["credential"], at(path, ".credential"));
   if (!field_credential.ok) return field_credential;
   return ok<IceServer>({ urls: field_urls.value, ...(field_username.value !== undefined ? { username: field_username.value } : {}), ...(field_credential.value !== undefined ? { credential: field_credential.value } : {}) });
 };
 
-export const decodePeerState = (value: unknown, path = "$"): Decoded<PeerState> => enumValue(value, path, ["new","connecting","connected","disconnected","failed","closed"] as const);
+export const decodePeerState = (value: unknown, path: Path = "$"): Decoded<PeerState> => enumValue(value, path, ["new","connecting","connected","disconnected","failed","closed"] as const);
 
-export const decodeRemoteKind = (value: unknown, path = "$"): Decoded<RemoteKind> => enumValue(value, path, ["audio","video"] as const);
+export const decodeRemoteKind = (value: unknown, path: Path = "$"): Decoded<RemoteKind> => enumValue(value, path, ["audio","video"] as const);
 
-export const decodeRemoteTarget = (value: unknown, path = "$"): Decoded<RemoteTarget> => {
+export const decodeRemoteTarget = (value: unknown, path: Path = "$"): Decoded<RemoteTarget> => {
   const object = objectValue(value, path, ["name","key"]);
   if (!object.ok) return object;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], `${path}.key`);
+  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
   return ok<RemoteTarget>({ name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}) });
 };
 
-export const decodePeerRequest = (value: unknown, path = "$"): Decoded<PeerRequest> => {
+export const decodePeerRequest = (value: unknown, path: Path = "$"): Decoded<PeerRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -147,111 +172,111 @@ export const decodePeerRequest = (value: unknown, path = "$"): Decoded<PeerReque
     case "addCandidate": return decodePeerRequest_addCandidate(value, path);
     case "showRemote": return decodePeerRequest_showRemote(value, path);
     case "close": return decodePeerRequest_close(value, path);
-    default: return unknownVariant(`${path}.operation`, ["open","addCapture","createOffer","createAnswer","setLocal","setRemote","addCandidate","showRemote","close"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["open","addCapture","createOffer","createAnswer","setLocal","setRemote","addCandidate","showRemote","close"], tag);
   }
 };
 
-const decodePeerRequest_open = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_open = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","iceServers"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "open");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "open");
   if (!operationTag.ok) return operationTag;
-  const field_iceServers = listOf(object.value["iceServers"], `${path}.iceServers`, (item, at) => decodeIceServer(item, at));
+  const field_iceServers = listOf(object.value["iceServers"], at(path, ".iceServers"), (item, at) => decodeIceServer(item, at));
   if (!field_iceServers.ok) return field_iceServers;
   return ok<PeerRequest>({ operation: "open", iceServers: field_iceServers.value });
 };
 
-const decodePeerRequest_addCapture = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_addCapture = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection","capture"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "addCapture");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "addCapture");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_capture = stringValue(object.value["capture"], `${path}.capture`);
+  const field_capture = stringValue(object.value["capture"], at(path, ".capture"));
   if (!field_capture.ok) return field_capture;
   return ok<PeerRequest>({ operation: "addCapture", connection: field_connection.value, capture: field_capture.value });
 };
 
-const decodePeerRequest_createOffer = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_createOffer = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "createOffer");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "createOffer");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<PeerRequest>({ operation: "createOffer", connection: field_connection.value });
 };
 
-const decodePeerRequest_createAnswer = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_createAnswer = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "createAnswer");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "createAnswer");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<PeerRequest>({ operation: "createAnswer", connection: field_connection.value });
 };
 
-const decodePeerRequest_setLocal = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_setLocal = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection","description"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "setLocal");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "setLocal");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_description = decodeSessionDescription(object.value["description"], `${path}.description`);
+  const field_description = decodeSessionDescription(object.value["description"], at(path, ".description"));
   if (!field_description.ok) return field_description;
   return ok<PeerRequest>({ operation: "setLocal", connection: field_connection.value, description: field_description.value });
 };
 
-const decodePeerRequest_setRemote = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_setRemote = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection","description"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "setRemote");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "setRemote");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_description = decodeSessionDescription(object.value["description"], `${path}.description`);
+  const field_description = decodeSessionDescription(object.value["description"], at(path, ".description"));
   if (!field_description.ok) return field_description;
   return ok<PeerRequest>({ operation: "setRemote", connection: field_connection.value, description: field_description.value });
 };
 
-const decodePeerRequest_addCandidate = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_addCandidate = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection","candidate"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "addCandidate");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "addCandidate");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_candidate = decodeIceCandidate(object.value["candidate"], `${path}.candidate`);
+  const field_candidate = decodeIceCandidate(object.value["candidate"], at(path, ".candidate"));
   if (!field_candidate.ok) return field_candidate;
   return ok<PeerRequest>({ operation: "addCandidate", connection: field_connection.value, candidate: field_candidate.value });
 };
 
-const decodePeerRequest_showRemote = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_showRemote = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection","target"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "showRemote");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "showRemote");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_target = decodeRemoteTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeRemoteTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
   return ok<PeerRequest>({ operation: "showRemote", connection: field_connection.value, target: field_target.value });
 };
 
-const decodePeerRequest_close = (value: unknown, path: string): Decoded<PeerRequest> => {
+const decodePeerRequest_close = (value: unknown, path: Path): Decoded<PeerRequest> => {
   const object = objectValue(value, path, ["operation","connection"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "close");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "close");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<PeerRequest>({ operation: "close", connection: field_connection.value });
 };
 
-export const decodePeerResult = (value: unknown, path = "$"): Decoded<PeerResult> => {
+export const decodePeerResult = (value: unknown, path: Path = "$"): Decoded<PeerResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -271,145 +296,145 @@ export const decodePeerResult = (value: unknown, path = "$"): Decoded<PeerResult
     case "NotSupported": return decodePeerResult_NotSupported(value, path);
     case "Cancelled": return decodePeerResult_Cancelled(value, path);
     case "Failed": return decodePeerResult_Failed(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Opened","TracksAdded","Described","Applied","Showing","NotFound","Ambiguous","WrongElement","Closed","UnknownCapture","Rejected","Stale","NotSupported","Cancelled","Failed"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Opened","TracksAdded","Described","Applied","Showing","NotFound","Ambiguous","WrongElement","Closed","UnknownCapture","Rejected","Stale","NotSupported","Cancelled","Failed"], tag);
   }
 };
 
-const decodePeerResult_Opened = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Opened = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind","connection"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Opened");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Opened");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<PeerResult>({ kind: "Opened", connection: field_connection.value });
 };
 
-const decodePeerResult_TracksAdded = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_TracksAdded = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind","count"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "TracksAdded");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "TracksAdded");
   if (!kindTag.ok) return kindTag;
-  const field_count = intValue(object.value["count"], `${path}.count`);
+  const field_count = intValue(object.value["count"], at(path, ".count"));
   if (!field_count.ok) return field_count;
   return ok<PeerResult>({ kind: "TracksAdded", count: field_count.value });
 };
 
-const decodePeerResult_Described = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Described = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind","description"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Described");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Described");
   if (!kindTag.ok) return kindTag;
-  const field_description = decodeSessionDescription(object.value["description"], `${path}.description`);
+  const field_description = decodeSessionDescription(object.value["description"], at(path, ".description"));
   if (!field_description.ok) return field_description;
   return ok<PeerResult>({ kind: "Described", description: field_description.value });
 };
 
-const decodePeerResult_Applied = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Applied = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Applied");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Applied");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "Applied" });
 };
 
-const decodePeerResult_Showing = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Showing = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Showing");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Showing");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "Showing" });
 };
 
-const decodePeerResult_NotFound = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_NotFound = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotFound");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotFound");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "NotFound" });
 };
 
-const decodePeerResult_Ambiguous = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Ambiguous = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind","count"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Ambiguous");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Ambiguous");
   if (!kindTag.ok) return kindTag;
-  const field_count = intValue(object.value["count"], `${path}.count`);
+  const field_count = intValue(object.value["count"], at(path, ".count"));
   if (!field_count.ok) return field_count;
   return ok<PeerResult>({ kind: "Ambiguous", count: field_count.value });
 };
 
-const decodePeerResult_WrongElement = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_WrongElement = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "WrongElement");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "WrongElement");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "WrongElement" });
 };
 
-const decodePeerResult_Closed = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Closed = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Closed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Closed");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "Closed" });
 };
 
-const decodePeerResult_UnknownCapture = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_UnknownCapture = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UnknownCapture");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UnknownCapture");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "UnknownCapture" });
 };
 
-const decodePeerResult_Rejected = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Rejected = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Rejected");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Rejected");
   if (!kindTag.ok) return kindTag;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<PeerResult>({ kind: "Rejected", reason: field_reason.value });
 };
 
-const decodePeerResult_Stale = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Stale = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Stale");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Stale");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodePeerStaleReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodePeerStaleReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<PeerResult>({ kind: "Stale", reason: field_reason.value });
 };
 
-const decodePeerResult_NotSupported = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_NotSupported = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotSupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotSupported");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "NotSupported" });
 };
 
-const decodePeerResult_Cancelled = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Cancelled = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<PeerResult>({ kind: "Cancelled" });
 };
 
-const decodePeerResult_Failed = (value: unknown, path: string): Decoded<PeerResult> => {
+const decodePeerResult_Failed = (value: unknown, path: Path): Decoded<PeerResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Failed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Failed");
   if (!kindTag.ok) return kindTag;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<PeerResult>({ kind: "Failed", reason: field_reason.value });
 };
 
-export const decodePeerFact = (value: unknown, path = "$"): Decoded<PeerFact> => {
+export const decodePeerFact = (value: unknown, path: Path = "$"): Decoded<PeerFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -419,62 +444,62 @@ export const decodePeerFact = (value: unknown, path = "$"): Decoded<PeerFact> =>
     case "StateChanged": return decodePeerFact_StateChanged(value, path);
     case "RemoteTrackArrived": return decodePeerFact_RemoteTrackArrived(value, path);
     case "NegotiationNeeded": return decodePeerFact_NegotiationNeeded(value, path);
-    default: return unknownVariant(`${path}.kind`, ["LocalCandidate","GatheringComplete","StateChanged","RemoteTrackArrived","NegotiationNeeded"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["LocalCandidate","GatheringComplete","StateChanged","RemoteTrackArrived","NegotiationNeeded"], tag);
   }
 };
 
-const decodePeerFact_LocalCandidate = (value: unknown, path: string): Decoded<PeerFact> => {
+const decodePeerFact_LocalCandidate = (value: unknown, path: Path): Decoded<PeerFact> => {
   const object = objectValue(value, path, ["kind","connection","candidate"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "LocalCandidate");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "LocalCandidate");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_candidate = decodeIceCandidate(object.value["candidate"], `${path}.candidate`);
+  const field_candidate = decodeIceCandidate(object.value["candidate"], at(path, ".candidate"));
   if (!field_candidate.ok) return field_candidate;
   return ok<PeerFact>({ kind: "LocalCandidate", connection: field_connection.value, candidate: field_candidate.value });
 };
 
-const decodePeerFact_GatheringComplete = (value: unknown, path: string): Decoded<PeerFact> => {
+const decodePeerFact_GatheringComplete = (value: unknown, path: Path): Decoded<PeerFact> => {
   const object = objectValue(value, path, ["kind","connection"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "GatheringComplete");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "GatheringComplete");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<PeerFact>({ kind: "GatheringComplete", connection: field_connection.value });
 };
 
-const decodePeerFact_StateChanged = (value: unknown, path: string): Decoded<PeerFact> => {
+const decodePeerFact_StateChanged = (value: unknown, path: Path): Decoded<PeerFact> => {
   const object = objectValue(value, path, ["kind","connection","state"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "StateChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "StateChanged");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_state = decodePeerState(object.value["state"], `${path}.state`);
+  const field_state = decodePeerState(object.value["state"], at(path, ".state"));
   if (!field_state.ok) return field_state;
   return ok<PeerFact>({ kind: "StateChanged", connection: field_connection.value, state: field_state.value });
 };
 
-const decodePeerFact_RemoteTrackArrived = (value: unknown, path: string): Decoded<PeerFact> => {
+const decodePeerFact_RemoteTrackArrived = (value: unknown, path: Path): Decoded<PeerFact> => {
   const object = objectValue(value, path, ["kind","connection","track"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "RemoteTrackArrived");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "RemoteTrackArrived");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_track = decodeRemoteKind(object.value["track"], `${path}.track`);
+  const field_track = decodeRemoteKind(object.value["track"], at(path, ".track"));
   if (!field_track.ok) return field_track;
   return ok<PeerFact>({ kind: "RemoteTrackArrived", connection: field_connection.value, track: field_track.value });
 };
 
-const decodePeerFact_NegotiationNeeded = (value: unknown, path: string): Decoded<PeerFact> => {
+const decodePeerFact_NegotiationNeeded = (value: unknown, path: Path): Decoded<PeerFact> => {
   const object = objectValue(value, path, ["kind","connection"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NegotiationNeeded");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NegotiationNeeded");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<PeerFact>({ kind: "NegotiationNeeded", connection: field_connection.value });
 };

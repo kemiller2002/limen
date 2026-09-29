@@ -4,7 +4,7 @@
 // unit: limen.transfer@1
 // contract-fingerprint: sha256:86dc0ced666c6dc6190a2afba74539d45672beef7f50f0060aee579bc31ee609
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:79525f6a8266100a820fc88aad956d761e15f9b82558cd9c2e69d4c44f1bad1e
+// content-hash: sha256:4413f2d8b32a04b0b486746fc72f611cc0100666c5bf0f6c371beace8b9665ad
 // </auto-generated>
 import type { TransferMethod, TransferResponseKind, TransferCredentials, Part, TransferBody, TransferRequest, TransferFailureReason, TransferResult, TransferDirection, TransferFact } from "./transfer.js";
 
@@ -12,36 +12,47 @@ import type { TransferMethod, TransferResponseKind, TransferCredentials, Part, T
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,72 +66,86 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeTransferMethod = (value: unknown, path = "$"): Decoded<TransferMethod> => enumValue(value, path, ["GET","PUT","POST","PATCH","DELETE"] as const);
+export const decodeTransferMethod = (value: unknown, path: Path = "$"): Decoded<TransferMethod> => enumValue(value, path, ["GET","PUT","POST","PATCH","DELETE"] as const);
 
-export const decodeTransferResponseKind = (value: unknown, path = "$"): Decoded<TransferResponseKind> => enumValue(value, path, ["json","text","base64","none"] as const);
+export const decodeTransferResponseKind = (value: unknown, path: Path = "$"): Decoded<TransferResponseKind> => enumValue(value, path, ["json","text","base64","none"] as const);
 
-export const decodeTransferCredentials = (value: unknown, path = "$"): Decoded<TransferCredentials> => enumValue(value, path, ["omit","same-origin","include"] as const);
+export const decodeTransferCredentials = (value: unknown, path: Path = "$"): Decoded<TransferCredentials> => enumValue(value, path, ["omit","same-origin","include"] as const);
 
-export const decodePart = (value: unknown, path = "$"): Decoded<Part> => {
+export const decodePart = (value: unknown, path: Path = "$"): Decoded<Part> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "field": return decodePart_field(value, path);
     case "file": return decodePart_file(value, path);
-    default: return unknownVariant(`${path}.kind`, ["field","file"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["field","file"], tag);
   }
 };
 
-const decodePart_field = (value: unknown, path: string): Decoded<Part> => {
+const decodePart_field = (value: unknown, path: Path): Decoded<Part> => {
   const object = objectValue(value, path, ["kind","name","value"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "field");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "field");
   if (!kindTag.ok) return kindTag;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_value = stringValue(object.value["value"], `${path}.value`);
+  const field_value = stringValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
   return ok<Part>({ kind: "field", name: field_name.value, value: field_value.value });
 };
 
-const decodePart_file = (value: unknown, path: string): Decoded<Part> => {
+const decodePart_file = (value: unknown, path: Path): Decoded<Part> => {
   const object = objectValue(value, path, ["kind","name","file","fileName"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "file");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "file");
   if (!kindTag.ok) return kindTag;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_file = stringValue(object.value["file"], `${path}.file`);
+  const field_file = stringValue(object.value["file"], at(path, ".file"));
   if (!field_file.ok) return field_file;
-  const field_fileName = object.value["fileName"] === undefined ? ok(undefined) : stringValue(object.value["fileName"], `${path}.fileName`);
+  const field_fileName = object.value["fileName"] === undefined ? ok(undefined) : stringValue(object.value["fileName"], at(path, ".fileName"));
   if (!field_fileName.ok) return field_fileName;
   return ok<Part>({ kind: "file", name: field_name.value, file: field_file.value, ...(field_fileName.value !== undefined ? { fileName: field_fileName.value } : {}) });
 };
 
-export const decodeTransferBody = (value: unknown, path = "$"): Decoded<TransferBody> => {
+export const decodeTransferBody = (value: unknown, path: Path = "$"): Decoded<TransferBody> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -129,93 +154,93 @@ export const decodeTransferBody = (value: unknown, path = "$"): Decoded<Transfer
     case "text": return decodeTransferBody_text(value, path);
     case "file": return decodeTransferBody_file(value, path);
     case "multipart": return decodeTransferBody_multipart(value, path);
-    default: return unknownVariant(`${path}.kind`, ["empty","text","file","multipart"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["empty","text","file","multipart"], tag);
   }
 };
 
-const decodeTransferBody_empty = (value: unknown, path: string): Decoded<TransferBody> => {
+const decodeTransferBody_empty = (value: unknown, path: Path): Decoded<TransferBody> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "empty");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "empty");
   if (!kindTag.ok) return kindTag;
   return ok<TransferBody>({ kind: "empty" });
 };
 
-const decodeTransferBody_text = (value: unknown, path: string): Decoded<TransferBody> => {
+const decodeTransferBody_text = (value: unknown, path: Path): Decoded<TransferBody> => {
   const object = objectValue(value, path, ["kind","text","contentType"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "text");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "text");
   if (!kindTag.ok) return kindTag;
-  const field_text = stringValue(object.value["text"], `${path}.text`);
+  const field_text = stringValue(object.value["text"], at(path, ".text"));
   if (!field_text.ok) return field_text;
-  const field_contentType = stringValue(object.value["contentType"], `${path}.contentType`);
+  const field_contentType = stringValue(object.value["contentType"], at(path, ".contentType"));
   if (!field_contentType.ok) return field_contentType;
   return ok<TransferBody>({ kind: "text", text: field_text.value, contentType: field_contentType.value });
 };
 
-const decodeTransferBody_file = (value: unknown, path: string): Decoded<TransferBody> => {
+const decodeTransferBody_file = (value: unknown, path: Path): Decoded<TransferBody> => {
   const object = objectValue(value, path, ["kind","file","contentType"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "file");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "file");
   if (!kindTag.ok) return kindTag;
-  const field_file = stringValue(object.value["file"], `${path}.file`);
+  const field_file = stringValue(object.value["file"], at(path, ".file"));
   if (!field_file.ok) return field_file;
-  const field_contentType = object.value["contentType"] === undefined ? ok(undefined) : stringValue(object.value["contentType"], `${path}.contentType`);
+  const field_contentType = object.value["contentType"] === undefined ? ok(undefined) : stringValue(object.value["contentType"], at(path, ".contentType"));
   if (!field_contentType.ok) return field_contentType;
   return ok<TransferBody>({ kind: "file", file: field_file.value, ...(field_contentType.value !== undefined ? { contentType: field_contentType.value } : {}) });
 };
 
-const decodeTransferBody_multipart = (value: unknown, path: string): Decoded<TransferBody> => {
+const decodeTransferBody_multipart = (value: unknown, path: Path): Decoded<TransferBody> => {
   const object = objectValue(value, path, ["kind","parts"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "multipart");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "multipart");
   if (!kindTag.ok) return kindTag;
-  const field_parts = listOf(object.value["parts"], `${path}.parts`, (item, at) => decodePart(item, at));
+  const field_parts = listOf(object.value["parts"], at(path, ".parts"), (item, at) => decodePart(item, at));
   if (!field_parts.ok) return field_parts;
   return ok<TransferBody>({ kind: "multipart", parts: field_parts.value });
 };
 
-export const decodeTransferRequest = (value: unknown, path = "$"): Decoded<TransferRequest> => {
+export const decodeTransferRequest = (value: unknown, path: Path = "$"): Decoded<TransferRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
   switch (tag) {
     case "send": return decodeTransferRequest_send(value, path);
-    default: return unknownVariant(`${path}.operation`, ["send"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["send"], tag);
   }
 };
 
-const decodeTransferRequest_send = (value: unknown, path: string): Decoded<TransferRequest> => {
+const decodeTransferRequest_send = (value: unknown, path: Path): Decoded<TransferRequest> => {
   const object = objectValue(value, path, ["operation","method","url","headers","body","response","responseHeaders","credentials","timeoutMs","progress","progressIntervalMs"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "send");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "send");
   if (!operationTag.ok) return operationTag;
-  const field_method = decodeTransferMethod(object.value["method"], `${path}.method`);
+  const field_method = decodeTransferMethod(object.value["method"], at(path, ".method"));
   if (!field_method.ok) return field_method;
-  const field_url = stringValue(object.value["url"], `${path}.url`);
+  const field_url = stringValue(object.value["url"], at(path, ".url"));
   if (!field_url.ok) return field_url;
-  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], `${path}.headers`, (item, at) => stringValue(item, at));
+  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], at(path, ".headers"), (item, at) => stringValue(item, at));
   if (!field_headers.ok) return field_headers;
-  const field_body = decodeTransferBody(object.value["body"], `${path}.body`);
+  const field_body = decodeTransferBody(object.value["body"], at(path, ".body"));
   if (!field_body.ok) return field_body;
-  const field_response = decodeTransferResponseKind(object.value["response"], `${path}.response`);
+  const field_response = decodeTransferResponseKind(object.value["response"], at(path, ".response"));
   if (!field_response.ok) return field_response;
-  const field_responseHeaders = object.value["responseHeaders"] === undefined ? ok(undefined) : listOf(object.value["responseHeaders"], `${path}.responseHeaders`, (item, at) => stringValue(item, at));
+  const field_responseHeaders = object.value["responseHeaders"] === undefined ? ok(undefined) : listOf(object.value["responseHeaders"], at(path, ".responseHeaders"), (item, at) => stringValue(item, at));
   if (!field_responseHeaders.ok) return field_responseHeaders;
-  const field_credentials = object.value["credentials"] === undefined ? ok(undefined) : decodeTransferCredentials(object.value["credentials"], `${path}.credentials`);
+  const field_credentials = object.value["credentials"] === undefined ? ok(undefined) : decodeTransferCredentials(object.value["credentials"], at(path, ".credentials"));
   if (!field_credentials.ok) return field_credentials;
-  const field_timeoutMs = intValue(object.value["timeoutMs"], `${path}.timeoutMs`);
+  const field_timeoutMs = intValue(object.value["timeoutMs"], at(path, ".timeoutMs"));
   if (!field_timeoutMs.ok) return field_timeoutMs;
-  const field_progress = boolValue(object.value["progress"], `${path}.progress`);
+  const field_progress = boolValue(object.value["progress"], at(path, ".progress"));
   if (!field_progress.ok) return field_progress;
-  const field_progressIntervalMs = intValue(object.value["progressIntervalMs"], `${path}.progressIntervalMs`);
+  const field_progressIntervalMs = intValue(object.value["progressIntervalMs"], at(path, ".progressIntervalMs"));
   if (!field_progressIntervalMs.ok) return field_progressIntervalMs;
   return ok<TransferRequest>({ operation: "send", method: field_method.value, url: field_url.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}), body: field_body.value, response: field_response.value, ...(field_responseHeaders.value !== undefined ? { responseHeaders: field_responseHeaders.value } : {}), ...(field_credentials.value !== undefined ? { credentials: field_credentials.value } : {}), timeoutMs: field_timeoutMs.value, progress: field_progress.value, progressIntervalMs: field_progressIntervalMs.value });
 };
 
-export const decodeTransferFailureReason = (value: unknown, path = "$"): Decoded<TransferFailureReason> => enumValue(value, path, ["network","invalid-response","too-large","unknown-file","no-files"] as const);
+export const decodeTransferFailureReason = (value: unknown, path: Path = "$"): Decoded<TransferFailureReason> => enumValue(value, path, ["network","invalid-response","too-large","unknown-file","no-files"] as const);
 
-export const decodeTransferResult = (value: unknown, path = "$"): Decoded<TransferResult> => {
+export const decodeTransferResult = (value: unknown, path: Path = "$"): Decoded<TransferResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -225,86 +250,86 @@ export const decodeTransferResult = (value: unknown, path = "$"): Decoded<Transf
     case "Cancelled": return decodeTransferResult_Cancelled(value, path);
     case "OutcomeUnknown": return decodeTransferResult_OutcomeUnknown(value, path);
     case "InvalidRequest": return decodeTransferResult_InvalidRequest(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Success","Failure","Cancelled","OutcomeUnknown","InvalidRequest"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Success","Failure","Cancelled","OutcomeUnknown","InvalidRequest"], tag);
   }
 };
 
-const decodeTransferResult_Success = (value: unknown, path: string): Decoded<TransferResult> => {
+const decodeTransferResult_Success = (value: unknown, path: Path): Decoded<TransferResult> => {
   const object = objectValue(value, path, ["kind","status","body","headers"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Success");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Success");
   if (!kindTag.ok) return kindTag;
-  const field_status = intValue(object.value["status"], `${path}.status`);
+  const field_status = intValue(object.value["status"], at(path, ".status"));
   if (!field_status.ok) return field_status;
-  const field_body = jsonValue(object.value["body"], `${path}.body`);
+  const field_body = jsonValue(object.value["body"], at(path, ".body"));
   if (!field_body.ok) return field_body;
-  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], `${path}.headers`, (item, at) => stringValue(item, at));
+  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], at(path, ".headers"), (item, at) => stringValue(item, at));
   if (!field_headers.ok) return field_headers;
   return ok<TransferResult>({ kind: "Success", status: field_status.value, body: field_body.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}) });
 };
 
-const decodeTransferResult_Failure = (value: unknown, path: string): Decoded<TransferResult> => {
+const decodeTransferResult_Failure = (value: unknown, path: Path): Decoded<TransferResult> => {
   const object = objectValue(value, path, ["kind","reason","status"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Failure");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Failure");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeTransferFailureReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeTransferFailureReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
-  const field_status = object.value["status"] === undefined ? ok(undefined) : intValue(object.value["status"], `${path}.status`);
+  const field_status = object.value["status"] === undefined ? ok(undefined) : intValue(object.value["status"], at(path, ".status"));
   if (!field_status.ok) return field_status;
   return ok<TransferResult>({ kind: "Failure", reason: field_reason.value, ...(field_status.value !== undefined ? { status: field_status.value } : {}) });
 };
 
-const decodeTransferResult_Cancelled = (value: unknown, path: string): Decoded<TransferResult> => {
+const decodeTransferResult_Cancelled = (value: unknown, path: Path): Decoded<TransferResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<TransferResult>({ kind: "Cancelled" });
 };
 
-const decodeTransferResult_OutcomeUnknown = (value: unknown, path: string): Decoded<TransferResult> => {
+const decodeTransferResult_OutcomeUnknown = (value: unknown, path: Path): Decoded<TransferResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "OutcomeUnknown");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "OutcomeUnknown");
   if (!kindTag.ok) return kindTag;
   return ok<TransferResult>({ kind: "OutcomeUnknown" });
 };
 
-const decodeTransferResult_InvalidRequest = (value: unknown, path: string): Decoded<TransferResult> => {
+const decodeTransferResult_InvalidRequest = (value: unknown, path: Path): Decoded<TransferResult> => {
   const object = objectValue(value, path, ["kind","problem"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidRequest");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidRequest");
   if (!kindTag.ok) return kindTag;
-  const field_problem = stringValue(object.value["problem"], `${path}.problem`);
+  const field_problem = stringValue(object.value["problem"], at(path, ".problem"));
   if (!field_problem.ok) return field_problem;
   return ok<TransferResult>({ kind: "InvalidRequest", problem: field_problem.value });
 };
 
-export const decodeTransferDirection = (value: unknown, path = "$"): Decoded<TransferDirection> => enumValue(value, path, ["upload","download"] as const);
+export const decodeTransferDirection = (value: unknown, path: Path = "$"): Decoded<TransferDirection> => enumValue(value, path, ["upload","download"] as const);
 
-export const decodeTransferFact = (value: unknown, path = "$"): Decoded<TransferFact> => {
+export const decodeTransferFact = (value: unknown, path: Path = "$"): Decoded<TransferFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "Progress": return decodeTransferFact_Progress(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Progress"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Progress"], tag);
   }
 };
 
-const decodeTransferFact_Progress = (value: unknown, path: string): Decoded<TransferFact> => {
+const decodeTransferFact_Progress = (value: unknown, path: Path): Decoded<TransferFact> => {
   const object = objectValue(value, path, ["kind","request","direction","loaded","total"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Progress");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Progress");
   if (!kindTag.ok) return kindTag;
-  const field_request = stringValue(object.value["request"], `${path}.request`);
+  const field_request = stringValue(object.value["request"], at(path, ".request"));
   if (!field_request.ok) return field_request;
-  const field_direction = decodeTransferDirection(object.value["direction"], `${path}.direction`);
+  const field_direction = decodeTransferDirection(object.value["direction"], at(path, ".direction"));
   if (!field_direction.ok) return field_direction;
-  const field_loaded = intValue(object.value["loaded"], `${path}.loaded`);
+  const field_loaded = intValue(object.value["loaded"], at(path, ".loaded"));
   if (!field_loaded.ok) return field_loaded;
-  const field_total = object.value["total"] === undefined ? ok(undefined) : intValue(object.value["total"], `${path}.total`);
+  const field_total = object.value["total"] === undefined ? ok(undefined) : intValue(object.value["total"], at(path, ".total"));
   if (!field_total.ok) return field_total;
   return ok<TransferFact>({ kind: "Progress", request: field_request.value, direction: field_direction.value, loaded: field_loaded.value, ...(field_total.value !== undefined ? { total: field_total.value } : {}) });
 };

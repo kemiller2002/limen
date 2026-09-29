@@ -4,7 +4,7 @@
 // unit: limen.realtime@1
 // contract-fingerprint: sha256:00561fb3820d20931bc667dc4f12c3acbc84963a096a5b9db31495681981454e
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:ef2c99af820da4f4061f5589c89088c3e10ea909de7cfd3c8fccfa658b9229ed
+// content-hash: sha256:e77ead7ea93f7b8bce8a20f145f34fa9c5fb3657d27c855363276dc3a0f98f78
 // </auto-generated>
 import type { ConnectionId, ConnectionStaleReason, ReadyState, CloseInitiator, RealtimeRequest, RealtimeResult, RealtimeFact } from "./realtime.js";
 
@@ -12,36 +12,47 @@ import type { ConnectionId, ConnectionStaleReason, ReadyState, CloseInitiator, R
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,37 +66,51 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeConnectionId = (value: unknown, path = "$"): Decoded<ConnectionId> => brand<ConnectionId>(stringValue(value, path));
+export const decodeConnectionId = (value: unknown, path: Path = "$"): Decoded<ConnectionId> => brand<ConnectionId>(stringValue(value, path));
 
-export const decodeConnectionStaleReason = (value: unknown, path = "$"): Decoded<ConnectionStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
+export const decodeConnectionStaleReason = (value: unknown, path: Path = "$"): Decoded<ConnectionStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
 
-export const decodeReadyState = (value: unknown, path = "$"): Decoded<ReadyState> => enumValue(value, path, ["connecting","open","closing","closed"] as const);
+export const decodeReadyState = (value: unknown, path: Path = "$"): Decoded<ReadyState> => enumValue(value, path, ["connecting","open","closing","closed"] as const);
 
-export const decodeCloseInitiator = (value: unknown, path = "$"): Decoded<CloseInitiator> => enumValue(value, path, ["remote","error"] as const);
+export const decodeCloseInitiator = (value: unknown, path: Path = "$"): Decoded<CloseInitiator> => enumValue(value, path, ["remote","error"] as const);
 
-export const decodeRealtimeRequest = (value: unknown, path = "$"): Decoded<RealtimeRequest> => {
+export const decodeRealtimeRequest = (value: unknown, path: Path = "$"): Decoded<RealtimeRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -94,63 +119,63 @@ export const decodeRealtimeRequest = (value: unknown, path = "$"): Decoded<Realt
     case "openEventSource": return decodeRealtimeRequest_openEventSource(value, path);
     case "send": return decodeRealtimeRequest_send(value, path);
     case "close": return decodeRealtimeRequest_close(value, path);
-    default: return unknownVariant(`${path}.operation`, ["openWebSocket","openEventSource","send","close"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["openWebSocket","openEventSource","send","close"], tag);
   }
 };
 
-const decodeRealtimeRequest_openWebSocket = (value: unknown, path: string): Decoded<RealtimeRequest> => {
+const decodeRealtimeRequest_openWebSocket = (value: unknown, path: Path): Decoded<RealtimeRequest> => {
   const object = objectValue(value, path, ["operation","url","protocols"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "openWebSocket");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "openWebSocket");
   if (!operationTag.ok) return operationTag;
-  const field_url = stringValue(object.value["url"], `${path}.url`);
+  const field_url = stringValue(object.value["url"], at(path, ".url"));
   if (!field_url.ok) return field_url;
-  const field_protocols = listOf(object.value["protocols"], `${path}.protocols`, (item, at) => stringValue(item, at));
+  const field_protocols = listOf(object.value["protocols"], at(path, ".protocols"), (item, at) => stringValue(item, at));
   if (!field_protocols.ok) return field_protocols;
   return ok<RealtimeRequest>({ operation: "openWebSocket", url: field_url.value, protocols: field_protocols.value });
 };
 
-const decodeRealtimeRequest_openEventSource = (value: unknown, path: string): Decoded<RealtimeRequest> => {
+const decodeRealtimeRequest_openEventSource = (value: unknown, path: Path): Decoded<RealtimeRequest> => {
   const object = objectValue(value, path, ["operation","url","withCredentials","events"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "openEventSource");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "openEventSource");
   if (!operationTag.ok) return operationTag;
-  const field_url = stringValue(object.value["url"], `${path}.url`);
+  const field_url = stringValue(object.value["url"], at(path, ".url"));
   if (!field_url.ok) return field_url;
-  const field_withCredentials = boolValue(object.value["withCredentials"], `${path}.withCredentials`);
+  const field_withCredentials = boolValue(object.value["withCredentials"], at(path, ".withCredentials"));
   if (!field_withCredentials.ok) return field_withCredentials;
-  const field_events = listOf(object.value["events"], `${path}.events`, (item, at) => stringValue(item, at));
+  const field_events = listOf(object.value["events"], at(path, ".events"), (item, at) => stringValue(item, at));
   if (!field_events.ok) return field_events;
   return ok<RealtimeRequest>({ operation: "openEventSource", url: field_url.value, withCredentials: field_withCredentials.value, events: field_events.value });
 };
 
-const decodeRealtimeRequest_send = (value: unknown, path: string): Decoded<RealtimeRequest> => {
+const decodeRealtimeRequest_send = (value: unknown, path: Path): Decoded<RealtimeRequest> => {
   const object = objectValue(value, path, ["operation","connection","text"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "send");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "send");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_text = stringValue(object.value["text"], `${path}.text`);
+  const field_text = stringValue(object.value["text"], at(path, ".text"));
   if (!field_text.ok) return field_text;
   return ok<RealtimeRequest>({ operation: "send", connection: field_connection.value, text: field_text.value });
 };
 
-const decodeRealtimeRequest_close = (value: unknown, path: string): Decoded<RealtimeRequest> => {
+const decodeRealtimeRequest_close = (value: unknown, path: Path): Decoded<RealtimeRequest> => {
   const object = objectValue(value, path, ["operation","connection","code","reason"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "close");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "close");
   if (!operationTag.ok) return operationTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_code = object.value["code"] === undefined ? ok(undefined) : intValue(object.value["code"], `${path}.code`);
+  const field_code = object.value["code"] === undefined ? ok(undefined) : intValue(object.value["code"], at(path, ".code"));
   if (!field_code.ok) return field_code;
-  const field_reason = object.value["reason"] === undefined ? ok(undefined) : stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = object.value["reason"] === undefined ? ok(undefined) : stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<RealtimeRequest>({ operation: "close", connection: field_connection.value, ...(field_code.value !== undefined ? { code: field_code.value } : {}), ...(field_reason.value !== undefined ? { reason: field_reason.value } : {}) });
 };
 
-export const decodeRealtimeResult = (value: unknown, path = "$"): Decoded<RealtimeResult> => {
+export const decodeRealtimeResult = (value: unknown, path: Path = "$"): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -166,111 +191,111 @@ export const decodeRealtimeResult = (value: unknown, path = "$"): Decoded<Realti
     case "Refused": return decodeRealtimeResult_Refused(value, path);
     case "Unsupported": return decodeRealtimeResult_Unsupported(value, path);
     case "Cancelled": return decodeRealtimeResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Connecting","Sent","Closed","NotOpen","NotSendable","Stale","InvalidUrl","InvalidCloseCode","Refused","Unsupported","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Connecting","Sent","Closed","NotOpen","NotSendable","Stale","InvalidUrl","InvalidCloseCode","Refused","Unsupported","Cancelled"], tag);
   }
 };
 
-const decodeRealtimeResult_Connecting = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_Connecting = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind","connection"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Connecting");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Connecting");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<RealtimeResult>({ kind: "Connecting", connection: field_connection.value });
 };
 
-const decodeRealtimeResult_Sent = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_Sent = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind","bufferedAmount"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Sent");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Sent");
   if (!kindTag.ok) return kindTag;
-  const field_bufferedAmount = intValue(object.value["bufferedAmount"], `${path}.bufferedAmount`);
+  const field_bufferedAmount = intValue(object.value["bufferedAmount"], at(path, ".bufferedAmount"));
   if (!field_bufferedAmount.ok) return field_bufferedAmount;
   return ok<RealtimeResult>({ kind: "Sent", bufferedAmount: field_bufferedAmount.value });
 };
 
-const decodeRealtimeResult_Closed = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_Closed = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Closed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Closed");
   if (!kindTag.ok) return kindTag;
   return ok<RealtimeResult>({ kind: "Closed" });
 };
 
-const decodeRealtimeResult_NotOpen = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_NotOpen = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind","state"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotOpen");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotOpen");
   if (!kindTag.ok) return kindTag;
-  const field_state = decodeReadyState(object.value["state"], `${path}.state`);
+  const field_state = decodeReadyState(object.value["state"], at(path, ".state"));
   if (!field_state.ok) return field_state;
   return ok<RealtimeResult>({ kind: "NotOpen", state: field_state.value });
 };
 
-const decodeRealtimeResult_NotSendable = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_NotSendable = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotSendable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotSendable");
   if (!kindTag.ok) return kindTag;
   return ok<RealtimeResult>({ kind: "NotSendable" });
 };
 
-const decodeRealtimeResult_Stale = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_Stale = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Stale");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Stale");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeConnectionStaleReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeConnectionStaleReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<RealtimeResult>({ kind: "Stale", reason: field_reason.value });
 };
 
-const decodeRealtimeResult_InvalidUrl = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_InvalidUrl = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind","scheme"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidUrl");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidUrl");
   if (!kindTag.ok) return kindTag;
-  const field_scheme = stringValue(object.value["scheme"], `${path}.scheme`);
+  const field_scheme = stringValue(object.value["scheme"], at(path, ".scheme"));
   if (!field_scheme.ok) return field_scheme;
   return ok<RealtimeResult>({ kind: "InvalidUrl", scheme: field_scheme.value });
 };
 
-const decodeRealtimeResult_InvalidCloseCode = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_InvalidCloseCode = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidCloseCode");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidCloseCode");
   if (!kindTag.ok) return kindTag;
   return ok<RealtimeResult>({ kind: "InvalidCloseCode" });
 };
 
-const decodeRealtimeResult_Refused = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_Refused = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Refused");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Refused");
   if (!kindTag.ok) return kindTag;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<RealtimeResult>({ kind: "Refused", reason: field_reason.value });
 };
 
-const decodeRealtimeResult_Unsupported = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_Unsupported = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
   return ok<RealtimeResult>({ kind: "Unsupported" });
 };
 
-const decodeRealtimeResult_Cancelled = (value: unknown, path: string): Decoded<RealtimeResult> => {
+const decodeRealtimeResult_Cancelled = (value: unknown, path: Path): Decoded<RealtimeResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<RealtimeResult>({ kind: "Cancelled" });
 };
 
-export const decodeRealtimeFact = (value: unknown, path = "$"): Decoded<RealtimeFact> => {
+export const decodeRealtimeFact = (value: unknown, path: Path = "$"): Decoded<RealtimeFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -279,64 +304,64 @@ export const decodeRealtimeFact = (value: unknown, path = "$"): Decoded<Realtime
     case "Message": return decodeRealtimeFact_Message(value, path);
     case "BinaryMessage": return decodeRealtimeFact_BinaryMessage(value, path);
     case "Closed": return decodeRealtimeFact_Closed(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Opened","Message","BinaryMessage","Closed"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Opened","Message","BinaryMessage","Closed"], tag);
   }
 };
 
-const decodeRealtimeFact_Opened = (value: unknown, path: string): Decoded<RealtimeFact> => {
+const decodeRealtimeFact_Opened = (value: unknown, path: Path): Decoded<RealtimeFact> => {
   const object = objectValue(value, path, ["kind","connection","protocol"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Opened");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Opened");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_protocol = stringValue(object.value["protocol"], `${path}.protocol`);
+  const field_protocol = stringValue(object.value["protocol"], at(path, ".protocol"));
   if (!field_protocol.ok) return field_protocol;
   return ok<RealtimeFact>({ kind: "Opened", connection: field_connection.value, protocol: field_protocol.value });
 };
 
-const decodeRealtimeFact_Message = (value: unknown, path: string): Decoded<RealtimeFact> => {
+const decodeRealtimeFact_Message = (value: unknown, path: Path): Decoded<RealtimeFact> => {
   const object = objectValue(value, path, ["kind","connection","data","event","lastEventId"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Message");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Message");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_data = stringValue(object.value["data"], `${path}.data`);
+  const field_data = stringValue(object.value["data"], at(path, ".data"));
   if (!field_data.ok) return field_data;
-  const field_event = object.value["event"] === undefined ? ok(undefined) : stringValue(object.value["event"], `${path}.event`);
+  const field_event = object.value["event"] === undefined ? ok(undefined) : stringValue(object.value["event"], at(path, ".event"));
   if (!field_event.ok) return field_event;
-  const field_lastEventId = object.value["lastEventId"] === undefined ? ok(undefined) : stringValue(object.value["lastEventId"], `${path}.lastEventId`);
+  const field_lastEventId = object.value["lastEventId"] === undefined ? ok(undefined) : stringValue(object.value["lastEventId"], at(path, ".lastEventId"));
   if (!field_lastEventId.ok) return field_lastEventId;
   return ok<RealtimeFact>({ kind: "Message", connection: field_connection.value, data: field_data.value, ...(field_event.value !== undefined ? { event: field_event.value } : {}), ...(field_lastEventId.value !== undefined ? { lastEventId: field_lastEventId.value } : {}) });
 };
 
-const decodeRealtimeFact_BinaryMessage = (value: unknown, path: string): Decoded<RealtimeFact> => {
+const decodeRealtimeFact_BinaryMessage = (value: unknown, path: Path): Decoded<RealtimeFact> => {
   const object = objectValue(value, path, ["kind","connection","bytes"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "BinaryMessage");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "BinaryMessage");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_bytes = intValue(object.value["bytes"], `${path}.bytes`);
+  const field_bytes = intValue(object.value["bytes"], at(path, ".bytes"));
   if (!field_bytes.ok) return field_bytes;
   return ok<RealtimeFact>({ kind: "BinaryMessage", connection: field_connection.value, bytes: field_bytes.value });
 };
 
-const decodeRealtimeFact_Closed = (value: unknown, path: string): Decoded<RealtimeFact> => {
+const decodeRealtimeFact_Closed = (value: unknown, path: Path): Decoded<RealtimeFact> => {
   const object = objectValue(value, path, ["kind","connection","initiator","code","reason","clean"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Closed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Closed");
   if (!kindTag.ok) return kindTag;
-  const field_connection = decodeConnectionId(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionId(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
-  const field_initiator = decodeCloseInitiator(object.value["initiator"], `${path}.initiator`);
+  const field_initiator = decodeCloseInitiator(object.value["initiator"], at(path, ".initiator"));
   if (!field_initiator.ok) return field_initiator;
-  const field_code = intValue(object.value["code"], `${path}.code`);
+  const field_code = intValue(object.value["code"], at(path, ".code"));
   if (!field_code.ok) return field_code;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
-  const field_clean = boolValue(object.value["clean"], `${path}.clean`);
+  const field_clean = boolValue(object.value["clean"], at(path, ".clean"));
   if (!field_clean.ok) return field_clean;
   return ok<RealtimeFact>({ kind: "Closed", connection: field_connection.value, initiator: field_initiator.value, code: field_code.value, reason: field_reason.value, clean: field_clean.value });
 };

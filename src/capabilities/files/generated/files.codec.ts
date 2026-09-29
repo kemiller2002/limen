@@ -4,7 +4,7 @@
 // unit: limen.files@1
 // contract-fingerprint: sha256:2cf28b1016994b11955c412282ec6038a6c8c205a056b14c6039ef6fd5bfabdf
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:4e1858ce3046721104cad8c78ef5478515bd3d490950c0827db8b9a2cda2ba6d
+// content-hash: sha256:1be6a85cc414eb12597b33331a06b4f27b42f816578ed3c7304c9147be2840ef
 // </auto-generated>
 import type { FileInput, FileId, FileStaleReason, ReadFormat, FileInfo, FilesRequest, FilesResult, FilesFact } from "./files.js";
 
@@ -12,36 +12,47 @@ import type { FileInput, FileId, FileStaleReason, ReadFormat, FileInfo, FilesReq
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,61 +66,75 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeFileInput = (value: unknown, path = "$"): Decoded<FileInput> => {
+export const decodeFileInput = (value: unknown, path: Path = "$"): Decoded<FileInput> => {
   const object = objectValue(value, path, ["name","key"]);
   if (!object.ok) return object;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], `${path}.key`);
+  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
   return ok<FileInput>({ name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}) });
 };
 
-export const decodeFileId = (value: unknown, path = "$"): Decoded<FileId> => brand<FileId>(stringValue(value, path));
+export const decodeFileId = (value: unknown, path: Path = "$"): Decoded<FileId> => brand<FileId>(stringValue(value, path));
 
-export const decodeFileStaleReason = (value: unknown, path = "$"): Decoded<FileStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
+export const decodeFileStaleReason = (value: unknown, path: Path = "$"): Decoded<FileStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
 
-export const decodeReadFormat = (value: unknown, path = "$"): Decoded<ReadFormat> => enumValue(value, path, ["text","base64"] as const);
+export const decodeReadFormat = (value: unknown, path: Path = "$"): Decoded<ReadFormat> => enumValue(value, path, ["text","base64"] as const);
 
-export const decodeFileInfo = (value: unknown, path = "$"): Decoded<FileInfo> => {
+export const decodeFileInfo = (value: unknown, path: Path = "$"): Decoded<FileInfo> => {
   const object = objectValue(value, path, ["file","name","size","type","lastModified"]);
   if (!object.ok) return object;
-  const field_file = decodeFileId(object.value["file"], `${path}.file`);
+  const field_file = decodeFileId(object.value["file"], at(path, ".file"));
   if (!field_file.ok) return field_file;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_size = intValue(object.value["size"], `${path}.size`);
+  const field_size = intValue(object.value["size"], at(path, ".size"));
   if (!field_size.ok) return field_size;
-  const field_type = stringValue(object.value["type"], `${path}.type`);
+  const field_type = stringValue(object.value["type"], at(path, ".type"));
   if (!field_type.ok) return field_type;
-  const field_lastModified = numberValue(object.value["lastModified"], `${path}.lastModified`);
+  const field_lastModified = numberValue(object.value["lastModified"], at(path, ".lastModified"));
   if (!field_lastModified.ok) return field_lastModified;
   return ok<FileInfo>({ file: field_file.value, name: field_name.value, size: field_size.value, type: field_type.value, lastModified: field_lastModified.value });
 };
 
-export const decodeFilesRequest = (value: unknown, path = "$"): Decoded<FilesRequest> => {
+export const decodeFilesRequest = (value: unknown, path: Path = "$"): Decoded<FilesRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -118,63 +143,63 @@ export const decodeFilesRequest = (value: unknown, path = "$"): Decoded<FilesReq
     case "read": return decodeFilesRequest_read(value, path);
     case "release": return decodeFilesRequest_release(value, path);
     case "download": return decodeFilesRequest_download(value, path);
-    default: return unknownVariant(`${path}.operation`, ["pick","read","release","download"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["pick","read","release","download"], tag);
   }
 };
 
-const decodeFilesRequest_pick = (value: unknown, path: string): Decoded<FilesRequest> => {
+const decodeFilesRequest_pick = (value: unknown, path: Path): Decoded<FilesRequest> => {
   const object = objectValue(value, path, ["operation","input"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "pick");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "pick");
   if (!operationTag.ok) return operationTag;
-  const field_input = decodeFileInput(object.value["input"], `${path}.input`);
+  const field_input = decodeFileInput(object.value["input"], at(path, ".input"));
   if (!field_input.ok) return field_input;
   return ok<FilesRequest>({ operation: "pick", input: field_input.value });
 };
 
-const decodeFilesRequest_read = (value: unknown, path: string): Decoded<FilesRequest> => {
+const decodeFilesRequest_read = (value: unknown, path: Path): Decoded<FilesRequest> => {
   const object = objectValue(value, path, ["operation","file","format","offset","length"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "read");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "read");
   if (!operationTag.ok) return operationTag;
-  const field_file = decodeFileId(object.value["file"], `${path}.file`);
+  const field_file = decodeFileId(object.value["file"], at(path, ".file"));
   if (!field_file.ok) return field_file;
-  const field_format = decodeReadFormat(object.value["format"], `${path}.format`);
+  const field_format = decodeReadFormat(object.value["format"], at(path, ".format"));
   if (!field_format.ok) return field_format;
-  const field_offset = intValue(object.value["offset"], `${path}.offset`);
+  const field_offset = intValue(object.value["offset"], at(path, ".offset"));
   if (!field_offset.ok) return field_offset;
-  const field_length = intValue(object.value["length"], `${path}.length`);
+  const field_length = intValue(object.value["length"], at(path, ".length"));
   if (!field_length.ok) return field_length;
   return ok<FilesRequest>({ operation: "read", file: field_file.value, format: field_format.value, offset: field_offset.value, length: field_length.value });
 };
 
-const decodeFilesRequest_release = (value: unknown, path: string): Decoded<FilesRequest> => {
+const decodeFilesRequest_release = (value: unknown, path: Path): Decoded<FilesRequest> => {
   const object = objectValue(value, path, ["operation","file"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "release");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "release");
   if (!operationTag.ok) return operationTag;
-  const field_file = decodeFileId(object.value["file"], `${path}.file`);
+  const field_file = decodeFileId(object.value["file"], at(path, ".file"));
   if (!field_file.ok) return field_file;
   return ok<FilesRequest>({ operation: "release", file: field_file.value });
 };
 
-const decodeFilesRequest_download = (value: unknown, path: string): Decoded<FilesRequest> => {
+const decodeFilesRequest_download = (value: unknown, path: Path): Decoded<FilesRequest> => {
   const object = objectValue(value, path, ["operation","fileName","mimeType","format","data"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "download");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "download");
   if (!operationTag.ok) return operationTag;
-  const field_fileName = stringValue(object.value["fileName"], `${path}.fileName`);
+  const field_fileName = stringValue(object.value["fileName"], at(path, ".fileName"));
   if (!field_fileName.ok) return field_fileName;
-  const field_mimeType = stringValue(object.value["mimeType"], `${path}.mimeType`);
+  const field_mimeType = stringValue(object.value["mimeType"], at(path, ".mimeType"));
   if (!field_mimeType.ok) return field_mimeType;
-  const field_format = decodeReadFormat(object.value["format"], `${path}.format`);
+  const field_format = decodeReadFormat(object.value["format"], at(path, ".format"));
   if (!field_format.ok) return field_format;
-  const field_data = stringValue(object.value["data"], `${path}.data`);
+  const field_data = stringValue(object.value["data"], at(path, ".data"));
   if (!field_data.ok) return field_data;
   return ok<FilesRequest>({ operation: "download", fileName: field_fileName.value, mimeType: field_mimeType.value, format: field_format.value, data: field_data.value });
 };
 
-export const decodeFilesResult = (value: unknown, path = "$"): Decoded<FilesResult> => {
+export const decodeFilesResult = (value: unknown, path: Path = "$"): Decoded<FilesResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -195,183 +220,183 @@ export const decodeFilesResult = (value: unknown, path = "$"): Decoded<FilesResu
     case "Refused": return decodeFilesResult_Refused(value, path);
     case "Unsupported": return decodeFilesResult_Unsupported(value, path);
     case "Cancelled": return decodeFilesResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["PickerOpened","Read","Released","Downloaded","NeedsGesture","NotFound","Ambiguous","WrongElement","Stale","InvalidRange","TooLarge","InvalidData","Unreadable","Refused","Unsupported","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["PickerOpened","Read","Released","Downloaded","NeedsGesture","NotFound","Ambiguous","WrongElement","Stale","InvalidRange","TooLarge","InvalidData","Unreadable","Refused","Unsupported","Cancelled"], tag);
   }
 };
 
-const decodeFilesResult_PickerOpened = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_PickerOpened = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PickerOpened");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PickerOpened");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "PickerOpened" });
 };
 
-const decodeFilesResult_Read = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Read = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind","data","bytesRead","eof"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Read");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Read");
   if (!kindTag.ok) return kindTag;
-  const field_data = stringValue(object.value["data"], `${path}.data`);
+  const field_data = stringValue(object.value["data"], at(path, ".data"));
   if (!field_data.ok) return field_data;
-  const field_bytesRead = intValue(object.value["bytesRead"], `${path}.bytesRead`);
+  const field_bytesRead = intValue(object.value["bytesRead"], at(path, ".bytesRead"));
   if (!field_bytesRead.ok) return field_bytesRead;
-  const field_eof = boolValue(object.value["eof"], `${path}.eof`);
+  const field_eof = boolValue(object.value["eof"], at(path, ".eof"));
   if (!field_eof.ok) return field_eof;
   return ok<FilesResult>({ kind: "Read", data: field_data.value, bytesRead: field_bytesRead.value, eof: field_eof.value });
 };
 
-const decodeFilesResult_Released = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Released = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Released");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Released");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "Released" });
 };
 
-const decodeFilesResult_Downloaded = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Downloaded = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Downloaded");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Downloaded");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "Downloaded" });
 };
 
-const decodeFilesResult_NeedsGesture = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_NeedsGesture = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NeedsGesture");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NeedsGesture");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "NeedsGesture" });
 };
 
-const decodeFilesResult_NotFound = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_NotFound = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotFound");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotFound");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "NotFound" });
 };
 
-const decodeFilesResult_Ambiguous = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Ambiguous = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind","count"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Ambiguous");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Ambiguous");
   if (!kindTag.ok) return kindTag;
-  const field_count = intValue(object.value["count"], `${path}.count`);
+  const field_count = intValue(object.value["count"], at(path, ".count"));
   if (!field_count.ok) return field_count;
   return ok<FilesResult>({ kind: "Ambiguous", count: field_count.value });
 };
 
-const decodeFilesResult_WrongElement = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_WrongElement = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "WrongElement");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "WrongElement");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "WrongElement" });
 };
 
-const decodeFilesResult_Stale = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Stale = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Stale");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Stale");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeFileStaleReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeFileStaleReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<FilesResult>({ kind: "Stale", reason: field_reason.value });
 };
 
-const decodeFilesResult_InvalidRange = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_InvalidRange = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidRange");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidRange");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "InvalidRange" });
 };
 
-const decodeFilesResult_TooLarge = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_TooLarge = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind","limit"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "TooLarge");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "TooLarge");
   if (!kindTag.ok) return kindTag;
-  const field_limit = intValue(object.value["limit"], `${path}.limit`);
+  const field_limit = intValue(object.value["limit"], at(path, ".limit"));
   if (!field_limit.ok) return field_limit;
   return ok<FilesResult>({ kind: "TooLarge", limit: field_limit.value });
 };
 
-const decodeFilesResult_InvalidData = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_InvalidData = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidData");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidData");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "InvalidData" });
 };
 
-const decodeFilesResult_Unreadable = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Unreadable = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unreadable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unreadable");
   if (!kindTag.ok) return kindTag;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<FilesResult>({ kind: "Unreadable", reason: field_reason.value });
 };
 
-const decodeFilesResult_Refused = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Refused = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Refused");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Refused");
   if (!kindTag.ok) return kindTag;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<FilesResult>({ kind: "Refused", reason: field_reason.value });
 };
 
-const decodeFilesResult_Unsupported = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Unsupported = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "Unsupported" });
 };
 
-const decodeFilesResult_Cancelled = (value: unknown, path: string): Decoded<FilesResult> => {
+const decodeFilesResult_Cancelled = (value: unknown, path: Path): Decoded<FilesResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<FilesResult>({ kind: "Cancelled" });
 };
 
-export const decodeFilesFact = (value: unknown, path = "$"): Decoded<FilesFact> => {
+export const decodeFilesFact = (value: unknown, path: Path = "$"): Decoded<FilesFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "Selected": return decodeFilesFact_Selected(value, path);
     case "PickerCancelled": return decodeFilesFact_PickerCancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Selected","PickerCancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Selected","PickerCancelled"], tag);
   }
 };
 
-const decodeFilesFact_Selected = (value: unknown, path: string): Decoded<FilesFact> => {
+const decodeFilesFact_Selected = (value: unknown, path: Path): Decoded<FilesFact> => {
   const object = objectValue(value, path, ["kind","input","files"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Selected");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Selected");
   if (!kindTag.ok) return kindTag;
-  const field_input = decodeFileInput(object.value["input"], `${path}.input`);
+  const field_input = decodeFileInput(object.value["input"], at(path, ".input"));
   if (!field_input.ok) return field_input;
-  const field_files = listOf(object.value["files"], `${path}.files`, (item, at) => decodeFileInfo(item, at));
+  const field_files = listOf(object.value["files"], at(path, ".files"), (item, at) => decodeFileInfo(item, at));
   if (!field_files.ok) return field_files;
   return ok<FilesFact>({ kind: "Selected", input: field_input.value, files: field_files.value });
 };
 
-const decodeFilesFact_PickerCancelled = (value: unknown, path: string): Decoded<FilesFact> => {
+const decodeFilesFact_PickerCancelled = (value: unknown, path: Path): Decoded<FilesFact> => {
   const object = objectValue(value, path, ["kind","input"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PickerCancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PickerCancelled");
   if (!kindTag.ok) return kindTag;
-  const field_input = decodeFileInput(object.value["input"], `${path}.input`);
+  const field_input = decodeFileInput(object.value["input"], at(path, ".input"));
   if (!field_input.ok) return field_input;
   return ok<FilesFact>({ kind: "PickerCancelled", input: field_input.value });
 };

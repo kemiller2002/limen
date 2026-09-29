@@ -4,7 +4,7 @@
 // unit: limen.lifecycle@1
 // contract-fingerprint: sha256:cadd4037cac232869a486237ec523e667af9490cdcf3e4fb1ba729cbc5c87978
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:1830e4ecb8942a8d26409f9892a3b77ce93470c0551c44be96dc3f99dd446d93
+// content-hash: sha256:6af11a4572f0add4f4d97f509b17ab44c756d74e9a3e85565c3cd22946433e99
 // </auto-generated>
 import type { Visibility, Topic, ConnectionQuality, PageState, LifecycleRequest, LifecycleResult, LifecycleFact } from "./lifecycle.js";
 
@@ -12,36 +12,47 @@ import type { Visibility, Topic, ConnectionQuality, PageState, LifecycleRequest,
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,63 +66,77 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeVisibility = (value: unknown, path = "$"): Decoded<Visibility> => enumValue(value, path, ["visible","hidden"] as const);
+export const decodeVisibility = (value: unknown, path: Path = "$"): Decoded<Visibility> => enumValue(value, path, ["visible","hidden"] as const);
 
-export const decodeTopic = (value: unknown, path = "$"): Decoded<Topic> => enumValue(value, path, ["connectivity","visibility","pageLifecycle","freezing","prerendering","connection"] as const);
+export const decodeTopic = (value: unknown, path: Path = "$"): Decoded<Topic> => enumValue(value, path, ["connectivity","visibility","pageLifecycle","freezing","prerendering","connection"] as const);
 
-export const decodeConnectionQuality = (value: unknown, path = "$"): Decoded<ConnectionQuality> => {
+export const decodeConnectionQuality = (value: unknown, path: Path = "$"): Decoded<ConnectionQuality> => {
   const object = objectValue(value, path, ["effectiveType","downlinkMbps","rttMs","saveData"]);
   if (!object.ok) return object;
-  const field_effectiveType = object.value["effectiveType"] === undefined ? ok(undefined) : stringValue(object.value["effectiveType"], `${path}.effectiveType`);
+  const field_effectiveType = object.value["effectiveType"] === undefined ? ok(undefined) : stringValue(object.value["effectiveType"], at(path, ".effectiveType"));
   if (!field_effectiveType.ok) return field_effectiveType;
-  const field_downlinkMbps = object.value["downlinkMbps"] === undefined ? ok(undefined) : numberValue(object.value["downlinkMbps"], `${path}.downlinkMbps`);
+  const field_downlinkMbps = object.value["downlinkMbps"] === undefined ? ok(undefined) : numberValue(object.value["downlinkMbps"], at(path, ".downlinkMbps"));
   if (!field_downlinkMbps.ok) return field_downlinkMbps;
-  const field_rttMs = object.value["rttMs"] === undefined ? ok(undefined) : numberValue(object.value["rttMs"], `${path}.rttMs`);
+  const field_rttMs = object.value["rttMs"] === undefined ? ok(undefined) : numberValue(object.value["rttMs"], at(path, ".rttMs"));
   if (!field_rttMs.ok) return field_rttMs;
-  const field_saveData = object.value["saveData"] === undefined ? ok(undefined) : boolValue(object.value["saveData"], `${path}.saveData`);
+  const field_saveData = object.value["saveData"] === undefined ? ok(undefined) : boolValue(object.value["saveData"], at(path, ".saveData"));
   if (!field_saveData.ok) return field_saveData;
   return ok<ConnectionQuality>({ ...(field_effectiveType.value !== undefined ? { effectiveType: field_effectiveType.value } : {}), ...(field_downlinkMbps.value !== undefined ? { downlinkMbps: field_downlinkMbps.value } : {}), ...(field_rttMs.value !== undefined ? { rttMs: field_rttMs.value } : {}), ...(field_saveData.value !== undefined ? { saveData: field_saveData.value } : {}) });
 };
 
-export const decodePageState = (value: unknown, path = "$"): Decoded<PageState> => {
+export const decodePageState = (value: unknown, path: Path = "$"): Decoded<PageState> => {
   const object = objectValue(value, path, ["online","visibility","prerendering","wasDiscarded","connection"]);
   if (!object.ok) return object;
-  const field_online = boolValue(object.value["online"], `${path}.online`);
+  const field_online = boolValue(object.value["online"], at(path, ".online"));
   if (!field_online.ok) return field_online;
-  const field_visibility = decodeVisibility(object.value["visibility"], `${path}.visibility`);
+  const field_visibility = decodeVisibility(object.value["visibility"], at(path, ".visibility"));
   if (!field_visibility.ok) return field_visibility;
-  const field_prerendering = boolValue(object.value["prerendering"], `${path}.prerendering`);
+  const field_prerendering = boolValue(object.value["prerendering"], at(path, ".prerendering"));
   if (!field_prerendering.ok) return field_prerendering;
-  const field_wasDiscarded = boolValue(object.value["wasDiscarded"], `${path}.wasDiscarded`);
+  const field_wasDiscarded = boolValue(object.value["wasDiscarded"], at(path, ".wasDiscarded"));
   if (!field_wasDiscarded.ok) return field_wasDiscarded;
-  const field_connection = object.value["connection"] === undefined ? ok(undefined) : decodeConnectionQuality(object.value["connection"], `${path}.connection`);
+  const field_connection = object.value["connection"] === undefined ? ok(undefined) : decodeConnectionQuality(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<PageState>({ online: field_online.value, visibility: field_visibility.value, prerendering: field_prerendering.value, wasDiscarded: field_wasDiscarded.value, ...(field_connection.value !== undefined ? { connection: field_connection.value } : {}) });
 };
 
-export const decodeLifecycleRequest = (value: unknown, path = "$"): Decoded<LifecycleRequest> => {
+export const decodeLifecycleRequest = (value: unknown, path: Path = "$"): Decoded<LifecycleRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -119,39 +144,39 @@ export const decodeLifecycleRequest = (value: unknown, path = "$"): Decoded<Life
     case "describe": return decodeLifecycleRequest_describe(value, path);
     case "subscribe": return decodeLifecycleRequest_subscribe(value, path);
     case "unsubscribe": return decodeLifecycleRequest_unsubscribe(value, path);
-    default: return unknownVariant(`${path}.operation`, ["describe","subscribe","unsubscribe"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["describe","subscribe","unsubscribe"], tag);
   }
 };
 
-const decodeLifecycleRequest_describe = (value: unknown, path: string): Decoded<LifecycleRequest> => {
+const decodeLifecycleRequest_describe = (value: unknown, path: Path): Decoded<LifecycleRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "describe");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "describe");
   if (!operationTag.ok) return operationTag;
   return ok<LifecycleRequest>({ operation: "describe" });
 };
 
-const decodeLifecycleRequest_subscribe = (value: unknown, path: string): Decoded<LifecycleRequest> => {
+const decodeLifecycleRequest_subscribe = (value: unknown, path: Path): Decoded<LifecycleRequest> => {
   const object = objectValue(value, path, ["operation","topics"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "subscribe");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "subscribe");
   if (!operationTag.ok) return operationTag;
-  const field_topics = listOf(object.value["topics"], `${path}.topics`, (item, at) => decodeTopic(item, at));
+  const field_topics = listOf(object.value["topics"], at(path, ".topics"), (item, at) => decodeTopic(item, at));
   if (!field_topics.ok) return field_topics;
   return ok<LifecycleRequest>({ operation: "subscribe", topics: field_topics.value });
 };
 
-const decodeLifecycleRequest_unsubscribe = (value: unknown, path: string): Decoded<LifecycleRequest> => {
+const decodeLifecycleRequest_unsubscribe = (value: unknown, path: Path): Decoded<LifecycleRequest> => {
   const object = objectValue(value, path, ["operation","subscription"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "unsubscribe");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "unsubscribe");
   if (!operationTag.ok) return operationTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
   return ok<LifecycleRequest>({ operation: "unsubscribe", subscription: field_subscription.value });
 };
 
-export const decodeLifecycleResult = (value: unknown, path = "$"): Decoded<LifecycleResult> => {
+export const decodeLifecycleResult = (value: unknown, path: Path = "$"): Decoded<LifecycleResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -162,67 +187,67 @@ export const decodeLifecycleResult = (value: unknown, path = "$"): Decoded<Lifec
     case "UnknownSubscription": return decodeLifecycleResult_UnknownSubscription(value, path);
     case "InvalidRequest": return decodeLifecycleResult_InvalidRequest(value, path);
     case "Cancelled": return decodeLifecycleResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Described","Subscribed","Unsubscribed","UnknownSubscription","InvalidRequest","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Described","Subscribed","Unsubscribed","UnknownSubscription","InvalidRequest","Cancelled"], tag);
   }
 };
 
-const decodeLifecycleResult_Described = (value: unknown, path: string): Decoded<LifecycleResult> => {
+const decodeLifecycleResult_Described = (value: unknown, path: Path): Decoded<LifecycleResult> => {
   const object = objectValue(value, path, ["kind","state"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Described");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Described");
   if (!kindTag.ok) return kindTag;
-  const field_state = decodePageState(object.value["state"], `${path}.state`);
+  const field_state = decodePageState(object.value["state"], at(path, ".state"));
   if (!field_state.ok) return field_state;
   return ok<LifecycleResult>({ kind: "Described", state: field_state.value });
 };
 
-const decodeLifecycleResult_Subscribed = (value: unknown, path: string): Decoded<LifecycleResult> => {
+const decodeLifecycleResult_Subscribed = (value: unknown, path: Path): Decoded<LifecycleResult> => {
   const object = objectValue(value, path, ["kind","subscription","state"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Subscribed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Subscribed");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_state = decodePageState(object.value["state"], `${path}.state`);
+  const field_state = decodePageState(object.value["state"], at(path, ".state"));
   if (!field_state.ok) return field_state;
   return ok<LifecycleResult>({ kind: "Subscribed", subscription: field_subscription.value, state: field_state.value });
 };
 
-const decodeLifecycleResult_Unsubscribed = (value: unknown, path: string): Decoded<LifecycleResult> => {
+const decodeLifecycleResult_Unsubscribed = (value: unknown, path: Path): Decoded<LifecycleResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsubscribed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsubscribed");
   if (!kindTag.ok) return kindTag;
   return ok<LifecycleResult>({ kind: "Unsubscribed" });
 };
 
-const decodeLifecycleResult_UnknownSubscription = (value: unknown, path: string): Decoded<LifecycleResult> => {
+const decodeLifecycleResult_UnknownSubscription = (value: unknown, path: Path): Decoded<LifecycleResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UnknownSubscription");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UnknownSubscription");
   if (!kindTag.ok) return kindTag;
   return ok<LifecycleResult>({ kind: "UnknownSubscription" });
 };
 
-const decodeLifecycleResult_InvalidRequest = (value: unknown, path: string): Decoded<LifecycleResult> => {
+const decodeLifecycleResult_InvalidRequest = (value: unknown, path: Path): Decoded<LifecycleResult> => {
   const object = objectValue(value, path, ["kind","problem"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidRequest");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidRequest");
   if (!kindTag.ok) return kindTag;
-  const field_problem = stringValue(object.value["problem"], `${path}.problem`);
+  const field_problem = stringValue(object.value["problem"], at(path, ".problem"));
   if (!field_problem.ok) return field_problem;
   return ok<LifecycleResult>({ kind: "InvalidRequest", problem: field_problem.value });
 };
 
-const decodeLifecycleResult_Cancelled = (value: unknown, path: string): Decoded<LifecycleResult> => {
+const decodeLifecycleResult_Cancelled = (value: unknown, path: Path): Decoded<LifecycleResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<LifecycleResult>({ kind: "Cancelled" });
 };
 
-export const decodeLifecycleFact = (value: unknown, path = "$"): Decoded<LifecycleFact> => {
+export const decodeLifecycleFact = (value: unknown, path: Path = "$"): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -235,96 +260,96 @@ export const decodeLifecycleFact = (value: unknown, path = "$"): Decoded<Lifecyc
     case "Resumed": return decodeLifecycleFact_Resumed(value, path);
     case "PrerenderActivated": return decodeLifecycleFact_PrerenderActivated(value, path);
     case "ConnectionChanged": return decodeLifecycleFact_ConnectionChanged(value, path);
-    default: return unknownVariant(`${path}.kind`, ["ConnectivityChanged","VisibilityChanged","PageHidden","PageShown","Frozen","Resumed","PrerenderActivated","ConnectionChanged"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["ConnectivityChanged","VisibilityChanged","PageHidden","PageShown","Frozen","Resumed","PrerenderActivated","ConnectionChanged"], tag);
   }
 };
 
-const decodeLifecycleFact_ConnectivityChanged = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_ConnectivityChanged = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription","online"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "ConnectivityChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ConnectivityChanged");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_online = boolValue(object.value["online"], `${path}.online`);
+  const field_online = boolValue(object.value["online"], at(path, ".online"));
   if (!field_online.ok) return field_online;
   return ok<LifecycleFact>({ kind: "ConnectivityChanged", subscription: field_subscription.value, online: field_online.value });
 };
 
-const decodeLifecycleFact_VisibilityChanged = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_VisibilityChanged = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription","visibility"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "VisibilityChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "VisibilityChanged");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_visibility = decodeVisibility(object.value["visibility"], `${path}.visibility`);
+  const field_visibility = decodeVisibility(object.value["visibility"], at(path, ".visibility"));
   if (!field_visibility.ok) return field_visibility;
   return ok<LifecycleFact>({ kind: "VisibilityChanged", subscription: field_subscription.value, visibility: field_visibility.value });
 };
 
-const decodeLifecycleFact_PageHidden = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_PageHidden = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription","persisted"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PageHidden");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PageHidden");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_persisted = boolValue(object.value["persisted"], `${path}.persisted`);
+  const field_persisted = boolValue(object.value["persisted"], at(path, ".persisted"));
   if (!field_persisted.ok) return field_persisted;
   return ok<LifecycleFact>({ kind: "PageHidden", subscription: field_subscription.value, persisted: field_persisted.value });
 };
 
-const decodeLifecycleFact_PageShown = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_PageShown = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription","persisted"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PageShown");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PageShown");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_persisted = boolValue(object.value["persisted"], `${path}.persisted`);
+  const field_persisted = boolValue(object.value["persisted"], at(path, ".persisted"));
   if (!field_persisted.ok) return field_persisted;
   return ok<LifecycleFact>({ kind: "PageShown", subscription: field_subscription.value, persisted: field_persisted.value });
 };
 
-const decodeLifecycleFact_Frozen = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_Frozen = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Frozen");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Frozen");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
   return ok<LifecycleFact>({ kind: "Frozen", subscription: field_subscription.value });
 };
 
-const decodeLifecycleFact_Resumed = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_Resumed = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Resumed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Resumed");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
   return ok<LifecycleFact>({ kind: "Resumed", subscription: field_subscription.value });
 };
 
-const decodeLifecycleFact_PrerenderActivated = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_PrerenderActivated = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PrerenderActivated");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PrerenderActivated");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
   return ok<LifecycleFact>({ kind: "PrerenderActivated", subscription: field_subscription.value });
 };
 
-const decodeLifecycleFact_ConnectionChanged = (value: unknown, path: string): Decoded<LifecycleFact> => {
+const decodeLifecycleFact_ConnectionChanged = (value: unknown, path: Path): Decoded<LifecycleFact> => {
   const object = objectValue(value, path, ["kind","subscription","connection"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "ConnectionChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ConnectionChanged");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = stringValue(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = stringValue(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_connection = decodeConnectionQuality(object.value["connection"], `${path}.connection`);
+  const field_connection = decodeConnectionQuality(object.value["connection"], at(path, ".connection"));
   if (!field_connection.ok) return field_connection;
   return ok<LifecycleFact>({ kind: "ConnectionChanged", subscription: field_subscription.value, connection: field_connection.value });
 };

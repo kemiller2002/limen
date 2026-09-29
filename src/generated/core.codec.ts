@@ -4,7 +4,7 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:41dfa7adb15274f33261b61dc60054793d858e5a508a57b5d62e2f1b0f8b0a67
+// content-hash: sha256:c287d9fefce08b9ac1ff8ddac74b1395f779edb451fda4b162e97d839529ccc4
 // </auto-generated>
 import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, OutcomeUnknownReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
 
@@ -12,36 +12,47 @@ import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFai
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,71 +66,85 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeCorrelationId = (value: unknown, path = "$"): Decoded<CorrelationId> => brand<CorrelationId>(stringValue(value, path));
+export const decodeCorrelationId = (value: unknown, path: Path = "$"): Decoded<CorrelationId> => brand<CorrelationId>(stringValue(value, path));
 
-export const decodeCapability = (value: unknown, path = "$"): Decoded<Capability> => enumValue(value, path, ["Http","Storage","Clipboard","Navigation"] as const);
+export const decodeCapability = (value: unknown, path: Path = "$"): Decoded<Capability> => enumValue(value, path, ["Http","Storage","Clipboard","Navigation"] as const);
 
-export const decodeSemanticEvent = (value: unknown, path = "$"): Decoded<SemanticEvent> => {
+export const decodeSemanticEvent = (value: unknown, path: Path = "$"): Decoded<SemanticEvent> => {
   const object = objectValue(value, path, ["kind","name","key","value","checked","values","submitter"]);
   if (!object.ok) return object;
-  const field_kind = literalValue(object.value["kind"], `${path}.kind`, "Event");
+  const field_kind = literalValue(object.value["kind"], at(path, ".kind"), "Event");
   if (!field_kind.ok) return field_kind;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], `${path}.key`);
+  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
-  const field_value = object.value["value"] === undefined ? ok(undefined) : stringValue(object.value["value"], `${path}.value`);
+  const field_value = object.value["value"] === undefined ? ok(undefined) : stringValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
-  const field_checked = object.value["checked"] === undefined ? ok(undefined) : boolValue(object.value["checked"], `${path}.checked`);
+  const field_checked = object.value["checked"] === undefined ? ok(undefined) : boolValue(object.value["checked"], at(path, ".checked"));
   if (!field_checked.ok) return field_checked;
-  const field_values = object.value["values"] === undefined ? ok(undefined) : listOf(object.value["values"], `${path}.values`, (item, at) => stringValue(item, at));
+  const field_values = object.value["values"] === undefined ? ok(undefined) : listOf(object.value["values"], at(path, ".values"), (item, at) => stringValue(item, at));
   if (!field_values.ok) return field_values;
-  const field_submitter = object.value["submitter"] === undefined ? ok(undefined) : stringValue(object.value["submitter"], `${path}.submitter`);
+  const field_submitter = object.value["submitter"] === undefined ? ok(undefined) : stringValue(object.value["submitter"], at(path, ".submitter"));
   if (!field_submitter.ok) return field_submitter;
   return ok<SemanticEvent>({ kind: field_kind.value, name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}), ...(field_value.value !== undefined ? { value: field_value.value } : {}), ...(field_checked.value !== undefined ? { checked: field_checked.value } : {}), ...(field_values.value !== undefined ? { values: field_values.value } : {}), ...(field_submitter.value !== undefined ? { submitter: field_submitter.value } : {}) });
 };
 
-export const decodeBrowserLocation = (value: unknown, path = "$"): Decoded<BrowserLocation> => {
+export const decodeBrowserLocation = (value: unknown, path: Path = "$"): Decoded<BrowserLocation> => {
   const object = objectValue(value, path, ["origin","path","query","hash"]);
   if (!object.ok) return object;
-  const field_origin = stringValue(object.value["origin"], `${path}.origin`);
+  const field_origin = stringValue(object.value["origin"], at(path, ".origin"));
   if (!field_origin.ok) return field_origin;
-  const field_path = stringValue(object.value["path"], `${path}.path`);
+  const field_path = stringValue(object.value["path"], at(path, ".path"));
   if (!field_path.ok) return field_path;
-  const field_query = stringValue(object.value["query"], `${path}.query`);
+  const field_query = stringValue(object.value["query"], at(path, ".query"));
   if (!field_query.ok) return field_query;
-  const field_hash = stringValue(object.value["hash"], `${path}.hash`);
+  const field_hash = stringValue(object.value["hash"], at(path, ".hash"));
   if (!field_hash.ok) return field_hash;
   return ok<BrowserLocation>({ origin: field_origin.value, path: field_path.value, query: field_query.value, hash: field_hash.value });
 };
 
-export const decodeHttpFailureReason = (value: unknown, path = "$"): Decoded<HttpFailureReason> => enumValue(value, path, ["network","aborted","invalid-response","too-large"] as const);
+export const decodeHttpFailureReason = (value: unknown, path: Path = "$"): Decoded<HttpFailureReason> => enumValue(value, path, ["network","aborted","invalid-response","too-large"] as const);
 
-export const decodeOutcomeUnknownReason = (value: unknown, path = "$"): Decoded<OutcomeUnknownReason> => enumValue(value, path, ["timeout-after-dispatch","connection-lost"] as const);
+export const decodeOutcomeUnknownReason = (value: unknown, path: Path = "$"): Decoded<OutcomeUnknownReason> => enumValue(value, path, ["timeout-after-dispatch","connection-lost"] as const);
 
-export const decodeEffectOutcome = (value: unknown, path = "$"): Decoded<EffectOutcome> => {
+export const decodeEffectOutcome = (value: unknown, path: Path = "$"): Decoded<EffectOutcome> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -128,121 +153,121 @@ export const decodeEffectOutcome = (value: unknown, path = "$"): Decoded<EffectO
     case "Failure": return decodeEffectOutcome_Failure(value, path);
     case "Cancelled": return decodeEffectOutcome_Cancelled(value, path);
     case "OutcomeUnknown": return decodeEffectOutcome_OutcomeUnknown(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Success","Failure","Cancelled","OutcomeUnknown"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Success","Failure","Cancelled","OutcomeUnknown"], tag);
   }
 };
 
-const decodeEffectOutcome_Success = (value: unknown, path: string): Decoded<EffectOutcome> => {
+const decodeEffectOutcome_Success = (value: unknown, path: Path): Decoded<EffectOutcome> => {
   const object = objectValue(value, path, ["kind","status","body","headers"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Success");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Success");
   if (!kindTag.ok) return kindTag;
-  const field_status = intValue(object.value["status"], `${path}.status`);
+  const field_status = intValue(object.value["status"], at(path, ".status"));
   if (!field_status.ok) return field_status;
-  const field_body = jsonValue(object.value["body"], `${path}.body`);
+  const field_body = jsonValue(object.value["body"], at(path, ".body"));
   if (!field_body.ok) return field_body;
-  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], `${path}.headers`, (item, at) => stringValue(item, at));
+  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], at(path, ".headers"), (item, at) => stringValue(item, at));
   if (!field_headers.ok) return field_headers;
   return ok<EffectOutcome>({ kind: "Success", status: field_status.value, body: field_body.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}) });
 };
 
-const decodeEffectOutcome_Failure = (value: unknown, path: string): Decoded<EffectOutcome> => {
+const decodeEffectOutcome_Failure = (value: unknown, path: Path): Decoded<EffectOutcome> => {
   const object = objectValue(value, path, ["kind","reason","status"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Failure");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Failure");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeHttpFailureReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeHttpFailureReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
-  const field_status = object.value["status"] === undefined ? ok(undefined) : intValue(object.value["status"], `${path}.status`);
+  const field_status = object.value["status"] === undefined ? ok(undefined) : intValue(object.value["status"], at(path, ".status"));
   if (!field_status.ok) return field_status;
   return ok<EffectOutcome>({ kind: "Failure", reason: field_reason.value, ...(field_status.value !== undefined ? { status: field_status.value } : {}) });
 };
 
-const decodeEffectOutcome_Cancelled = (value: unknown, path: string): Decoded<EffectOutcome> => {
+const decodeEffectOutcome_Cancelled = (value: unknown, path: Path): Decoded<EffectOutcome> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<EffectOutcome>({ kind: "Cancelled" });
 };
 
-const decodeEffectOutcome_OutcomeUnknown = (value: unknown, path: string): Decoded<EffectOutcome> => {
+const decodeEffectOutcome_OutcomeUnknown = (value: unknown, path: Path): Decoded<EffectOutcome> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "OutcomeUnknown");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "OutcomeUnknown");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeOutcomeUnknownReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeOutcomeUnknownReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<EffectOutcome>({ kind: "OutcomeUnknown", reason: field_reason.value });
 };
 
-export const decodeStorageFailureReason = (value: unknown, path = "$"): Decoded<StorageFailureReason> => enumValue(value, path, ["unavailable","quota-exceeded"] as const);
+export const decodeStorageFailureReason = (value: unknown, path: Path = "$"): Decoded<StorageFailureReason> => enumValue(value, path, ["unavailable","quota-exceeded"] as const);
 
-export const decodeStorageOutcome = (value: unknown, path = "$"): Decoded<StorageOutcome> => {
+export const decodeStorageOutcome = (value: unknown, path: Path = "$"): Decoded<StorageOutcome> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "Success": return decodeStorageOutcome_Success(value, path);
     case "Failure": return decodeStorageOutcome_Failure(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Success","Failure"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Success","Failure"], tag);
   }
 };
 
-const decodeStorageOutcome_Success = (value: unknown, path: string): Decoded<StorageOutcome> => {
+const decodeStorageOutcome_Success = (value: unknown, path: Path): Decoded<StorageOutcome> => {
   const object = objectValue(value, path, ["kind","value"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Success");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Success");
   if (!kindTag.ok) return kindTag;
-  const field_value = object.value["value"] === null ? ok(null) : stringValue(object.value["value"], `${path}.value`);
+  const field_value = object.value["value"] === null ? ok(null) : stringValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
   return ok<StorageOutcome>({ kind: "Success", value: field_value.value });
 };
 
-const decodeStorageOutcome_Failure = (value: unknown, path: string): Decoded<StorageOutcome> => {
+const decodeStorageOutcome_Failure = (value: unknown, path: Path): Decoded<StorageOutcome> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Failure");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Failure");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeStorageFailureReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeStorageFailureReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<StorageOutcome>({ kind: "Failure", reason: field_reason.value });
 };
 
-export const decodeClipboardFailureReason = (value: unknown, path = "$"): Decoded<ClipboardFailureReason> => enumValue(value, path, ["denied","unavailable","unknown"] as const);
+export const decodeClipboardFailureReason = (value: unknown, path: Path = "$"): Decoded<ClipboardFailureReason> => enumValue(value, path, ["denied","unavailable","unknown"] as const);
 
-export const decodeClipboardOutcome = (value: unknown, path = "$"): Decoded<ClipboardOutcome> => {
+export const decodeClipboardOutcome = (value: unknown, path: Path = "$"): Decoded<ClipboardOutcome> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "Success": return decodeClipboardOutcome_Success(value, path);
     case "Failure": return decodeClipboardOutcome_Failure(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Success","Failure"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Success","Failure"], tag);
   }
 };
 
-const decodeClipboardOutcome_Success = (value: unknown, path: string): Decoded<ClipboardOutcome> => {
+const decodeClipboardOutcome_Success = (value: unknown, path: Path): Decoded<ClipboardOutcome> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Success");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Success");
   if (!kindTag.ok) return kindTag;
   return ok<ClipboardOutcome>({ kind: "Success" });
 };
 
-const decodeClipboardOutcome_Failure = (value: unknown, path: string): Decoded<ClipboardOutcome> => {
+const decodeClipboardOutcome_Failure = (value: unknown, path: Path): Decoded<ClipboardOutcome> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Failure");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Failure");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeClipboardFailureReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeClipboardFailureReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<ClipboardOutcome>({ kind: "Failure", reason: field_reason.value });
 };
 
-export const decodeNavigationFailureReason = (value: unknown, path = "$"): Decoded<NavigationFailureReason> => enumValue(value, path, ["unavailable","not-same-origin"] as const);
+export const decodeNavigationFailureReason = (value: unknown, path: Path = "$"): Decoded<NavigationFailureReason> => enumValue(value, path, ["unavailable","not-same-origin"] as const);
 
-export const decodeNavigationOutcome = (value: unknown, path = "$"): Decoded<NavigationOutcome> => {
+export const decodeNavigationOutcome = (value: unknown, path: Path = "$"): Decoded<NavigationOutcome> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -250,45 +275,45 @@ export const decodeNavigationOutcome = (value: unknown, path = "$"): Decoded<Nav
     case "Success": return decodeNavigationOutcome_Success(value, path);
     case "Dispatched": return decodeNavigationOutcome_Dispatched(value, path);
     case "Failure": return decodeNavigationOutcome_Failure(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Success","Dispatched","Failure"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Success","Dispatched","Failure"], tag);
   }
 };
 
-const decodeNavigationOutcome_Success = (value: unknown, path: string): Decoded<NavigationOutcome> => {
+const decodeNavigationOutcome_Success = (value: unknown, path: Path): Decoded<NavigationOutcome> => {
   const object = objectValue(value, path, ["kind","location"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Success");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Success");
   if (!kindTag.ok) return kindTag;
-  const field_location = decodeBrowserLocation(object.value["location"], `${path}.location`);
+  const field_location = decodeBrowserLocation(object.value["location"], at(path, ".location"));
   if (!field_location.ok) return field_location;
   return ok<NavigationOutcome>({ kind: "Success", location: field_location.value });
 };
 
-const decodeNavigationOutcome_Dispatched = (value: unknown, path: string): Decoded<NavigationOutcome> => {
+const decodeNavigationOutcome_Dispatched = (value: unknown, path: Path): Decoded<NavigationOutcome> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Dispatched");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Dispatched");
   if (!kindTag.ok) return kindTag;
   return ok<NavigationOutcome>({ kind: "Dispatched" });
 };
 
-const decodeNavigationOutcome_Failure = (value: unknown, path: string): Decoded<NavigationOutcome> => {
+const decodeNavigationOutcome_Failure = (value: unknown, path: Path): Decoded<NavigationOutcome> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Failure");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Failure");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeNavigationFailureReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeNavigationFailureReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<NavigationOutcome>({ kind: "Failure", reason: field_reason.value });
 };
 
-export const decodeCapabilityId = (value: unknown, path = "$"): Decoded<CapabilityId> => brand<CapabilityId>(stringValue(value, path));
+export const decodeCapabilityId = (value: unknown, path: Path = "$"): Decoded<CapabilityId> => brand<CapabilityId>(stringValue(value, path));
 
-export const decodeCapabilityUnsupportedReason = (value: unknown, path = "$"): Decoded<CapabilityUnsupportedReason> => enumValue(value, path, ["not-negotiated","version-unsupported"] as const);
+export const decodeCapabilityUnsupportedReason = (value: unknown, path: Path = "$"): Decoded<CapabilityUnsupportedReason> => enumValue(value, path, ["not-negotiated","version-unsupported"] as const);
 
-export const decodeCapabilityRejectedReason = (value: unknown, path = "$"): Decoded<CapabilityRejectedReason> => enumValue(value, path, ["malformed-request"] as const);
+export const decodeCapabilityRejectedReason = (value: unknown, path: Path = "$"): Decoded<CapabilityRejectedReason> => enumValue(value, path, ["malformed-request"] as const);
 
-export const decodeCapabilityOutcome = (value: unknown, path = "$"): Decoded<CapabilityOutcome> => {
+export const decodeCapabilityOutcome = (value: unknown, path: Path = "$"): Decoded<CapabilityOutcome> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -296,41 +321,41 @@ export const decodeCapabilityOutcome = (value: unknown, path = "$"): Decoded<Cap
     case "Completed": return decodeCapabilityOutcome_Completed(value, path);
     case "Unsupported": return decodeCapabilityOutcome_Unsupported(value, path);
     case "Rejected": return decodeCapabilityOutcome_Rejected(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Completed","Unsupported","Rejected"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Completed","Unsupported","Rejected"], tag);
   }
 };
 
-const decodeCapabilityOutcome_Completed = (value: unknown, path: string): Decoded<CapabilityOutcome> => {
+const decodeCapabilityOutcome_Completed = (value: unknown, path: Path): Decoded<CapabilityOutcome> => {
   const object = objectValue(value, path, ["kind","result"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Completed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Completed");
   if (!kindTag.ok) return kindTag;
-  const field_result = jsonValue(object.value["result"], `${path}.result`);
+  const field_result = jsonValue(object.value["result"], at(path, ".result"));
   if (!field_result.ok) return field_result;
   return ok<CapabilityOutcome>({ kind: "Completed", result: field_result.value });
 };
 
-const decodeCapabilityOutcome_Unsupported = (value: unknown, path: string): Decoded<CapabilityOutcome> => {
+const decodeCapabilityOutcome_Unsupported = (value: unknown, path: Path): Decoded<CapabilityOutcome> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeCapabilityUnsupportedReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeCapabilityUnsupportedReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<CapabilityOutcome>({ kind: "Unsupported", reason: field_reason.value });
 };
 
-const decodeCapabilityOutcome_Rejected = (value: unknown, path: string): Decoded<CapabilityOutcome> => {
+const decodeCapabilityOutcome_Rejected = (value: unknown, path: Path): Decoded<CapabilityOutcome> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Rejected");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Rejected");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeCapabilityRejectedReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeCapabilityRejectedReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<CapabilityOutcome>({ kind: "Rejected", reason: field_reason.value });
 };
 
-export const decodeEffectResult = (value: unknown, path = "$"): Decoded<EffectResult> => {
+export const decodeEffectResult = (value: unknown, path: Path = "$"): Decoded<EffectResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -340,121 +365,121 @@ export const decodeEffectResult = (value: unknown, path = "$"): Decoded<EffectRe
     case "ClipboardResult": return decodeEffectResult_ClipboardResult(value, path);
     case "NavigationResult": return decodeEffectResult_NavigationResult(value, path);
     case "CapabilityResult": return decodeEffectResult_CapabilityResult(value, path);
-    default: return unknownVariant(`${path}.kind`, ["HttpResult","StorageResult","ClipboardResult","NavigationResult","CapabilityResult"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["HttpResult","StorageResult","ClipboardResult","NavigationResult","CapabilityResult"], tag);
   }
 };
 
-const decodeEffectResult_HttpResult = (value: unknown, path: string): Decoded<EffectResult> => {
+const decodeEffectResult_HttpResult = (value: unknown, path: Path): Decoded<EffectResult> => {
   const object = objectValue(value, path, ["kind","correlationId","outcome"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "HttpResult");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "HttpResult");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_outcome = decodeEffectOutcome(object.value["outcome"], `${path}.outcome`);
+  const field_outcome = decodeEffectOutcome(object.value["outcome"], at(path, ".outcome"));
   if (!field_outcome.ok) return field_outcome;
   return ok<EffectResult>({ kind: "HttpResult", correlationId: field_correlationId.value, outcome: field_outcome.value });
 };
 
-const decodeEffectResult_StorageResult = (value: unknown, path: string): Decoded<EffectResult> => {
+const decodeEffectResult_StorageResult = (value: unknown, path: Path): Decoded<EffectResult> => {
   const object = objectValue(value, path, ["kind","correlationId","outcome"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "StorageResult");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "StorageResult");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_outcome = decodeStorageOutcome(object.value["outcome"], `${path}.outcome`);
+  const field_outcome = decodeStorageOutcome(object.value["outcome"], at(path, ".outcome"));
   if (!field_outcome.ok) return field_outcome;
   return ok<EffectResult>({ kind: "StorageResult", correlationId: field_correlationId.value, outcome: field_outcome.value });
 };
 
-const decodeEffectResult_ClipboardResult = (value: unknown, path: string): Decoded<EffectResult> => {
+const decodeEffectResult_ClipboardResult = (value: unknown, path: Path): Decoded<EffectResult> => {
   const object = objectValue(value, path, ["kind","correlationId","outcome"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "ClipboardResult");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ClipboardResult");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_outcome = decodeClipboardOutcome(object.value["outcome"], `${path}.outcome`);
+  const field_outcome = decodeClipboardOutcome(object.value["outcome"], at(path, ".outcome"));
   if (!field_outcome.ok) return field_outcome;
   return ok<EffectResult>({ kind: "ClipboardResult", correlationId: field_correlationId.value, outcome: field_outcome.value });
 };
 
-const decodeEffectResult_NavigationResult = (value: unknown, path: string): Decoded<EffectResult> => {
+const decodeEffectResult_NavigationResult = (value: unknown, path: Path): Decoded<EffectResult> => {
   const object = objectValue(value, path, ["kind","correlationId","outcome"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NavigationResult");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NavigationResult");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_outcome = decodeNavigationOutcome(object.value["outcome"], `${path}.outcome`);
+  const field_outcome = decodeNavigationOutcome(object.value["outcome"], at(path, ".outcome"));
   if (!field_outcome.ok) return field_outcome;
   return ok<EffectResult>({ kind: "NavigationResult", correlationId: field_correlationId.value, outcome: field_outcome.value });
 };
 
-const decodeEffectResult_CapabilityResult = (value: unknown, path: string): Decoded<EffectResult> => {
+const decodeEffectResult_CapabilityResult = (value: unknown, path: Path): Decoded<EffectResult> => {
   const object = objectValue(value, path, ["kind","correlationId","capability","version","outcome"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "CapabilityResult");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "CapabilityResult");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_capability = decodeCapabilityId(object.value["capability"], `${path}.capability`);
+  const field_capability = decodeCapabilityId(object.value["capability"], at(path, ".capability"));
   if (!field_capability.ok) return field_capability;
-  const field_version = intValue(object.value["version"], `${path}.version`);
+  const field_version = intValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
-  const field_outcome = decodeCapabilityOutcome(object.value["outcome"], `${path}.outcome`);
+  const field_outcome = decodeCapabilityOutcome(object.value["outcome"], at(path, ".outcome"));
   if (!field_outcome.ok) return field_outcome;
   return ok<EffectResult>({ kind: "CapabilityResult", correlationId: field_correlationId.value, capability: field_capability.value, version: field_version.value, outcome: field_outcome.value });
 };
 
-export const decodeProtocolRevision = (value: unknown, path = "$"): Decoded<ProtocolRevision> => {
+export const decodeProtocolRevision = (value: unknown, path: Path = "$"): Decoded<ProtocolRevision> => {
   const object = objectValue(value, path, ["major","minor"]);
   if (!object.ok) return object;
-  const field_major = intValue(object.value["major"], `${path}.major`);
+  const field_major = intValue(object.value["major"], at(path, ".major"));
   if (!field_major.ok) return field_major;
-  const field_minor = intValue(object.value["minor"], `${path}.minor`);
+  const field_minor = intValue(object.value["minor"], at(path, ".minor"));
   if (!field_minor.ok) return field_minor;
   return ok<ProtocolRevision>({ major: field_major.value, minor: field_minor.value });
 };
 
-export const decodeContractIdentity = (value: unknown, path = "$"): Decoded<ContractIdentity> => {
+export const decodeContractIdentity = (value: unknown, path: Path = "$"): Decoded<ContractIdentity> => {
   const object = objectValue(value, path, ["unit","version","fingerprint"]);
   if (!object.ok) return object;
-  const field_unit = stringValue(object.value["unit"], `${path}.unit`);
+  const field_unit = stringValue(object.value["unit"], at(path, ".unit"));
   if (!field_unit.ok) return field_unit;
-  const field_version = intValue(object.value["version"], `${path}.version`);
+  const field_version = intValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
-  const field_fingerprint = stringValue(object.value["fingerprint"], `${path}.fingerprint`);
+  const field_fingerprint = stringValue(object.value["fingerprint"], at(path, ".fingerprint"));
   if (!field_fingerprint.ok) return field_fingerprint;
   return ok<ContractIdentity>({ unit: field_unit.value, version: field_version.value, fingerprint: field_fingerprint.value });
 };
 
-export const decodeCapabilityOffer = (value: unknown, path = "$"): Decoded<CapabilityOffer> => {
+export const decodeCapabilityOffer = (value: unknown, path: Path = "$"): Decoded<CapabilityOffer> => {
   const object = objectValue(value, path, ["id","version","fingerprint"]);
   if (!object.ok) return object;
-  const field_id = decodeCapabilityId(object.value["id"], `${path}.id`);
+  const field_id = decodeCapabilityId(object.value["id"], at(path, ".id"));
   if (!field_id.ok) return field_id;
-  const field_version = intValue(object.value["version"], `${path}.version`);
+  const field_version = intValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
-  const field_fingerprint = stringValue(object.value["fingerprint"], `${path}.fingerprint`);
+  const field_fingerprint = stringValue(object.value["fingerprint"], at(path, ".fingerprint"));
   if (!field_fingerprint.ok) return field_fingerprint;
   return ok<CapabilityOffer>({ id: field_id.value, version: field_version.value, fingerprint: field_fingerprint.value });
 };
 
-export const decodeHostHandshake = (value: unknown, path = "$"): Decoded<HostHandshake> => {
+export const decodeHostHandshake = (value: unknown, path: Path = "$"): Decoded<HostHandshake> => {
   const object = objectValue(value, path, ["protocol","contract","capabilities"]);
   if (!object.ok) return object;
-  const field_protocol = decodeProtocolRevision(object.value["protocol"], `${path}.protocol`);
+  const field_protocol = decodeProtocolRevision(object.value["protocol"], at(path, ".protocol"));
   if (!field_protocol.ok) return field_protocol;
-  const field_contract = decodeContractIdentity(object.value["contract"], `${path}.contract`);
+  const field_contract = decodeContractIdentity(object.value["contract"], at(path, ".contract"));
   if (!field_contract.ok) return field_contract;
-  const field_capabilities = listOf(object.value["capabilities"], `${path}.capabilities`, (item, at) => decodeCapabilityOffer(item, at));
+  const field_capabilities = listOf(object.value["capabilities"], at(path, ".capabilities"), (item, at) => decodeCapabilityOffer(item, at));
   if (!field_capabilities.ok) return field_capabilities;
   return ok<HostHandshake>({ protocol: field_protocol.value, contract: field_contract.value, capabilities: field_capabilities.value });
 };
 
-export const decodeHandshakeRejection = (value: unknown, path = "$"): Decoded<HandshakeRejection> => {
+export const decodeHandshakeRejection = (value: unknown, path: Path = "$"): Decoded<HandshakeRejection> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -463,88 +488,88 @@ export const decodeHandshakeRejection = (value: unknown, path = "$"): Decoded<Ha
     case "ContractMismatch": return decodeHandshakeRejection_ContractMismatch(value, path);
     case "CapabilityUnavailable": return decodeHandshakeRejection_CapabilityUnavailable(value, path);
     case "HandshakeMissing": return decodeHandshakeRejection_HandshakeMissing(value, path);
-    default: return unknownVariant(`${path}.kind`, ["ProtocolUnsupported","ContractMismatch","CapabilityUnavailable","HandshakeMissing"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["ProtocolUnsupported","ContractMismatch","CapabilityUnavailable","HandshakeMissing"], tag);
   }
 };
 
-const decodeHandshakeRejection_ProtocolUnsupported = (value: unknown, path: string): Decoded<HandshakeRejection> => {
+const decodeHandshakeRejection_ProtocolUnsupported = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
   const object = objectValue(value, path, ["kind","offered"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "ProtocolUnsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ProtocolUnsupported");
   if (!kindTag.ok) return kindTag;
-  const field_offered = decodeProtocolRevision(object.value["offered"], `${path}.offered`);
+  const field_offered = decodeProtocolRevision(object.value["offered"], at(path, ".offered"));
   if (!field_offered.ok) return field_offered;
   return ok<HandshakeRejection>({ kind: "ProtocolUnsupported", offered: field_offered.value });
 };
 
-const decodeHandshakeRejection_ContractMismatch = (value: unknown, path: string): Decoded<HandshakeRejection> => {
+const decodeHandshakeRejection_ContractMismatch = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
   const object = objectValue(value, path, ["kind","expected","offered"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "ContractMismatch");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ContractMismatch");
   if (!kindTag.ok) return kindTag;
-  const field_expected = decodeContractIdentity(object.value["expected"], `${path}.expected`);
+  const field_expected = decodeContractIdentity(object.value["expected"], at(path, ".expected"));
   if (!field_expected.ok) return field_expected;
-  const field_offered = decodeContractIdentity(object.value["offered"], `${path}.offered`);
+  const field_offered = decodeContractIdentity(object.value["offered"], at(path, ".offered"));
   if (!field_offered.ok) return field_offered;
   return ok<HandshakeRejection>({ kind: "ContractMismatch", expected: field_expected.value, offered: field_offered.value });
 };
 
-const decodeHandshakeRejection_CapabilityUnavailable = (value: unknown, path: string): Decoded<HandshakeRejection> => {
+const decodeHandshakeRejection_CapabilityUnavailable = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
   const object = objectValue(value, path, ["kind","id","version"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "CapabilityUnavailable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "CapabilityUnavailable");
   if (!kindTag.ok) return kindTag;
-  const field_id = decodeCapabilityId(object.value["id"], `${path}.id`);
+  const field_id = decodeCapabilityId(object.value["id"], at(path, ".id"));
   if (!field_id.ok) return field_id;
-  const field_version = intValue(object.value["version"], `${path}.version`);
+  const field_version = intValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
   return ok<HandshakeRejection>({ kind: "CapabilityUnavailable", id: field_id.value, version: field_version.value });
 };
 
-const decodeHandshakeRejection_HandshakeMissing = (value: unknown, path: string): Decoded<HandshakeRejection> => {
+const decodeHandshakeRejection_HandshakeMissing = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "HandshakeMissing");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "HandshakeMissing");
   if (!kindTag.ok) return kindTag;
   return ok<HandshakeRejection>({ kind: "HandshakeMissing" });
 };
 
-export const decodeEngineHandshake = (value: unknown, path = "$"): Decoded<EngineHandshake> => {
+export const decodeEngineHandshake = (value: unknown, path: Path = "$"): Decoded<EngineHandshake> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "Accepted": return decodeEngineHandshake_Accepted(value, path);
     case "Rejected": return decodeEngineHandshake_Rejected(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Accepted","Rejected"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Accepted","Rejected"], tag);
   }
 };
 
-const decodeEngineHandshake_Accepted = (value: unknown, path: string): Decoded<EngineHandshake> => {
+const decodeEngineHandshake_Accepted = (value: unknown, path: Path): Decoded<EngineHandshake> => {
   const object = objectValue(value, path, ["kind","protocol","contract","capabilities"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Accepted");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Accepted");
   if (!kindTag.ok) return kindTag;
-  const field_protocol = decodeProtocolRevision(object.value["protocol"], `${path}.protocol`);
+  const field_protocol = decodeProtocolRevision(object.value["protocol"], at(path, ".protocol"));
   if (!field_protocol.ok) return field_protocol;
-  const field_contract = decodeContractIdentity(object.value["contract"], `${path}.contract`);
+  const field_contract = decodeContractIdentity(object.value["contract"], at(path, ".contract"));
   if (!field_contract.ok) return field_contract;
-  const field_capabilities = listOf(object.value["capabilities"], `${path}.capabilities`, (item, at) => decodeCapabilityOffer(item, at));
+  const field_capabilities = listOf(object.value["capabilities"], at(path, ".capabilities"), (item, at) => decodeCapabilityOffer(item, at));
   if (!field_capabilities.ok) return field_capabilities;
   return ok<EngineHandshake>({ kind: "Accepted", protocol: field_protocol.value, contract: field_contract.value, capabilities: field_capabilities.value });
 };
 
-const decodeEngineHandshake_Rejected = (value: unknown, path: string): Decoded<EngineHandshake> => {
+const decodeEngineHandshake_Rejected = (value: unknown, path: Path): Decoded<EngineHandshake> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Rejected");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Rejected");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeHandshakeRejection(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeHandshakeRejection(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<EngineHandshake>({ kind: "Rejected", reason: field_reason.value });
 };
 
-export const decodeBrowserToEngineMessage = (value: unknown, path = "$"): Decoded<BrowserToEngineMessage> => {
+export const decodeBrowserToEngineMessage = (value: unknown, path: Path = "$"): Decoded<BrowserToEngineMessage> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -554,71 +579,71 @@ export const decodeBrowserToEngineMessage = (value: unknown, path = "$"): Decode
     case "EffectResult": return decodeBrowserToEngineMessage_EffectResult(value, path);
     case "LocationChanged": return decodeBrowserToEngineMessage_LocationChanged(value, path);
     case "CapabilityFact": return decodeBrowserToEngineMessage_CapabilityFact(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Initialize","Event","EffectResult","LocationChanged","CapabilityFact"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Initialize","Event","EffectResult","LocationChanged","CapabilityFact"], tag);
   }
 };
 
-const decodeBrowserToEngineMessage_Initialize = (value: unknown, path: string): Decoded<BrowserToEngineMessage> => {
+const decodeBrowserToEngineMessage_Initialize = (value: unknown, path: Path): Decoded<BrowserToEngineMessage> => {
   const object = objectValue(value, path, ["kind","protocolVersion","capabilities","location","handshake"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Initialize");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Initialize");
   if (!kindTag.ok) return kindTag;
-  const field_protocolVersion = literalValue(object.value["protocolVersion"], `${path}.protocolVersion`, 1);
+  const field_protocolVersion = literalValue(object.value["protocolVersion"], at(path, ".protocolVersion"), 1);
   if (!field_protocolVersion.ok) return field_protocolVersion;
-  const field_capabilities = listOf(object.value["capabilities"], `${path}.capabilities`, (item, at) => decodeCapability(item, at));
+  const field_capabilities = listOf(object.value["capabilities"], at(path, ".capabilities"), (item, at) => decodeCapability(item, at));
   if (!field_capabilities.ok) return field_capabilities;
-  const field_location = decodeBrowserLocation(object.value["location"], `${path}.location`);
+  const field_location = decodeBrowserLocation(object.value["location"], at(path, ".location"));
   if (!field_location.ok) return field_location;
-  const field_handshake = object.value["handshake"] === undefined ? ok(undefined) : decodeHostHandshake(object.value["handshake"], `${path}.handshake`);
+  const field_handshake = object.value["handshake"] === undefined ? ok(undefined) : decodeHostHandshake(object.value["handshake"], at(path, ".handshake"));
   if (!field_handshake.ok) return field_handshake;
   return ok<BrowserToEngineMessage>({ kind: "Initialize", protocolVersion: field_protocolVersion.value, capabilities: field_capabilities.value, location: field_location.value, ...(field_handshake.value !== undefined ? { handshake: field_handshake.value } : {}) });
 };
 
-const decodeBrowserToEngineMessage_Event = (value: unknown, path: string): Decoded<BrowserToEngineMessage> => {
+const decodeBrowserToEngineMessage_Event = (value: unknown, path: Path): Decoded<BrowserToEngineMessage> => {
   const object = objectValue(value, path, ["kind","event"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Event");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Event");
   if (!kindTag.ok) return kindTag;
-  const field_event = decodeSemanticEvent(object.value["event"], `${path}.event`);
+  const field_event = decodeSemanticEvent(object.value["event"], at(path, ".event"));
   if (!field_event.ok) return field_event;
   return ok<BrowserToEngineMessage>({ kind: "Event", event: field_event.value });
 };
 
-const decodeBrowserToEngineMessage_EffectResult = (value: unknown, path: string): Decoded<BrowserToEngineMessage> => {
+const decodeBrowserToEngineMessage_EffectResult = (value: unknown, path: Path): Decoded<BrowserToEngineMessage> => {
   const object = objectValue(value, path, ["kind","result"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "EffectResult");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "EffectResult");
   if (!kindTag.ok) return kindTag;
-  const field_result = decodeEffectResult(object.value["result"], `${path}.result`);
+  const field_result = decodeEffectResult(object.value["result"], at(path, ".result"));
   if (!field_result.ok) return field_result;
   return ok<BrowserToEngineMessage>({ kind: "EffectResult", result: field_result.value });
 };
 
-const decodeBrowserToEngineMessage_LocationChanged = (value: unknown, path: string): Decoded<BrowserToEngineMessage> => {
+const decodeBrowserToEngineMessage_LocationChanged = (value: unknown, path: Path): Decoded<BrowserToEngineMessage> => {
   const object = objectValue(value, path, ["kind","location"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "LocationChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "LocationChanged");
   if (!kindTag.ok) return kindTag;
-  const field_location = decodeBrowserLocation(object.value["location"], `${path}.location`);
+  const field_location = decodeBrowserLocation(object.value["location"], at(path, ".location"));
   if (!field_location.ok) return field_location;
   return ok<BrowserToEngineMessage>({ kind: "LocationChanged", location: field_location.value });
 };
 
-const decodeBrowserToEngineMessage_CapabilityFact = (value: unknown, path: string): Decoded<BrowserToEngineMessage> => {
+const decodeBrowserToEngineMessage_CapabilityFact = (value: unknown, path: Path): Decoded<BrowserToEngineMessage> => {
   const object = objectValue(value, path, ["kind","capability","version","fact"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "CapabilityFact");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "CapabilityFact");
   if (!kindTag.ok) return kindTag;
-  const field_capability = decodeCapabilityId(object.value["capability"], `${path}.capability`);
+  const field_capability = decodeCapabilityId(object.value["capability"], at(path, ".capability"));
   if (!field_capability.ok) return field_capability;
-  const field_version = intValue(object.value["version"], `${path}.version`);
+  const field_version = intValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
-  const field_fact = jsonValue(object.value["fact"], `${path}.fact`);
+  const field_fact = jsonValue(object.value["fact"], at(path, ".fact"));
   if (!field_fact.ok) return field_fact;
   return ok<BrowserToEngineMessage>({ kind: "CapabilityFact", capability: field_capability.value, version: field_version.value, fact: field_fact.value });
 };
 
-export const decodeViewPrimitive = (value: unknown, path = "$"): Decoded<ViewPrimitive> => {
+export const decodeViewPrimitive = (value: unknown, path: Path = "$"): Decoded<ViewPrimitive> => {
   switch (jsonKind(value)) {
     case "string": return stringValue(value, path);
     case "number": return numberValue(value, path);
@@ -627,9 +652,9 @@ export const decodeViewPrimitive = (value: unknown, path = "$"): Decoded<ViewPri
   }
 };
 
-export const decodeViewItem = (value: unknown, path = "$"): Decoded<ViewItem> => mapOf(value, path, (item, at) => decodeViewPrimitive(item, at));
+export const decodeViewItem = (value: unknown, path: Path = "$"): Decoded<ViewItem> => mapOf(value, path, (item, at) => decodeViewPrimitive(item, at));
 
-export const decodeViewValue = (value: unknown, path = "$"): Decoded<ViewValue> => {
+export const decodeViewValue = (value: unknown, path: Path = "$"): Decoded<ViewValue> => {
   switch (jsonKind(value)) {
     case "string": return stringValue(value, path);
     case "number": return numberValue(value, path);
@@ -639,53 +664,53 @@ export const decodeViewValue = (value: unknown, path = "$"): Decoded<ViewValue> 
   }
 };
 
-export const decodeViewState = (value: unknown, path = "$"): Decoded<ViewState> => mapOf(value, path, (item, at) => decodeViewValue(item, at));
+export const decodeViewState = (value: unknown, path: Path = "$"): Decoded<ViewState> => mapOf(value, path, (item, at) => decodeViewValue(item, at));
 
-export const decodeHttpMethod = (value: unknown, path = "$"): Decoded<HttpMethod> => enumValue(value, path, ["GET","PUT","POST","PATCH","DELETE","HEAD","OPTIONS"] as const);
+export const decodeHttpMethod = (value: unknown, path: Path = "$"): Decoded<HttpMethod> => enumValue(value, path, ["GET","PUT","POST","PATCH","DELETE","HEAD","OPTIONS"] as const);
 
-export const decodeHttpResponseKind = (value: unknown, path = "$"): Decoded<HttpResponseKind> => enumValue(value, path, ["json","text","base64","none"] as const);
+export const decodeHttpResponseKind = (value: unknown, path: Path = "$"): Decoded<HttpResponseKind> => enumValue(value, path, ["json","text","base64","none"] as const);
 
-export const decodeHttpCredentials = (value: unknown, path = "$"): Decoded<HttpCredentials> => enumValue(value, path, ["omit","same-origin","include"] as const);
+export const decodeHttpCredentials = (value: unknown, path: Path = "$"): Decoded<HttpCredentials> => enumValue(value, path, ["omit","same-origin","include"] as const);
 
-export const decodeXsrfBinding = (value: unknown, path = "$"): Decoded<XsrfBinding> => {
+export const decodeXsrfBinding = (value: unknown, path: Path = "$"): Decoded<XsrfBinding> => {
   const object = objectValue(value, path, ["cookie","header"]);
   if (!object.ok) return object;
-  const field_cookie = stringValue(object.value["cookie"], `${path}.cookie`);
+  const field_cookie = stringValue(object.value["cookie"], at(path, ".cookie"));
   if (!field_cookie.ok) return field_cookie;
-  const field_header = stringValue(object.value["header"], `${path}.header`);
+  const field_header = stringValue(object.value["header"], at(path, ".header"));
   if (!field_header.ok) return field_header;
   return ok<XsrfBinding>({ cookie: field_cookie.value, header: field_header.value });
 };
 
-export const decodeHttpEffectRequest = (value: unknown, path = "$"): Decoded<HttpEffectRequest> => {
+export const decodeHttpEffectRequest = (value: unknown, path: Path = "$"): Decoded<HttpEffectRequest> => {
   const object = objectValue(value, path, ["kind","correlationId","method","url","headers","body","timeoutMs","response","responseHeaders","credentials","xsrf"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Http");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Http");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_method = decodeHttpMethod(object.value["method"], `${path}.method`);
+  const field_method = decodeHttpMethod(object.value["method"], at(path, ".method"));
   if (!field_method.ok) return field_method;
-  const field_url = stringValue(object.value["url"], `${path}.url`);
+  const field_url = stringValue(object.value["url"], at(path, ".url"));
   if (!field_url.ok) return field_url;
-  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], `${path}.headers`, (item, at) => stringValue(item, at));
+  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], at(path, ".headers"), (item, at) => stringValue(item, at));
   if (!field_headers.ok) return field_headers;
-  const field_body = object.value["body"] === undefined ? ok(undefined) : stringValue(object.value["body"], `${path}.body`);
+  const field_body = object.value["body"] === undefined ? ok(undefined) : stringValue(object.value["body"], at(path, ".body"));
   if (!field_body.ok) return field_body;
-  const field_timeoutMs = intValue(object.value["timeoutMs"], `${path}.timeoutMs`);
+  const field_timeoutMs = intValue(object.value["timeoutMs"], at(path, ".timeoutMs"));
   if (!field_timeoutMs.ok) return field_timeoutMs;
-  const field_response = object.value["response"] === undefined ? ok(undefined) : decodeHttpResponseKind(object.value["response"], `${path}.response`);
+  const field_response = object.value["response"] === undefined ? ok(undefined) : decodeHttpResponseKind(object.value["response"], at(path, ".response"));
   if (!field_response.ok) return field_response;
-  const field_responseHeaders = object.value["responseHeaders"] === undefined ? ok(undefined) : listOf(object.value["responseHeaders"], `${path}.responseHeaders`, (item, at) => stringValue(item, at));
+  const field_responseHeaders = object.value["responseHeaders"] === undefined ? ok(undefined) : listOf(object.value["responseHeaders"], at(path, ".responseHeaders"), (item, at) => stringValue(item, at));
   if (!field_responseHeaders.ok) return field_responseHeaders;
-  const field_credentials = object.value["credentials"] === undefined ? ok(undefined) : decodeHttpCredentials(object.value["credentials"], `${path}.credentials`);
+  const field_credentials = object.value["credentials"] === undefined ? ok(undefined) : decodeHttpCredentials(object.value["credentials"], at(path, ".credentials"));
   if (!field_credentials.ok) return field_credentials;
-  const field_xsrf = object.value["xsrf"] === undefined ? ok(undefined) : decodeXsrfBinding(object.value["xsrf"], `${path}.xsrf`);
+  const field_xsrf = object.value["xsrf"] === undefined ? ok(undefined) : decodeXsrfBinding(object.value["xsrf"], at(path, ".xsrf"));
   if (!field_xsrf.ok) return field_xsrf;
   return ok<HttpEffectRequest>({ kind: "Http", correlationId: field_correlationId.value, method: field_method.value, url: field_url.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}), ...(field_body.value !== undefined ? { body: field_body.value } : {}), timeoutMs: field_timeoutMs.value, ...(field_response.value !== undefined ? { response: field_response.value } : {}), ...(field_responseHeaders.value !== undefined ? { responseHeaders: field_responseHeaders.value } : {}), ...(field_credentials.value !== undefined ? { credentials: field_credentials.value } : {}), ...(field_xsrf.value !== undefined ? { xsrf: field_xsrf.value } : {}) });
 };
 
-export const decodeStorageEffectRequest = (value: unknown, path = "$"): Decoded<StorageEffectRequest> => {
+export const decodeStorageEffectRequest = (value: unknown, path: Path = "$"): Decoded<StorageEffectRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -693,69 +718,69 @@ export const decodeStorageEffectRequest = (value: unknown, path = "$"): Decoded<
     case "get": return decodeStorageEffectRequest_get(value, path);
     case "set": return decodeStorageEffectRequest_set(value, path);
     case "remove": return decodeStorageEffectRequest_remove(value, path);
-    default: return unknownVariant(`${path}.operation`, ["get","set","remove"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["get","set","remove"], tag);
   }
 };
 
-const decodeStorageEffectRequest_get = (value: unknown, path: string): Decoded<StorageEffectRequest> => {
+const decodeStorageEffectRequest_get = (value: unknown, path: Path): Decoded<StorageEffectRequest> => {
   const object = objectValue(value, path, ["kind","operation","correlationId","key"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Storage");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Storage");
   if (!kindTag.ok) return kindTag;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "get");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "get");
   if (!operationTag.ok) return operationTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_key = stringValue(object.value["key"], `${path}.key`);
+  const field_key = stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
   return ok<StorageEffectRequest>({ kind: "Storage", operation: "get", correlationId: field_correlationId.value, key: field_key.value });
 };
 
-const decodeStorageEffectRequest_set = (value: unknown, path: string): Decoded<StorageEffectRequest> => {
+const decodeStorageEffectRequest_set = (value: unknown, path: Path): Decoded<StorageEffectRequest> => {
   const object = objectValue(value, path, ["kind","operation","correlationId","key","value"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Storage");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Storage");
   if (!kindTag.ok) return kindTag;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "set");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "set");
   if (!operationTag.ok) return operationTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_key = stringValue(object.value["key"], `${path}.key`);
+  const field_key = stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
-  const field_value = stringValue(object.value["value"], `${path}.value`);
+  const field_value = stringValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
   return ok<StorageEffectRequest>({ kind: "Storage", operation: "set", correlationId: field_correlationId.value, key: field_key.value, value: field_value.value });
 };
 
-const decodeStorageEffectRequest_remove = (value: unknown, path: string): Decoded<StorageEffectRequest> => {
+const decodeStorageEffectRequest_remove = (value: unknown, path: Path): Decoded<StorageEffectRequest> => {
   const object = objectValue(value, path, ["kind","operation","correlationId","key"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Storage");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Storage");
   if (!kindTag.ok) return kindTag;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "remove");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "remove");
   if (!operationTag.ok) return operationTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_key = stringValue(object.value["key"], `${path}.key`);
+  const field_key = stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
   return ok<StorageEffectRequest>({ kind: "Storage", operation: "remove", correlationId: field_correlationId.value, key: field_key.value });
 };
 
-export const decodeClipboardEffectRequest = (value: unknown, path = "$"): Decoded<ClipboardEffectRequest> => {
+export const decodeClipboardEffectRequest = (value: unknown, path: Path = "$"): Decoded<ClipboardEffectRequest> => {
   const object = objectValue(value, path, ["kind","correlationId","operation","text"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Clipboard");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Clipboard");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_operation = literalValue(object.value["operation"], `${path}.operation`, "writeText");
+  const field_operation = literalValue(object.value["operation"], at(path, ".operation"), "writeText");
   if (!field_operation.ok) return field_operation;
-  const field_text = stringValue(object.value["text"], `${path}.text`);
+  const field_text = stringValue(object.value["text"], at(path, ".text"));
   if (!field_text.ok) return field_text;
   return ok<ClipboardEffectRequest>({ kind: "Clipboard", correlationId: field_correlationId.value, operation: field_operation.value, text: field_text.value });
 };
 
-export const decodeNavigationEffectRequest = (value: unknown, path = "$"): Decoded<NavigationEffectRequest> => {
+export const decodeNavigationEffectRequest = (value: unknown, path: Path = "$"): Decoded<NavigationEffectRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -764,79 +789,79 @@ export const decodeNavigationEffectRequest = (value: unknown, path = "$"): Decod
     case "replace": return decodeNavigationEffectRequest_replace(value, path);
     case "back": return decodeNavigationEffectRequest_back(value, path);
     case "forward": return decodeNavigationEffectRequest_forward(value, path);
-    default: return unknownVariant(`${path}.operation`, ["push","replace","back","forward"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["push","replace","back","forward"], tag);
   }
 };
 
-const decodeNavigationEffectRequest_push = (value: unknown, path: string): Decoded<NavigationEffectRequest> => {
+const decodeNavigationEffectRequest_push = (value: unknown, path: Path): Decoded<NavigationEffectRequest> => {
   const object = objectValue(value, path, ["kind","operation","correlationId","url"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Navigation");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Navigation");
   if (!kindTag.ok) return kindTag;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "push");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "push");
   if (!operationTag.ok) return operationTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_url = stringValue(object.value["url"], `${path}.url`);
+  const field_url = stringValue(object.value["url"], at(path, ".url"));
   if (!field_url.ok) return field_url;
   return ok<NavigationEffectRequest>({ kind: "Navigation", operation: "push", correlationId: field_correlationId.value, url: field_url.value });
 };
 
-const decodeNavigationEffectRequest_replace = (value: unknown, path: string): Decoded<NavigationEffectRequest> => {
+const decodeNavigationEffectRequest_replace = (value: unknown, path: Path): Decoded<NavigationEffectRequest> => {
   const object = objectValue(value, path, ["kind","operation","correlationId","url"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Navigation");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Navigation");
   if (!kindTag.ok) return kindTag;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "replace");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "replace");
   if (!operationTag.ok) return operationTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_url = stringValue(object.value["url"], `${path}.url`);
+  const field_url = stringValue(object.value["url"], at(path, ".url"));
   if (!field_url.ok) return field_url;
   return ok<NavigationEffectRequest>({ kind: "Navigation", operation: "replace", correlationId: field_correlationId.value, url: field_url.value });
 };
 
-const decodeNavigationEffectRequest_back = (value: unknown, path: string): Decoded<NavigationEffectRequest> => {
+const decodeNavigationEffectRequest_back = (value: unknown, path: Path): Decoded<NavigationEffectRequest> => {
   const object = objectValue(value, path, ["kind","operation","correlationId"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Navigation");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Navigation");
   if (!kindTag.ok) return kindTag;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "back");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "back");
   if (!operationTag.ok) return operationTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
   return ok<NavigationEffectRequest>({ kind: "Navigation", operation: "back", correlationId: field_correlationId.value });
 };
 
-const decodeNavigationEffectRequest_forward = (value: unknown, path: string): Decoded<NavigationEffectRequest> => {
+const decodeNavigationEffectRequest_forward = (value: unknown, path: Path): Decoded<NavigationEffectRequest> => {
   const object = objectValue(value, path, ["kind","operation","correlationId"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Navigation");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Navigation");
   if (!kindTag.ok) return kindTag;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "forward");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "forward");
   if (!operationTag.ok) return operationTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
   return ok<NavigationEffectRequest>({ kind: "Navigation", operation: "forward", correlationId: field_correlationId.value });
 };
 
-export const decodeCapabilityEffectRequest = (value: unknown, path = "$"): Decoded<CapabilityEffectRequest> => {
+export const decodeCapabilityEffectRequest = (value: unknown, path: Path = "$"): Decoded<CapabilityEffectRequest> => {
   const object = objectValue(value, path, ["kind","correlationId","capability","version","request"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Capability");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Capability");
   if (!kindTag.ok) return kindTag;
-  const field_correlationId = decodeCorrelationId(object.value["correlationId"], `${path}.correlationId`);
+  const field_correlationId = decodeCorrelationId(object.value["correlationId"], at(path, ".correlationId"));
   if (!field_correlationId.ok) return field_correlationId;
-  const field_capability = decodeCapabilityId(object.value["capability"], `${path}.capability`);
+  const field_capability = decodeCapabilityId(object.value["capability"], at(path, ".capability"));
   if (!field_capability.ok) return field_capability;
-  const field_version = intValue(object.value["version"], `${path}.version`);
+  const field_version = intValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
-  const field_request = jsonValue(object.value["request"], `${path}.request`);
+  const field_request = jsonValue(object.value["request"], at(path, ".request"));
   if (!field_request.ok) return field_request;
   return ok<CapabilityEffectRequest>({ kind: "Capability", correlationId: field_correlationId.value, capability: field_capability.value, version: field_version.value, request: field_request.value });
 };
 
-export const decodeEffectRequest = (value: unknown, path = "$"): Decoded<EffectRequest> => {
+export const decodeEffectRequest = (value: unknown, path: Path = "$"): Decoded<EffectRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -846,20 +871,20 @@ export const decodeEffectRequest = (value: unknown, path = "$"): Decoded<EffectR
     case "Clipboard": return decodeClipboardEffectRequest(value, path);
     case "Navigation": return decodeNavigationEffectRequest(value, path);
     case "Capability": return decodeCapabilityEffectRequest(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Http","Storage","Clipboard","Navigation","Capability"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Http","Storage","Clipboard","Navigation","Capability"], tag);
   }
 };
 
-export const decodeEngineToBrowserMessage = (value: unknown, path = "$"): Decoded<EngineToBrowserMessage> => {
+export const decodeEngineToBrowserMessage = (value: unknown, path: Path = "$"): Decoded<EngineToBrowserMessage> => {
   const object = objectValue(value, path, ["view","effects","cancellations","handshake"]);
   if (!object.ok) return object;
-  const field_view = decodeViewState(object.value["view"], `${path}.view`);
+  const field_view = decodeViewState(object.value["view"], at(path, ".view"));
   if (!field_view.ok) return field_view;
-  const field_effects = listOf(object.value["effects"], `${path}.effects`, (item, at) => decodeEffectRequest(item, at));
+  const field_effects = listOf(object.value["effects"], at(path, ".effects"), (item, at) => decodeEffectRequest(item, at));
   if (!field_effects.ok) return field_effects;
-  const field_cancellations = listOf(object.value["cancellations"], `${path}.cancellations`, (item, at) => decodeCorrelationId(item, at));
+  const field_cancellations = listOf(object.value["cancellations"], at(path, ".cancellations"), (item, at) => decodeCorrelationId(item, at));
   if (!field_cancellations.ok) return field_cancellations;
-  const field_handshake = object.value["handshake"] === undefined ? ok(undefined) : decodeEngineHandshake(object.value["handshake"], `${path}.handshake`);
+  const field_handshake = object.value["handshake"] === undefined ? ok(undefined) : decodeEngineHandshake(object.value["handshake"], at(path, ".handshake"));
   if (!field_handshake.ok) return field_handshake;
   return ok<EngineToBrowserMessage>({ view: field_view.value, effects: field_effects.value, cancellations: field_cancellations.value, ...(field_handshake.value !== undefined ? { handshake: field_handshake.value } : {}) });
 };

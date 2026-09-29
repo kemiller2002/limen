@@ -182,6 +182,35 @@ test("an engine response with every optional absent decodes, and null where a li
   assert.equal(decodeEngineToBrowserMessage({ view: {}, effects: null, cancellations: [] }).ok, false);
 });
 
+// WI-0045: the codec decodes lists and maps in one pass and renders a path only
+// on failure. These pin that nothing observable changed: the first failure
+// reported, its exact path, and the decoded values.
+test("a list reports its first failing entry, with the path it always had", () => {
+  const view = { rows: [{ id: 1 }, { id: {} }, { id: [] }] };
+  assert.deepEqual(decodeViewState(view), { ok: false, error: { path: '$["rows"][1]["id"]', expected: "string | number | boolean", found: "object" } });
+});
+
+test("a map reports its first failing key in sorted order, quoted as JSON", () => {
+  assert.deepEqual(decodeViewState({ z: {}, 'a"b': null }), { ok: false, error: { path: '$["a\\"b"]', expected: "string | number | boolean | array", found: "null" } });
+});
+
+test("a field path and a caller's path prefix are rendered exactly as before", () => {
+  assert.deepEqual(decodeEngineToBrowserMessage({ view: {}, effects: [{ kind: "Storage", operation: "get", correlationId: "c", key: 1 }], cancellations: [] }, "$.response"),
+    { ok: false, error: { path: "$.response.effects[0].key", expected: "string", found: "number" } });
+  assert.deepEqual(decodeViewState({ a: {} }, () => "$.lazy"), { ok: false, error: { path: '$.lazy["a"]', expected: "string | number | boolean | array", found: "object" } });
+});
+
+test("a decoded view equals its input, and a __proto__ key stays an own entry", () => {
+  const view = JSON.parse('{"b":[{"x":1,"y":"z"}],"a":true,"__proto__":"kept"}') as unknown;
+  const decoded = decodeViewState(view);
+  assert.equal(decoded.ok, true);
+  if (!decoded.ok) return;
+  assert.deepEqual(decoded.value, view);
+  assert.equal(Object.getPrototypeOf(decoded.value), Object.prototype);
+  assert.deepEqual(Object.keys(decoded.value), ["__proto__", "a", "b"]);
+  assert.equal(Object.getOwnPropertyDescriptor(decoded.value, "__proto__")?.value, "kept");
+});
+
 // ---------------------------------------------------------------------------
 // End to end: a contract edit without regeneration is caught in every language
 // ---------------------------------------------------------------------------

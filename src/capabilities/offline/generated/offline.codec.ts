@@ -4,7 +4,7 @@
 // unit: limen.offline@1
 // contract-fingerprint: sha256:bbf4f4679faa373a54c44ff7564d095c763fd7bbfdb529a019ecb5c479843c01
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:7708d44a5d72addc46a0016b1004b7999c5d6e2011071b1ba06aee1ad29d222c
+// content-hash: sha256:cbc9007ad427cbda7d86e55faf8ac6692bcf3b3ec15226cb7aba289403224854
 // </auto-generated>
 import type { OfflineStatus, OfflineRequest, OfflineResult, OfflineFact, WorkerCommand, WorkerReply } from "./offline.js";
 
@@ -12,36 +12,47 @@ import type { OfflineStatus, OfflineRequest, OfflineResult, OfflineFact, WorkerC
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,51 +66,65 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeOfflineStatus = (value: unknown, path = "$"): Decoded<OfflineStatus> => {
+export const decodeOfflineStatus = (value: unknown, path: Path = "$"): Decoded<OfflineStatus> => {
   const object = objectValue(value, path, ["supported","registered","controlled","activeVersion","waitingVersion","installing","push","backgroundSync"]);
   if (!object.ok) return object;
-  const field_supported = boolValue(object.value["supported"], `${path}.supported`);
+  const field_supported = boolValue(object.value["supported"], at(path, ".supported"));
   if (!field_supported.ok) return field_supported;
-  const field_registered = boolValue(object.value["registered"], `${path}.registered`);
+  const field_registered = boolValue(object.value["registered"], at(path, ".registered"));
   if (!field_registered.ok) return field_registered;
-  const field_controlled = boolValue(object.value["controlled"], `${path}.controlled`);
+  const field_controlled = boolValue(object.value["controlled"], at(path, ".controlled"));
   if (!field_controlled.ok) return field_controlled;
-  const field_activeVersion = object.value["activeVersion"] === undefined ? ok(undefined) : stringValue(object.value["activeVersion"], `${path}.activeVersion`);
+  const field_activeVersion = object.value["activeVersion"] === undefined ? ok(undefined) : stringValue(object.value["activeVersion"], at(path, ".activeVersion"));
   if (!field_activeVersion.ok) return field_activeVersion;
-  const field_waitingVersion = object.value["waitingVersion"] === undefined ? ok(undefined) : stringValue(object.value["waitingVersion"], `${path}.waitingVersion`);
+  const field_waitingVersion = object.value["waitingVersion"] === undefined ? ok(undefined) : stringValue(object.value["waitingVersion"], at(path, ".waitingVersion"));
   if (!field_waitingVersion.ok) return field_waitingVersion;
-  const field_installing = boolValue(object.value["installing"], `${path}.installing`);
+  const field_installing = boolValue(object.value["installing"], at(path, ".installing"));
   if (!field_installing.ok) return field_installing;
-  const field_push = boolValue(object.value["push"], `${path}.push`);
+  const field_push = boolValue(object.value["push"], at(path, ".push"));
   if (!field_push.ok) return field_push;
-  const field_backgroundSync = boolValue(object.value["backgroundSync"], `${path}.backgroundSync`);
+  const field_backgroundSync = boolValue(object.value["backgroundSync"], at(path, ".backgroundSync"));
   if (!field_backgroundSync.ok) return field_backgroundSync;
   return ok<OfflineStatus>({ supported: field_supported.value, registered: field_registered.value, controlled: field_controlled.value, ...(field_activeVersion.value !== undefined ? { activeVersion: field_activeVersion.value } : {}), ...(field_waitingVersion.value !== undefined ? { waitingVersion: field_waitingVersion.value } : {}), installing: field_installing.value, push: field_push.value, backgroundSync: field_backgroundSync.value });
 };
 
-export const decodeOfflineRequest = (value: unknown, path = "$"): Decoded<OfflineRequest> => {
+export const decodeOfflineRequest = (value: unknown, path: Path = "$"): Decoded<OfflineRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -108,45 +133,45 @@ export const decodeOfflineRequest = (value: unknown, path = "$"): Decoded<Offlin
     case "status": return decodeOfflineRequest_status(value, path);
     case "checkForUpdate": return decodeOfflineRequest_checkForUpdate(value, path);
     case "activateUpdate": return decodeOfflineRequest_activateUpdate(value, path);
-    default: return unknownVariant(`${path}.operation`, ["register","status","checkForUpdate","activateUpdate"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["register","status","checkForUpdate","activateUpdate"], tag);
   }
 };
 
-const decodeOfflineRequest_register = (value: unknown, path: string): Decoded<OfflineRequest> => {
+const decodeOfflineRequest_register = (value: unknown, path: Path): Decoded<OfflineRequest> => {
   const object = objectValue(value, path, ["operation","worker"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "register");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "register");
   if (!operationTag.ok) return operationTag;
-  const field_worker = stringValue(object.value["worker"], `${path}.worker`);
+  const field_worker = stringValue(object.value["worker"], at(path, ".worker"));
   if (!field_worker.ok) return field_worker;
   return ok<OfflineRequest>({ operation: "register", worker: field_worker.value });
 };
 
-const decodeOfflineRequest_status = (value: unknown, path: string): Decoded<OfflineRequest> => {
+const decodeOfflineRequest_status = (value: unknown, path: Path): Decoded<OfflineRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "status");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "status");
   if (!operationTag.ok) return operationTag;
   return ok<OfflineRequest>({ operation: "status" });
 };
 
-const decodeOfflineRequest_checkForUpdate = (value: unknown, path: string): Decoded<OfflineRequest> => {
+const decodeOfflineRequest_checkForUpdate = (value: unknown, path: Path): Decoded<OfflineRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "checkForUpdate");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "checkForUpdate");
   if (!operationTag.ok) return operationTag;
   return ok<OfflineRequest>({ operation: "checkForUpdate" });
 };
 
-const decodeOfflineRequest_activateUpdate = (value: unknown, path: string): Decoded<OfflineRequest> => {
+const decodeOfflineRequest_activateUpdate = (value: unknown, path: Path): Decoded<OfflineRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "activateUpdate");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "activateUpdate");
   if (!operationTag.ok) return operationTag;
   return ok<OfflineRequest>({ operation: "activateUpdate" });
 };
 
-export const decodeOfflineResult = (value: unknown, path = "$"): Decoded<OfflineResult> => {
+export const decodeOfflineResult = (value: unknown, path: Path = "$"): Decoded<OfflineResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -161,101 +186,101 @@ export const decodeOfflineResult = (value: unknown, path = "$"): Decoded<Offline
     case "Unsupported": return decodeOfflineResult_Unsupported(value, path);
     case "Failed": return decodeOfflineResult_Failed(value, path);
     case "Cancelled": return decodeOfflineResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Registered","Described","UpdateChecked","Activating","NothingWaiting","NotRegistered","UnknownWorker","Unsupported","Failed","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Registered","Described","UpdateChecked","Activating","NothingWaiting","NotRegistered","UnknownWorker","Unsupported","Failed","Cancelled"], tag);
   }
 };
 
-const decodeOfflineResult_Registered = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_Registered = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind","status"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Registered");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Registered");
   if (!kindTag.ok) return kindTag;
-  const field_status = decodeOfflineStatus(object.value["status"], `${path}.status`);
+  const field_status = decodeOfflineStatus(object.value["status"], at(path, ".status"));
   if (!field_status.ok) return field_status;
   return ok<OfflineResult>({ kind: "Registered", status: field_status.value });
 };
 
-const decodeOfflineResult_Described = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_Described = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind","status"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Described");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Described");
   if (!kindTag.ok) return kindTag;
-  const field_status = decodeOfflineStatus(object.value["status"], `${path}.status`);
+  const field_status = decodeOfflineStatus(object.value["status"], at(path, ".status"));
   if (!field_status.ok) return field_status;
   return ok<OfflineResult>({ kind: "Described", status: field_status.value });
 };
 
-const decodeOfflineResult_UpdateChecked = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_UpdateChecked = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind","status"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UpdateChecked");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UpdateChecked");
   if (!kindTag.ok) return kindTag;
-  const field_status = decodeOfflineStatus(object.value["status"], `${path}.status`);
+  const field_status = decodeOfflineStatus(object.value["status"], at(path, ".status"));
   if (!field_status.ok) return field_status;
   return ok<OfflineResult>({ kind: "UpdateChecked", status: field_status.value });
 };
 
-const decodeOfflineResult_Activating = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_Activating = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind","version"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Activating");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Activating");
   if (!kindTag.ok) return kindTag;
-  const field_version = object.value["version"] === undefined ? ok(undefined) : stringValue(object.value["version"], `${path}.version`);
+  const field_version = object.value["version"] === undefined ? ok(undefined) : stringValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
   return ok<OfflineResult>({ kind: "Activating", ...(field_version.value !== undefined ? { version: field_version.value } : {}) });
 };
 
-const decodeOfflineResult_NothingWaiting = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_NothingWaiting = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NothingWaiting");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NothingWaiting");
   if (!kindTag.ok) return kindTag;
   return ok<OfflineResult>({ kind: "NothingWaiting" });
 };
 
-const decodeOfflineResult_NotRegistered = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_NotRegistered = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotRegistered");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotRegistered");
   if (!kindTag.ok) return kindTag;
   return ok<OfflineResult>({ kind: "NotRegistered" });
 };
 
-const decodeOfflineResult_UnknownWorker = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_UnknownWorker = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UnknownWorker");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UnknownWorker");
   if (!kindTag.ok) return kindTag;
   return ok<OfflineResult>({ kind: "UnknownWorker" });
 };
 
-const decodeOfflineResult_Unsupported = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_Unsupported = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
   return ok<OfflineResult>({ kind: "Unsupported" });
 };
 
-const decodeOfflineResult_Failed = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_Failed = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind","problem"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Failed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Failed");
   if (!kindTag.ok) return kindTag;
-  const field_problem = stringValue(object.value["problem"], `${path}.problem`);
+  const field_problem = stringValue(object.value["problem"], at(path, ".problem"));
   if (!field_problem.ok) return field_problem;
   return ok<OfflineResult>({ kind: "Failed", problem: field_problem.value });
 };
 
-const decodeOfflineResult_Cancelled = (value: unknown, path: string): Decoded<OfflineResult> => {
+const decodeOfflineResult_Cancelled = (value: unknown, path: Path): Decoded<OfflineResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<OfflineResult>({ kind: "Cancelled" });
 };
 
-export const decodeOfflineFact = (value: unknown, path = "$"): Decoded<OfflineFact> => {
+export const decodeOfflineFact = (value: unknown, path: Path = "$"): Decoded<OfflineFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -263,81 +288,81 @@ export const decodeOfflineFact = (value: unknown, path = "$"): Decoded<OfflineFa
     case "UpdateReady": return decodeOfflineFact_UpdateReady(value, path);
     case "ControllerChanged": return decodeOfflineFact_ControllerChanged(value, path);
     case "UpdateFailed": return decodeOfflineFact_UpdateFailed(value, path);
-    default: return unknownVariant(`${path}.kind`, ["UpdateReady","ControllerChanged","UpdateFailed"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["UpdateReady","ControllerChanged","UpdateFailed"], tag);
   }
 };
 
-const decodeOfflineFact_UpdateReady = (value: unknown, path: string): Decoded<OfflineFact> => {
+const decodeOfflineFact_UpdateReady = (value: unknown, path: Path): Decoded<OfflineFact> => {
   const object = objectValue(value, path, ["kind","version"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UpdateReady");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UpdateReady");
   if (!kindTag.ok) return kindTag;
-  const field_version = object.value["version"] === undefined ? ok(undefined) : stringValue(object.value["version"], `${path}.version`);
+  const field_version = object.value["version"] === undefined ? ok(undefined) : stringValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
   return ok<OfflineFact>({ kind: "UpdateReady", ...(field_version.value !== undefined ? { version: field_version.value } : {}) });
 };
 
-const decodeOfflineFact_ControllerChanged = (value: unknown, path: string): Decoded<OfflineFact> => {
+const decodeOfflineFact_ControllerChanged = (value: unknown, path: Path): Decoded<OfflineFact> => {
   const object = objectValue(value, path, ["kind","version"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "ControllerChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ControllerChanged");
   if (!kindTag.ok) return kindTag;
-  const field_version = object.value["version"] === undefined ? ok(undefined) : stringValue(object.value["version"], `${path}.version`);
+  const field_version = object.value["version"] === undefined ? ok(undefined) : stringValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
   return ok<OfflineFact>({ kind: "ControllerChanged", ...(field_version.value !== undefined ? { version: field_version.value } : {}) });
 };
 
-const decodeOfflineFact_UpdateFailed = (value: unknown, path: string): Decoded<OfflineFact> => {
+const decodeOfflineFact_UpdateFailed = (value: unknown, path: Path): Decoded<OfflineFact> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UpdateFailed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UpdateFailed");
   if (!kindTag.ok) return kindTag;
   return ok<OfflineFact>({ kind: "UpdateFailed" });
 };
 
-export const decodeWorkerCommand = (value: unknown, path = "$"): Decoded<WorkerCommand> => {
+export const decodeWorkerCommand = (value: unknown, path: Path = "$"): Decoded<WorkerCommand> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "version": return decodeWorkerCommand_version(value, path);
     case "activate": return decodeWorkerCommand_activate(value, path);
-    default: return unknownVariant(`${path}.kind`, ["version","activate"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["version","activate"], tag);
   }
 };
 
-const decodeWorkerCommand_version = (value: unknown, path: string): Decoded<WorkerCommand> => {
+const decodeWorkerCommand_version = (value: unknown, path: Path): Decoded<WorkerCommand> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "version");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "version");
   if (!kindTag.ok) return kindTag;
   return ok<WorkerCommand>({ kind: "version" });
 };
 
-const decodeWorkerCommand_activate = (value: unknown, path: string): Decoded<WorkerCommand> => {
+const decodeWorkerCommand_activate = (value: unknown, path: Path): Decoded<WorkerCommand> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "activate");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "activate");
   if (!kindTag.ok) return kindTag;
   return ok<WorkerCommand>({ kind: "activate" });
 };
 
-export const decodeWorkerReply = (value: unknown, path = "$"): Decoded<WorkerReply> => {
+export const decodeWorkerReply = (value: unknown, path: Path = "$"): Decoded<WorkerReply> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "Version": return decodeWorkerReply_Version(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Version"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Version"], tag);
   }
 };
 
-const decodeWorkerReply_Version = (value: unknown, path: string): Decoded<WorkerReply> => {
+const decodeWorkerReply_Version = (value: unknown, path: Path): Decoded<WorkerReply> => {
   const object = objectValue(value, path, ["kind","version"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Version");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Version");
   if (!kindTag.ok) return kindTag;
-  const field_version = stringValue(object.value["version"], `${path}.version`);
+  const field_version = stringValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
   return ok<WorkerReply>({ kind: "Version", version: field_version.value });
 };

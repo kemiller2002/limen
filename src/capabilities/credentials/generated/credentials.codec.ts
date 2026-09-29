@@ -4,7 +4,7 @@
 // unit: limen.credentials@1
 // contract-fingerprint: sha256:785ea0f9fa93fe0900d0bc4f164bf50e9c82e372ef0dcf95d04a39b0dc90059d
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:f3e0cef612465ce8515d7f2624cd8f7e086bd7bdbc8c10ad723d5884419ca546
+// content-hash: sha256:47f3d24c371cc2aff93c9d0eb0586004fe6fb4868663b7fe057cebc6bdd9d20f
 // </auto-generated>
 import type { PermissionState, UnavailableReason, Requirement, RelyingParty, UserAccount, CredentialsRequest, CredentialsResult } from "./credentials.js";
 
@@ -12,36 +12,47 @@ import type { PermissionState, UnavailableReason, Requirement, RelyingParty, Use
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,57 +66,71 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodePermissionState = (value: unknown, path = "$"): Decoded<PermissionState> => enumValue(value, path, ["granted","denied","prompt"] as const);
+export const decodePermissionState = (value: unknown, path: Path = "$"): Decoded<PermissionState> => enumValue(value, path, ["granted","denied","prompt"] as const);
 
-export const decodeUnavailableReason = (value: unknown, path = "$"): Decoded<UnavailableReason> => enumValue(value, path, ["notSupported","insecureContext","blockedByPolicy"] as const);
+export const decodeUnavailableReason = (value: unknown, path: Path = "$"): Decoded<UnavailableReason> => enumValue(value, path, ["notSupported","insecureContext","blockedByPolicy"] as const);
 
-export const decodeRequirement = (value: unknown, path = "$"): Decoded<Requirement> => enumValue(value, path, ["required","preferred","discouraged"] as const);
+export const decodeRequirement = (value: unknown, path: Path = "$"): Decoded<Requirement> => enumValue(value, path, ["required","preferred","discouraged"] as const);
 
-export const decodeRelyingParty = (value: unknown, path = "$"): Decoded<RelyingParty> => {
+export const decodeRelyingParty = (value: unknown, path: Path = "$"): Decoded<RelyingParty> => {
   const object = objectValue(value, path, ["id","name"]);
   if (!object.ok) return object;
-  const field_id = object.value["id"] === undefined ? ok(undefined) : stringValue(object.value["id"], `${path}.id`);
+  const field_id = object.value["id"] === undefined ? ok(undefined) : stringValue(object.value["id"], at(path, ".id"));
   if (!field_id.ok) return field_id;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
   return ok<RelyingParty>({ ...(field_id.value !== undefined ? { id: field_id.value } : {}), name: field_name.value });
 };
 
-export const decodeUserAccount = (value: unknown, path = "$"): Decoded<UserAccount> => {
+export const decodeUserAccount = (value: unknown, path: Path = "$"): Decoded<UserAccount> => {
   const object = objectValue(value, path, ["id","name","displayName"]);
   if (!object.ok) return object;
-  const field_id = stringValue(object.value["id"], `${path}.id`);
+  const field_id = stringValue(object.value["id"], at(path, ".id"));
   if (!field_id.ok) return field_id;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_displayName = stringValue(object.value["displayName"], `${path}.displayName`);
+  const field_displayName = stringValue(object.value["displayName"], at(path, ".displayName"));
   if (!field_displayName.ok) return field_displayName;
   return ok<UserAccount>({ id: field_id.value, name: field_name.value, displayName: field_displayName.value });
 };
 
-export const decodeCredentialsRequest = (value: unknown, path = "$"): Decoded<CredentialsRequest> => {
+export const decodeCredentialsRequest = (value: unknown, path: Path = "$"): Decoded<CredentialsRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -113,61 +138,61 @@ export const decodeCredentialsRequest = (value: unknown, path = "$"): Decoded<Cr
     case "availability": return decodeCredentialsRequest_availability(value, path);
     case "create": return decodeCredentialsRequest_create(value, path);
     case "get": return decodeCredentialsRequest_get(value, path);
-    default: return unknownVariant(`${path}.operation`, ["availability","create","get"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["availability","create","get"], tag);
   }
 };
 
-const decodeCredentialsRequest_availability = (value: unknown, path: string): Decoded<CredentialsRequest> => {
+const decodeCredentialsRequest_availability = (value: unknown, path: Path): Decoded<CredentialsRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "availability");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "availability");
   if (!operationTag.ok) return operationTag;
   return ok<CredentialsRequest>({ operation: "availability" });
 };
 
-const decodeCredentialsRequest_create = (value: unknown, path: string): Decoded<CredentialsRequest> => {
+const decodeCredentialsRequest_create = (value: unknown, path: Path): Decoded<CredentialsRequest> => {
   const object = objectValue(value, path, ["operation","challenge","relyingParty","user","algorithms","residentKey","userVerification","excludeCredentials","timeoutMs"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "create");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "create");
   if (!operationTag.ok) return operationTag;
-  const field_challenge = stringValue(object.value["challenge"], `${path}.challenge`);
+  const field_challenge = stringValue(object.value["challenge"], at(path, ".challenge"));
   if (!field_challenge.ok) return field_challenge;
-  const field_relyingParty = decodeRelyingParty(object.value["relyingParty"], `${path}.relyingParty`);
+  const field_relyingParty = decodeRelyingParty(object.value["relyingParty"], at(path, ".relyingParty"));
   if (!field_relyingParty.ok) return field_relyingParty;
-  const field_user = decodeUserAccount(object.value["user"], `${path}.user`);
+  const field_user = decodeUserAccount(object.value["user"], at(path, ".user"));
   if (!field_user.ok) return field_user;
-  const field_algorithms = listOf(object.value["algorithms"], `${path}.algorithms`, (item, at) => intValue(item, at));
+  const field_algorithms = listOf(object.value["algorithms"], at(path, ".algorithms"), (item, at) => intValue(item, at));
   if (!field_algorithms.ok) return field_algorithms;
-  const field_residentKey = decodeRequirement(object.value["residentKey"], `${path}.residentKey`);
+  const field_residentKey = decodeRequirement(object.value["residentKey"], at(path, ".residentKey"));
   if (!field_residentKey.ok) return field_residentKey;
-  const field_userVerification = decodeRequirement(object.value["userVerification"], `${path}.userVerification`);
+  const field_userVerification = decodeRequirement(object.value["userVerification"], at(path, ".userVerification"));
   if (!field_userVerification.ok) return field_userVerification;
-  const field_excludeCredentials = listOf(object.value["excludeCredentials"], `${path}.excludeCredentials`, (item, at) => stringValue(item, at));
+  const field_excludeCredentials = listOf(object.value["excludeCredentials"], at(path, ".excludeCredentials"), (item, at) => stringValue(item, at));
   if (!field_excludeCredentials.ok) return field_excludeCredentials;
-  const field_timeoutMs = intValue(object.value["timeoutMs"], `${path}.timeoutMs`);
+  const field_timeoutMs = intValue(object.value["timeoutMs"], at(path, ".timeoutMs"));
   if (!field_timeoutMs.ok) return field_timeoutMs;
   return ok<CredentialsRequest>({ operation: "create", challenge: field_challenge.value, relyingParty: field_relyingParty.value, user: field_user.value, algorithms: field_algorithms.value, residentKey: field_residentKey.value, userVerification: field_userVerification.value, excludeCredentials: field_excludeCredentials.value, timeoutMs: field_timeoutMs.value });
 };
 
-const decodeCredentialsRequest_get = (value: unknown, path: string): Decoded<CredentialsRequest> => {
+const decodeCredentialsRequest_get = (value: unknown, path: Path): Decoded<CredentialsRequest> => {
   const object = objectValue(value, path, ["operation","challenge","relyingPartyId","allowCredentials","userVerification","timeoutMs"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "get");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "get");
   if (!operationTag.ok) return operationTag;
-  const field_challenge = stringValue(object.value["challenge"], `${path}.challenge`);
+  const field_challenge = stringValue(object.value["challenge"], at(path, ".challenge"));
   if (!field_challenge.ok) return field_challenge;
-  const field_relyingPartyId = object.value["relyingPartyId"] === undefined ? ok(undefined) : stringValue(object.value["relyingPartyId"], `${path}.relyingPartyId`);
+  const field_relyingPartyId = object.value["relyingPartyId"] === undefined ? ok(undefined) : stringValue(object.value["relyingPartyId"], at(path, ".relyingPartyId"));
   if (!field_relyingPartyId.ok) return field_relyingPartyId;
-  const field_allowCredentials = listOf(object.value["allowCredentials"], `${path}.allowCredentials`, (item, at) => stringValue(item, at));
+  const field_allowCredentials = listOf(object.value["allowCredentials"], at(path, ".allowCredentials"), (item, at) => stringValue(item, at));
   if (!field_allowCredentials.ok) return field_allowCredentials;
-  const field_userVerification = decodeRequirement(object.value["userVerification"], `${path}.userVerification`);
+  const field_userVerification = decodeRequirement(object.value["userVerification"], at(path, ".userVerification"));
   if (!field_userVerification.ok) return field_userVerification;
-  const field_timeoutMs = intValue(object.value["timeoutMs"], `${path}.timeoutMs`);
+  const field_timeoutMs = intValue(object.value["timeoutMs"], at(path, ".timeoutMs"));
   if (!field_timeoutMs.ok) return field_timeoutMs;
   return ok<CredentialsRequest>({ operation: "get", challenge: field_challenge.value, ...(field_relyingPartyId.value !== undefined ? { relyingPartyId: field_relyingPartyId.value } : {}), allowCredentials: field_allowCredentials.value, userVerification: field_userVerification.value, timeoutMs: field_timeoutMs.value });
 };
 
-export const decodeCredentialsResult = (value: unknown, path = "$"): Decoded<CredentialsResult> => {
+export const decodeCredentialsResult = (value: unknown, path: Path = "$"): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -183,124 +208,124 @@ export const decodeCredentialsResult = (value: unknown, path = "$"): Decoded<Cre
     case "InvalidRequest": return decodeCredentialsResult_InvalidRequest(value, path);
     case "Unavailable": return decodeCredentialsResult_Unavailable(value, path);
     case "Cancelled": return decodeCredentialsResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Available","Created","Asserted","NeedsGesture","NotAllowed","AlreadyRegistered","InvalidRelyingParty","NotSupported","InvalidRequest","Unavailable","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Available","Created","Asserted","NeedsGesture","NotAllowed","AlreadyRegistered","InvalidRelyingParty","NotSupported","InvalidRequest","Unavailable","Cancelled"], tag);
   }
 };
 
-const decodeCredentialsResult_Available = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_Available = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind","platformAuthenticator","conditionalMediation"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Available");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Available");
   if (!kindTag.ok) return kindTag;
-  const field_platformAuthenticator = boolValue(object.value["platformAuthenticator"], `${path}.platformAuthenticator`);
+  const field_platformAuthenticator = boolValue(object.value["platformAuthenticator"], at(path, ".platformAuthenticator"));
   if (!field_platformAuthenticator.ok) return field_platformAuthenticator;
-  const field_conditionalMediation = boolValue(object.value["conditionalMediation"], `${path}.conditionalMediation`);
+  const field_conditionalMediation = boolValue(object.value["conditionalMediation"], at(path, ".conditionalMediation"));
   if (!field_conditionalMediation.ok) return field_conditionalMediation;
   return ok<CredentialsResult>({ kind: "Available", platformAuthenticator: field_platformAuthenticator.value, conditionalMediation: field_conditionalMediation.value });
 };
 
-const decodeCredentialsResult_Created = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_Created = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind","credentialId","clientDataJSON","attestationObject","transports","authenticatorAttachment"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Created");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Created");
   if (!kindTag.ok) return kindTag;
-  const field_credentialId = stringValue(object.value["credentialId"], `${path}.credentialId`);
+  const field_credentialId = stringValue(object.value["credentialId"], at(path, ".credentialId"));
   if (!field_credentialId.ok) return field_credentialId;
-  const field_clientDataJSON = stringValue(object.value["clientDataJSON"], `${path}.clientDataJSON`);
+  const field_clientDataJSON = stringValue(object.value["clientDataJSON"], at(path, ".clientDataJSON"));
   if (!field_clientDataJSON.ok) return field_clientDataJSON;
-  const field_attestationObject = stringValue(object.value["attestationObject"], `${path}.attestationObject`);
+  const field_attestationObject = stringValue(object.value["attestationObject"], at(path, ".attestationObject"));
   if (!field_attestationObject.ok) return field_attestationObject;
-  const field_transports = listOf(object.value["transports"], `${path}.transports`, (item, at) => stringValue(item, at));
+  const field_transports = listOf(object.value["transports"], at(path, ".transports"), (item, at) => stringValue(item, at));
   if (!field_transports.ok) return field_transports;
-  const field_authenticatorAttachment = object.value["authenticatorAttachment"] === undefined ? ok(undefined) : stringValue(object.value["authenticatorAttachment"], `${path}.authenticatorAttachment`);
+  const field_authenticatorAttachment = object.value["authenticatorAttachment"] === undefined ? ok(undefined) : stringValue(object.value["authenticatorAttachment"], at(path, ".authenticatorAttachment"));
   if (!field_authenticatorAttachment.ok) return field_authenticatorAttachment;
   return ok<CredentialsResult>({ kind: "Created", credentialId: field_credentialId.value, clientDataJSON: field_clientDataJSON.value, attestationObject: field_attestationObject.value, transports: field_transports.value, ...(field_authenticatorAttachment.value !== undefined ? { authenticatorAttachment: field_authenticatorAttachment.value } : {}) });
 };
 
-const decodeCredentialsResult_Asserted = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_Asserted = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind","credentialId","clientDataJSON","authenticatorData","signature","userHandle"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Asserted");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Asserted");
   if (!kindTag.ok) return kindTag;
-  const field_credentialId = stringValue(object.value["credentialId"], `${path}.credentialId`);
+  const field_credentialId = stringValue(object.value["credentialId"], at(path, ".credentialId"));
   if (!field_credentialId.ok) return field_credentialId;
-  const field_clientDataJSON = stringValue(object.value["clientDataJSON"], `${path}.clientDataJSON`);
+  const field_clientDataJSON = stringValue(object.value["clientDataJSON"], at(path, ".clientDataJSON"));
   if (!field_clientDataJSON.ok) return field_clientDataJSON;
-  const field_authenticatorData = stringValue(object.value["authenticatorData"], `${path}.authenticatorData`);
+  const field_authenticatorData = stringValue(object.value["authenticatorData"], at(path, ".authenticatorData"));
   if (!field_authenticatorData.ok) return field_authenticatorData;
-  const field_signature = stringValue(object.value["signature"], `${path}.signature`);
+  const field_signature = stringValue(object.value["signature"], at(path, ".signature"));
   if (!field_signature.ok) return field_signature;
-  const field_userHandle = object.value["userHandle"] === undefined ? ok(undefined) : stringValue(object.value["userHandle"], `${path}.userHandle`);
+  const field_userHandle = object.value["userHandle"] === undefined ? ok(undefined) : stringValue(object.value["userHandle"], at(path, ".userHandle"));
   if (!field_userHandle.ok) return field_userHandle;
   return ok<CredentialsResult>({ kind: "Asserted", credentialId: field_credentialId.value, clientDataJSON: field_clientDataJSON.value, authenticatorData: field_authenticatorData.value, signature: field_signature.value, ...(field_userHandle.value !== undefined ? { userHandle: field_userHandle.value } : {}) });
 };
 
-const decodeCredentialsResult_NeedsGesture = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_NeedsGesture = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NeedsGesture");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NeedsGesture");
   if (!kindTag.ok) return kindTag;
   return ok<CredentialsResult>({ kind: "NeedsGesture" });
 };
 
-const decodeCredentialsResult_NotAllowed = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_NotAllowed = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotAllowed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotAllowed");
   if (!kindTag.ok) return kindTag;
   return ok<CredentialsResult>({ kind: "NotAllowed" });
 };
 
-const decodeCredentialsResult_AlreadyRegistered = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_AlreadyRegistered = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "AlreadyRegistered");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "AlreadyRegistered");
   if (!kindTag.ok) return kindTag;
   return ok<CredentialsResult>({ kind: "AlreadyRegistered" });
 };
 
-const decodeCredentialsResult_InvalidRelyingParty = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_InvalidRelyingParty = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidRelyingParty");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidRelyingParty");
   if (!kindTag.ok) return kindTag;
   return ok<CredentialsResult>({ kind: "InvalidRelyingParty" });
 };
 
-const decodeCredentialsResult_NotSupported = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_NotSupported = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind","problem"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotSupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotSupported");
   if (!kindTag.ok) return kindTag;
-  const field_problem = stringValue(object.value["problem"], `${path}.problem`);
+  const field_problem = stringValue(object.value["problem"], at(path, ".problem"));
   if (!field_problem.ok) return field_problem;
   return ok<CredentialsResult>({ kind: "NotSupported", problem: field_problem.value });
 };
 
-const decodeCredentialsResult_InvalidRequest = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_InvalidRequest = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind","problem"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidRequest");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidRequest");
   if (!kindTag.ok) return kindTag;
-  const field_problem = stringValue(object.value["problem"], `${path}.problem`);
+  const field_problem = stringValue(object.value["problem"], at(path, ".problem"));
   if (!field_problem.ok) return field_problem;
   return ok<CredentialsResult>({ kind: "InvalidRequest", problem: field_problem.value });
 };
 
-const decodeCredentialsResult_Unavailable = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_Unavailable = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unavailable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unavailable");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeUnavailableReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeUnavailableReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<CredentialsResult>({ kind: "Unavailable", reason: field_reason.value });
 };
 
-const decodeCredentialsResult_Cancelled = (value: unknown, path: string): Decoded<CredentialsResult> => {
+const decodeCredentialsResult_Cancelled = (value: unknown, path: Path): Decoded<CredentialsResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<CredentialsResult>({ kind: "Cancelled" });
 };

@@ -4,7 +4,7 @@
 // unit: limen.schedule@1
 // contract-fingerprint: sha256:627657798f0fa735ac6f955eb4f413e7c397f0aef6942b340a87683a30db54d0
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:e1761318de84c9346749a2abe3352604d2db269b627bc67257a04142bbc24889
+// content-hash: sha256:5a5eb1c356bda09abb8a2d2d635876a5d0c67c02a31c0ecb2d1287100748e712
 // </auto-generated>
 import type { ScheduleRequest, ScheduleResult } from "./schedule.js";
 
@@ -12,36 +12,47 @@ import type { ScheduleRequest, ScheduleResult } from "./schedule.js";
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,29 +66,43 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeScheduleRequest = (value: unknown, path = "$"): Decoded<ScheduleRequest> => {
+export const decodeScheduleRequest = (value: unknown, path: Path = "$"): Decoded<ScheduleRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -85,39 +110,39 @@ export const decodeScheduleRequest = (value: unknown, path = "$"): Decoded<Sched
     case "timeout": return decodeScheduleRequest_timeout(value, path);
     case "animationFrame": return decodeScheduleRequest_animationFrame(value, path);
     case "idle": return decodeScheduleRequest_idle(value, path);
-    default: return unknownVariant(`${path}.operation`, ["timeout","animationFrame","idle"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["timeout","animationFrame","idle"], tag);
   }
 };
 
-const decodeScheduleRequest_timeout = (value: unknown, path: string): Decoded<ScheduleRequest> => {
+const decodeScheduleRequest_timeout = (value: unknown, path: Path): Decoded<ScheduleRequest> => {
   const object = objectValue(value, path, ["operation","delayMs"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "timeout");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "timeout");
   if (!operationTag.ok) return operationTag;
-  const field_delayMs = intValue(object.value["delayMs"], `${path}.delayMs`);
+  const field_delayMs = intValue(object.value["delayMs"], at(path, ".delayMs"));
   if (!field_delayMs.ok) return field_delayMs;
   return ok<ScheduleRequest>({ operation: "timeout", delayMs: field_delayMs.value });
 };
 
-const decodeScheduleRequest_animationFrame = (value: unknown, path: string): Decoded<ScheduleRequest> => {
+const decodeScheduleRequest_animationFrame = (value: unknown, path: Path): Decoded<ScheduleRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "animationFrame");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "animationFrame");
   if (!operationTag.ok) return operationTag;
   return ok<ScheduleRequest>({ operation: "animationFrame" });
 };
 
-const decodeScheduleRequest_idle = (value: unknown, path: string): Decoded<ScheduleRequest> => {
+const decodeScheduleRequest_idle = (value: unknown, path: Path): Decoded<ScheduleRequest> => {
   const object = objectValue(value, path, ["operation","timeoutMs"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "idle");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "idle");
   if (!operationTag.ok) return operationTag;
-  const field_timeoutMs = object.value["timeoutMs"] === undefined ? ok(undefined) : intValue(object.value["timeoutMs"], `${path}.timeoutMs`);
+  const field_timeoutMs = object.value["timeoutMs"] === undefined ? ok(undefined) : intValue(object.value["timeoutMs"], at(path, ".timeoutMs"));
   if (!field_timeoutMs.ok) return field_timeoutMs;
   return ok<ScheduleRequest>({ operation: "idle", ...(field_timeoutMs.value !== undefined ? { timeoutMs: field_timeoutMs.value } : {}) });
 };
 
-export const decodeScheduleResult = (value: unknown, path = "$"): Decoded<ScheduleResult> => {
+export const decodeScheduleResult = (value: unknown, path: Path = "$"): Decoded<ScheduleResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -127,54 +152,54 @@ export const decodeScheduleResult = (value: unknown, path = "$"): Decoded<Schedu
     case "InvalidDelay": return decodeScheduleResult_InvalidDelay(value, path);
     case "Unsupported": return decodeScheduleResult_Unsupported(value, path);
     case "Cancelled": return decodeScheduleResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Fired","IdleFired","InvalidDelay","Unsupported","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Fired","IdleFired","InvalidDelay","Unsupported","Cancelled"], tag);
   }
 };
 
-const decodeScheduleResult_Fired = (value: unknown, path: string): Decoded<ScheduleResult> => {
+const decodeScheduleResult_Fired = (value: unknown, path: Path): Decoded<ScheduleResult> => {
   const object = objectValue(value, path, ["kind","elapsedMs"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Fired");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Fired");
   if (!kindTag.ok) return kindTag;
-  const field_elapsedMs = numberValue(object.value["elapsedMs"], `${path}.elapsedMs`);
+  const field_elapsedMs = numberValue(object.value["elapsedMs"], at(path, ".elapsedMs"));
   if (!field_elapsedMs.ok) return field_elapsedMs;
   return ok<ScheduleResult>({ kind: "Fired", elapsedMs: field_elapsedMs.value });
 };
 
-const decodeScheduleResult_IdleFired = (value: unknown, path: string): Decoded<ScheduleResult> => {
+const decodeScheduleResult_IdleFired = (value: unknown, path: Path): Decoded<ScheduleResult> => {
   const object = objectValue(value, path, ["kind","elapsedMs","didTimeout","remainingMs"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "IdleFired");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "IdleFired");
   if (!kindTag.ok) return kindTag;
-  const field_elapsedMs = numberValue(object.value["elapsedMs"], `${path}.elapsedMs`);
+  const field_elapsedMs = numberValue(object.value["elapsedMs"], at(path, ".elapsedMs"));
   if (!field_elapsedMs.ok) return field_elapsedMs;
-  const field_didTimeout = boolValue(object.value["didTimeout"], `${path}.didTimeout`);
+  const field_didTimeout = boolValue(object.value["didTimeout"], at(path, ".didTimeout"));
   if (!field_didTimeout.ok) return field_didTimeout;
-  const field_remainingMs = numberValue(object.value["remainingMs"], `${path}.remainingMs`);
+  const field_remainingMs = numberValue(object.value["remainingMs"], at(path, ".remainingMs"));
   if (!field_remainingMs.ok) return field_remainingMs;
   return ok<ScheduleResult>({ kind: "IdleFired", elapsedMs: field_elapsedMs.value, didTimeout: field_didTimeout.value, remainingMs: field_remainingMs.value });
 };
 
-const decodeScheduleResult_InvalidDelay = (value: unknown, path: string): Decoded<ScheduleResult> => {
+const decodeScheduleResult_InvalidDelay = (value: unknown, path: Path): Decoded<ScheduleResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidDelay");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidDelay");
   if (!kindTag.ok) return kindTag;
   return ok<ScheduleResult>({ kind: "InvalidDelay" });
 };
 
-const decodeScheduleResult_Unsupported = (value: unknown, path: string): Decoded<ScheduleResult> => {
+const decodeScheduleResult_Unsupported = (value: unknown, path: Path): Decoded<ScheduleResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
   return ok<ScheduleResult>({ kind: "Unsupported" });
 };
 
-const decodeScheduleResult_Cancelled = (value: unknown, path: string): Decoded<ScheduleResult> => {
+const decodeScheduleResult_Cancelled = (value: unknown, path: Path): Decoded<ScheduleResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<ScheduleResult>({ kind: "Cancelled" });
 };

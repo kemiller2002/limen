@@ -4,7 +4,7 @@
 // unit: limen.geolocation@1
 // contract-fingerprint: sha256:48ebd4878e20a34d81881a7f3d5f8315bdc938cd666e0fe755429a8c26273e2e
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:ce20ef3732c7ddf855e8ae6122c7c8abf57199a6c9966d2ff9687c7db68876a7
+// content-hash: sha256:b66b1a9d1d3d53178e235218c513987bef03212ca4e94c59cd2d4d92f1d99e19
 // </auto-generated>
 import type { PermissionState, UnavailableReason, Position, GeolocationRequest, GeolocationResult, GeolocationFact } from "./geolocation.js";
 
@@ -12,36 +12,47 @@ import type { PermissionState, UnavailableReason, Position, GeolocationRequest, 
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,53 +66,67 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodePermissionState = (value: unknown, path = "$"): Decoded<PermissionState> => enumValue(value, path, ["granted","denied","prompt"] as const);
+export const decodePermissionState = (value: unknown, path: Path = "$"): Decoded<PermissionState> => enumValue(value, path, ["granted","denied","prompt"] as const);
 
-export const decodeUnavailableReason = (value: unknown, path = "$"): Decoded<UnavailableReason> => enumValue(value, path, ["notSupported","insecureContext","blockedByPolicy"] as const);
+export const decodeUnavailableReason = (value: unknown, path: Path = "$"): Decoded<UnavailableReason> => enumValue(value, path, ["notSupported","insecureContext","blockedByPolicy"] as const);
 
-export const decodePosition = (value: unknown, path = "$"): Decoded<Position> => {
+export const decodePosition = (value: unknown, path: Path = "$"): Decoded<Position> => {
   const object = objectValue(value, path, ["latitude","longitude","accuracyM","altitudeM","headingDeg","speedMps","timestampMs"]);
   if (!object.ok) return object;
-  const field_latitude = numberValue(object.value["latitude"], `${path}.latitude`);
+  const field_latitude = numberValue(object.value["latitude"], at(path, ".latitude"));
   if (!field_latitude.ok) return field_latitude;
-  const field_longitude = numberValue(object.value["longitude"], `${path}.longitude`);
+  const field_longitude = numberValue(object.value["longitude"], at(path, ".longitude"));
   if (!field_longitude.ok) return field_longitude;
-  const field_accuracyM = numberValue(object.value["accuracyM"], `${path}.accuracyM`);
+  const field_accuracyM = numberValue(object.value["accuracyM"], at(path, ".accuracyM"));
   if (!field_accuracyM.ok) return field_accuracyM;
-  const field_altitudeM = object.value["altitudeM"] === undefined ? ok(undefined) : numberValue(object.value["altitudeM"], `${path}.altitudeM`);
+  const field_altitudeM = object.value["altitudeM"] === undefined ? ok(undefined) : numberValue(object.value["altitudeM"], at(path, ".altitudeM"));
   if (!field_altitudeM.ok) return field_altitudeM;
-  const field_headingDeg = object.value["headingDeg"] === undefined ? ok(undefined) : numberValue(object.value["headingDeg"], `${path}.headingDeg`);
+  const field_headingDeg = object.value["headingDeg"] === undefined ? ok(undefined) : numberValue(object.value["headingDeg"], at(path, ".headingDeg"));
   if (!field_headingDeg.ok) return field_headingDeg;
-  const field_speedMps = object.value["speedMps"] === undefined ? ok(undefined) : numberValue(object.value["speedMps"], `${path}.speedMps`);
+  const field_speedMps = object.value["speedMps"] === undefined ? ok(undefined) : numberValue(object.value["speedMps"], at(path, ".speedMps"));
   if (!field_speedMps.ok) return field_speedMps;
-  const field_timestampMs = numberValue(object.value["timestampMs"], `${path}.timestampMs`);
+  const field_timestampMs = numberValue(object.value["timestampMs"], at(path, ".timestampMs"));
   if (!field_timestampMs.ok) return field_timestampMs;
   return ok<Position>({ latitude: field_latitude.value, longitude: field_longitude.value, accuracyM: field_accuracyM.value, ...(field_altitudeM.value !== undefined ? { altitudeM: field_altitudeM.value } : {}), ...(field_headingDeg.value !== undefined ? { headingDeg: field_headingDeg.value } : {}), ...(field_speedMps.value !== undefined ? { speedMps: field_speedMps.value } : {}), timestampMs: field_timestampMs.value });
 };
 
-export const decodeGeolocationRequest = (value: unknown, path = "$"): Decoded<GeolocationRequest> => {
+export const decodeGeolocationRequest = (value: unknown, path: Path = "$"): Decoded<GeolocationRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -110,49 +135,49 @@ export const decodeGeolocationRequest = (value: unknown, path = "$"): Decoded<Ge
     case "watchPermission": return decodeGeolocationRequest_watchPermission(value, path);
     case "unwatchPermission": return decodeGeolocationRequest_unwatchPermission(value, path);
     case "locate": return decodeGeolocationRequest_locate(value, path);
-    default: return unknownVariant(`${path}.operation`, ["permission","watchPermission","unwatchPermission","locate"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["permission","watchPermission","unwatchPermission","locate"], tag);
   }
 };
 
-const decodeGeolocationRequest_permission = (value: unknown, path: string): Decoded<GeolocationRequest> => {
+const decodeGeolocationRequest_permission = (value: unknown, path: Path): Decoded<GeolocationRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "permission");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "permission");
   if (!operationTag.ok) return operationTag;
   return ok<GeolocationRequest>({ operation: "permission" });
 };
 
-const decodeGeolocationRequest_watchPermission = (value: unknown, path: string): Decoded<GeolocationRequest> => {
+const decodeGeolocationRequest_watchPermission = (value: unknown, path: Path): Decoded<GeolocationRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "watchPermission");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "watchPermission");
   if (!operationTag.ok) return operationTag;
   return ok<GeolocationRequest>({ operation: "watchPermission" });
 };
 
-const decodeGeolocationRequest_unwatchPermission = (value: unknown, path: string): Decoded<GeolocationRequest> => {
+const decodeGeolocationRequest_unwatchPermission = (value: unknown, path: Path): Decoded<GeolocationRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "unwatchPermission");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "unwatchPermission");
   if (!operationTag.ok) return operationTag;
   return ok<GeolocationRequest>({ operation: "unwatchPermission" });
 };
 
-const decodeGeolocationRequest_locate = (value: unknown, path: string): Decoded<GeolocationRequest> => {
+const decodeGeolocationRequest_locate = (value: unknown, path: Path): Decoded<GeolocationRequest> => {
   const object = objectValue(value, path, ["operation","highAccuracy","timeoutMs","maximumAgeMs"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "locate");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "locate");
   if (!operationTag.ok) return operationTag;
-  const field_highAccuracy = boolValue(object.value["highAccuracy"], `${path}.highAccuracy`);
+  const field_highAccuracy = boolValue(object.value["highAccuracy"], at(path, ".highAccuracy"));
   if (!field_highAccuracy.ok) return field_highAccuracy;
-  const field_timeoutMs = intValue(object.value["timeoutMs"], `${path}.timeoutMs`);
+  const field_timeoutMs = intValue(object.value["timeoutMs"], at(path, ".timeoutMs"));
   if (!field_timeoutMs.ok) return field_timeoutMs;
-  const field_maximumAgeMs = intValue(object.value["maximumAgeMs"], `${path}.maximumAgeMs`);
+  const field_maximumAgeMs = intValue(object.value["maximumAgeMs"], at(path, ".maximumAgeMs"));
   if (!field_maximumAgeMs.ok) return field_maximumAgeMs;
   return ok<GeolocationRequest>({ operation: "locate", highAccuracy: field_highAccuracy.value, timeoutMs: field_timeoutMs.value, maximumAgeMs: field_maximumAgeMs.value });
 };
 
-export const decodeGeolocationResult = (value: unknown, path = "$"): Decoded<GeolocationResult> => {
+export const decodeGeolocationResult = (value: unknown, path: Path = "$"): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -167,116 +192,116 @@ export const decodeGeolocationResult = (value: unknown, path = "$"): Decoded<Geo
     case "TimedOut": return decodeGeolocationResult_TimedOut(value, path);
     case "Unavailable": return decodeGeolocationResult_Unavailable(value, path);
     case "Cancelled": return decodeGeolocationResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Permission","Watching","Unwatched","CannotWatch","Located","Denied","PositionUnavailable","TimedOut","Unavailable","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Permission","Watching","Unwatched","CannotWatch","Located","Denied","PositionUnavailable","TimedOut","Unavailable","Cancelled"], tag);
   }
 };
 
-const decodeGeolocationResult_Permission = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_Permission = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind","state"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Permission");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Permission");
   if (!kindTag.ok) return kindTag;
-  const field_state = object.value["state"] === undefined ? ok(undefined) : decodePermissionState(object.value["state"], `${path}.state`);
+  const field_state = object.value["state"] === undefined ? ok(undefined) : decodePermissionState(object.value["state"], at(path, ".state"));
   if (!field_state.ok) return field_state;
   return ok<GeolocationResult>({ kind: "Permission", ...(field_state.value !== undefined ? { state: field_state.value } : {}) });
 };
 
-const decodeGeolocationResult_Watching = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_Watching = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind","state"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Watching");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Watching");
   if (!kindTag.ok) return kindTag;
-  const field_state = decodePermissionState(object.value["state"], `${path}.state`);
+  const field_state = decodePermissionState(object.value["state"], at(path, ".state"));
   if (!field_state.ok) return field_state;
   return ok<GeolocationResult>({ kind: "Watching", state: field_state.value });
 };
 
-const decodeGeolocationResult_Unwatched = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_Unwatched = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unwatched");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unwatched");
   if (!kindTag.ok) return kindTag;
   return ok<GeolocationResult>({ kind: "Unwatched" });
 };
 
-const decodeGeolocationResult_CannotWatch = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_CannotWatch = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "CannotWatch");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "CannotWatch");
   if (!kindTag.ok) return kindTag;
   return ok<GeolocationResult>({ kind: "CannotWatch" });
 };
 
-const decodeGeolocationResult_Located = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_Located = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind","position"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Located");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Located");
   if (!kindTag.ok) return kindTag;
-  const field_position = decodePosition(object.value["position"], `${path}.position`);
+  const field_position = decodePosition(object.value["position"], at(path, ".position"));
   if (!field_position.ok) return field_position;
   return ok<GeolocationResult>({ kind: "Located", position: field_position.value });
 };
 
-const decodeGeolocationResult_Denied = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_Denied = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Denied");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Denied");
   if (!kindTag.ok) return kindTag;
   return ok<GeolocationResult>({ kind: "Denied" });
 };
 
-const decodeGeolocationResult_PositionUnavailable = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_PositionUnavailable = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PositionUnavailable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PositionUnavailable");
   if (!kindTag.ok) return kindTag;
   return ok<GeolocationResult>({ kind: "PositionUnavailable" });
 };
 
-const decodeGeolocationResult_TimedOut = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_TimedOut = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "TimedOut");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "TimedOut");
   if (!kindTag.ok) return kindTag;
   return ok<GeolocationResult>({ kind: "TimedOut" });
 };
 
-const decodeGeolocationResult_Unavailable = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_Unavailable = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unavailable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unavailable");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeUnavailableReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeUnavailableReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<GeolocationResult>({ kind: "Unavailable", reason: field_reason.value });
 };
 
-const decodeGeolocationResult_Cancelled = (value: unknown, path: string): Decoded<GeolocationResult> => {
+const decodeGeolocationResult_Cancelled = (value: unknown, path: Path): Decoded<GeolocationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<GeolocationResult>({ kind: "Cancelled" });
 };
 
-export const decodeGeolocationFact = (value: unknown, path = "$"): Decoded<GeolocationFact> => {
+export const decodeGeolocationFact = (value: unknown, path: Path = "$"): Decoded<GeolocationFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "PermissionChanged": return decodeGeolocationFact_PermissionChanged(value, path);
-    default: return unknownVariant(`${path}.kind`, ["PermissionChanged"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["PermissionChanged"], tag);
   }
 };
 
-const decodeGeolocationFact_PermissionChanged = (value: unknown, path: string): Decoded<GeolocationFact> => {
+const decodeGeolocationFact_PermissionChanged = (value: unknown, path: Path): Decoded<GeolocationFact> => {
   const object = objectValue(value, path, ["kind","state","previous"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PermissionChanged");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PermissionChanged");
   if (!kindTag.ok) return kindTag;
-  const field_state = decodePermissionState(object.value["state"], `${path}.state`);
+  const field_state = decodePermissionState(object.value["state"], at(path, ".state"));
   if (!field_state.ok) return field_state;
-  const field_previous = decodePermissionState(object.value["previous"], `${path}.previous`);
+  const field_previous = decodePermissionState(object.value["previous"], at(path, ".previous"));
   if (!field_previous.ok) return field_previous;
   return ok<GeolocationFact>({ kind: "PermissionChanged", state: field_state.value, previous: field_previous.value });
 };
