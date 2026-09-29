@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen overlay pack in a real browser</title>
+  <link rel="stylesheet" href="./page.css">
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types.
+       main.js drives the scenarios and reports window.__limenPackResult. -->
+  <button id="opener" data-event="poke">Rename…</button>
+  <button id="behind">Behind the dialog</button>
+  <div class="clip">
+    <!-- Deliberately inside a zero-height, overflow-hidden, low z-index box:
+         the top layer must escape it. -->
+    <dialog id="rename" data-overlay-target="rename" aria-labelledby="rename-title">
+      <h2 id="rename-title">Rename</h2>
+      <input id="rename-name" autofocus value="report.csv">
+      <button id="hint-button" type="button" popovertarget="hint" data-overlay-target="hintButton">?</button>
+      <div id="hint" popover data-overlay-target="hint">Names may not contain slashes.</div>
+      <form method="dialog"><button id="rename-ok" value="ok">OK</button></form>
+    </dialog>
+  </div>
+  <div id="menu" popover data-overlay-target="menu">
+    <button id="menu-first">First</button>
+    <button id="sub-button" type="button">More</button>
+    <div id="submenu" popover data-overlay-target="submenu">Submenu</div>
+  </div>
+  <div id="plain" data-overlay-target="plain"></div>
+  <div class="spacer"></div>
+  <button id="low-anchor" class="low" data-overlay-target="lowAnchor">Near the bottom</button>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

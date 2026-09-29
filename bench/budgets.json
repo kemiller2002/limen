@@ -24,6 +24,10 @@
     {
       "workItem": "WI-0068",
       "change": "Added kernel-with-events (kemiller2002/limen#29): the events pack adds 6208 bytes gzip over the kernel, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0072",
+      "change": "Added kernel-with-overlay (kemiller2002/limen#49): the overlay pack, with the shared named-target resolver, adds 5614 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/overlay/."
     }
   ],
   "profiles": [
@@ -82,7 +86,8 @@
         "dist/tooling/",
         "dist/hosts/",
         "dist/engine/",
-        "dist/federation.js"
+        "dist/federation.js",
+        "dist/capabilities/overlay/"
       ],
       "baseline": {
         "rawBytes": 92602,
@@ -105,7 +110,8 @@
         "dist/tooling/",
         "dist/capabilities/",
         "dist/engine/",
-        "dist/federation.js"
+        "dist/federation.js",
+        "dist/capabilities/overlay/"
       ],
       "baseline": {
         "rawBytes": 92470,
@@ -128,7 +134,8 @@
         "dist/tooling/",
         "dist/capabilities/",
         "dist/engine/",
-        "dist/federation.js"
+        "dist/federation.js",
+        "dist/capabilities/overlay/"
       ],
       "baseline": {
         "rawBytes": 95578,
@@ -151,7 +158,8 @@
         "dist/hosts/",
         "dist/engine/",
         "dist/federation.js",
-        "dist/capability-support/"
+        "dist/capability-support/",
+        "dist/capabilities/overlay/"
       ],
       "baseline": {
         "rawBytes": 112426,
@@ -175,7 +183,8 @@
         "dist/engine/",
         "dist/federation.js",
         "dist/capability-support/",
-        "dist/capabilities/focus/"
+        "dist/capabilities/focus/",
+        "dist/capabilities/overlay/"
       ],
       "baseline": {
         "rawBytes": 107508,
@@ -199,7 +208,8 @@
         "dist/engine/",
         "dist/federation.js",
         "dist/capabilities/focus/",
-        "dist/capabilities/schedule/"
+        "dist/capabilities/schedule/",
+        "dist/capabilities/overlay/"
       ],
       "baseline": {
         "rawBytes": 124360,
@@ -225,7 +235,8 @@
         "dist/capability-support/",
         "dist/capabilities/focus/",
         "dist/capabilities/schedule/",
-        "dist/capabilities/measure/"
+        "dist/capabilities/measure/",
+        "dist/capabilities/overlay/"
       ],
       "baseline": {
         "rawBytes": 123906,
@@ -234,6 +245,32 @@
       "budget": {
         "rawBytes": 137216,
         "gzipBytesBundled": 27648
+      }
+    },
+    {
+      "name": "kernel-with-overlay",
+      "doc": "The kernel plus the overlay and top-layer capability pack (./capabilities/overlay), with the capability-support target resolver it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/overlay/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/"
+      ],
+      "baseline": {
+        "rawBytes": 125294,
+        "gzipBytesBundled": 24040
+      },
+      "budget": {
+        "rawBytes": 138240,
+        "gzipBytesBundled": 26624
       }
     }
   ]

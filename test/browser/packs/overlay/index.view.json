@@ -1,0 +1,7 @@
+{
+  "doc": "The overlay pack's real-browser page (scripts/smoke-packs.ts). Its engine is main.js; nothing here is bound, every overlay is driven through the pack.",
+  "view": {},
+  "events": {
+    "poke": {}
+  }
+}

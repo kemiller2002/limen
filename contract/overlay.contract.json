@@ -1,0 +1,57 @@
+{
+  "unit": "limen.overlay",
+  "role": "capability",
+  "version": 1,
+  "doc": "Overlays and the top layer, native-first (LCP-013). The pack calls the browser's own <dialog> and popover methods on named targets (data-overlay-target, and data-overlay-key inside a row) and reports what the browser did. Top-layer placement, focus entry and focus return are the browser's; whether an overlay should be open is the engine's. A dismissal the browser performs on its own (Escape, a close request, light dismiss, a method=dialog form) arrives as a Dismissed fact that the engine adopts, never as a request to undo.",
+  "types": [
+    { "name": "OverlayTarget", "kind": "record", "fields": [ { "name": "name", "type": "string" }, { "name": "key", "type": "string", "optional": true } ] },
+    { "name": "Side", "kind": "enum", "doc": "Where a popover sits relative to its anchor.", "values": ["below", "above", "after", "before"] },
+    { "name": "DismissReason", "kind": "enum", "doc": "cancel: a dialog closed by Escape or another close request (browsers skip the cancel event for a repeated request without user activation, so this is every dialog close that the engine did not ask for and no form made). lightDismiss: a popover closed by Escape, a click outside it, an ancestor popover closing, or a modal dialog opening. submitted: a dialog closed by its own method=dialog form, with the form's return value.", "values": ["cancel", "lightDismiss", "submitted"] },
+    {
+      "name": "OverlayRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "showModal", "doc": "Open a <dialog> as modal: in the top layer, with the rest of the page inert.", "fields": [ { "name": "target", "type": "OverlayTarget" } ] },
+        { "name": "show", "doc": "Open a <dialog> without making it modal.", "fields": [ { "name": "target", "type": "OverlayTarget" } ] },
+        { "name": "close", "doc": "Close an open <dialog>, with an optional return value. No Dismissed fact follows: the engine asked.", "fields": [ { "name": "target", "type": "OverlayTarget" }, { "name": "returnValue", "type": "string", "optional": true } ] },
+        { "name": "showPopover", "doc": "Show an element that has a popover attribute. With an anchor, the pack places it on the first side in sides that fits in the viewport (or the first side if none fits; an empty list means below) and reports where. after and before follow the anchor's text direction. Without an anchor, sides is ignored and the popover stays where its CSS puts it.", "fields": [ { "name": "target", "type": "OverlayTarget" }, { "name": "anchor", "type": "OverlayTarget", "optional": true }, { "name": "sides", "type": { "list": "Side" } } ] },
+        { "name": "hidePopover", "doc": "Hide a shown popover. No Dismissed fact follows: the engine asked.", "fields": [ { "name": "target", "type": "OverlayTarget" } ] },
+        { "name": "support", "doc": "What this browser implements, so the engine can choose a fallback before it needs one.", "fields": [] }
+      ]
+    },
+    {
+      "name": "Placement",
+      "kind": "record",
+      "doc": "CSS pixels, relative to the viewport. fits is false when no requested side fitted and the first was used.",
+      "fields": [ { "name": "side", "type": "Side" }, { "name": "x", "type": "number" }, { "name": "y", "type": "number" }, { "name": "fits", "type": "bool" } ]
+    },
+    {
+      "name": "OverlayResult",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "Every outcome the engine must handle; the pack retries nothing.",
+      "variants": [
+        { "name": "Shown", "fields": [ { "name": "placement", "type": "Placement", "optional": true } ] },
+        { "name": "Closed", "fields": [] },
+        { "name": "AlreadyOpen", "doc": "It was already open; nothing changed. A non-modal dialog is not upgraded to modal.", "fields": [] },
+        { "name": "NotOpen", "doc": "It was already closed; nothing changed — typically the browser dismissed it and the Dismissed fact is on its way or already arrived.", "fields": [] },
+        { "name": "NotFound", "fields": [] },
+        { "name": "Ambiguous", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "WrongElement", "doc": "The target is not a <dialog> (dialog operations) or has no popover attribute (popover operations).", "fields": [] },
+        { "name": "Refused", "doc": "The browser threw: for example a disconnected element, or a popover shown while it is a modal dialog. The reason is the exception's name only.", "fields": [ { "name": "reason", "type": "string" } ] },
+        { "name": "Unsupported", "doc": "This browser does not implement the operation; the engine renders its fallback (see docs/38).", "fields": [] },
+        { "name": "Support", "fields": [ { "name": "dialog", "type": "bool" }, { "name": "popover", "type": "bool" } ] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "OverlayFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Dismissed", "doc": "The browser closed an overlay the engine did not ask to close. The engine adopts it; answering with another show is the engine's choice, never automatic.", "fields": [ { "name": "target", "type": "OverlayTarget" }, { "name": "reason", "type": "DismissReason" }, { "name": "returnValue", "type": "string", "optional": true, "doc": "Only for submitted, and only when not empty." } ] }
+      ]
+    }
+  ]
+}

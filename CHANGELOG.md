@@ -48,6 +48,20 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Overlay and top-layer capability pack (#49).** `./capabilities/overlay`
+  (`overlayCapability()`, contract unit `limen.overlay`, with bindings for
+  TypeScript, F#, C# and Rust), native-first:
+  - `showModal`, `show` and `close` on `<dialog>`, `showPopover` and
+    `hidePopover` on `popover` elements, named by `data-overlay-target`;
+  - the browser keeps the top layer, the inert background, focus entry and
+    focus return;
+  - a dismissal the engine did not ask for (Escape, light dismiss, a
+    `method=dialog` form) arrives once as a `Dismissed` fact, which the engine
+    adopts;
+  - anchored popovers are placed on the engine's first preferred side that
+    fits, and the answer says where;
+  - `support` and `Unsupported` let the engine fall back to an inline
+    `data-if` overlay.
 - **Rich browser event facts capability pack (#29).** `./capabilities/events`
   (`eventsCapability()`, contract unit `limen.events`, with bindings for
   TypeScript, F#, C# and Rust):
