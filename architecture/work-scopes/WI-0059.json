@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0059",
+  "reference": "kemiller2002/limen#20 (LCP-005)",
+  "placement": "Engine Library — routing is application meaning, so it lives on the engine side: a language-neutral semantics (conformance/routing/) and a pure F# reference library (libraries/fsharp/Limen.Routing) bound by the engineLibraries rules. Browser history stays in Core's Navigation effect; BrowserKernel learns nothing about routes.",
+  "guardrail": false,
+  "paths": ["conformance/routing/**", "libraries/**", "package.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
