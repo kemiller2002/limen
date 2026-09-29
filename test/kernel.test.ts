@@ -378,6 +378,29 @@ async function tick(document: Document): Promise<void> {
   await flush();
 }
 
+// WI-0043 (evidence: a no-op list projection was one DOM mutation per row).
+test("an unchanged projection writes nothing to the DOM, and a node changed outside the kernel is still corrected", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { message: "hello", label: "Save", link: "/home", rows: [{ id: "a", name: "A" }, { id: "b", name: "B" }] } }));
+  await withDom(`<button data-event="tick">t</button><p data-text="message"></p><span data-bind-aria-label="label"></span><a data-bind-href="link">h</a><ul><template data-each="rows" data-key="id"><li data-text="name"></li></template></ul>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    const records: MutationRecord[] = [];
+    const observer = new window.MutationObserver((batch) => { records.push(...batch); });
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+    await tick(document);
+    assert.deepEqual(records.splice(0).map((record) => record.type), [], "the same projection again changes nothing");
+    // Something outside the kernel changes a bound node; the next projection puts it back.
+    const paragraph = document.querySelector("p")!;
+    paragraph.textContent = "tampered";
+    document.querySelector("a")!.setAttribute("href", "/elsewhere");
+    records.splice(0);
+    await tick(document);
+    observer.disconnect();
+    assert.equal(paragraph.textContent, "hello");
+    assert.equal(document.querySelector("a")!.getAttribute("href"), "/home");
+    assert.equal(records.length > 0, true);
+  });
+});
+
 test("data-bind-value only writes when the value actually differs, preserving caret position", async () => {
   let view: Record<string, unknown> = { draft: "hello" };
   const transport = new ScriptedTransport(() => respond({ view }));

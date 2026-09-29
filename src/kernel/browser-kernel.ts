@@ -245,14 +245,14 @@ function applyBoundAttribute(bound: AttrBinding, raw: ViewValue | undefined): st
     case "Url": {
       const verdict = checkUrl(String(raw), el.ownerDocument.baseURI);
       if (verdict.kind === "Safe") {
-        el.setAttribute(attr, String(raw));
+        if (el.getAttribute(attr) !== String(raw)) el.setAttribute(attr, String(raw));
         return undefined;
       }
       el.removeAttribute(attr);
       return `refused a ${verdict.scheme} URL for <${el.tagName.toLowerCase()} ${attr}>; only http, https, mailto, tel and relative URLs are projected`;
     }
     case "Attribute":
-      el.setAttribute(attr, String(raw));
+      if (el.getAttribute(attr) !== String(raw)) el.setAttribute(attr, String(raw));
       return undefined;
     case "Forbidden":
       throw new Error(`data-bind-${attr}: ${target.reason}`);
@@ -559,7 +559,12 @@ export class BrowserKernel {
   // Returns the refusals the projection produced (an unsafe URL not written);
   // a malformed projection still throws.
   #applyScope(scope: Scope, view: ViewState): readonly string[] {
-    for (const text of scope.texts) text.element.textContent = coerceScalar(view[text.key], text.key);
+    // Compared with the live DOM, not a cached value: an unchanged projection
+    // writes nothing, and a node changed outside the kernel is still corrected.
+    for (const text of scope.texts) {
+      const next = coerceScalar(view[text.key], text.key);
+      if (text.element.textContent !== next) text.element.textContent = next;
+    }
     return [
       ...scope.attrs.flatMap((bound) => applyBoundAttribute(bound, view[bound.key]) ?? []),
       ...scope.ifs.flatMap((ifBinding) => this.#applyIf(ifBinding, view)),

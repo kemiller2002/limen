@@ -143,6 +143,13 @@ exhaustive lists.
 
 ### Changed
 
+- **Projection skips unchanged writes (WI-0043, #19).**
+  - The kernel compares each `data-text` and each plain or URL attribute with
+    the live DOM before writing.
+  - An unchanged 10k-row projection went from 10,000 DOM mutations to none
+    (32.9 ms to 12.0 ms). A one-row update went from 10,000 mutations to 1.
+  - Outside changes to a bound node are still corrected.
+
 - **`<head>` is bound, and page metadata is a projection (#38).**
   - The kernel binds `<head>` with the same rules as `<body>`, so a route's
     `<title data-text>`, meta description and robots, and canonical link

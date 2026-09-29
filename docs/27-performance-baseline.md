@@ -161,6 +161,20 @@ acted on here.
    costs 10,000 DOM mutations and 22.8ms, and 100 unchanged form fields cost
    100 mutations. Writing only changed values is a kernel-mechanism change
    with no protocol impact. It is the largest DOM-side cost measured.
+   *Done in WI-0043:* the kernel compares each `data-text` and each plain or
+   URL attribute with the live DOM before writing. Measured on 2026-09-29, on
+   this machine:
+
+   | Case | Before | After |
+   | --- | --- | --- |
+   | list-10k no-op, DOM mutations | 10,000 | 0 |
+   | list-10k no-op, time | 32.9 ms | 12.0 ms |
+   | list-10k one-row update, DOM mutations | 10,000 | 1 |
+   | list-10k removal, DOM mutations | 20,001 | 10,001 |
+
+   The removal figure is halved. What remains of it is WI-0044. A node
+   changed outside the kernel is still corrected, because the comparison is
+   with the DOM, not a cache (`test/kernel.test.ts`).
 2. **Removing a keyed row moves every row after it** (WI-0044). A middle
    removal costs twice the mutations of a middle insertion. The stale row
    leaves only after the reorder pass, so each following row fails the
