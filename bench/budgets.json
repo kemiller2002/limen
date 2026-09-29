@@ -92,12 +92,16 @@
     {
       "workItem": "WI-0117",
       "change": "Re-baselined kernel-with-handles after WI-0116 (kemiller2002/limen#38): binding <head> and allowing the inert page-metadata forms add about 450 bytes gzip to every profile that loads the kernel, which put this profile 9 bytes over. Also corrected the baselines recorded for minimal-consumer (WI-0105) and the profiles added in WI-0100, WI-0106, WI-0108, WI-0110 and WI-0114: they were measured with a relative root, which orders the bundled modules differently from test/bench-size.test.ts and changes the bundled gzip size by a few hundred bytes (raw bytes are identical). They are now measured exactly as the test measures them, and their budgets follow from the same 10% rule; the new baselines also include the kernel growth since each was recorded (protocol 1.4, WI-0103, where it came after them, and WI-0116), so none of the differences is the capability packs themselves growing."
+    },
+    {
+      "workItem": "WI-0121",
+      "change": "Lowered minimal-consumer (kemiller2002/limen#61): the package root no longer exports federation or the reference engine, so the minimal consumer loads Core only. Measured with an absolute root: 144579 -> 114362 raw bytes, 30286 -> 23819 gzip bundled. It now also forbids dist/federation.js, dist/engine/ and dist/renderer/."
     }
   ],
   "profiles": [
     {
       "name": "minimal-consumer",
-      "doc": "What examples/minimal (the copy shipped in the package) loads: the package root. It carries the reference email engine and federation, which a consumer never registers — see docs/27-performance-baseline.md.",
+      "doc": "What examples/minimal (the copy shipped in the package, and the minimal root consumer of kemiller2002/limen#61) loads: the package root, which is Limen Core only. Federation, the reference engine and every optional layer are forbidden here.",
       "entries": [
         "dist/index.js"
       ],
@@ -105,15 +109,18 @@
         "dist/capability-support/",
         "dist/tooling/",
         "dist/hosts/",
-        "dist/capabilities/"
+        "dist/capabilities/",
+        "dist/federation.js",
+        "dist/engine/",
+        "dist/renderer/"
       ],
       "baseline": {
-        "rawBytes": 144579,
-        "gzipBytesBundled": 30286
+        "rawBytes": 114362,
+        "gzipBytesBundled": 23819
       },
       "budget": {
-        "rawBytes": 159744,
-        "gzipBytesBundled": 33792
+        "rawBytes": 125952,
+        "gzipBytesBundled": 26624
       }
     },
     {

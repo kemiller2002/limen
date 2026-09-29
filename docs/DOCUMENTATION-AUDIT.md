@@ -86,6 +86,11 @@ maintainer:** rename, or keep the name and treat the docs as the disambiguator?
 
 ### A-1 · `DirectTypeScriptTransport` is a demo promoted as an entry point
 
+> **Status: resolved for the root** by kemiller2002/limen#61.
+> The package root no longer exports it (or `ReferenceEngine`, `project`, or
+> federation); it is reachable only through `./reference-engine`. The text below
+> records the finding as it stood.
+
 `DirectTypeScriptTransport` is exported from the package root **and** as the
 dedicated subpath `./reference-engine`, and the old README's quickstart showed
 it as the code to copy:

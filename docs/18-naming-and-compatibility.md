@@ -93,6 +93,40 @@ No deprecation, no package alias, no shim, no codemod. The repository rename
 changes the canonical GitHub URL only; npm/package/API compatibility remains
 unchanged.
 
+### Root entrypoint: Core only
+
+The rename changed nothing in the API. A later, separate change did:
+kemiller2002/limen#61 made the package root
+export **Limen Core only**, so that importing Limen never loads, or teaches,
+an optional system. Federation and the TypeScript reference engine are still
+supported and unchanged; they moved to the explicit subpaths that already
+existed.
+
+| Name | Before (root) | Now |
+| --- | --- | --- |
+| `ModuleFederation`, `createLazyFederation`, `routeMatches`, `FederationError`, `FEDERATION_PROTOCOL_VERSION`, `noopFederationDiagnostics` and every federation type | `…typescript-wasm-kernel` | `…typescript-wasm-kernel/federation` |
+| `ReferenceEngine`, `project`, `DirectTypeScriptTransport`, `State`, `Command`, `EmailAddress`, `TransitionError`, `TransitionResult` | `…typescript-wasm-kernel` | `…typescript-wasm-kernel/reference-engine` |
+| everything else | `…typescript-wasm-kernel` | unchanged |
+
+```ts
+// before
+import { BrowserKernel, ModuleFederation, DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel";
+// now
+import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { ModuleFederation } from "@echelon-foundry/typescript-wasm-kernel/federation";
+import { DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel/reference-engine";
+```
+
+**Compatibility decision.** This is a breaking change to the root's export
+list, released in the next minor version (the package is `0.x`, where a minor
+may break). There is deliberately **no deprecation shim on the root**: any
+re-export there would put federation and the reference engine back into
+every minimal consumer's import graph, which is the thing being removed. The
+subpaths themselves are not new — `./federation` is unchanged, and
+`./reference-engine` now exports a superset of what it did (it previously
+exposed only `DirectTypeScriptTransport`). `npm run check:architecture` and
+`npm run check:package` fail if an optional export returns to the root.
+
 ### If you write about it
 
 | Prefer | Over |

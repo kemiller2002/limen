@@ -152,8 +152,8 @@
       "import": "./dist/kernel/browser-kernel.js"
     },
     "./reference-engine": {
-      "types": "./dist/engine/transport.d.ts",
-      "import": "./dist/engine/transport.js"
+      "types": "./dist/engine/index.d.ts",
+      "import": "./dist/engine/index.js"
     },
     "./federation": {
       "types": "./dist/federation.d.ts",

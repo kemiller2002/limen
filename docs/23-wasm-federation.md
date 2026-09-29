@@ -598,7 +598,11 @@ import {
 } from "@echelon-foundry/typescript-wasm-kernel/federation";
 ```
 
-or from the package root.
+Federation is not exported from the package root: it is optional
+composition, not Limen Core, and a consumer that never federates loads none of
+it. The explicit `…/federation` subpath is the only way in (the root export was
+removed by kemiller2002/limen#61; see
+[naming and compatibility](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md#root-entrypoint-core-only)).
 
 The federation protocol version is independent of an individual module's
 semantic version and independent of the existing browser/engine

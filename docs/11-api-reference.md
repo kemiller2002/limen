@@ -17,8 +17,9 @@ Know what you are allowed to depend on.
 
 | Tier | What | Examples |
 | --- | --- | --- |
-| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, `ModuleFederation`, `ModuleManifest`, `FederationEnvelope`, `FEDERATION_PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
+| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
 | **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport`, `DiagnosticsSink`, `FederatedModuleTransport`, `FederationDiagnosticsSink` |
+| **Optional, stable** | Supported, but not Core: never exported from the root, never needed to use Limen. | from `…/federation`: `ModuleFederation`, `ModuleManifest`, `FederationEnvelope`, `FEDERATION_PROTOCOL_VERSION`; from `…/capabilities/<name>`: each pack's provider |
 | **Reference implementation** | Ships, but is this repo's demo. Do **not** build on it. | `DirectTypeScriptTransport`, `ReferenceEngine`, `project`, `State`, `Command`, `TransitionResult`, `EmailAddress` |
 | **Internal** | Private; may change without notice. | every `#`-prefixed member of `BrowserKernel`, `Scope`/binding types, `TRIGGER_BY_TAG`, `BOOLEAN_PROPS` |
 | **Experimental** | None currently. | — |
@@ -62,11 +63,19 @@ import type { ViewState } from "@echelon-foundry/typescript-wasm-kernel/protocol
 
 | Specifier | Contents |
 | --- | --- |
-| `@echelon-foundry/typescript-wasm-kernel` | everything in [`src/index.ts`](https://github.com/kemiller2002/limen/blob/main/src/index.ts) |
+| `@echelon-foundry/typescript-wasm-kernel` | **Limen Core only** ([`src/index.ts`](https://github.com/kemiller2002/limen/blob/main/src/index.ts)): the kernel, the boundary messages, the four built-in effect families, the optional-capability seam, compatibility. Every name belongs to an approved export family of [`architecture/core.json`](https://github.com/kemiller2002/limen/blob/main/architecture/core.json); nothing it loads is optional code |
 | `…/protocol` | the protocol types |
+| `…/contract` | the generated Core codec (decoders and encoders) |
+| `…/capabilities` | the optional-capability seam (`defineCapability`) |
 | `…/kernel` | `BrowserKernel` alone |
-| `…/reference-engine` | `DirectTypeScriptTransport` — reference only |
-| `…/federation` | multi-engine manifests, envelopes, lifecycle and `ModuleFederation` |
+| `…/capabilities/<name>` | an optional capability pack — see [24](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) |
+| `…/reference-engine` | *optional, reference only:* `ReferenceEngine`, `project`, `DirectTypeScriptTransport` and the demo domain types |
+| `…/federation` | *optional:* multi-engine manifests, envelopes, lifecycle and `ModuleFederation` |
+
+Federation and the reference engine were exported from the root until
+kemiller2002/limen#61; import them from their
+subpaths (migration table in
+[18](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md#root-entrypoint-core-only)).
 
 `moduleResolution` must be `"bundler"`, `"node16"`, or `"nodenext"`; older modes
 do not read `exports`.

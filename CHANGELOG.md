@@ -37,6 +37,25 @@ exhaustive lists.
   - The demo composition root (`src/main.ts`, `src/styles.css`) is now its own
     `reference-demo` layer.
 
+### Breaking
+
+- **The package root exports Limen Core only (#61).**
+  - Federation (`ModuleFederation`, `createLazyFederation`, `routeMatches`,
+    `FederationError`, `FEDERATION_PROTOCOL_VERSION`,
+    `noopFederationDiagnostics` and the federation types) is no longer exported
+    from the root: import it from `…/federation`.
+  - The reference engine (`ReferenceEngine`, `project`,
+    `DirectTypeScriptTransport` and the demo domain types) is no longer
+    exported from the root: import it from `…/reference-engine`, which now
+    exports all of it (previously only `DirectTypeScriptTransport`).
+  - There is no root shim, by design: a re-export would put both back into
+    every minimal consumer's graph. Migration table in
+    [docs/18](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md#root-entrypoint-core-only).
+  - `examples/minimal` — the minimal root consumer — now loads Core files only;
+    `npm run check:architecture` (sources) and `npm run check:package` (the
+    packed `dist/`) fail if an optional module re-enters its graph or an
+    optional export returns to the root.
+
 ### Changed
 
 - **`<head>` is bound, and page metadata is a projection (#38).**

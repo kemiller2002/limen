@@ -53,9 +53,7 @@
       ],
       "mayImport": [
         "core-contract",
-        "core-kernel",
-        "federation-host",
-        "reference-engine"
+        "core-kernel"
       ]
     },
     {

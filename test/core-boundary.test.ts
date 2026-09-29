@@ -40,6 +40,10 @@ const sourceOf = (path: string): string => repository.files.find((file) => file.
 const appended = (path: string, code: string): SourceFile => ({ path, source: `${sourceOf(path)}\n${code}\n` });
 const check = (inputs: CoreInputs, using: CoreManifest = manifest) => checkCore(using, map, inputs);
 const rules = (inputs: CoreInputs, using: CoreManifest = manifest): readonly string[] => check(inputs, using).map((violation) => violation.rule);
+// Distinct rules, in first-seen order: a Core file that imports an optional
+// layer also puts that layer in every Core entrypoint's graph that reaches it.
+const distinct = (violations: readonly { readonly rule: string }[]): readonly string[] => [...new Set(violations.map((violation) => violation.rule))];
+const IMPORTS_OPTIONAL = ["core-imports-optional", "optional-in-minimal-graph"];
 
 test("the repository satisfies its Core manifest", () => {
   assert.deepEqual(check(repository), []);
@@ -81,20 +85,20 @@ test("a new file in a Core layer fails: Core does not grow by adding a path", ()
 
 test("Core importing federation fails, naming the destination and its optional group", () => {
   const violations = check(withFiles(appended("src/kernel/browser-kernel.ts", `import { ModuleFederation } from "../federation.js";`)));
-  assert.deepEqual(violations.map((violation) => violation.rule), ["core-imports-optional"]);
+  assert.deepEqual(distinct(violations), IMPORTS_OPTIONAL);
   assert.match(violations[0]?.path ?? "", /^src\/kernel\/browser-kernel\.ts:\d+$/);
   assert.match(violations[0]?.detail ?? "", /imports src\/federation\.ts, in federation-host \[optional group: federation\]/);
 });
 
 test("Core importing an optional capability pack fails", () => {
   const violations = check(withFiles(appended("src/kernel/capabilities.ts", `import { focusCapability } from "../capabilities/focus/index.js";`)));
-  assert.deepEqual(violations.map((violation) => violation.rule), ["core-imports-optional"]);
+  assert.deepEqual(distinct(violations), IMPORTS_OPTIONAL);
   assert.match(violations[0]?.detail ?? "", /capability-pack \[optional group: capability-packs\]/);
 });
 
 test("Core importing the reference engine fails", () => {
   const violations = check(withFiles(appended("src/protocol.ts", `export type { State } from "./engine/domain.js";`)));
-  assert.deepEqual(violations.map((violation) => violation.rule), ["core-imports-optional"]);
+  assert.deepEqual(distinct(violations), IMPORTS_OPTIONAL);
   assert.match(violations[0]?.detail ?? "", /reference-engine \[optional group: reference-demo\]/);
 });
 
@@ -106,7 +110,7 @@ test("Core importing a host, renderer or tooling fails", () => {
   ] as const;
   imports.forEach(([path, code, group]) => {
     const violations = check(withFiles(appended(path, code)));
-    assert.deepEqual(violations.map((violation) => violation.rule), ["core-imports-optional"], path);
+    assert.deepEqual(distinct(violations), IMPORTS_OPTIONAL, path);
     assert.match(violations[0]?.detail ?? "", new RegExp(`optional group: ${group}`));
   });
 });
@@ -163,6 +167,31 @@ test("a runtime dependency fails", () => {
 test("a root export outside every approved family fails", () => {
   const violations = check(withFiles(appended("src/index.ts", `export { renderRoute } from "./renderer/server.js";`)));
   assert.ok(violations.some((violation) => violation.rule === "root-export-unapproved" && /exports renderRoute/.test(violation.detail)));
+});
+
+test("the root exporting federation or the reference engine fails (kemiller2002/limen#61)", () => {
+  const federation = check(withFiles(appended("src/index.ts", `export { ModuleFederation } from "./federation.js";`)));
+  assert.deepEqual(distinct(federation), ["root-export-unapproved", "optional-in-minimal-graph"]);
+  assert.match(federation.find((violation) => violation.rule === "optional-in-minimal-graph")?.detail ?? "", /entrypoint "\." transitively loads src\/federation\.ts \(federation-host, optional group federation\)/);
+  const reference = check(withFiles(appended("src/index.ts", `export { ReferenceEngine } from "./engine/engine.js";`)));
+  assert.deepEqual(distinct(reference), ["root-export-unapproved", "optional-in-minimal-graph"]);
+  // The layer map forbids the same import independently.
+  assert.deepEqual(checkLayers(map, [appended("src/index.ts", `export { ModuleFederation } from "./federation.js";`)]).map((violation) => violation.rule), ["layer-direction"]);
+});
+
+test("a hidden transitive import of an optional layer from Core fails", () => {
+  // Through a type-free re-export in a file the root reaches only indirectly.
+  const violations = check(withFiles(appended("src/kernel/diagnostics.ts", `export { createLazyFederation } from "../federation.js";`)));
+  assert.deepEqual(distinct(violations), IMPORTS_OPTIONAL);
+  assert.ok(violations.some((violation) => violation.rule === "optional-in-minimal-graph" && violation.path === "src/index.ts"));
+});
+
+test("an optional surface losing its explicit subpath fails", () => {
+  const exports = { ...((repository.packageJson as { exports: Record<string, unknown> }).exports) };
+  delete exports["./federation"];
+  const violations = check({ ...repository, packageJson: { ...(repository.packageJson as Record<string, unknown>), exports } });
+  assert.deepEqual(violations.map((violation) => violation.rule), ["entrypoint-mismatch"]);
+  assert.match(violations[0]?.detail ?? "", /exports\["\.\/federation"\] is missing/);
 });
 
 test("an eighth canonical concept fails", () => {

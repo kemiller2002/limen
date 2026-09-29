@@ -1,11 +1,11 @@
-export {
-  ModuleFederation,
-  createLazyFederation,
-  routeMatches,
-  FederationError,
-  FEDERATION_PROTOCOL_VERSION,
-  noopFederationDiagnostics,
-} from "./federation.js";
+// The root entrypoint teaches Limen Core only (kemiller2002/limen#59, #61):
+// the browser kernel, the boundary messages, the four built-in effect
+// families, the optional-capability seam, and compatibility. Every name here
+// belongs to an approved export family in architecture/core.json, and nothing
+// here loads an optional layer. Optional surfaces have their own subpaths:
+//   ./federation          multi-engine composition
+//   ./reference-engine    the TypeScript demonstration engine
+//   ./capabilities/<name> optional capability packs
 export { BrowserKernel } from "./kernel/browser-kernel.js";
 export type { KernelOptions, KernelStatus } from "./kernel/browser-kernel.js";
 export { defineCapability } from "./kernel/capabilities.js";
@@ -15,8 +15,6 @@ export type { HandshakeVerdict, Incompatibility, Negotiation } from "./kernel/ha
 export { answerHandshake } from "./guest/handshake.js";
 export type { EngineRequirements } from "./guest/handshake.js";
 export type { DiagnosticEvent, DiagnosticsSink } from "./kernel/diagnostics.js";
-export { DirectTypeScriptTransport } from "./engine/transport.js";
-export { ReferenceEngine, project } from "./engine/engine.js";
 export { CORE_CONTRACT_IDENTITY, PROTOCOL_MINOR, PROTOCOL_VERSION } from "./protocol.js";
 
 export type {
@@ -59,41 +57,3 @@ export type {
   ViewState,
   ViewValue,
 } from "./protocol.js";
-
-export type {
-  Command,
-  EmailAddress,
-  State,
-  TransitionError,
-  TransitionResult,
-} from "./engine/domain.js";
-
-export type {
-  ContractId,
-  ContractRange,
-  ExchangeResult,
-  FederatedModuleTransport,
-  FederationCorrelationId,
-  FederationDiagnosticEvent,
-  FederationDiagnosticsSink,
-  FederationEnvelope,
-  FederationEnvelopeDiagnostic,
-  FederationErrorCode,
-  FederationMessageKind,
-  FederationOperation,
-  FederationOptions,
-  FederationStartReport,
-  FederationStartupBlock,
-  JsonPrimitive,
-  LazyFederation,
-  LazyOutcome,
-  LazyRelease,
-  LazyStatus,
-  JsonValue,
-  ModuleDispatchResult,
-  ModuleId,
-  ModuleInitialization,
-  ModuleLifecycleState,
-  ModuleManifest,
-  ModulePeer,
-} from "./federation.js";

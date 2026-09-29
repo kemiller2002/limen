@@ -22,6 +22,7 @@ export type CoreManifest = {
   readonly optionalGroups: Readonly<Record<string, readonly string[]>>;
   readonly files: readonly CoreFile[];
   readonly coreEntrypoints: Readonly<Record<string, string>>;
+  readonly optionalEntrypoints: Readonly<Record<string, string>>;
   readonly families: readonly ExportFamily[];
   readonly legacyRootExports: readonly string[];
   readonly bindingPrimitives: readonly string[];
@@ -64,7 +65,10 @@ export const parseCoreManifest = (raw: unknown): CoreManifest => {
   const capability = field(raw, "capabilityFamilies");
   const binding = field(raw, "bindingPrimitives");
   const root = field(raw, "rootExports");
-  const entrypoints = field(field(raw, "entrypoints"), "core");
+  const subpaths = (group: string): Readonly<Record<string, string>> => {
+    const found = field(field(raw, "entrypoints"), group);
+    return isRecord(found) ? Object.fromEntries(Object.entries(found).filter((pair): pair is [string, string] => typeof pair[1] === "string")) : {};
+  };
   return {
     architectureVersion: text(raw, "architectureVersion"),
     referenceCommit: text(raw, "referenceCommit"),
@@ -77,7 +81,8 @@ export const parseCoreManifest = (raw: unknown): CoreManifest => {
       visibility: entry.visibility === "private" ? "private" : "public",
       generated: entry.generated === true,
     })),
-    coreEntrypoints: isRecord(entrypoints) ? Object.fromEntries(Object.entries(entrypoints).filter((pair): pair is [string, string] => typeof pair[1] === "string")) : {},
+    coreEntrypoints: subpaths("core"),
+    optionalEntrypoints: subpaths("optional"),
     families: records(field(root, "families")).map((family) => ({ id: text(family, "id"), concepts: strings(family.concepts), names: strings(family.names) })),
     legacyRootExports: strings(field(root, "legacy")),
     bindingPrimitives: strings(field(binding, "primitives")),
@@ -130,6 +135,42 @@ export const contractFamilies = (contract: unknown, seam: string): { readonly va
     variants: records(field(named("EffectRequest"), "variants")).map((variant) => String(variant.name)).filter((name) => name !== seam),
     announced: strings(field(named("Capability"), "values")),
   };
+};
+
+// The static import closure of some entry modules: what a consumer of those
+// entries loads. `resolve` maps (importing path, specifier) to a path, or
+// undefined for a bare specifier; `read` returns a module's text, or undefined
+// when it does not exist. Works over TypeScript sources and emitted JavaScript.
+export const moduleClosure = (
+  entries: readonly string[],
+  read: (path: string) => string | undefined,
+  resolve: (from: string, specifier: string) => string | undefined,
+): readonly string[] => {
+  const visit = (pending: readonly string[], seen: ReadonlySet<string>): ReadonlySet<string> => {
+    const [next, ...rest] = pending;
+    if (next === undefined) return seen;
+    if (seen.has(next)) return visit(rest, seen);
+    const source = read(next);
+    const targets = source === undefined ? [] : importsOf(source).flatMap((site) => {
+      const target = site.specifier === undefined ? undefined : resolve(next, site.specifier);
+      return target === undefined ? [] : [target];
+    });
+    return visit([...rest, ...targets], new Set([...seen, next]));
+  };
+  return [...visit(entries, new Set())].sort();
+};
+
+// The emitted file for a source path: src/kernel/x.ts -> dist/kernel/x.js.
+export const emittedPath = (source: string): string => source.replace(/^src\//, "dist/").replace(/\.ts$/, ".js");
+
+// package.json "exports" subpath -> its "import" target.
+export const exportTargets = (packageJson: unknown): Readonly<Record<string, string>> => {
+  const exports = field(packageJson, "exports");
+  if (!isRecord(exports)) return {};
+  return Object.fromEntries(Object.entries(exports).flatMap(([subpath, target]) => {
+    const path = typeof target === "string" ? target : field(target, "import");
+    return typeof path === "string" ? [[subpath, path.replace(/^\.\//, "")] as const] : [];
+  }));
 };
 
 export const runtimeDependencies = (packageJson: unknown): readonly string[] =>
@@ -267,6 +308,33 @@ const rootExports = (manifest: CoreManifest, files: readonly SourceFile[]): read
   ];
 };
 
+// The minimal consumer: each Core entrypoint's transitive graph holds Core
+// files (and the root facade) only. Checked over sources here, and over the
+// packed dist/ by scripts/check-package.ts.
+const minimalGraph = (manifest: CoreManifest, map: LayerMap, files: readonly SourceFile[]): readonly Violation[] => {
+  const sources = new Map(files.map((file) => [file.path, file.source] as const));
+  const facade = manifest.coreEntrypoints["."];
+  return Object.entries(manifest.coreEntrypoints).flatMap(([subpath, entry]) =>
+    moduleClosure([entry], (path) => sources.get(path), resolveImport)
+      .filter((path) => path !== facade && coreFileOf(manifest, path) === undefined)
+      .map((path) => {
+        const layer = placementOf(map, path)?.layer.name ?? "(no layer)";
+        const group = Object.entries(manifest.optionalGroups).find(([, layers]) => layers.includes(layer))?.[0] ?? layer;
+        return violation("optional-in-minimal-graph", entry, `the Core entrypoint "${subpath}" transitively loads ${path} (${layer}, optional group ${group})`, "A minimal Core consumer loads Core only. Export the optional surface from its own subpath (package.json exports) and let the consumer import it explicitly.");
+      }));
+};
+
+// Every declared entrypoint is in package.json exports and points at the
+// emitted file of the source the manifest names.
+const entrypoints = (manifest: CoreManifest, packageJson: unknown): readonly Violation[] => {
+  const targets = exportTargets(packageJson);
+  return Object.entries({ ...manifest.coreEntrypoints, ...manifest.optionalEntrypoints }).flatMap(([subpath, source]) => {
+    const target = targets[subpath];
+    if (target === emittedPath(source)) return [];
+    return [violation("entrypoint-mismatch", "package.json", `exports["${subpath}"] is ${target === undefined ? "missing" : target}; the Core manifest expects ${emittedPath(source)}`, "Keep package.json exports and architecture/core.json entrypoints in step; an optional surface must stay reachable through its explicit subpath.")];
+  });
+};
+
 export const checkCore = (manifest: CoreManifest, map: LayerMap, inputs: CoreInputs): readonly Violation[] => [
   ...layerClassification(manifest, map),
   ...pathClassification(map, inputs.files),
@@ -277,4 +345,6 @@ export const checkCore = (manifest: CoreManifest, map: LayerMap, inputs: CoreInp
   ...dependencies(manifest, inputs.packageJson),
   ...concepts(manifest),
   ...rootExports(manifest, inputs.files),
+  ...minimalGraph(manifest, map, inputs.files),
+  ...entrypoints(manifest, inputs.packageJson),
 ];

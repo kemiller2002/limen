@@ -42,16 +42,21 @@
     ]
   },
   "entrypoints": {
-    "doc": "Package subpaths that expose Core. Every other subpath in package.json exports is optional and must resolve outside Core layers' private files.",
+    "doc": "Package subpaths. core: subpaths whose whole transitive graph is Core (the root adds only its facade). optional: subpaths that must keep existing so optional surfaces stay reachable by explicit import. Every other subpath in package.json exports (./capabilities/<name>, hosts, tooling) is optional too.",
     "core": {
       ".": "src/index.ts",
       "./protocol": "src/protocol.ts",
       "./contract": "src/generated/core.codec.ts",
-      "./capabilities": "src/kernel/capabilities.ts"
+      "./capabilities": "src/kernel/capabilities.ts",
+      "./kernel": "src/kernel/browser-kernel.ts"
+    },
+    "optional": {
+      "./federation": "src/federation.ts",
+      "./reference-engine": "src/engine/index.ts"
     }
   },
   "rootExports": {
-    "doc": "Every name the root entrypoint (src/index.ts) exports belongs to exactly one approved family, and every family to one canonical concept. A new family, or a name in no family, fails. legacy lists names still exported from the root that are not Core; they are removed by kemiller2002/limen#61 and may not grow.",
+    "doc": "Every name the root entrypoint (src/index.ts) exports belongs to exactly one approved family, and every family to one canonical concept. A new family, or a name in no family, fails. legacy is empty since kemiller2002/limen#61 moved federation to ./federation and the reference engine to ./reference-engine; it may not be refilled.",
     "families": [
       {
         "id": "browser-kernel",
@@ -84,12 +89,7 @@
         "names": ["CorrelationId"]
       }
     ],
-    "legacy": [
-      "ModuleFederation", "createLazyFederation", "routeMatches", "FederationError", "FEDERATION_PROTOCOL_VERSION", "noopFederationDiagnostics",
-      "ContractId", "ContractRange", "ExchangeResult", "FederatedModuleTransport", "FederationCorrelationId", "FederationDiagnosticEvent", "FederationDiagnosticsSink", "FederationEnvelope", "FederationEnvelopeDiagnostic", "FederationErrorCode", "FederationMessageKind", "FederationOperation", "FederationOptions", "FederationStartReport", "FederationStartupBlock", "JsonPrimitive", "JsonValue", "LazyFederation", "LazyOutcome", "LazyRelease", "LazyStatus", "ModuleDispatchResult", "ModuleId", "ModuleInitialization", "ModuleLifecycleState", "ModuleManifest", "ModulePeer",
-      "DirectTypeScriptTransport", "ReferenceEngine", "project",
-      "Command", "EmailAddress", "State", "TransitionError", "TransitionResult"
-    ]
+    "legacy": []
   },
   "bindingPrimitives": {
     "doc": "The DOM binding primitives the kernel reads. data-key is a required modifier of data-each, not a primitive. Any other data-* attribute a Core file reads is an undeclared primitive.",

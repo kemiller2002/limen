@@ -172,7 +172,11 @@ acted on here.
    the package root loads the reference email engine and federation, 30 KB
    raw and 6.5 KB gzipped. The kernel also loads the whole 47.5 KB generated
    core codec to decode one handshake. A bundler would tree-shake both;
-   unbundled ES modules, as `examples/minimal` ships, cannot.
+   unbundled ES modules, as `examples/minimal` ships, cannot. *Resolved for
+   the root by kemiller2002/limen#61:* the
+   root no longer loads the reference engine or federation (the
+   `minimal-consumer` profile in `bench/budgets.json` forbids both); the
+   codec cost remains.
 
 **Virtualization (#37) is not warranted by this evidence.** A one-row update
 of 10,000 rows makes 10,000 mutations, the same as an unchanged
