@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 136,
+  "nextSeq": 137,
   "items": [
     {
       "id": "WI-0001",
@@ -2018,6 +2018,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T18:27:01.671Z",
       "updatedAt": "2026-09-29T18:30:04Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0136",
+      "title": "Re-baseline every kernel-loading payload profile after WI-0043/WI-0044 put kernel-with-files 31 bytes over a budget recorded before ~3 KB of in-budget kernel growth (GH-19)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T19:40:12.697Z",
+      "updatedAt": "2026-09-29T19:40:26Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
