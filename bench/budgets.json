@@ -48,6 +48,10 @@
     {
       "workItem": "WI-0085",
       "change": "Re-baselined every profile after the Core HTTP profile, protocol 1.3 (kemiller2002/limen#47): Core's generated codec gained the new request and outcome types, and the kernel's Http path gained the response representations, header selection and the XSRF binding. Measured on kernel-with-overlay before and after: +1729 bytes gzip (+6640 raw), on every profile that loads the kernel. kernel-only, minimal-consumer, kernel-with-handles, the two host profiles and kernel-with-focus exceeded their budgets; the rest are re-baselined by the same rule so every budget keeps 10% headroom over what ships. The remaining growth since WI-0053 on the older profiles (about 0.9 KB gzip on kernel-only) is protocol 1.2 form-control state, IME handling and boolean attributes, which had stayed within budget."
+    },
+    {
+      "workItem": "WI-0086",
+      "change": "Added kernel-with-transfer (kemiller2002/limen#47): the transfer profile pack adds 5340 bytes gzip over the kernel, and only to applications that register it. The files pack gained its explicit fileFor accessor (+157 raw bytes, within its budget). Earlier kernel-with-* profiles now also forbid dist/capabilities/transfer/."
     }
   ],
   "profiles": [
@@ -111,7 +115,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 103024,
@@ -139,7 +144,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 102812,
@@ -167,7 +173,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 105920,
@@ -195,7 +202,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 122768,
@@ -224,7 +232,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 115285,
@@ -253,7 +262,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 132137,
@@ -284,7 +294,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 132375,
@@ -314,7 +325,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 131934,
@@ -344,7 +356,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 133014,
@@ -374,7 +387,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 134030,
@@ -405,7 +419,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 151216,
@@ -436,7 +451,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/transfer/"
       ],
       "baseline": {
         "rawBytes": 137357,
@@ -445,6 +461,38 @@
       "budget": {
         "rawBytes": 151552,
         "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "name": "kernel-with-transfer",
+      "doc": "The kernel plus the HTTP transfer profile pack (./capabilities/transfer), as an application that registers it loads them. Uploading picked files also loads the files pack, which has its own profile.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/transfer/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
+      ],
+      "baseline": {
+        "rawBytes": 130595,
+        "gzipBytesBundled": 25489
+      },
+      "budget": {
+        "rawBytes": 144384,
+        "gzipBytesBundled": 28672
       }
     }
   ]

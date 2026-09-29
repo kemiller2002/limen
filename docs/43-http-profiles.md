@@ -104,7 +104,70 @@ request to behave differently from what the engine reasons about. Each would
 arrive the way the 1.3 options did: optional, explicit, and with the current
 behaviour as the default.
 
+## The transfer profile pack
+
+```ts
+import { filesCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/files";
+import { transferCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/transfer";
+
+const files = filesCapability();
+await new BrowserKernel(transport, document, diagnostics, {
+  capabilities: [files, transferCapability({ files })],
+}).start();
+```
+
+The contract is [`contract/transfer.contract.json`](../contract/transfer.contract.json),
+with bindings for TypeScript, F#, C# and Rust.
+
+```text
+send { method, url, headers?, body, response, responseHeaders?, credentials?, timeoutMs, progress, progressIntervalMs }
+```
+
+`body` is one of these four:
+
+- `empty`;
+- `text { text, contentType }`;
+- `file { file, contentType? }`: the raw bytes of a file the user picked with
+  the files pack ([40](40-files.md)), named by its opaque id;
+- `multipart { parts }`: fields and picked files. The pack builds the
+  `FormData` itself, and the browser sets the boundary.
+
+**Progress is opt-in, twice over.** An application that does not register the
+pack loads none of it. A request with `progress: false` registers no progress
+listener at all. With `progress: true`, the engine hears
+`Progress { request, direction, loaded, total? }` facts under the request's
+correlation id:
+
+- at most one per `progressIntervalMs` in each direction;
+- the final value always arrives.
+
+**Picked files, not `File` objects.** The application hands the transfer pack
+the files pack's `fileFor` accessor. That is explicit wiring: nothing is
+shared implicitly between packs. The engine names a file by the id it got in
+`Selected`. An id the files pack did not issue, or has released, is
+`Failure { unknown-file }`; a file body with no files pack wired is
+`Failure { no-files }`. Uploading from disk streams through the browser, so
+the pack does not hold a large file in memory.
+
+**The same outcomes as Core Http:**
+
+- `Success { status, body, headers? }`;
+- `Failure { reason, status? }`;
+- `Cancelled`;
+- `OutcomeUnknown` when the timeout passes after the request was sent;
+- `InvalidRequest { problem }` for a request that could not be sent as
+  written.
+
+**One honest limit.** The transport is `XMLHttpRequest`, because `fetch`
+cannot report upload progress. `XMLHttpRequest` always sends same-origin
+cookies and cannot omit them, so `credentials: "omit"` is refused as
+`InvalidRequest` rather than silently ignored. Core Http honours it.
+
+## Evidence
+
 | Evidence | Where |
 | --- | --- |
 | JSON regression; text; base64 bytes; none for HEAD, 204 and OPTIONS; too-large read incrementally and abandoned; exact response headers only when asked; each credentials mode passed exactly; XSRF same-origin, absolute same-origin, cross-origin refused, missing cookie, and no secret in diagnostics or outcomes; OutcomeUnknown in every representation | [`test/http-profile.test.ts`](../test/http-profile.test.ts) |
+| Transfer: no listener without progress; throttled progress per direction with the final value; a picked file by id and as multipart (FormData built inside the pack, the file's own name unless given, cross-realm files); the files pack's accessor and release; text, base64, none, invalid-response, network, cancel, OutcomeUnknown; validation, including `omit` refused; conformance suite | [`test/transfer.test.ts`](../test/transfer.test.ts) |
 | The same against real `fetch` in Chromium, including real response headers (and `Set-Cookie` withheld by the browser), real cookies with `omit` against the default, and the XSRF header checked by the server | [`test/browser/packs/core-http/`](../test/browser/packs/core-http/), [`test/browser/servers/http.ts`](../test/browser/servers/http.ts), `npm run smoke:packs` |
+| Transfer in Chromium: a real picked 4 MiB file uploaded by id with real progress to the total; multipart parts seen by the server; no progress facts when not asked; throttled download progress to a known total; an unknown id; OutcomeUnknown after a timeout | [`test/browser/packs/transfer/`](../test/browser/packs/transfer/), `npm run smoke:packs` |

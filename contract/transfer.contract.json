@@ -1,0 +1,76 @@
+{
+  "unit": "limen.transfer",
+  "role": "capability",
+  "version": 1,
+  "doc": "The optional HTTP transfer profile (LCP-041): requests that report upload and download progress, and uploads of files the user picked with the files pack, by opaque id — alone or as multipart form data. No File, Blob or FormData crosses. Outcomes keep Core Http's four-way semantics: a timeout after the request was sent is OutcomeUnknown, never a failure. Retry, caching and authentication stay in the engine. An application that does not register this pack pays nothing for it.",
+  "constants": [
+    { "name": "MAX_TRANSFER_RESPONSE_BYTES", "type": "int", "value": 8388608, "doc": "The largest text or base64 response body, as in Core Http." }
+  ],
+  "types": [
+    { "name": "TransferMethod", "kind": "enum", "values": ["GET", "PUT", "POST", "PATCH", "DELETE"] },
+    { "name": "TransferResponseKind", "kind": "enum", "values": ["json", "text", "base64", "none"] },
+    { "name": "TransferCredentials", "kind": "enum", "doc": "omit is refused as InvalidRequest: the transfer transport (XMLHttpRequest) always sends same-origin cookies. Core Http honours omit.", "values": ["omit", "same-origin", "include"] },
+    {
+      "name": "Part",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "One field of a multipart/form-data body.",
+      "variants": [
+        { "name": "field", "fields": [ { "name": "name", "type": "string" }, { "name": "value", "type": "string" } ] },
+        { "name": "file", "doc": "A file the files pack issued; fileName defaults to the picked file's own name.", "fields": [ { "name": "name", "type": "string" }, { "name": "file", "type": "string" }, { "name": "fileName", "type": "string", "optional": true } ] }
+      ]
+    },
+    {
+      "name": "TransferBody",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "empty", "fields": [] },
+        { "name": "text", "fields": [ { "name": "text", "type": "string" }, { "name": "contentType", "type": "string" } ] },
+        { "name": "file", "doc": "The raw bytes of a picked file; the content type is the file's own unless given.", "fields": [ { "name": "file", "type": "string" }, { "name": "contentType", "type": "string", "optional": true } ] },
+        { "name": "multipart", "fields": [ { "name": "parts", "type": { "list": "Part" } } ] }
+      ]
+    },
+    {
+      "name": "TransferRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "send", "doc": "Send one request. With progress, Progress facts follow for this request (by its correlation id), at most one per progressIntervalMs per direction, and always the final one; without, the pack registers no progress listener at all.", "fields": [
+          { "name": "method", "type": "TransferMethod" },
+          { "name": "url", "type": "string" },
+          { "name": "headers", "type": { "map": "string" }, "optional": true, "doc": "Never surfaced in diagnostics." },
+          { "name": "body", "type": "TransferBody" },
+          { "name": "response", "type": "TransferResponseKind" },
+          { "name": "responseHeaders", "type": { "list": "string" }, "optional": true },
+          { "name": "credentials", "type": "TransferCredentials", "optional": true },
+          { "name": "timeoutMs", "type": "int" },
+          { "name": "progress", "type": "bool" },
+          { "name": "progressIntervalMs", "type": "int" }
+        ] }
+      ]
+    },
+    { "name": "TransferFailureReason", "kind": "enum", "doc": "network: no response arrived. invalid-response: a response arrived but its body did not decode as asked. too-large: the body passed MAX_TRANSFER_RESPONSE_BYTES. unknown-file: a file id the files pack does not know (released, or never issued). no-files: a file body without a files pack wired to this one.", "values": ["network", "invalid-response", "too-large", "unknown-file", "no-files"] },
+    {
+      "name": "TransferResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Success", "fields": [ { "name": "status", "type": "int" }, { "name": "body", "type": "json" }, { "name": "headers", "type": { "map": "string" }, "optional": true } ] },
+        { "name": "Failure", "fields": [ { "name": "reason", "type": "TransferFailureReason" }, { "name": "status", "type": "int", "optional": true } ] },
+        { "name": "Cancelled", "doc": "The engine cancelled it. If the request was already sent, the server may still have acted on it; the engine that must know asks the server.", "fields": [] },
+        { "name": "OutcomeUnknown", "doc": "The timeout passed after the request was sent: it may have been applied.", "fields": [] },
+        { "name": "InvalidRequest", "fields": [ { "name": "problem", "type": "string" } ] }
+      ]
+    },
+    { "name": "TransferDirection", "kind": "enum", "values": ["upload", "download"] },
+    {
+      "name": "TransferFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Progress", "fields": [ { "name": "request", "type": "string", "doc": "The correlation id of the send request." }, { "name": "direction", "type": "TransferDirection" }, { "name": "loaded", "type": "int" }, { "name": "total", "type": "int", "optional": true, "doc": "Absent when the size is not known." } ] }
+      ]
+    }
+  ]
+}

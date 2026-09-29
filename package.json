@@ -63,6 +63,10 @@
       "types": "./dist/capabilities/adapters/web-component.d.ts",
       "import": "./dist/capabilities/adapters/web-component.js"
     },
+    "./capabilities/transfer": {
+      "types": "./dist/capabilities/transfer/index.d.ts",
+      "import": "./dist/capabilities/transfer/index.js"
+    },
     "./capability-support/handles": {
       "types": "./dist/capability-support/handles.d.ts",
       "import": "./dist/capability-support/handles.js"

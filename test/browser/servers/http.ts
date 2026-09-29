@@ -41,6 +41,24 @@ export const serveHttp = (request: IncomingMessage, response: ServerResponse): b
         xsrfSent: request.headers["x-xsrf-token"] !== undefined,
       }));
       return true;
+    case "/__limen/http/upload": {
+      // Consumes the whole body and reports its size, its content type and,
+      // for multipart, the part names and file names it saw.
+      const chunks: Buffer[] = [];
+      request.on("data", (chunk: Buffer) => chunks.push(chunk));
+      request.on("end", () => {
+        const body = Buffer.concat(chunks);
+        const type = String(request.headers["content-type"] ?? "");
+        const text = type.startsWith("multipart/form-data") ? body.toString("latin1") : "";
+        const names = Array.from(text.matchAll(/name="([^"]*)"(?:; filename="([^"]*)")?/g), (match) => (match[2] === undefined ? match[1] : `${match[1]}:${match[2]}`));
+        const field = /name="title"\r\n\r\n([^\r]*)/.exec(text)?.[1];
+        response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ bytes: body.length, type: type.split(";")[0], names, field: field ?? null }));
+      });
+      return true;
+    }
+    case "/__limen/http/download":
+      response.writeHead(200, { "Content-Type": "application/octet-stream", "Content-Length": String(3 * 1024 * 1024) }).end(Buffer.alloc(3 * 1024 * 1024, 7));
+      return true;
     case "/__limen/http/slow":
       setTimeout(() => { if (!response.writableEnded) response.writeHead(200, { "Content-Type": "application/json" }).end("{}"); }, 2000);
       return true;

@@ -106,9 +106,9 @@ for data the engine supplied, and only for a download.
 ## Not here
 
 - **Upload.** Nothing is uploaded implicitly: no form behaviour and no hidden
-  request. Sending a file needs a binary request body, which belongs to HTTP
-  profiles (#47). Until then, an engine reads and sends through its own
-  effects.
+  request. To send a picked file, the application wires this pack's `fileFor`
+  accessor into the transfer profile pack, and the engine uploads it by id,
+  alone or as multipart ([43](43-http-profiles.md)).
 - **Filesystem browsing, directories, persistent file handles** (the File
   System Access API). There is no reference consumer yet, and each would be a
   wider grant than a picked file.

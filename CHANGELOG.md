@@ -48,6 +48,14 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **HTTP transfer profile pack (#47).** `./capabilities/transfer`
+  (`transferCapability({ files })`, contract unit `limen.transfer`, with
+  bindings for TypeScript, F#, C# and Rust):
+  - opt-in, throttled upload and download `Progress` facts;
+  - uploads of files picked with the files pack, by opaque id, alone or as
+    multipart, through the files pack's new explicit `fileFor` accessor;
+  - Core Http's four outcomes, with `OutcomeUnknown` after a timeout.
+  A request without progress registers no progress listener.
 - **Core HTTP profile, protocol 1.3 (#47).** The `Http` effect gains optional
   fields, each absent by default, so the JSON path is unchanged:
   - `response` (`json`, `text`, `base64`, `none`), so non-JSON bodies no longer

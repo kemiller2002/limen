@@ -56,7 +56,12 @@ const fromBase64 = (view: View, data: string): Decoded => {
   }
 };
 
-export const filesCapability = (): CapabilityProvider => {
+// What another pack may be given, explicitly, by the application: the File
+// behind an id this pack issued (the transfer profile uploads it). Nothing is
+// shared implicitly, and the File never crosses to the engine.
+export type FileAccess = { readonly fileFor: (id: string) => File | undefined };
+
+export const filesCapability = (): CapabilityProvider & FileAccess => {
   // Owned by this provider instance: the files the user selected, until released.
   const table = createHandleTable<File>();
   const wiring: { host?: CapabilityHost<FilesFact> } = {};
@@ -162,5 +167,10 @@ export const filesCapability = (): CapabilityProvider => {
     }
   };
 
-  return defineCapability<FilesRequest, FilesResult, FilesFact>({ offer: CAPABILITY_OFFER, decodeRequest: decodeFilesRequest, execute, activate });
+  const fileFor = (id: string): File | undefined => {
+    const found = table.use(id);
+    return found.kind === "Live" ? found.resource : undefined;
+  };
+
+  return { ...defineCapability<FilesRequest, FilesResult, FilesFact>({ offer: CAPABILITY_OFFER, decodeRequest: decodeFilesRequest, execute, activate }), fileFor };
 };
