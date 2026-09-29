@@ -19,7 +19,8 @@
     "contract/offline.contract.json",
     "contract/geolocation.contract.json",
     "contract/credentials.contract.json",
-    "contract/coordination.contract.json"
+    "contract/coordination.contract.json",
+    "contract/media.contract.json"
   ],
   "outputs": [
     {
@@ -538,6 +539,32 @@
       "unit": "limen.coordination",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_coordination.rs"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "typescript-types",
+      "path": "src/capabilities/media/generated/media.ts"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/media/generated/media.codec.ts",
+      "typesModule": "./media.js"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Media.fs"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Media.cs"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_media.rs"
     }
   ]
 }
