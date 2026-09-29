@@ -1,0 +1,12 @@
+{
+  "workItem": "WI-0105",
+  "reference": "kemiller2002/limen#40",
+  "placement": "Performance budget (bench/budgets.json). Protocol 1.4 (WI-0103) adds the OutcomeUnknownReason codec and the kernel's method/offline classification: +497 bytes gzip on minimal-consumer, measured against the commit before it, which pushes that one profile 80 bytes over its budget. Only that profile is re-baselined, with the measured growth recorded; every other profile keeps its baseline and headroom.",
+  "guardrail": false,
+  "paths": [
+    "bench/budgets.json",
+    "docs/27-performance-baseline.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
