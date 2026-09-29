@@ -72,6 +72,7 @@ Then, for depth:
 | 31 | [Routing](https://github.com/kemiller2002/limen/blob/main/docs/31-routing.md) | Where do routes live, what exactly do they mean in any language, and how do deep links and Back/Forward avoid redundant pushes? |
 | 32 | [Forms](https://github.com/kemiller2002/limen/blob/main/docs/32-forms.md) | Who owns form state, what exactly do touched, dirty, async validation and submission mean, and how are they tested in any language? |
 | 33 | [Async resources and optimistic state](https://github.com/kemiller2002/limen/blob/main/docs/33-resources-and-optimistic-state.md) | How does an engine model loading, refreshing, stale answers and optimistic updates — including unknown outcomes — with no hidden cache? |
+| 34 | [Scheduling](https://github.com/kemiller2002/limen/blob/main/docs/34-scheduling.md) | How does an engine wait — a timeout, the next frame, an idle moment — and cancel it, without timers hidden in application JavaScript? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 

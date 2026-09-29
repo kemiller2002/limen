@@ -1,0 +1,5 @@
+{
+  "doc": "The scheduling pack's real-browser page (scripts/smoke-packs.ts). Its engine is main.js; it projects nothing.",
+  "view": {},
+  "events": { "next": {} }
+}

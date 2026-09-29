@@ -27,6 +27,10 @@
       "types": "./dist/capabilities/focus/index.d.ts",
       "import": "./dist/capabilities/focus/index.js"
     },
+    "./capabilities/schedule": {
+      "types": "./dist/capabilities/schedule/index.d.ts",
+      "import": "./dist/capabilities/schedule/index.js"
+    },
     "./capability-support/handles": {
       "types": "./dist/capability-support/handles.d.ts",
       "import": "./dist/capability-support/handles.js"

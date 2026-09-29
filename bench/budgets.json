@@ -12,6 +12,10 @@
     {
       "workItem": "WI-0056",
       "change": "Added kernel-with-focus (kemiller2002/limen#23): the focus pack adds 3876 bytes gzip over kernel-only, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0063",
+      "change": "Added kernel-with-schedule (kemiller2002/limen#24): the scheduling pack adds 2689 bytes gzip over the kernel, and only to applications that register it."
     }
   ],
   "profiles": [
@@ -147,6 +151,30 @@
       },
       "budget": {
         "rawBytes": 123904,
+        "gzipBytesBundled": 23552
+      }
+    },
+    {
+      "name": "kernel-with-schedule",
+      "doc": "The kernel plus the scheduling capability pack (./capabilities/schedule), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/schedule/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/"
+      ],
+      "baseline": {
+        "rawBytes": 107508,
+        "gzipBytesBundled": 20758
+      },
+      "budget": {
+        "rawBytes": 118784,
         "gzipBytesBundled": 23552
       }
     }

@@ -31,6 +31,14 @@ exhaustive lists.
 
 ### Added
 
+- **Scheduling capability pack (#24).** `./capabilities/schedule`
+  (`scheduleCapability()`, contract unit `limen.schedule`, with bindings for
+  TypeScript, F#, C# and Rust) offers timeout, animation frame and idle
+  wake-ups. Each answers exactly once: `Fired`, `IdleFired`, `InvalidDelay`,
+  `Unsupported` or `Cancelled`. A cancellation that races the timer never
+  also fires. Debounce and throttle stay engine policy. Intervals and
+  prioritized tasks are deliberately absent until a reference case needs
+  them.
 - **Language-neutral async-resource and optimistic-mutation semantics with
   the F# reference library (#22).** `conformance/resources/` covers seven
   scenarios, 58 steps:
