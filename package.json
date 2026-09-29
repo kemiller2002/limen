@@ -158,6 +158,10 @@
     "./federation": {
       "types": "./dist/federation.d.ts",
       "import": "./dist/federation.js"
+    },
+    "./renderer": {
+      "types": "./dist/renderer/index.d.ts",
+      "import": "./dist/renderer/index.js"
     }
   },
   "bin": {

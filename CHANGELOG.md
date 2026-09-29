@@ -97,6 +97,22 @@ exhaustive lists.
     packed `dist/`) fail if an optional module re-enters its graph or an
     optional export returns to the root.
 
+### Added
+
+- **Optional server and static renderer (#38), `…/renderer`.**
+  - `renderRoute` and `renderStatic` run the same engine and page as the
+    browser, and write the settled projection, head metadata included, into
+    semantic HTML, using the kernel's own binding policy.
+  - Only Http is offered, and only with a fetch you supply. Storage,
+    Clipboard and Navigation answer `Failure{unavailable}`; optional
+    capabilities answer `Unsupported{not-negotiated}`; an engine that selects
+    one is refused.
+  - `data-client-only` sections are written as authored.
+  - Rows and mounted sections carry the markers hydration (#39) will adopt.
+  - The renderer never imports the BrowserKernel.
+  - Streaming is not built: there is no measured use case yet.
+  - See [docs/54](https://github.com/kemiller2002/limen/blob/main/docs/54-server-rendering.md).
+
 ### Changed
 
 - **`<head>` is bound, and page metadata is a projection (#38).**

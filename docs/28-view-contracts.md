@@ -72,6 +72,12 @@ Output is sorted by line, so it is deterministic.
 [`test/fixtures/views/`](../test/fixtures/views/) has one fixture page per
 row above, and its snapshot is compared exactly.
 
+A page written by the [server renderer](54-server-rendering.md) is checked
+the same way. A row it wrote after its `<template data-each>` carries
+`data-limen-key`, and its bindings are checked in that list's item scope, as
+the template's are; a `data-limen-key` row with no list template before it is
+reported.
+
 ## Holding the engine to the same contract
 
 A contract the engine does not honour is fiction, so every engine in the

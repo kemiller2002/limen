@@ -96,6 +96,10 @@
     {
       "workItem": "WI-0121",
       "change": "Lowered minimal-consumer (kemiller2002/limen#61): the package root no longer exports federation or the reference engine, so the minimal consumer loads Core only. Measured with an absolute root: 144579 -> 114362 raw bytes, 30286 -> 23819 gzip bundled. It now also forbids dist/federation.js, dist/engine/ and dist/renderer/."
+    },
+    {
+      "workItem": "WI-0119",
+      "change": "Added renderer (kemiller2002/limen#38): the optional server and static renderer, 87066 raw / 16648 gzip bytes bundled, measured with an absolute root. It runs on a server or at build time, never in a page; its closure must hold no BrowserKernel, pack, federation, reference engine, host or tooling."
     }
   ],
   "profiles": [
@@ -952,6 +956,30 @@
       "budget": {
         "rawBytes": 168960,
         "gzipBytesBundled": 33792
+      }
+    },
+    {
+      "name": "renderer",
+      "doc": "The optional server and static renderer (./renderer, kemiller2002/limen#38): what a server or build step loads to render a route. It reuses the kernel's pure binding policy and handshake, never the BrowserKernel itself.",
+      "entries": [
+        "dist/renderer/index.js"
+      ],
+      "forbidden": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/",
+        "dist/capability-support/",
+        "dist/federation.js",
+        "dist/engine/",
+        "dist/hosts/",
+        "dist/tooling/"
+      ],
+      "baseline": {
+        "rawBytes": 87066,
+        "gzipBytesBundled": 16648
+      },
+      "budget": {
+        "rawBytes": 96256,
+        "gzipBytesBundled": 18432
       }
     }
   ]

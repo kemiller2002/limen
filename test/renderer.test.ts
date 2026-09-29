@@ -6,7 +6,7 @@
 // module graph holds no BrowserKernel; and the template reader is strict.
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import test from "node:test";
 import { BrowserKernel } from "../dist/kernel/browser-kernel.js";
 import { parse, renderProjection, renderRoute, renderStatic, serialize, ProjectionError, RenderRefused, TemplateError } from "../dist/renderer/index.js";
@@ -120,6 +120,16 @@ test("the round budget bounds an engine that never stops asking: rendered as it 
 });
 
 // --- static output -------------------------------------------------------------------------
+
+// scripts/smoke-packs.ts loads this page in Chromium. It is the renderer's
+// output, not a hand-written copy: LIMEN_WRITE_RENDERED=1 regenerates it.
+test("the browser page for the renderer is renderRoute's current output for /", async () => {
+  const committed = new URL("./browser/packs/renderer/index.html", import.meta.url);
+  const { html, settled } = await renderRoute({ page: PAGE, engine: createCatalogueTransport(), url: `${ORIGIN}/`, fetch: catalogueFetch });
+  assert.equal(settled, true);
+  if (process.env.LIMEN_WRITE_RENDERED === "1") await writeFile(committed, html);
+  assert.equal(await readFile(committed, "utf8"), html, "regenerate with LIMEN_WRITE_RENDERED=1");
+});
 
 test("static generation renders every route, and the output reads without JavaScript", async () => {
   const pages = await renderStatic(["/", ...ITEMS.map((item) => `/items/${item.id}`)], { page: PAGE, origin: ORIGIN, engine: () => createCatalogueTransport(), fetch: catalogueFetch });

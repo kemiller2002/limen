@@ -127,7 +127,9 @@ export const tagsOf = (html: string): readonly Tag[] =>
 
 const FORM_CONTROLS: readonly string[] = ["input", "select", "textarea"];
 
-type Frame = { readonly kind: "each"; readonly list: string } | { readonly kind: "other" };
+// A rendered row (data-limen-key, written by the server renderer) is in its
+// list's item scope until its element closes, like the template it came from.
+type Frame = { readonly kind: "each"; readonly list: string; readonly row?: { readonly element: string; readonly open: number } } | { readonly kind: "other" };
 type Scope = { readonly absence: string; readonly fields: Readonly<Record<string, ViewEntry>> };
 
 const describe = (entry: ViewEntry | undefined): string => (entry === undefined ? "absent" : typeof entry === "string" ? entry : "list");
@@ -214,15 +216,41 @@ const checkTag = (file: string, contract: ViewContract, tag: Tag, frames: readon
   return [...misplaced, ...eachChecks, ...ifChecks, ...textChecks, ...elementChecks, ...bindChecks, ...eventChecks, ...triggerChecks];
 };
 
+const VOID_ELEMENTS: readonly string[] = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"];
+
 export const checkPage = (file: string, html: string, contract: ViewContract): readonly Diagnostic[] => {
-  type Walk = { readonly frames: readonly Frame[]; readonly diagnostics: readonly Diagnostic[] };
+  // lastList: the list of the most recent data-each template, which a
+  // rendered row that follows it belongs to.
+  type Walk = { readonly frames: readonly Frame[]; readonly diagnostics: readonly Diagnostic[]; readonly lastList: string | undefined };
+  const top = (frames: readonly Frame[]): Frame | undefined => frames[frames.length - 1];
+  const withTopRow = (frames: readonly Frame[], change: number): readonly Frame[] => {
+    const frame = top(frames);
+    if (frame?.kind !== "each" || frame.row === undefined) return frames;
+    const open = frame.row.open + change;
+    return open === 0 ? frames.slice(0, -1) : [...frames.slice(0, -1), { ...frame, row: { ...frame.row, open } }];
+  };
   const walked = tagsOf(html).reduce<Walk>((state, tag) => {
-    if (tag.closing) return tag.name === "template" ? { ...state, frames: state.frames.slice(0, -1) } : state;
-    const diagnostics = [...state.diagnostics, ...checkTag(file, contract, tag, state.frames)];
-    if (tag.name !== "template") return { ...state, diagnostics };
+    const row = top(state.frames);
+    const inRowOf = row?.kind === "each" && row.row !== undefined && row.row.element === tag.name ? row : undefined;
+    if (tag.closing) {
+      if (inRowOf !== undefined) return { ...state, frames: withTopRow(state.frames, -1) };
+      if (tag.name !== "template") return state;
+      const closed = top(state.frames);
+      return { ...state, frames: state.frames.slice(0, -1), lastList: closed?.kind === "each" && closed.row === undefined ? closed.list : state.lastList };
+    }
+    const key = tag.attributes.get("data-limen-key");
+    const rendered = key === undefined || tag.name === "template" || VOID_ELEMENTS.includes(tag.name) ? undefined : state.lastList;
+    if (key !== undefined && rendered === undefined && tag.name !== "template") {
+      const orphan: Diagnostic = { file, line: tag.line, element: render(tag), binding: "data-limen-key", message: "a rendered row with no data-each template before it", expected: "the row's <template data-each> immediately before it, as the renderer writes it" };
+      return { ...state, diagnostics: [...state.diagnostics, orphan, ...checkTag(file, contract, tag, state.frames)] };
+    }
+    const frames = rendered !== undefined ? [...state.frames, { kind: "each" as const, list: rendered, row: { element: tag.name, open: 1 } }]
+      : inRowOf !== undefined && !VOID_ELEMENTS.includes(tag.name) ? withTopRow(state.frames, 1) : state.frames;
+    const diagnostics = [...state.diagnostics, ...checkTag(file, contract, tag, frames)];
+    if (tag.name !== "template") return { ...state, frames, diagnostics };
     const list = tag.attributes.get("data-each");
-    return { frames: [...state.frames, list === undefined ? { kind: "other" } : { kind: "each", list }], diagnostics };
-  }, { frames: [], diagnostics: [] });
+    return { ...state, frames: [...frames, list === undefined ? { kind: "other" } : { kind: "each", list }], diagnostics };
+  }, { frames: [], diagnostics: [], lastList: undefined });
   return [...walked.diagnostics].sort((a, b) => a.line - b.line || a.binding.localeCompare(b.binding));
 };
 
