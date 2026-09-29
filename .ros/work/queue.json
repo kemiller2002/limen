@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 95,
+  "nextSeq": 97,
   "items": [
     {
       "id": "WI-0001",
@@ -1444,6 +1444,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T10:46:34Z",
       "updatedAt": "2026-09-29T10:56:07Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0095",
+      "title": "Environment evidence and native formatting pack: locale, languages, time zone, direction, opt-in preferences, change facts, typed Intl formatting for a supplied locale and time zone (GH-35)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:56:38Z",
+      "updatedAt": "2026-09-29T10:56:38Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0096",
+      "title": "Guardrail: register the limen.environment contract unit and its generated bindings (GH-35)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:56:39Z",
+      "updatedAt": "2026-09-29T10:56:39Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
