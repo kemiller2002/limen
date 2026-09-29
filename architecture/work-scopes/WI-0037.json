@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0037",
+  "reference": "kemiller2002/limen#17",
+  "placement": "Tooling / Conformance + Optional Host (WASM host transports) — guardrail-class because it declares a new layer for host adapters",
+  "guardrail": true,
+  "paths": [
+    "guests/**", "conformance/**", "src/hosts/**", "src/index.ts", "architecture/layers.json", "architecture/typescript-boundary.json",
+    "architecture/guardrails.json", "test/**", "scripts/**", "package.json", "tsconfig.json", ".github/workflows/ci.yml", ".github/CODEOWNERS",
+    ".gitignore", "docs/**", "research/decisions/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "README.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
