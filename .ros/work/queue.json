@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 125,
+  "nextSeq": 126,
   "items": [
     {
       "id": "WI-0001",
@@ -1864,6 +1864,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T16:58:14.326Z",
       "updatedAt": "2026-09-29T16:59:09Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0125",
+      "title": "Prove the minimal F#, C# and Rust WebAssembly consumers use the Core contract without optional subsystems (kemiller2002/limen#59): their host's module graph is Core plus the WASM host adapters, no capability pack is registered, and no minimal engine requests an optional capability",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T17:02:26.308Z",
+      "updatedAt": "2026-09-29T17:02:36Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
