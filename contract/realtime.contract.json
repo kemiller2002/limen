@@ -1,0 +1,52 @@
+{
+  "unit": "limen.realtime",
+  "role": "capability",
+  "version": 1,
+  "doc": "Long-lived browser I/O: WebSocket and Server-Sent Events (LCP-016). The engine opens a connection and gets an opaque id; everything that happens to it arrives as facts under that id, ending with exactly one Closed. The pack never reconnects — EventSource's native retry is stopped and reported as Closed — so reconnection, backoff and replacement are the engine's decisions. Payloads are uninterpreted text.",
+  "types": [
+    { "name": "ConnectionId", "kind": "brand", "of": "string", "doc": "Opaque; issued by this page's pack and meaningless anywhere else." },
+    { "name": "ConnectionStaleReason", "kind": "enum", "values": ["unknown", "disposed", "other-session"] },
+    { "name": "ReadyState", "kind": "enum", "values": ["connecting", "open", "closing", "closed"] },
+    { "name": "CloseInitiator", "kind": "enum", "doc": "Who ended a connection the engine did not close (an engine's own close is answered Closed and nothing follows). remote: the server closed it. error: the connection failed, or an event stream dropped and would have retried on its own.", "values": ["remote", "error"] },
+    {
+      "name": "RealtimeRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "openWebSocket", "doc": "url is ws:, wss:, or http(s): (mapped to ws(s):), absolute or relative to the page.", "fields": [ { "name": "url", "type": "string" }, { "name": "protocols", "type": { "list": "string" } } ] },
+        { "name": "openEventSource", "doc": "url is http(s):, absolute or relative to the page. Unnamed events arrive as Message; a named event type arrives only if it is listed in events (the browser offers no way to hear every type).", "fields": [ { "name": "url", "type": "string" }, { "name": "withCredentials", "type": "bool" }, { "name": "events", "type": { "list": "string" } } ] },
+        { "name": "send", "doc": "Send one text message on an open WebSocket.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "text", "type": "string" } ] },
+        { "name": "close", "doc": "Close a connection. It is answered Closed and nothing more is heard for it — not even a message the browser had already queued.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "code", "type": "int", "optional": true }, { "name": "reason", "type": "string", "optional": true } ] }
+      ]
+    },
+    {
+      "name": "RealtimeResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Connecting", "doc": "Facts for this connection follow: Opened, Message…, then exactly one Closed — unless the engine closes it first.", "fields": [ { "name": "connection", "type": "ConnectionId" } ] },
+        { "name": "Sent", "fields": [ { "name": "bufferedAmount", "type": "int" } ] },
+        { "name": "Closed", "fields": [] },
+        { "name": "NotOpen", "doc": "send before Opened, or while closing.", "fields": [ { "name": "state", "type": "ReadyState" } ] },
+        { "name": "NotSendable", "doc": "An event stream is receive-only.", "fields": [] },
+        { "name": "Stale", "doc": "No such live connection: never issued here, already closed, or from before a reload.", "fields": [ { "name": "reason", "type": "ConnectionStaleReason" } ] },
+        { "name": "InvalidUrl", "doc": "The URL does not parse, or its scheme is not one this transport takes. Named by scheme only, never by value.", "fields": [ { "name": "scheme", "type": "string" } ] },
+        { "name": "InvalidCloseCode", "doc": "A WebSocket close code must be 1000 or 3000–4999.", "fields": [] },
+        { "name": "Refused", "doc": "The browser threw (for example a content security policy). The exception's name only.", "fields": [ { "name": "reason", "type": "string" } ] },
+        { "name": "Unsupported", "fields": [] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "RealtimeFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Opened", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "protocol", "type": "string", "doc": "The subprotocol the server chose; empty for none and for event streams." } ] },
+        { "name": "Message", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "data", "type": "string" }, { "name": "event", "type": "string", "optional": true, "doc": "An event stream's event type, when not the default message." }, { "name": "lastEventId", "type": "string", "optional": true } ] },
+        { "name": "BinaryMessage", "doc": "A binary WebSocket frame: its size only. Bytes do not cross.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "bytes", "type": "int" } ] },
+        { "name": "Closed", "doc": "The last fact for this connection; its id is Stale from now on.", "fields": [ { "name": "connection", "type": "ConnectionId" }, { "name": "initiator", "type": "CloseInitiator" }, { "name": "code", "type": "int" }, { "name": "reason", "type": "string" }, { "name": "clean", "type": "bool" } ] }
+      ]
+    }
+  ]
+}

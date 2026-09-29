@@ -48,6 +48,16 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Realtime and streaming capability pack (#26).** `./capabilities/realtime`
+  (`realtimeCapability()`, contract unit `limen.realtime`, with bindings for
+  TypeScript, F#, C# and Rust):
+  - WebSocket and Server-Sent Events connections under opaque ids;
+  - `Opened`, `Message`, `BinaryMessage` (size only) and exactly one terminal
+    `Closed` as capability facts;
+  - an engine's close silences the id, even for queued messages, so a
+    replacement connection never hears the old one;
+  - the pack never reconnects, and `EventSource`'s native retry is stopped;
+  - URLs are refused by scheme, and the scheme only is reported.
 - **Overlay and top-layer capability pack (#49).** `./capabilities/overlay`
   (`overlayCapability()`, contract unit `limen.overlay`, with bindings for
   TypeScript, F#, C# and Rust), native-first:

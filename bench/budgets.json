@@ -28,6 +28,10 @@
     {
       "workItem": "WI-0072",
       "change": "Added kernel-with-overlay (kemiller2002/limen#49): the overlay pack, with the shared named-target resolver, adds 5614 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/overlay/."
+    },
+    {
+      "workItem": "WI-0075",
+      "change": "Added kernel-with-realtime (kemiller2002/limen#26): the realtime pack, with the shared handle table, adds 5841 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/realtime/."
     }
   ],
   "profiles": [
@@ -87,7 +91,8 @@
         "dist/hosts/",
         "dist/engine/",
         "dist/federation.js",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 92602,
@@ -111,7 +116,8 @@
         "dist/capabilities/",
         "dist/engine/",
         "dist/federation.js",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 92470,
@@ -135,7 +141,8 @@
         "dist/capabilities/",
         "dist/engine/",
         "dist/federation.js",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 95578,
@@ -159,7 +166,8 @@
         "dist/engine/",
         "dist/federation.js",
         "dist/capability-support/",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 112426,
@@ -184,7 +192,8 @@
         "dist/federation.js",
         "dist/capability-support/",
         "dist/capabilities/focus/",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 107508,
@@ -209,7 +218,8 @@
         "dist/federation.js",
         "dist/capabilities/focus/",
         "dist/capabilities/schedule/",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 124360,
@@ -236,7 +246,8 @@
         "dist/capabilities/focus/",
         "dist/capabilities/schedule/",
         "dist/capabilities/measure/",
-        "dist/capabilities/overlay/"
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 123906,
@@ -262,7 +273,8 @@
         "dist/capabilities/focus/",
         "dist/capabilities/schedule/",
         "dist/capabilities/measure/",
-        "dist/capabilities/events/"
+        "dist/capabilities/events/",
+        "dist/capabilities/realtime/"
       ],
       "baseline": {
         "rawBytes": 125294,
@@ -271,6 +283,33 @@
       "budget": {
         "rawBytes": 138240,
         "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "name": "kernel-with-realtime",
+      "doc": "The kernel plus the realtime and streaming capability pack (./capabilities/realtime), with the capability-support handle table it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/realtime/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/"
+      ],
+      "baseline": {
+        "rawBytes": 126374,
+        "gzipBytesBundled": 24267
+      },
+      "budget": {
+        "rawBytes": 139264,
+        "gzipBytesBundled": 27648
       }
     }
   ]

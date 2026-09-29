@@ -43,6 +43,10 @@
       "types": "./dist/capabilities/overlay/index.d.ts",
       "import": "./dist/capabilities/overlay/index.js"
     },
+    "./capabilities/realtime": {
+      "types": "./dist/capabilities/realtime/index.d.ts",
+      "import": "./dist/capabilities/realtime/index.js"
+    },
     "./capability-support/handles": {
       "types": "./dist/capability-support/handles.d.ts",
       "import": "./dist/capability-support/handles.js"

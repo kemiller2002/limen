@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen realtime pack in a real browser</title>
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP (connect-src 'self')
+       with Trusted Types. main.js talks to the runner's same-origin echo
+       WebSocket and event stream, and reports window.__limenPackResult. -->
+  <button id="poke" data-event="poke">Ask</button>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
