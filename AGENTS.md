@@ -2,11 +2,11 @@
 id: GV-START-001
 title: Agent Startup Guide
 status: canonical
-version: 2.0.0
+version: 2.1.0
 owners:
   - repository-governance
 created: 2026-07-22
-updated: 2026-09-21
+updated: 2026-09-29
 review_cycle: quarterly
 supersedes: []
 superseded_by: []
@@ -109,6 +109,17 @@ ROS_BASE_REF=origin/main ./ros validate    # must print "validation passed"
 
 Skipping this does not fail locally. It fails the pull request. Part 2 has the
 full protocol.
+
+## CI observation discipline
+
+Keep incremental commits, pushes, and durable checkpoints at coherent recovery
+boundaries, but do not wait for remote CI after every push. Continue the next
+independent in-scope slice while debounced CI batches or runs. Run local checks
+when they inform implementation; inspect remote build/CI status at the final
+implementation boundary by default. Inspect it earlier only when its result
+gates the next action, protects a high-risk boundary, or is required for
+merge/release/publication. Never treat queued, cancelled, unavailable, or
+unobserved CI as passing.
 
 ## Architecture in one screen
 
