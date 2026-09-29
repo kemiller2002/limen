@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 105,
+  "nextSeq": 106,
   "items": [
     {
       "id": "WI-0001",
@@ -1584,6 +1584,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T11:52:36Z",
       "updatedAt": "2026-09-29T11:52:36Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0105",
+      "title": "Re-baseline the minimal-consumer payload budget after protocol 1.4 (GH-40)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:55:54Z",
+      "updatedAt": "2026-09-29T11:55:54Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
