@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen — a canvas surface behind a governed adapter</title>
+  <link rel="stylesheet" href="../examples.css">
+  <link rel="stylesheet" href="./surface.css">
+</head>
+<body>
+  <!-- The engine (engine.ts) owns the data, the selection and the viewport.
+       The surface (scatter-adapter.ts) owns every pixel, mounted into the
+       data-adapter-slot below through the adapters capability. Only a small
+       scene goes in, and only semantic facts come out. -->
+  <main>
+    <h1>A canvas surface</h1>
+    <p>
+      Selected: <strong id="selection" data-text="selection"></strong> ·
+      points: <span id="point-count" data-text="pointCount"></span> ·
+      zoom: <span id="zoom" data-text="zoom"></span> ·
+      boundary messages: <span id="messages" data-text="messages"></span>
+    </p>
+    <p>
+      The surface has drawn <span id="surface-frames" data-text="surfaceFrames"></span> frames
+      and emitted <span id="surface-emitted" data-text="surfaceEmitted"></span> facts;
+      its backing store is <span id="surface-width" data-text="surfaceWidth"></span> pixels wide.
+    </p>
+    <div class="controls">
+      <button type="button" id="add-point" data-event="addPoint">Add a point</button>
+      <button type="button" id="reset-view" data-event="resetView">Fit all points</button>
+      <button type="button" id="focus-chart" data-event="focusChart">Focus the chart</button>
+      <button type="button" id="measure-surface" data-event="measureSurface">Measure the surface</button>
+      <button type="button" id="toggle-width" data-event="toggleWidth">Wide / narrow</button>
+      <button type="button" id="hide-chart" data-event="hideChart">Hide the chart</button>
+      <button type="button" id="show-chart" data-event="showChart">Show the chart</button>
+      <button type="button" id="break-chart" data-event="breakChart">Break the chart</button>
+    </div>
+    <p id="chart-status" role="status" data-text="chartStatus"></p>
+    <template data-if="showChart">
+      <section id="chart" class="chart" aria-label="Samples" data-adapter-slot="chart" data-focus-target="chart" data-bind-data-width="width"></section>
+    </template>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

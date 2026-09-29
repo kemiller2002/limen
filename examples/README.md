@@ -37,6 +37,7 @@ python3 -m http.server 4173
 | Clipboard | <http://localhost:4173/examples/07-clipboard/> |
 | Routing | <http://localhost:4173/examples/08-routing/> |
 | Accessible patterns | <http://localhost:4173/examples/09-accessible-patterns/> |
+| Canvas surface | <http://localhost:4173/examples/10-canvas-surface/> |
 | Kitchen sink | <http://localhost:4173/examples/kitchen-sink.html> |
 
 [`minimal/`](minimal/) is not in that list because it is not built from this
@@ -80,6 +81,7 @@ without reproducing any kernel behavior.
 | **07-clipboard** | The `Clipboard` capability. Three distinct failure reasons, only one of which is worth offering a retry for. Waiting is a state. No `navigator` call appears anywhere in the engine — the architecture check would fail the build if it did. |
 | **08-routing** | The `Navigation` capability. Typed routes, parse and format side by side, the initial screen taken from the address bar, and the asymmetry that matters: an application-initiated move pushes, a browser-initiated move adopts and pushes nothing. |
 | **09-accessible-patterns** | Two optional capabilities (events, focus) and pure pattern state machines: tabs, menu button, listbox, combobox, tree, a right-to-left grid and a dialog, with every ARIA state projected and no widget logic in the kernel. |
+| **10-canvas-surface** | A high-frequency rendering surface behind a governed adapter: a canvas scatter plot that draws at frame rate while the engine hears only semantic facts (a selection, a settled viewport). Pointer, keyboard, focus, resize and fault isolation. |
 | **minimal** | The npm-shipped copy: four files, plain JavaScript, no build step, imported by package name exactly as a consumer would. |
 
 ## Deliberately absent
@@ -103,6 +105,7 @@ would be the beginning of the second framework
 | 07 | [Clipboard](https://github.com/kemiller2002/limen/blob/main/examples/07-clipboard/README.md) |
 | 08 | [Routing](https://github.com/kemiller2002/limen/blob/main/examples/08-routing/README.md) |
 | 09 | [Accessible patterns](https://github.com/kemiller2002/limen/blob/main/examples/09-accessible-patterns/README.md) |
+| 10 | [Canvas surface](https://github.com/kemiller2002/limen/blob/main/examples/10-canvas-surface/README.md) |
 | — | [Minimal (npm)](minimal/README.md) |
 
 ## Related

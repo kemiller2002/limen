@@ -1,0 +1,26 @@
+{
+  "doc": "Example 10: a canvas scatter plot behind the governed adapter contract (kemiller2002/limen#45).",
+  "view": {
+    "selection": "string",
+    "pointCount": "string",
+    "zoom": "string",
+    "messages": "string",
+    "chartStatus": "string",
+    "showChart": "boolean",
+    "chartFaulted": "boolean",
+    "width": "string",
+    "surfaceFrames": "string",
+    "surfaceEmitted": "string",
+    "surfaceWidth": "string"
+  },
+  "events": {
+    "addPoint": {},
+    "resetView": {},
+    "focusChart": {},
+    "measureSurface": {},
+    "toggleWidth": {},
+    "hideChart": {},
+    "showChart": {},
+    "breakChart": {}
+  }
+}

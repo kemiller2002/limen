@@ -72,6 +72,16 @@ exhaustive lists.
     reset); anything else reloads the page;
   - a dev server that streams file changes.
   Development only; nothing in Core imports it.
+- **Rendering surfaces behind governed adapters (#45).**
+  [Example 10](https://github.com/kemiller2002/limen/blob/main/examples/10-canvas-surface/README.md) and `docs/52`:
+  - a canvas scatter plot draws at frame rate behind the existing adapters
+    contract, with no new contract and no graphics primitive in Limen;
+  - the engine sends a small scene as props and hears only semantic facts
+    (a selection, a settled viewport);
+  - measured in Chromium: 65 frames and 0 messages per idle second, and 71
+    frames and 1 message for a 40-step drag;
+  - focus through the focus pack, sizing kept inside the surface, and faults
+    isolated with a remount.
 - **Permission-sensitive capability pattern (#42).**
   `capability-support/permissions` and two packs, each with a contract unit
   and bindings for TypeScript, F#, C# and Rust:
