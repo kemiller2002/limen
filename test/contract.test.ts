@@ -66,6 +66,12 @@ test("a shape-union whose variants share a JSON kind is rejected", () => {
   rejects(unitWith([{ name: "A", kind: "shape-union", variants: [{ name: "X", type: "int" }, { name: "Y", type: "number" }] }]), /share JSON kind number/);
 });
 
+test("a field named like another variant of its union is rejected; one named like its own variant is not", () => {
+  // limen.media had { startCapture... } as "capture" beside other variants' capture fields: C# did not compile.
+  rejects(unitWith([{ name: "A", kind: "union", tag: "operation", variants: [{ name: "capture", fields: [] }, { name: "stop", fields: [{ name: "capture", type: "string" }] }] }]), /field "capture" is named like another variant of A/);
+  assert.equal(parseUnit(unitWith([{ name: "A", kind: "union", tag: "kind", variants: [{ name: "Event", fields: [{ name: "event", type: "string" }] }] }]), "fixture").ok, true);
+});
+
 test("a variant field that shadows the union tag is rejected", () => {
   rejects(unitWith([{ name: "A", kind: "union", tag: "kind", variants: [{ name: "X", fields: [{ name: "kind", type: "string" }] }] }]), /shadows tag/);
 });
