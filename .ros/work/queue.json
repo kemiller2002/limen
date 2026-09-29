@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 104,
+  "nextSeq": 105,
   "items": [
     {
       "id": "WI-0001",
@@ -1570,6 +1570,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T11:42:58Z",
       "updatedAt": "2026-09-29T11:42:58Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0104",
+      "title": "Guardrail: compile-pressure consumers name OutcomeUnknownReason (protocol 1.4) (GH-40)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:52:36Z",
+      "updatedAt": "2026-09-29T11:52:36Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
