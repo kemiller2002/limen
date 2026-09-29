@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 132,
+  "nextSeq": 134,
   "items": [
     {
       "id": "WI-0001",
@@ -1962,6 +1962,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T17:53:57.924Z",
       "updatedAt": "2026-09-29T17:54:24Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0132",
+      "title": "WebRTC peer connection capability pack (kemiller2002/limen#44, LCP-038): opaque connection ids, offer/answer/ICE as requests and facts relayed by the engine (signaling meaning stays the engine's), local tracks from the media pack through an accessor the application passes explicitly, remote media previewed into named video elements, connection state as facts, and explicit close and teardown",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T18:02:06.726Z",
+      "updatedAt": "2026-09-29T18:02:21Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0133",
+      "title": "Guardrail: register the limen.peer contract unit and its F#, C# and Rust bindings (kemiller2002/limen#44)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T18:02:07.044Z",
+      "updatedAt": "2026-09-29T18:02:21Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
