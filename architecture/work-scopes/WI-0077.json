@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0077",
+  "reference": "kemiller2002/limen#27 (LCP-017)",
+  "placement": "Capability Pack — src/capabilities/files/ with its own contract unit. Selection stays native: a real <input type=file> the user operates, reported as facts with opaque file ids (no File object crosses). The engine may ask to open a picker, which the browser allows only with user activation (NeedsGesture otherwise); reads are bounded slices, so a large file is read in chunks without loading it whole. Core unchanged; absent unless registered. The smoke runner gains trusted file-input and click actions.",
+  "guardrail": false,
+  "paths": ["contract/files.contract.json", "src/capabilities/files/**", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
