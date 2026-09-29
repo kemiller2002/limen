@@ -65,4 +65,4 @@
 | WI-0058 | Guardrail: CI runs smoke:packs (every capability pack in Chromium under strict CSP) as a required step (GH-23) | complete |  | medium |
 | WI-0059 | Language-neutral routing semantics (shared vectors) with the F# reference engine library (GH-20) | complete |  | medium |
 | WI-0060 | Language-neutral form-state semantics (scenario vectors) with the F# reference engine library (GH-21) | complete |  | medium |
-| WI-0061 | Kernel form-control values: checkbox checked state, radio groups, select-multiple values and submitter identity reach the engine (GH-21, found while defining form semantics) | captured |  | medium |
+| WI-0061 | Kernel form-control values: checkbox checked state, radio groups, select-multiple values and submitter identity reach the engine (GH-21, found while defining form semantics) | ready |  | medium |
