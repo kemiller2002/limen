@@ -41,4 +41,4 @@
 | WI-0035 | GH-54: restricted handwritten TypeScript boundary checker (compiler-API based) with failing fixtures; remove existing escape hatches from Core and the core WASM transport | complete | limen,gh-54,guardrail | high |
 | WI-0036 | GH-55: guest compiler enforcement — added-variant compile pressure in F#/C#/Rust, Roslyn analyzer for C# closed-union handling and escape hatches, C# enum Match | complete | limen,gh-55,guardrail,guests | high |
 | WI-0037 | GH-17 LCP-001: minimal F#, C# and Rust WASM engines on the generated contract — guest handshake, shared session vectors, generic .NET and raw-wasm host transports, real-browser proof of Http/Storage/Clipboard/Navigation per guest | complete | limen,gh-17,lcp-001,wasm,guests | high |
-| WI-0038 | GH-17 follow-up: move the product site's F# engine off its handwritten Protocol.fs onto the generated F# binding and guest handshake | ready | limen,gh-17,site,fsharp | high |
+| WI-0038 | GH-17 follow-up: move the product site's F# engine off its handwritten Protocol.fs onto the generated F# binding and guest handshake | complete | limen,gh-17,site,fsharp | high |
