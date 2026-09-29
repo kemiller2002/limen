@@ -4,6 +4,21 @@ Tracks the TypeScript kernel's mechanism responsibilities against what is
 actually implemented and tested — not what's aspirational. Update the status
 next to the code, not ahead of it.
 
+## Core is frozen at v1 (kemiller2002/limen#59)
+
+The kernel's responsibilities below are **Limen Core**, and Core is now a
+fixed, machine-checked boundary: the files, root export families, six binding
+primitives, four built-in capability families (Http, Storage, Clipboard,
+Navigation) and zero runtime dependencies listed in
+[`architecture/core.json`](../architecture/core.json), within the budget in
+[`architecture/core-baseline.json`](../architecture/core-baseline.json).
+
+**Nothing on this page is a queue of future Core work.** A browser capability
+Limen does not yet expose is an optional capability pack
+([24](24-contract-and-capabilities.md)), an engine library, a governed
+adapter, an optional host, or tooling — never a new kernel branch. Growing
+Core at all takes a [Core Admission](core-admission.md).
+
 ## Mental model
 
 ```text
@@ -43,8 +58,10 @@ plain, JSON-serializable value.
 
 - ✅ **Implemented & tested** — real code, exercised by `test/*.test.ts`.
 - ⚠️ **Partial** — the mechanism exists but a named sub-case doesn't yet.
-- 🧊 **Deferred** — a genuine kernel responsibility, not yet built because no
-  feature has demonstrated the need. Per
+- 🧊 **Deferred** — not yet built because no feature has demonstrated the
+  need. Since the v1 freeze a deferred *capability* is deferred to an optional
+  pack, not to the kernel; only a deferred refinement of an existing Core
+  mechanism stays here, and it still answers to the Core budget. Per
   [`prompts/minimal-typescript-browser-kernel-responsibility-spec.md`](../prompts/minimal-typescript-browser-kernel-responsibility-spec.md)
   §29 ("these should not all exist in Kernel Core") and
   [`prompts/dependency-minimal-browser-kernel-architecture-policy.md`](../prompts/dependency-minimal-browser-kernel-architecture-policy.md)
@@ -60,7 +77,7 @@ plain, JSON-serializable value.
 | 1 | Engine lifecycle — load, initialize, version-check | ✅ Demonstrated | `BrowserKernel.start()` awaits the transport, then dispatches `Initialize` with `PROTOCOL_VERSION`. The product site's `WasmSiteTransport.start()` loads the .NET WebAssembly runtime, while F# `Dispatch` rejects a mismatched version. The kernel remains transport-neutral. | `kernel.test.ts` lifecycle tests; F# site-engine serialized-dispatch tests; site artifact check requires the WASM runtime |
 | 2 | Command dispatch | ✅ | `#bindEvent` / `#fire` | `kernel.test.ts` event-dispatch tests |
 | 3 | Projection rendering | ✅ | `#applyScope`, `#applyIf`, `#applyEach` | `kernel.test.ts` projection tests |
-| 4 | Effect execution | ⚠️ Partial | Http (`#runHttp`, any of `GET`/`PUT`/`POST`/`PATCH`/`DELETE`, caller headers merged over the default, opaque pre-serialized body), Storage (`#executeStorage`/`runStorage`, `localStorage`-backed), Clipboard (`writeClipboardText`, write-only) and Navigation (`runNavigation`, push/replace/back/forward). An effect kind the kernel does not implement is reported as `BridgeError` phase `"effect"` rather than silently dropped. File/auth adapters and clipboard *read*: 🧊 deferred, see below. | `kernel.test.ts` effect-execution tests |
+| 4 | Effect execution | ⚠️ Partial | Http (`#runHttp`, any of `GET`/`PUT`/`POST`/`PATCH`/`DELETE`, caller headers merged over the default, opaque pre-serialized body), Storage (`#executeStorage`/`runStorage`, `localStorage`-backed), Clipboard (`writeClipboardText`, write-only) and Navigation (`runNavigation`, push/replace/back/forward). An effect kind the kernel does not implement is reported as `BridgeError` phase `"effect"` rather than silently dropped. Anything beyond the four built-in families is an optional pack (files: [40](40-files.md); IndexedDB: [41](41-indexeddb.md); the rest via [24](24-contract-and-capabilities.md)); clipboard *read* is deliberately absent. | `kernel.test.ts` effect-execution tests |
 | 5 | Effect result return — Succeeded/Failed/Cancelled/OutcomeUnknown | ✅ | `EffectOutcome` in `protocol.ts` now carries all four (`Success`, `Failure`, `Cancelled`, `OutcomeUnknown`); `#classifyAbort` in the kernel classifies transport-level outcomes only, never business meaning | `kernel.test.ts`: Success/Failure(network)/Failure(invalid-response)/OutcomeUnknown/Cancelled — one test each |
 | 6 | DOM event wiring — click/input/change/submit/keyboard/focus | ✅ | `TRIGGER_BY_TAG` maps the exceptions (`form`→submit, `input`/`select`/`textarea`→change); everything else defaults to `click`; `data-on` overrides to any DOM event type, including keyboard/focus events — no special-casing needed since the trigger is data-driven | `kernel.test.ts`: default triggers + `data-on` override |
 | 7 | Form value extraction | ✅ | `readValue()` | covered by event-dispatch tests |
@@ -71,10 +88,10 @@ plain, JSON-serializable value.
 | 12 | Serialization boundary | ✅ Demonstrated for real F# consumers | `DirectTypeScriptTransport` remains in-process, but the product site serializes `BrowserToEngineMessage` to JSON, F# parses it, and F# serializes `EngineToBrowserMessage` back. The external time-entry consumer uses the same pattern. A generic codec is not part of the npm API because serialization belongs to the chosen transport. | F# site-engine serialized-dispatch tests; `test/site.test.ts`; product-site artifact checks |
 | 13 | Error boundary | ✅ | Every engine round-trip funnels through one chokepoint, `#send()`. A transport throw or a malformed projection is caught, reported via diagnostics, and does not propagate or leave a half-applied view. | `kernel.test.ts`: "a transport.dispatch() rejection is reported…", "a malformed projection is reported…" |
 | 14 | Diagnostics hooks | ✅ | `src/kernel/diagnostics.ts` — injectable `DiagnosticsSink`, defaults to a no-op. Reports `BridgeError` in four phases — `dispatch` (the transport threw or its `start()` rejected), `binding` (malformed markup, e.g. `data-each` without `data-key`), `projection` (a view key missing or not scalar) and `effect` (an effect kind the kernel cannot run) — and `EffectTiming`. | `kernel.test.ts`: "the kernel reports effect timing…", both error-boundary tests |
-| 15 | Accessibility plumbing | ⚠️ Partial | `aria-live` regions work today because they're native HTML the kernel already updates via `data-text`/`textContent` (see `index.html`'s status paragraph) — no special kernel code needed. Focus restoration (e.g. after a keyed list item is removed) is 🧊 deferred, no demonstrated need yet. | — |
+| 15 | Accessibility plumbing | ⚠️ Partial | `aria-live` regions work today because they're native HTML the kernel already updates via `data-text`/`textContent` (see `index.html`'s status paragraph) — no special kernel code needed. Moving focus is the optional focus pack ([30](30-focus-selection-scroll.md)), not Core; automatic focus restoration after a keyed removal remains 🧊 deferred, and would be a pack or an engine decision, not kernel behavior. | — |
 | 16 | Scheduling primitives — rAF/timers/idle callbacks | 🧊 Deferred | No feature currently needs debounced/scheduled semantic events; the coalesce/debounce allowance in zero-authoritative spec §15 is explicitly evidence-driven, not default. | — |
-| 17 | File/browser API adapters | ⚠️ Partial | Clipboard **write** implemented (`ClipboardEffectRequest`, `writeClipboardText`); guide in `docs/clipboard.md`, worked example in `examples/07-clipboard/`. Clipboard **read** is deliberately absent, not deferred: it would let an engine pull whatever the user last copied across the boundary unprompted. Files, geolocation, notifications, media: 🧊 deferred. | `kernel.test.ts` clipboard tests; `examples.test.ts` 07-clipboard tests |
-| 18 | Storage adapters | ✅ (`localStorage` only) | `StorageEffectRequest`/`StorageOutcome` in `protocol.ts`; `#executeStorage`/`runStorage` in the kernel. `get`/`set`/`remove` only, no `IndexedDB`/`Cache API` — build those when a feature demonstrates the need, same 🧊 policy as everything else here. No `OutcomeUnknown`: a single `localStorage` call is effectively atomic, so unlike Http there's no meaningful "dispatched but uncertain" state; failures classify as `unavailable` or `quota-exceeded`. | `kernel.test.ts`: set→get round-trip, remove→get reports `null`, quota-exceeded classification, stale-cancellation-is-a-no-op |
+| 17 | File/browser API adapters | ⚠️ Partial | Clipboard **write** implemented (`ClipboardEffectRequest`, `writeClipboardText`); guide in `docs/clipboard.md`, worked example in `examples/07-clipboard/`. Clipboard **read** is deliberately absent, not deferred: it would let an engine pull whatever the user last copied across the boundary unprompted. Files, geolocation, notifications and media are optional packs, not kernel work: files ([40](40-files.md)), permission-sensitive capabilities such as geolocation and credentials ([51](51-permission-sensitive-capabilities.md)). | `kernel.test.ts` clipboard tests; `examples.test.ts` 07-clipboard tests |
+| 18 | Storage adapters | ✅ (`localStorage` only) | `StorageEffectRequest`/`StorageOutcome` in `protocol.ts`; `#executeStorage`/`runStorage` in the kernel. `get`/`set`/`remove` only, no `IndexedDB`/`Cache API` in Core — IndexedDB is the optional store pack ([41](41-indexeddb.md)); a Cache API capability would be a pack too. No `OutcomeUnknown`: a single `localStorage` call is effectively atomic, so unlike Http there's no meaningful "dispatched but uncertain" state; failures classify as `unavailable` or `quota-exceeded`. | `kernel.test.ts`: set→get round-trip, remove→get reports `null`, quota-exceeded classification, stale-cancellation-is-a-no-op |
 | 19 | Network adapter | ✅ | `#runHttp` — classifies transport-level outcomes only (`Success`/`Failure`/`Cancelled`/`OutcomeUnknown`), never interprets a status code or decoded body as domain truth (per responsibility-spec §17: "TypeScript must not interpret business meaning"). Extended beyond `GET` to any of `PUT`/`POST`/`PATCH`/`DELETE` with caller-supplied headers (merged over the kernel's own `accept` default) and an opaque pre-serialized body — added for a real consumer's GitHub Contents API write (`PUT` + `Authorization` header + JSON body). Headers/body are never surfaced in a `DiagnosticEvent`. | `kernel.test.ts`: PUT with headers+body reaches `fetch()` correctly, GET omits body entirely, diagnostics never contain header/body content |
 
 ## Federated application engines
@@ -106,6 +123,21 @@ and reports `Cancelled` back through the ordinary `EffectResult` path — the
 engine handles it as evidence, the same as any other outcome, not as a
 special control-flow case. See "Cancelling an in-flight effect" in
 [USAGE.md](USAGE.md).
+
+## Reconciliation with the frozen boundary
+
+Where each related issue stands against the Core manifest, the budget gate
+and Core Admission (kemiller2002/limen#59–#63):
+
+| Issue | Relation to Core | Status against the boundary |
+| --- | --- | --- |
+| #15 capability parity | Every LCP item is placed outside Core: engine libraries, optional packs, governed adapters, optional hosts, tooling. | No parity item added a built-in family, a binding primitive, a Core file beyond the frozen list or a runtime dependency. Remaining items must follow the decision order in [where code goes](where-code-goes.md); the budget and manifest checks fail otherwise. |
+| #16 optional capabilities | Owns the one generic seam (`src/kernel/capabilities.ts`, the `Capability` effect, `CapabilityFact`). | The seam is Core (family `optional-capability-seam`); no pack's semantics are in Core: Core files name no pack, and `core-imports-optional` fails if one is imported. |
+| #18 binding security | `src/kernel/binding-policy.ts` guards the six primitives. | Core (public: the renderer and view-contract tooling reuse it). Its growth is part of CA-0001. |
+| #19 performance | Payload budgets per profile (`bench/budgets.json`). | The Core report reuses `bench/size.ts` for the minimal consumer; the `minimal-consumer` profile now forbids federation, the reference engine and the renderer. |
+| #47 HTTP profiles | Protocol 1.3/1.4 Http semantics are the grandfathered Http family's own; the transfer profile is an optional pack. | Http options stayed inside the Http family (no fifth family). The Core growth is recorded in CA-0001. |
+| #51 guardrails | Guardrail-owned paths and required gates. | Extended with the Core manifest, baseline, admission records and their tests; `check:core-budget` is a required gate, and CI re-verifies the reference from Git. |
+| #53 dependency direction | `architecture/layers.json`. | The manifest classifies every layer as Core or one optional group; every file under `src/` must be in exactly one layer; Core imports only Core; optional layers import only public Core files. |
 
 ## Extension history
 
