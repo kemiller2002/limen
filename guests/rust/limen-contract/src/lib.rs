@@ -20,6 +20,9 @@ pub mod limen_schedule;
 /// The optional measurement and observer capability (limen.measure).
 pub mod limen_measure;
 
+/// The optional rich browser event facts capability (limen.events).
+pub mod limen_events;
+
 /// A test-only capability unit, compiled only for the conformance tests.
 #[cfg(test)]
 pub mod limen_fixture_echo;

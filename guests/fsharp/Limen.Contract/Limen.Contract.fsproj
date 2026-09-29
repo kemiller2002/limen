@@ -16,5 +16,6 @@
     <Compile Include="Generated/Focus.fs" />
     <Compile Include="Generated/Schedule.fs" />
     <Compile Include="Generated/Measure.fs" />
+    <Compile Include="Generated/Events.fs" />
   </ItemGroup>
 </Project>
