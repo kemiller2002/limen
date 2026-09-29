@@ -26,6 +26,13 @@ exhaustive lists.
 
 ### Added
 
+- **Opaque handles and provider conformance (#32).** `./capability-support/handles`
+  exports `createHandleTable`: browser resources stay browser-side, only ids
+  cross, a disposed, unknown or other-session id is answered `Stale` with its
+  reason, and host teardown runs every cleanup exactly once.
+  `./testing/providers` exports `runProviderConformance`, one suite every
+  capability pack runs against its own fixtures (malformed requests rejected,
+  results within the pack's contract and plain JSON, cancellation settles).
 - **One language-neutral contract (#16).** The wire protocol is now defined once,
   as data, in `contract/core.contract.json`, and the TypeScript types in
   `src/protocol.ts` are generated from it by `tools/contract-gen`

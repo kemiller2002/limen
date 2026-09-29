@@ -1,7 +1,8 @@
 {
   "units": [
     "contract/core.contract.json",
-    "test/fixtures/capabilities/echo.contract.json"
+    "test/fixtures/capabilities/echo.contract.json",
+    "test/fixtures/capabilities/handle.contract.json"
   ],
   "outputs": [
     {
@@ -67,6 +68,17 @@
       "unit": "limen.fixture.echo",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_fixture_echo.rs"
+    },
+    {
+      "unit": "limen.fixture.handle",
+      "kind": "typescript-types",
+      "path": "test/fixtures/capabilities/generated/handle.ts"
+    },
+    {
+      "unit": "limen.fixture.handle",
+      "kind": "typescript-codec",
+      "path": "test/fixtures/capabilities/generated/handle.codec.ts",
+      "typesModule": "./handle.ts"
     }
   ]
 }

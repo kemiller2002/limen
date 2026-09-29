@@ -5,6 +5,7 @@
     "src/index.ts",
     "src/kernel/**",
     "src/guest/**",
+    "src/capability-support/**",
     "src/hosts/**",
     "src/tooling/**",
     "src/capabilities/**",
@@ -20,6 +21,11 @@
       "path": "src/kernel/capabilities.ts",
       "rule": "untyped-capability-dispatch",
       "reason": "The generic capability seam: Core carries an opaque request it must not interpret. defineCapability is the only way a provider receives it, and it decodes with the pack's generated decoder or answers Rejected. Every other file is checked."
+    },
+    {
+      "path": "src/tooling/provider-conformance.ts",
+      "rule": "untyped-capability-dispatch",
+      "reason": "The conformance suite feeds providers raw wire input on purpose \u2014 malformed payloads are what it tests \u2014 so its fixtures are typed `unknown`, the honest type of untrusted wire data. It dispatches nothing itself."
     }
   ],
   "knownDebt": [

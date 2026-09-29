@@ -60,6 +60,17 @@
       ]
     },
     {
+      "name": "capability-support",
+      "doc": "Shared mechanism for capability packs (opaque handle tables). Knows no capability; packs may import it, Core may not.",
+      "paths": [
+        "src/capability-support/**"
+      ],
+      "mayImport": [
+        "core-contract",
+        "capability-support"
+      ]
+    },
+    {
       "name": "host-adapter",
       "doc": "Optional hosts: transports that run an engine somewhere (a .NET or raw WebAssembly module). Mechanism only; engine output is decoded with the generated codec. The composition root supplies loaders, so no computed import appears here.",
       "paths": [
@@ -80,6 +91,7 @@
       "mayImport": [
         "core-contract",
         "core-kernel",
+        "capability-support",
         "same-instance"
       ]
     },

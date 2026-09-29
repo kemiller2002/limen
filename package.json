@@ -23,6 +23,10 @@
       "types": "./dist/kernel/capabilities.d.ts",
       "import": "./dist/kernel/capabilities.js"
     },
+    "./capability-support/handles": {
+      "types": "./dist/capability-support/handles.d.ts",
+      "import": "./dist/capability-support/handles.js"
+    },
     "./hosts/dotnet-wasm": {
       "types": "./dist/hosts/dotnet-wasm-transport.d.ts",
       "import": "./dist/hosts/dotnet-wasm-transport.js"
@@ -34,6 +38,10 @@
     "./testing": {
       "types": "./dist/tooling/fake-host.d.ts",
       "import": "./dist/tooling/fake-host.js"
+    },
+    "./testing/providers": {
+      "types": "./dist/tooling/provider-conformance.d.ts",
+      "import": "./dist/tooling/provider-conformance.js"
     },
     "./trace": {
       "types": "./dist/tooling/trace.d.ts",

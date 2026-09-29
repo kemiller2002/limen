@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 41,
+  "nextSeq": 42,
   "items": [
     {
       "id": "WI-0001",
@@ -689,6 +689,22 @@
       "createdBy": "claude-code",
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "WI-0041",
+      "title": "GH-32 part 2 / GH-51 §7: opaque-handle lifecycle support for capability packs, a handle fixture capability, and a generic provider conformance suite with negative cases",
+      "description": null,
+      "tags": [
+        "limen,gh-32,gh-51,conformance,handles"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T06:13:02Z",
+      "updatedAt": "2026-09-29T06:13:02Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#32"
     }
   ]
 }

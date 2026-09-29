@@ -241,6 +241,46 @@ is the executable proof that a capability family can be added without touching
 Core; [`test/handshake.test.ts`](../test/handshake.test.ts) exercises every rule
 above.
 
+### Opaque handles
+
+A browser resource that must outlive one request — an observer, a picked
+file, a media stream — stays in the browser, in a **handle table**, and only
+its id crosses. `@echelon-foundry/typescript-wasm-kernel/capability-support/handles`
+provides one:
+
+```ts
+const table = createHandleTable<IntersectionObserver>();  // one per page lifetime
+const id = table.create(observer, (o) => o.disconnect()); // "<session>.<n>", never reused
+table.use(id);      // { kind: "Live", resource } | { kind: "Stale", reason }
+table.dispose(id);  // { kind: "Disposed" } once; then Stale("disposed")
+table.disposeAll(); // host teardown: every live cleanup runs exactly once
+```
+
+A stale id is an answer, not an exception. Its reason is `unknown` (never
+issued here), `disposed`, or `other-session` — an id the engine kept across a
+reload, which names a resource that no longer exists. A pack declares handles
+as a `brand` in its contract and its stale reasons as its own enum; see
+[`test/fixtures/capabilities/handle.contract.json`](../test/fixtures/capabilities/handle.contract.json).
+The table is capability-support, not Core: a pack that needs none imports none.
+
+### Provider conformance
+
+`runProviderConformance(provider, fixture)` from
+`@echelon-foundry/typescript-wasm-kernel/testing/providers` runs the same checks
+against every pack, fed by the pack's own payloads and generated result decoder,
+and returns the failures (empty when the provider conforms):
+
+- the descriptor has an id, a positive version and a generated fingerprint;
+- a malformed request is `Rejected(malformed-request)` and never throws;
+- a valid request `Completed` with a result the pack's decoder accepts;
+- the result is plain JSON — no DOM node, `File`, function or non-finite number;
+- an aborted request still settles promptly, with a result the decoder accepts.
+
+It proves the seam, not the meaning: each pack still tests its own behavior,
+and anything only a browser can establish in a real browser.
+[`test/handles.test.ts`](../test/handles.test.ts) runs it against both fixture
+packs and against a deliberately broken provider.
+
 ## Compatibility notes for existing consumers
 
 - Public TypeScript names are unchanged. `Initialize` and

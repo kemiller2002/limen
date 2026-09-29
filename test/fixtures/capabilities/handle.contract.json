@@ -1,0 +1,31 @@
+{
+  "unit": "limen.fixture.handle",
+  "role": "capability",
+  "version": 1,
+  "doc": "A test-only capability that returns an opaque handle, proving the handle lifecycle (create, use, dispose, stale, reload) end to end. The resource behind a handle stays in the provider; only the id crosses.",
+  "types": [
+    { "name": "ResourceHandle", "kind": "brand", "of": "string" },
+    { "name": "HandleStaleReason", "kind": "enum", "values": ["unknown", "disposed", "other-session"] },
+    {
+      "name": "HandleRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "open", "fields": [ { "name": "label", "type": "string" } ] },
+        { "name": "read", "fields": [ { "name": "handle", "type": "ResourceHandle" } ] },
+        { "name": "close", "fields": [ { "name": "handle", "type": "ResourceHandle" } ] }
+      ]
+    },
+    {
+      "name": "HandleResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Opened", "fields": [ { "name": "handle", "type": "ResourceHandle" } ] },
+        { "name": "Read", "fields": [ { "name": "label", "type": "string" } ] },
+        { "name": "Closed", "fields": [] },
+        { "name": "Stale", "fields": [ { "name": "reason", "type": "HandleStaleReason" } ] }
+      ]
+    }
+  ]
+}
