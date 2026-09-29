@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0091",
+  "reference": "kemiller2002/limen#50 (LCP-032)",
+  "placement": "Optional Host — src/hosts/fallback.ts (host-adapter layer; it imports no kernel: the composition root builds the kernel through connect(guard), and the host sees only its status and dispose). Host health (starting, available, unavailable) is mechanical and separate from application state; the fallback surface is static, generic text built with DOM APIs; the one deterministic policy is preserve-and-cover (the last view stays, inert, under the surface) and restore-on-restart (the page's pre-start DOM is cloned back). Domain errors never reach this path: only a transport that throws, an Initialize that fails, a refused binding or an incompatible engine does. No kernel or protocol change.",
+  "guardrail": false,
+  "paths": ["src/hosts/fallback.ts", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
