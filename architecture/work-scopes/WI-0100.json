@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0100",
+  "reference": "kemiller2002/limen#43 (LCP-037)",
+  "placement": "Capability Pack — src/capabilities/lifecycle/ with its own contract unit. Online/offline, visibility, pagehide/pageshow (with bfcache persisted), freeze/resume, prerendering and advisory connection quality are browser facts; the pack reports them on request and by subscription, typed with what each can and cannot prove (navigator.onLine is not backend reachability). The kernel never pauses or resumes anything: the engine decides. Core unchanged; absent unless registered. The smoke runner gains network-emulation, web-lifecycle and back/forward actions.",
+  "guardrail": false,
+  "paths": ["contract/lifecycle.contract.json", "src/capabilities/lifecycle/**", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
