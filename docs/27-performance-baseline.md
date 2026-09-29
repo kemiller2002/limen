@@ -116,13 +116,18 @@ and the kernel closure (below) is identical whichever guest runs.
 
 ### Payload per consumer profile
 
-| Profile | Modules | Raw bytes | gzip, per module | gzip, bundled | Budget (raw / gzip) |
-| --- | --- | --- | --- | --- | --- |
-| `minimal-consumer` — package root, as `examples/minimal` imports it | 13 | 112,707 | 24,532 | 21,893 | 124,928 / 24,576 |
-| `kernel-only` — the `./kernel` subpath | 6 | 83,090 | 16,388 | 15,358 | 92,160 / 17,408 |
-| `kernel-with-handles` | 7 | 85,774 | 17,521 | 16,387 | 95,232 / 18,432 |
-| `kernel-with-dotnet-host` | 7 | 85,642 | 17,457 | 16,115 | 95,232 / 18,432 |
-| `kernel-with-raw-host` | 8 | 88,750 | 18,676 | 16,981 | 98,304 / 19,456 |
+| Profile | Modules | Raw bytes | gzip, per module | gzip, bundled |
+| --- | --- | --- | --- | --- |
+| `minimal-consumer` — package root, as `examples/minimal` imports it | 13 | 112,707 | 24,532 | 21,893 |
+| `kernel-only` — the `./kernel` subpath | 6 | 83,090 | 16,388 | 15,358 |
+| `kernel-with-handles` | 7 | 85,774 | 17,521 | 16,387 |
+| `kernel-with-dotnet-host` | 7 | 85,642 | 17,457 | 16,115 |
+| `kernel-with-raw-host` | 8 | 88,750 | 18,676 | 16,981 |
+
+These are the 2026-09-29 measurements. The current budgets, and why each
+changed, are in [`bench/budgets.json`](../bench/budgets.json) (`history`): the
+binding security policy (#18) re-baselined every kernel profile by about
+2.1 KB gzip.
 
 `test/bench-size.test.ts` proves that no module under `capability-support/`,
 `capabilities/`, `tooling/` or `hosts/` is in the minimal consumer. Optional

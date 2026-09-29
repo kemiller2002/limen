@@ -1,5 +1,15 @@
 {
   "doc": "Payload budgets per consumer profile (kemiller2002/limen#19). Each budget is the measured baseline plus 10%, rounded up to a whole KiB; test/bench-size.test.ts fails when a profile exceeds its budget or loads a forbidden module. Raising a budget needs its own work item saying what grew and why; lowering one after an optimization is encouraged.",
+  "history": [
+    {
+      "workItem": "WI-0042",
+      "change": "Initial baselines and budgets (kemiller2002/limen#19)."
+    },
+    {
+      "workItem": "WI-0053",
+      "change": "Re-baselined every profile after the binding security policy (src/kernel/binding-policy.ts, kemiller2002/limen#18): each profile that loads the kernel grew by about 2.1 KB gzip (6.8 KB raw). kernel-only and kernel-with-handles exceeded their budgets; the rest had not, but are re-baselined by the same rule so every budget keeps 10% headroom over what ships."
+    }
+  ],
   "profiles": [
     {
       "name": "minimal-consumer",
@@ -14,12 +24,12 @@
         "dist/capabilities/"
       ],
       "baseline": {
-        "rawBytes": 112707,
-        "gzipBytesBundled": 21893
+        "rawBytes": 119535,
+        "gzipBytesBundled": 24052
       },
       "budget": {
-        "rawBytes": 124928,
-        "gzipBytesBundled": 24576
+        "rawBytes": 132096,
+        "gzipBytesBundled": 26624
       }
     },
     {
@@ -37,12 +47,12 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 83090,
-        "gzipBytesBundled": 15358
+        "rawBytes": 89918,
+        "gzipBytesBundled": 17479
       },
       "budget": {
-        "rawBytes": 92160,
-        "gzipBytesBundled": 17408
+        "rawBytes": 99328,
+        "gzipBytesBundled": 19456
       }
     },
     {
@@ -59,12 +69,12 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 85774,
-        "gzipBytesBundled": 16387
+        "rawBytes": 92602,
+        "gzipBytesBundled": 18510
       },
       "budget": {
-        "rawBytes": 95232,
-        "gzipBytesBundled": 18432
+        "rawBytes": 102400,
+        "gzipBytesBundled": 20480
       }
     },
     {
@@ -82,12 +92,12 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 85642,
-        "gzipBytesBundled": 16115
+        "rawBytes": 92470,
+        "gzipBytesBundled": 18262
       },
       "budget": {
-        "rawBytes": 94208,
-        "gzipBytesBundled": 18432
+        "rawBytes": 102400,
+        "gzipBytesBundled": 20480
       }
     },
     {
@@ -105,12 +115,12 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 88750,
-        "gzipBytesBundled": 16981
+        "rawBytes": 95578,
+        "gzipBytesBundled": 19140
       },
       "budget": {
-        "rawBytes": 98304,
-        "gzipBytesBundled": 19456
+        "rawBytes": 105472,
+        "gzipBytesBundled": 21504
       }
     }
   ]
