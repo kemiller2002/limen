@@ -69,3 +69,5 @@
 | WI-0062 | Language-neutral async-resource and optimistic-mutation semantics with the F# reference engine library (GH-22) | complete |  | medium |
 | WI-0063 | Scheduling capability pack: timeout, animation frame, idle; typed, cancellable, exactly-once (GH-24) | complete |  | medium |
 | WI-0064 | Guardrail: register the limen.schedule contract unit and its generated bindings (GH-24) | complete |  | medium |
+| WI-0065 | Measurement and observer capability pack: rects, viewport, resize and visibility subscriptions, removed targets (GH-25) | active |  | medium |
+| WI-0066 | Guardrail: register the limen.measure contract unit and its generated bindings (GH-25) | ready |  | medium |

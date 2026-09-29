@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 65,
+  "nextSeq": 67,
   "items": [
     {
       "id": "WI-0001",
@@ -1024,6 +1024,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T07:54:31Z",
       "updatedAt": "2026-09-29T07:59:32Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0065",
+      "title": "Measurement and observer capability pack: rects, viewport, resize and visibility subscriptions, removed targets (GH-25)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:00:06Z",
+      "updatedAt": "2026-09-29T08:00:07Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0066",
+      "title": "Guardrail: register the limen.measure contract unit and its generated bindings (GH-25)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:00:08Z",
+      "updatedAt": "2026-09-29T08:00:08Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
