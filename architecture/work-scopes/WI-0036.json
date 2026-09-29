@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0036",
+  "reference": "kemiller2002/limen#55",
+  "placement": "Tooling / Guest SDKs — guardrail-class (analyzer, generator, guest strictness)",
+  "guardrail": true,
+  "paths": [
+    "guests/**", "tools/contract-gen/**", "src/generated/**", "test/**", "conformance/**", "scripts/**", "package.json",
+    ".github/workflows/ci.yml", ".github/CODEOWNERS", "architecture/guardrails.json", "docs/**", "research/decisions/**",
+    "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", ".gitignore"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
