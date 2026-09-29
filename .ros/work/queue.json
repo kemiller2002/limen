@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 128,
+  "nextSeq": 129,
   "items": [
     {
       "id": "WI-0001",
@@ -1906,6 +1906,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T17:34:49.237Z",
       "updatedAt": "2026-09-29T17:38:14Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0128",
+      "title": "Core Admission proposal CA-0002 (kemiller2002/limen#39): the kernel adopts a server-rendered data-if root or data-each row instead of cloning its template; recorded pending for the owner, since hydration is outside Core under #59 and feature work cannot approve it",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T17:38:50.185Z",
+      "updatedAt": "2026-09-29T17:38:59Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
