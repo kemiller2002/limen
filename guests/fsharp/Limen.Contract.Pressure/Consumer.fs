@@ -6,12 +6,13 @@ open Limen.Contract.Core
 
 let describeOutcome (outcome: EffectOutcome) : string =
     match outcome with
-    | EffectOutcome.Success(status, _) -> $"success {status}"
+    | EffectOutcome.Success(status, _, _) -> $"success {status}"
     | EffectOutcome.Failure(reason, _) ->
         match reason with
         | HttpFailureReason.Network -> "network"
         | HttpFailureReason.Aborted -> "aborted"
         | HttpFailureReason.InvalidResponse -> "invalid response"
+        | HttpFailureReason.TooLarge -> "too large"
     | EffectOutcome.Cancelled -> "cancelled"
     | EffectOutcome.OutcomeUnknown -> "unknown: reconcile before retrying"
 

@@ -10,7 +10,7 @@ public static class Consumer
 {
     public static string DescribeOutcome(EffectOutcome outcome) => outcome.Match(
         success: value => "success " + value.Status,
-        failure: value => value.Reason.Match(network: () => "network", aborted: () => "aborted", invalidResponse: () => "invalid response"),
+        failure: value => value.Reason.Match(network: () => "network", aborted: () => "aborted", invalidResponse: () => "invalid response", tooLarge: () => "too large"),
         cancelled: _ => "cancelled",
         outcomeUnknown: _ => "unknown: reconcile before retrying");
 

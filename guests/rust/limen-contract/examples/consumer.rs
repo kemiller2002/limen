@@ -10,6 +10,7 @@ pub fn describe_outcome(outcome: &EffectOutcome) -> String {
             HttpFailureReason::Network => "network".to_string(),
             HttpFailureReason::Aborted => "aborted".to_string(),
             HttpFailureReason::InvalidResponse => "invalid response".to_string(),
+            HttpFailureReason::TooLarge => "too large".to_string(),
         },
         EffectOutcome::Cancelled => "cancelled".to_string(),
         EffectOutcome::OutcomeUnknown => "unknown: reconcile before retrying".to_string(),
