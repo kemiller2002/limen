@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 86,
+  "nextSeq": 88,
   "items": [
     {
       "id": "WI-0001",
@@ -1318,6 +1318,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T09:57:45Z",
       "updatedAt": "2026-09-29T10:00:22Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0086",
+      "title": "HTTP transfer profile pack: opt-in upload/download progress facts, uploads of picked files by opaque id and multipart, four-outcome semantics with OutcomeUnknown intact (GH-47)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:00:57Z",
+      "updatedAt": "2026-09-29T10:00:58Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0087",
+      "title": "Guardrail: register the limen.transfer contract unit and its generated bindings (GH-47)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:00:58Z",
+      "updatedAt": "2026-09-29T10:00:59Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
