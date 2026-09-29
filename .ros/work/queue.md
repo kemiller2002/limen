@@ -88,4 +88,5 @@
 | WI-0081 | Governed third-party widget and custom-element adapter pack: identity and version, mount/update/command/unmount lifecycle, JSON-only facts, fault isolation, reference Web Component adapter and widget stub (GH-30) | complete |  | medium |
 | WI-0082 | Guardrail: register the limen.adapters contract unit and its generated bindings (GH-30) | complete |  | medium |
 | WI-0083 | Core HTTP profile, protocol 1.3 additive: text/base64/none response representations, response-header allowlist, explicit credentials, HEAD/OPTIONS, same-origin XSRF cookie-to-header binding; JSON default and OutcomeUnknown unchanged (GH-47) | active |  | medium |
-| WI-0084 | Guardrail: compile-pressure consumers name HttpFailureReason too-large (protocol 1.3, GH-47) | ready |  | medium |
+| WI-0084 | Guardrail: compile-pressure consumers name HttpFailureReason too-large (protocol 1.3, GH-47) | active |  | medium |
+| WI-0085 | Re-baseline payload budgets after the Core HTTP profile (protocol 1.3): about 1.7 KB gzip on every profile that loads the kernel (GH-47, GH-19) | ready |  | medium |
