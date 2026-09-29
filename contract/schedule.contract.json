@@ -1,0 +1,31 @@
+{
+  "unit": "limen.schedule",
+  "role": "capability",
+  "version": 1,
+  "doc": "Browser timing as explicit, cancellable mechanism (LCP-010): the engine asks for a wake-up and is told, exactly once, whether it fired or was cancelled. Debounce, throttle, polling and retry are engine policy built from these; the pack holds no policy. Interval and prioritized task scheduling are deliberately absent: no reference case or measurement yet justifies them (docs/34).",
+  "types": [
+    {
+      "name": "ScheduleRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "timeout", "doc": "Wake after at least delayMs milliseconds (0 to 2147483647).", "fields": [ { "name": "delayMs", "type": "int" } ] },
+        { "name": "animationFrame", "doc": "Wake before the browser's next repaint.", "fields": [] },
+        { "name": "idle", "doc": "Wake when the browser is idle, or after timeoutMs if given. Unsupported where the browser has no idle callback.", "fields": [ { "name": "timeoutMs", "type": "int", "optional": true } ] }
+      ]
+    },
+    {
+      "name": "ScheduleResult",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "Exactly one per request. A cancelled request never also fires.",
+      "variants": [
+        { "name": "Fired", "doc": "The wake-up happened; elapsedMs is the measured time since the request was accepted.", "fields": [ { "name": "elapsedMs", "type": "number" } ] },
+        { "name": "IdleFired", "doc": "An idle wake-up: whether it came from the timeout, and the idle time the browser estimated was left.", "fields": [ { "name": "elapsedMs", "type": "number" }, { "name": "didTimeout", "type": "bool" }, { "name": "remainingMs", "type": "number" } ] },
+        { "name": "InvalidDelay", "doc": "delayMs or timeoutMs outside 0..2147483647; nothing was scheduled.", "fields": [] },
+        { "name": "Unsupported", "doc": "This browser does not implement the primitive; nothing was scheduled.", "fields": [] },
+        { "name": "Cancelled", "doc": "The engine cancelled the request before it fired.", "fields": [] }
+      ]
+    }
+  ]
+}
