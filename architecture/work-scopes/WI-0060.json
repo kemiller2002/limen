@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0060",
+  "reference": "kemiller2002/limen#21 (LCP-006)",
+  "placement": "Engine Library — form state is application meaning: one authoritative owner in the engine. Language-neutral semantics (conformance/forms/) and a pure F# reference library (libraries/fsharp/Limen.Forms). No browser-side form store; the kernel is unchanged here (its form-control value gap is WI-0061).",
+  "guardrail": false,
+  "paths": ["conformance/forms/**", "libraries/**", "package.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

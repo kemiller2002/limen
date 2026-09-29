@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 60,
+  "nextSeq": 62,
   "items": [
     {
       "id": "WI-0001",
@@ -954,6 +954,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T07:17:58Z",
       "updatedAt": "2026-09-29T07:25:18Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0060",
+      "title": "Language-neutral form-state semantics (scenario vectors) with the F# reference engine library (GH-21)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:26:22Z",
+      "updatedAt": "2026-09-29T07:26:22Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0061",
+      "title": "Kernel form-control values: checkbox checked state, radio groups, select-multiple values and submitter identity reach the engine (GH-21, found while defining form semantics)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:26:23Z",
+      "updatedAt": "2026-09-29T07:26:23Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
