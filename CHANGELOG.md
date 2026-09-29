@@ -31,6 +31,16 @@ exhaustive lists.
 
 ### Added
 
+- **Language-neutral async-resource and optimistic-mutation semantics with
+  the F# reference library (#22).** `conformance/resources/` covers seven
+  scenarios, 58 steps:
+  - reads with explicit request identity, supersession, cancellation, stale
+    rejection, refreshing over the previous value, and `uncertain` distinct
+    from `failed`;
+  - optimistic mutations layered over confirmed values, with explicit
+    supersession and confirmations that never regress;
+  - unknown outcomes that stay visible as `unresolved` until reconciled.
+  `libraries/fsharp/Limen.Resources` is pure and agrees with every step.
 - **Protocol 1.2: form-control state (#21).** `SemanticEvent` gains
   optional `checked` (checkbox and radio), `values` (multi-select selections
   and checkbox-group checked values) and `submitter` (the submitting
