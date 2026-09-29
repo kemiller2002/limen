@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0129",
+  "reference": "kemiller2002/limen#44 (LCP-038)",
+  "placement": "Capability Pack — src/capabilities/media/ with its own contract unit limen.media. Camera and microphone capture under the #42 permission pattern (availability, permission state and per-request outcome kept apart); a MediaStream never crosses: the engine holds an opaque capture id and may preview it into a <video data-media-preview> the HTML names; recordings are opaque ids read in bounded base64 slices. Denied, device unavailable (not found, in use, overconstrained), track and capture ended, cancelled and stale are explicit outcomes or facts; stopping, releasing, cancelling a pending capture and disposing the provider all stop every track. Core unchanged; absent unless registered. The smoke runner gains an opt-in fake-media Chromium launch.",
+  "guardrail": false,
+  "paths": ["contract/media.contract.json", "src/capabilities/media/index.ts", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
