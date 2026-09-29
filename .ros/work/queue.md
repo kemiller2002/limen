@@ -81,5 +81,5 @@
 | WI-0074 | Fix: smoke:packs must build the examples it serves (patterns page never reported in CI) (GH-31) | complete |  | medium |
 | WI-0075 | Realtime capability pack: WebSocket and Server-Sent Events lifecycle facts, connection identity, explicit close, engine-directed reconnect only (GH-26) | complete |  | medium |
 | WI-0076 | Guardrail: register the limen.realtime contract unit and its generated bindings (GH-26) | complete |  | medium |
-| WI-0077 | User-mediated file capability pack: native input selection as facts, opaque file ids, bounded chunked reads, gesture-gated picker, download (GH-27) | active |  | medium |
-| WI-0078 | Guardrail: register the limen.files contract unit and its generated bindings (GH-27) | ready |  | medium |
+| WI-0077 | User-mediated file capability pack: native input selection as facts, opaque file ids, bounded chunked reads, gesture-gated picker, download (GH-27) | complete |  | medium |
+| WI-0078 | Guardrail: register the limen.files contract unit and its generated bindings (GH-27) | complete |  | medium |
