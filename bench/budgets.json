@@ -20,6 +20,10 @@
     {
       "workItem": "WI-0065",
       "change": "Added kernel-with-measure (kemiller2002/limen#25): the measurement pack adds 5605 bytes gzip over the kernel, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0068",
+      "change": "Added kernel-with-events (kemiller2002/limen#29): the events pack adds 6208 bytes gzip over the kernel, and only to applications that register it."
     }
   ],
   "profiles": [
@@ -204,6 +208,32 @@
       "budget": {
         "rawBytes": 137216,
         "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "name": "kernel-with-events",
+      "doc": "The kernel plus the rich browser event facts capability pack (./capabilities/events), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/events/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/"
+      ],
+      "baseline": {
+        "rawBytes": 123906,
+        "gzipBytesBundled": 24424
+      },
+      "budget": {
+        "rawBytes": 137216,
+        "gzipBytesBundled": 27648
       }
     }
   ]

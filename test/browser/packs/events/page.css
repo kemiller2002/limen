@@ -1,0 +1,4 @@
+/* Appearance only: targets with known positions and sizes. */
+#handle { position: absolute; left: 20px; top: 120px; width: 60px; height: 60px; touch-action: none; }
+#zone { position: absolute; left: 300px; top: 120px; width: 120px; height: 120px; }
+#source { position: absolute; left: 20px; top: 260px; }

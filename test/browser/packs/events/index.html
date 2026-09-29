@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen rich event facts in a real browser</title>
+  <link rel="stylesheet" href="./page.css">
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types; the
+       runner performs trusted key presses, pointer drags, drag and drop and IME
+       composition when main.js asks for them. -->
+  <textarea id="notes" data-rich-event="shortcut" data-rich-on="keydown" data-rich-facts="keyboard modifiers" data-rich-keys="Enter" data-rich-prevent></textarea>
+  <div id="handle" data-rich-event="drag" data-rich-on="pointerdown pointermove pointerup" data-rich-facts="pointer coordinates" data-rich-coalesce="frame" data-rich-pointer-capture></div>
+  <a id="source" href="/dragged" draggable="true">drag me</a>
+  <div id="zone" data-rich-event="zone" data-rich-on="dragover drop" data-rich-facts="drag" data-rich-coalesce="frame" data-rich-prevent></div>
+  <input id="ime" data-rich-event="composed" data-rich-on="compositionend" data-rich-facts="composition">
+  <input id="ime-input" data-rich-event="imeInput" data-rich-on="input" data-rich-facts="input">
+  <input id="simple" data-event="typed" data-on="input">
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

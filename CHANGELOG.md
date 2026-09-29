@@ -34,6 +34,17 @@ exhaustive lists.
 
 ### Added
 
+- **Rich browser event facts capability pack (#29).** `./capabilities/events`
+  (`eventsCapability()`, contract unit `limen.events`, with bindings for
+  TypeScript, F#, C# and Rust):
+  - `data-rich-*` listeners opt into keyboard, modifier, pointer (coordinates
+    on request), drag, composition, selection, input and value facts;
+  - preventDefault, stopPropagation, capture, passive, once, key filters and
+    pointer capture are declared in HTML;
+  - continuous streams can be coalesced per frame without reordering discrete
+    events;
+  - uncommitted IME text is never reported.
+  The simple `data-event` path is unchanged.
 - **Measurement and observer capability pack (#25).** `./capabilities/measure`
   (`measureCapability()`, contract unit `limen.measure`, with bindings for
   TypeScript, F#, C# and Rust):

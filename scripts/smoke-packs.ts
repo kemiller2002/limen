@@ -22,8 +22,13 @@ type Page = {
   evaluate<T>(fn: string): Promise<T>;
   addInitScript(script: { content: string }): Promise<void>;
   on(event: "pageerror", handler: (error: { message?: string }) => void): void;
+  focus(selector: string): Promise<void>;
+  dragAndDrop(source: string, target: string): Promise<void>;
+  keyboard: { press(key: string): Promise<void> };
+  mouse: { move(x: number, y: number, options?: { steps: number }): Promise<void>; down(): Promise<void>; up(): Promise<void> };
 };
-type Context = { newPage(): Promise<Page>; close(): Promise<void> };
+type CdpSession = { send(method: string, params: Record<string, unknown>): Promise<unknown> };
+type Context = { newPage(): Promise<Page>; close(): Promise<void>; newCDPSession(page: Page): Promise<CdpSession> };
 type Browser = { newContext(): Promise<Context>; close(): Promise<void> };
 type Chromium = { launch(): Promise<Browser> };
 type Check = { readonly name: string; readonly ok: boolean; readonly detail: string };
@@ -59,18 +64,63 @@ const RECORD_VIOLATIONS = `
     window.__limenViolations.push(event.violatedDirective + " " + (event.blockedURI || "") + " " + (event.sample || ""));
   });`;
 
+
 // page.evaluate goes through the DevTools protocol, which the page's policy
 // does not govern; Playwright's string waitForFunction would use in-page eval
-// and trip Trusted Types itself.
-const waitUntil = async (page: Page, expression: string, timeoutMs: number): Promise<boolean> => {
+// and trip Trusted Types itself. So the runner polls with page.evaluate.
+//
+// Some facts exist only for trusted input: a real key press, a pointer drag, a
+// native drag and drop, IME composition. A page asks for one by setting
+// window.__limenPackAction; the runner performs it with Playwright's real
+// input (IME through the DevTools protocol) and calls
+// window.__limenPackActionDone().
+type Action =
+  | { readonly kind: "press"; readonly selector: string; readonly key: string }
+  | { readonly kind: "drag"; readonly from: readonly [number, number]; readonly to: readonly [number, number]; readonly steps: number }
+  | { readonly kind: "dragAndDrop"; readonly source: string; readonly target: string }
+  | { readonly kind: "compose"; readonly selector: string; readonly steps: readonly string[]; readonly commit: string };
+
+const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Action): Promise<void> => {
+  switch (action.kind) {
+    case "press":
+      await page.focus(action.selector);
+      await page.keyboard.press(action.key);
+      return;
+    case "drag":
+      await page.mouse.move(action.from[0], action.from[1]);
+      await page.mouse.down();
+      await page.mouse.move(action.to[0], action.to[1], { steps: action.steps });
+      await page.mouse.up();
+      return;
+    case "dragAndDrop":
+      await page.dragAndDrop(action.source, action.target);
+      return;
+    case "compose": {
+      await page.focus(action.selector);
+      const session = await cdp();
+      for (const text of action.steps) await session.send("Input.imeSetComposition", { text, selectionStart: text.length, selectionEnd: text.length });
+      await session.send("Input.insertText", { text: action.commit });
+      return;
+    }
+  }
+};
+
+const drive = async (page: Page, cdp: () => Promise<CdpSession>, timeoutMs: number): Promise<boolean> => {
   const deadline = Date.now() + timeoutMs;
-  const poll = async (): Promise<boolean> => {
-    if (await page.evaluate<boolean>(`Boolean(${expression})`).catch(() => false)) return true;
-    if (Date.now() > deadline) return false;
-    await new Promise((resolve) => { setTimeout(resolve, 50); });
-    return poll();
+  const step = async (): Promise<boolean> => {
+    if (await page.evaluate<boolean>("Boolean(window.__limenPackResult)").catch(() => false)) return true;
+    const action = await page.evaluate<Action | null>("window.__limenPackAction ?? null").catch(() => null);
+    if (action !== null) {
+      await page.evaluate("window.__limenPackAction = null");
+      await perform(page, cdp, action);
+      await page.evaluate("window.__limenPackActionDone?.()");
+    } else {
+      if (Date.now() > deadline) return false;
+      await new Promise((resolve) => { setTimeout(resolve, 50); });
+    }
+    return step();
   };
-  return poll();
+  return step();
 };
 
 const runPack = async (browser: Browser, pack: string): Promise<readonly string[]> => {
@@ -81,7 +131,7 @@ const runPack = async (browser: Browser, pack: string): Promise<readonly string[
     page.on("pageerror", (error) => { errors.push(error.message ?? "page error"); });
     await page.addInitScript({ content: RECORD_VIOLATIONS });
     await page.goto(`http://127.0.0.1:${PORT}/${PACKS}/${pack}/index.html`);
-    const reported = await waitUntil(page, "window.__limenPackResult", 30000);
+    const reported = await drive(page, () => context.newCDPSession(page), 30000);
     const checks = reported ? await page.evaluate<readonly Check[]>("window.__limenPackResult.checks") : [];
     const violations = await page.evaluate<readonly string[]>("window.__limenViolations.slice()");
     checks.forEach((check) => { console.log(`${check.ok ? "PASS" : "FAIL"}  ${pack}: ${check.name}`); });
