@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 91,
+  "nextSeq": 92,
   "items": [
     {
       "id": "WI-0001",
@@ -1388,6 +1388,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T10:25:19Z",
       "updatedAt": "2026-09-29T10:30:13Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0091",
+      "title": "Optional fatal-fallback host: mechanical host health, a static generic failure surface with a stable redacted error id, explicit restart and reload, bounded repeated restarts, federation unchanged (GH-50)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:31:01Z",
+      "updatedAt": "2026-09-29T10:31:01Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
