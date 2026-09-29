@@ -2,7 +2,7 @@ import { CORE_CONTRACT_IDENTITY, MAX_HTTP_TEXT_BYTES, PROTOCOL_MINOR, PROTOCOL_V
 import type { CapabilityProvider } from "./capabilities.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
 import { verifyHandshake, type Incompatibility, type Negotiation } from "./handshake.js";
-import { bindableElement, checkUrl, classifyAttribute, type AttributeTarget } from "./binding-policy.js";
+import { bindableElement, boundNames, checkUrl, classifyAttribute, type AttributeTarget } from "./binding-policy.js";
 
 // Exceptions to the "click" default: element types whose most natural
 // interaction isn't a click. Any other element (a row, a card, a div acting
@@ -196,7 +196,7 @@ function auditTemplates(root: ParentNode): void {
     for (const el of Array.from(template.content.querySelectorAll("*"))) {
       const projected = el.getAttributeNames().filter((name) => name.startsWith("data-bind-"));
       if (el.hasAttribute("data-text") || projected.length > 0) {
-        const unbindable = bindableElement(el.tagName);
+        const unbindable = bindableElement(el.tagName, (name) => el.getAttribute(name), boundNames(el.getAttributeNames()));
         if (unbindable !== undefined) throw new Error(unbindable);
       }
       for (const name of projected) {
@@ -314,8 +314,11 @@ export class BrowserKernel {
     // Disposed while the transport was starting: this kernel never binds.
     if (this.#disposed) return;
     try {
-      auditTemplates(this.document.body);
-      this.#bindElement(this.document.body, this.#root, undefined);
+      // <head> too: page metadata is a projection (#38).
+      for (const region of [this.document.head, this.document.body]) {
+        auditTemplates(region);
+        this.#bindElement(region, this.#root, undefined);
+      }
     } catch (error) {
       // A malformed binding is a bridge integration failure, not a domain
       // outcome — the same rule #send applies. Reporting rather than throwing
@@ -448,7 +451,7 @@ export class BrowserKernel {
     if (el.hasAttribute("data-event")) this.#bindEvent(el, itemKey);
     const projected = Array.from(el.attributes).filter((attr) => attr.name.startsWith("data-bind-"));
     if (el.hasAttribute("data-text") || projected.length > 0) {
-      const unbindable = bindableElement(el.tagName);
+      const unbindable = bindableElement(el.tagName, (name) => el.getAttribute(name), boundNames(el.getAttributeNames()));
       if (unbindable !== undefined) throw new Error(unbindable);
     }
     if (el.hasAttribute("data-text")) scope.texts.push({ element: el, key: el.getAttribute("data-text")! });

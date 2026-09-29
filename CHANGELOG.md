@@ -18,6 +18,15 @@ exhaustive lists.
 
 ### Changed
 
+- **`<head>` is bound, and page metadata is a projection (#38).**
+  - The kernel binds `<head>` with the same rules as `<body>`, so a route's
+    `<title data-text>`, meta description and robots, and canonical link
+    follow the engine on the client as the server renderer writes them.
+  - The binding policy allows exactly the inert metadata forms: `content` on
+    a descriptive `<meta name>` (or `property="og:*"`), and `href`/`hreflang`
+    on `<link rel="canonical"|"alternate">`, with the URL checked.
+  - `http-equiv`, `charset` and every other meta or link stay refused.
+  - A page that already had bindings in `<head>` now has them applied.
 - **Breaking for engines that retry on `Failure { network }`: a write whose
   connection drops is `OutcomeUnknown` (#40, protocol 1.4).**
   - Before: a thrown `fetch` was always `Failure { network }`, documented as

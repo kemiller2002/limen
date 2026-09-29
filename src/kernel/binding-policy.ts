@@ -10,7 +10,7 @@
 //   - Event-handler attributes, srcdoc, style and URL lists are never targets.
 //   - Elements that load or run code, or rewrite other attributes (script,
 //     style, iframe, object, base, meta, link, SVG animation), take no
-//     bindings at all.
+//     bindings at all, except inert page metadata (below).
 //   - A URL-bearing attribute takes only http(s), mailto, tel or a relative
 //     URL; anything else is not written, and the refusal is reported without
 //     the value.
@@ -60,8 +60,25 @@ const FORBIDDEN_ATTRIBUTES: Readonly<Record<string, string>> = {
   attributename: "attributeName lets an SVG animation rewrite another attribute",
 };
 
-export const bindableElement = (tagName: string): string | undefined =>
-  UNBINDABLE_ELEMENTS.includes(tagName.toLowerCase()) ? `<${tagName.toLowerCase()}> loads, runs or rewrites code or other attributes; it takes no data-text or data-bind-* bindings` : undefined;
+// Page metadata (#38): content on a descriptive <meta>, href/hreflang on
+// <link rel="canonical"|"alternate">. Every other meta or link stays refused.
+const DESCRIPTIVE_META = /^(description|robots|googlebot|keywords|author|application-name|twitter:.+)$/;
+
+export type Authored = (name: string) => string | null;
+
+// bound: "data-text", or the <name> of each data-bind-<name>.
+export const bindableElement = (tagName: string, authored: Authored = () => null, bound: readonly string[] = []): string | undefined => {
+  const tag = tagName.toLowerCase();
+  const metadata = tag === "meta"
+    ? authored("http-equiv") === null && authored("charset") === null && (DESCRIPTIVE_META.test((authored("name") ?? "").toLowerCase()) || /^(og|article):/.test((authored("property") ?? "").toLowerCase())) && bound.every((name) => name === "content")
+    : tag === "link" && /^(canonical|alternate)$/.test((authored("rel") ?? "").trim().toLowerCase()) && bound.every((name) => name === "href" || name === "hreflang");
+  if (metadata) return undefined;
+  if (tag === "meta" || tag === "link") return `<${tag}> binds only as page metadata (docs/29)`;
+  return UNBINDABLE_ELEMENTS.includes(tag) ? `<${tag}> loads, runs or rewrites code or other attributes; it takes no data-text or data-bind-* bindings` : undefined;
+};
+
+export const boundNames = (attributeNames: readonly string[]): readonly string[] =>
+  attributeNames.flatMap((name) => (name === "data-text" ? ["data-text"] : name.startsWith("data-bind-") ? [name.slice(10).toLowerCase()] : []));
 
 export const classifyAttribute = (attribute: string): AttributeTarget => {
   const name = attribute.toLowerCase();

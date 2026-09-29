@@ -653,7 +653,9 @@ removed with a `projection` BridgeError that omits the value; `on*`, `style`,
 `srcdoc`, `srcset`, `ping` and `is` are refused at `start()` with a `binding`
 BridgeError, as is any `data-text`/`data-bind-*` on `<script>`, `<style>`,
 `<iframe>`, `<object>`, `<embed>`, `<base>`, `<meta>`, `<link>` or SVG
-animation elements; everything else uses `setAttribute`. See
+animation elements (except page metadata: `content` on a descriptive
+`<meta name>`, and `href` on `<link rel="canonical"|"alternate">`);
+everything else uses `setAttribute`. `<head>` is bound like `<body>`. See
 [29-binding-security.md](https://github.com/kemiller2002/limen/blob/main/docs/29-binding-security.md).
 
 ---

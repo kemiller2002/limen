@@ -22,7 +22,7 @@
 // expression-free. Tooling, not Core: nothing here runs in a shipped page.
 
 import type { SemanticEvent, ViewState, ViewValue } from "../protocol.js";
-import { bindableElement, classifyAttribute } from "../kernel/binding-policy.js";
+import { bindableElement, boundNames, classifyAttribute } from "../kernel/binding-policy.js";
 
 export type ValueKind = "string" | "number" | "boolean" | "scalar";
 export type ViewEntry = ValueKind | { readonly list: Readonly<Record<string, ValueKind>> };
@@ -179,7 +179,7 @@ const checkTag = (file: string, contract: ViewContract, tag: Tag, frames: readon
   // The kernel's own binding policy (src/kernel/binding-policy.ts): a target
   // it would refuse when the page starts is reported here, before it runs.
   const projectedNames = Array.from(tag.attributes.keys()).filter((name) => name === "data-text" || name.startsWith("data-bind-"));
-  const unbindable = projectedNames.length > 0 ? bindableElement(tag.name) : undefined;
+  const unbindable = projectedNames.length > 0 ? bindableElement(tag.name, (name) => tag.attributes.get(name) ?? null, boundNames(Array.from(tag.attributes.keys()))) : undefined;
   const elementChecks = unbindable === undefined ? [] : [at(projectedNames[0] ?? "data-text", unbindable, "a binding on an element that does not load or run code")];
 
   const bindChecks = Array.from(tag.attributes).filter(([name]) => name.startsWith("data-bind-")).flatMap(([name, key]) => {

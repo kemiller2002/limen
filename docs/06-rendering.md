@@ -122,7 +122,12 @@ The part after `data-bind-` is the target name. Behavior depends on which:
 No `data-text` or `data-bind-*` binding is accepted on an element that loads,
 runs or rewrites code — `<script>`, `<style>`, `<iframe>`, `<object>`,
 `<embed>`, `<base>`, `<meta>`, `<link>`, SVG `<set>`/`<animate…>` — including
-inside `<template>` content. The rules and their reasons are
+inside `<template>` content. There is one exception, for page metadata: a
+descriptive `<meta name>` binds its `content`, and `<link rel="canonical">` or
+`rel="alternate"` binds its `href`.
+
+`<head>` is bound like `<body>`. So a route's `<title data-text>`, description
+and canonical link are projections. The rules and their reasons are
 [29-binding-security.md](29-binding-security.md).
 
 The boolean-property list exists because `setAttribute("disabled", "false")`
