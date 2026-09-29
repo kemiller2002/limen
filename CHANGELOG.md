@@ -48,6 +48,18 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Governed adapter pack (#30).** `./capabilities/adapters`
+  (`adaptersCapability({ adapters })`, contract unit `limen.adapters`, with
+  bindings for TypeScript, F#, C# and Rust):
+  - explicitly registered adapters with an exact id and version;
+  - `mount`, `update`, `command` and `unmount` under opaque instance ids;
+  - adapters speak only through JSON facts;
+  - every adapter call is fault-isolated, and a faulted instance is
+    quarantined;
+  - a slot removed by a projection unmounts its instance.
+  `./capabilities/adapters/web-component` is a separately loaded reference
+  adapter whose surface is exactly its declared properties, events and
+  commands.
 - **IndexedDB structured-storage capability pack (#28).** `./capabilities/store`
   (`storeCapability()`, contract unit `limen.store`, with bindings for
   TypeScript, F#, C# and Rust):

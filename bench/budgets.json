@@ -40,6 +40,10 @@
     {
       "workItem": "WI-0079",
       "change": "Added kernel-with-store (kemiller2002/limen#28): the IndexedDB store pack adds 9456 bytes gzip over the kernel (its generated codec is the largest part: the transaction and schema contract is the widest yet), and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/store/."
+    },
+    {
+      "workItem": "WI-0081",
+      "change": "Added kernel-with-adapters (kemiller2002/limen#30): the adapter host pack, with the shared handle table and target resolver, adds 7419 bytes gzip over the kernel, and only to applications that register it; the reference Web Component adapter is a separate module and is not in this profile. Earlier kernel-with-* profiles now also forbid dist/capabilities/adapters/."
     }
   ],
   "profiles": [
@@ -102,7 +106,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 92602,
@@ -129,7 +134,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 92470,
@@ -156,7 +162,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 95578,
@@ -183,7 +190,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 112426,
@@ -211,7 +219,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 107508,
@@ -239,7 +248,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 124360,
@@ -269,7 +279,8 @@
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 123906,
@@ -298,7 +309,8 @@
         "dist/capabilities/events/",
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 125294,
@@ -327,7 +339,8 @@
         "dist/capabilities/events/",
         "dist/capabilities/overlay/",
         "dist/capabilities/files/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 126374,
@@ -356,7 +369,8 @@
         "dist/capabilities/events/",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/store/"
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 127390,
@@ -386,7 +400,8 @@
         "dist/capabilities/events/",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/adapters/"
       ],
       "baseline": {
         "rawBytes": 144576,
@@ -395,6 +410,37 @@
       "budget": {
         "rawBytes": 159744,
         "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "name": "kernel-with-adapters",
+      "doc": "The kernel plus the governed adapter host pack (./capabilities/adapters), with the capability-support libraries it imports, as an application that registers it loads them. Adapters themselves, including the reference Web Component adapter, load separately.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/adapters/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/adapters/web-component.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
+      ],
+      "baseline": {
+        "rawBytes": 130717,
+        "gzipBytesBundled": 25845
+      },
+      "budget": {
+        "rawBytes": 144384,
+        "gzipBytesBundled": 28672
       }
     }
   ]

@@ -80,6 +80,7 @@ Then, for depth:
 | 39 | [Realtime and streaming](https://github.com/kemiller2002/limen/blob/main/docs/39-realtime.md) | How does an engine hold WebSocket and Server-Sent Events connections — lifecycle, identity, stale messages — with every reconnect its own decision? |
 | 40 | [User-mediated files](https://github.com/kemiller2002/limen/blob/main/docs/40-files.md) | How does an engine learn what files the user chose and read them in bounded chunks — with no File object, no path, and no picker without a gesture? |
 | 41 | [Structured storage (IndexedDB)](https://github.com/kemiller2002/limen/blob/main/docs/41-indexeddb.md) | How does an engine keep versioned, indexed data in the browser — with atomic transactions, stale-write protection and typed schema, version and quota outcomes? |
+| 42 | [Governed adapters](https://github.com/kemiller2002/limen/blob/main/docs/42-adapters.md) | How do maps, charts, editors and Web Components join an application without owning its state — with versioned identity, a JSON-only boundary and fault isolation? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 

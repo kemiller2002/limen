@@ -137,4 +137,7 @@ cannot check for it. Such code must:
 - keep its own diagnostics free of application data, as Core does.
 
 Registering an adapter is the application's decision to extend trust. The
-kernel's guarantees do not transfer to what the adapter does.
+kernel's guarantees do not transfer to what the adapter does. The governed
+adapter pack ([42](42-adapters.md)) narrows what crosses the boundary for
+third-party widgets (identity, JSON only, fault isolation), but it does not
+sandbox their code either.
