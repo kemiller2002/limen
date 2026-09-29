@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0041",
+  "reference": "kemiller2002/limen#32, kemiller2002/limen#51 §7",
+  "placement": "Capability-pack support library + Tooling / Conformance — guardrail-class because it declares the capability-support layer",
+  "guardrail": true,
+  "paths": ["src/capability-support/**", "src/tooling/**", "architecture/layers.json", "architecture/typescript-boundary.json", "package.json", "contract/targets.json", "test/**", "docs/**", "research/decisions/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
