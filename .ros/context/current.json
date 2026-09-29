@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T08:51:47Z",
+  "updatedAt": "2026-09-29T09:01:09Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1543,24 +1543,48 @@
     {
       "id": "WI-0075",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T08:51:46Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/realtime/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/realtime.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/realtime/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:01:09Z",
       "telemetryExecutionIds": [
         "EXE-20260929T085146444Z-e07e35a9"
-      ]
+      ],
+      "completedAt": "2026-09-29T09:01:09Z"
     },
     {
       "id": "WI-0076",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T08:51:47Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_realtime.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:01:08Z",
       "telemetryExecutionIds": [
         "EXE-20260929T085147774Z-ffd26064"
-      ]
+      ],
+      "completedAt": "2026-09-29T09:01:08Z"
     }
   ]
 }
