@@ -87,3 +87,4 @@
 | WI-0080 | Guardrail: register the limen.store contract unit and its generated bindings (GH-28) | complete |  | medium |
 | WI-0081 | Governed third-party widget and custom-element adapter pack: identity and version, mount/update/command/unmount lifecycle, JSON-only facts, fault isolation, reference Web Component adapter and widget stub (GH-30) | complete |  | medium |
 | WI-0082 | Guardrail: register the limen.adapters contract unit and its generated bindings (GH-30) | complete |  | medium |
+| WI-0083 | Core HTTP profile, protocol 1.3 additive: text/base64/none response representations, response-header allowlist, explicit credentials, HEAD/OPTIONS, same-origin XSRF cookie-to-header binding; JSON default and OutcomeUnknown unchanged (GH-47) | ready |  | medium |
