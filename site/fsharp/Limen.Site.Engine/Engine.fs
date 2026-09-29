@@ -251,7 +251,11 @@ module Engine =
               Url = url
               Headers = None
               Body = None
-              TimeoutMs = 5000L }
+              TimeoutMs = 5000L
+              Response = None
+              ResponseHeaders = None
+              Credentials = None
+              Xsrf = None }
 
     let private deploymentEffect scenario correlationId =
         match scenario with
@@ -296,9 +300,9 @@ module Engine =
 
     let private recordDeploymentOutcome release outcome =
         match outcome with
-        | EffectOutcome.Success(status, _) when status >= 200L && status < 300L ->
+        | EffectOutcome.Success(status, _, _) when status >= 200L && status < 300L ->
             { release with Deployment = Deployed }
-        | EffectOutcome.Success(status, _) ->
+        | EffectOutcome.Success(status, _, _) ->
             { release with Deployment = DeploymentFailed($"Server responded {status}.", false) }
         | EffectOutcome.Failure(HttpFailureReason.Network, _) ->
             { release with Deployment = DeploymentFailed("No response was received. Retry is allowed only after the application classifies this as a pre-dispatch transport failure.", true) }

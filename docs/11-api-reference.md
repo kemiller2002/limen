@@ -422,16 +422,22 @@ so an arbitrary string cannot be passed by accident.
 type HttpEffectRequest = {
   readonly kind: "Http";
   readonly correlationId: CorrelationId;
-  readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE";
+  readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   readonly url: string;
   readonly headers?: Readonly<Record<string, string>>;
   readonly body?: string;      // pre-serialized; never interpreted
   readonly timeoutMs: number;  // required
+  readonly response?: "json" | "text" | "base64" | "none";      // 1.3; absent = json
+  readonly responseHeaders?: readonly string[];                 // 1.3
+  readonly credentials?: "omit" | "same-origin" | "include";    // 1.3; absent = browser default
+  readonly xsrf?: { readonly cookie: string; readonly header: string }; // 1.3; same-origin only
 };
 ```
 
-Headers merge over the kernel's `accept: application/json`; yours win.
-Headers and body are **never** included in diagnostics.
+Headers merge over the kernel's `accept: application/json` (sent only for the
+`json` representation); yours win. Headers, body, cookies and returned header
+values are **never** included in diagnostics. The 1.3 options are in
+[43-http-profiles.md](https://github.com/kemiller2002/limen/blob/main/docs/43-http-profiles.md).
 
 ### `StorageEffectRequest`
 
@@ -448,15 +454,16 @@ type StorageEffectRequest =
 
 ```ts
 type EffectOutcome =
-  | { kind: "Success";        status: number; body: unknown }
-  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response"; status?: number }
+  | { kind: "Success";        status: number; body: unknown; headers?: Readonly<Record<string, string>> }
+  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response" | "too-large"; status?: number }
   | { kind: "Cancelled" }
   | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" };
 ```
 
 | Outcome | Produced when |
 | --- | --- |
-| `Success` | a response arrived **and `.json()` parsed** — any status, including 500 |
+| `Success` | a response arrived **and its body was read as the request asked** (`.json()` parsed, by default) — any status, including 500 |
+| `Failure { too-large, status }` | a `text` or `base64` body passed `MAX_HTTP_TEXT_BYTES` (8 MiB) |
 | `Failure { network }` | `fetch` threw and was not aborted. **No `status`** — nothing came back |
 | `Failure { invalid-response, status }` | a response arrived but would not decode. **Carries the status** |
 

@@ -1,4 +1,4 @@
-import { CORE_CONTRACT_IDENTITY, PROTOCOL_MINOR, PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type CapabilityEffectRequest, type CapabilityId, type CapabilityOutcome, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HostHandshake, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { CORE_CONTRACT_IDENTITY, MAX_HTTP_TEXT_BYTES, PROTOCOL_MINOR, PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type CapabilityEffectRequest, type CapabilityId, type CapabilityOutcome, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HostHandshake, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
 import type { CapabilityProvider } from "./capabilities.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
 import { verifyHandshake, type Incompatibility, type Negotiation } from "./handshake.js";
@@ -566,16 +566,39 @@ export class BrowserKernel {
   // A timeout is always reported as OutcomeUnknown, never a confident
   // Failure: fetch() may already have sent the request before the abort
   // fires, so the kernel cannot claim the effect did not occur.
+  //
+  // Protocol 1.3 options (response representation, response headers,
+  // credentials, XSRF binding) are all explicit on the request; absent, the
+  // request is exactly the JSON request of 1.0.
   async #runHttp(effect: HttpEffectRequest, controller: AbortController): Promise<EffectOutcome> {
+    const representation = effect.response ?? "json";
     try {
       const response = await fetch(effect.url, {
         method: effect.method,
         signal: controller.signal,
-        headers: { accept: "application/json", ...effect.headers },
+        headers: {
+          ...(representation === "json" ? { accept: "application/json" } : {}),
+          ...xsrfHeader(this.document, effect),
+          ...effect.headers,
+        },
+        ...(effect.credentials !== undefined ? { credentials: effect.credentials } : {}),
         ...(effect.body !== undefined ? { body: effect.body } : {}),
       });
+      const headers = returnedHeaders(response, effect.responseHeaders);
+      const success = (body: unknown): EffectOutcome => ({ kind: "Success", status: response.status, body, ...(headers !== undefined ? { headers } : {}) });
       try {
-        return { kind: "Success", status: response.status, body: await response.json() as unknown };
+        switch (representation) {
+          case "json": return success(await response.json() as unknown);
+          case "none":
+            await response.body?.cancel();
+            return success(null);
+          case "text":
+          case "base64": {
+            const bytes = await readBounded(response, MAX_HTTP_TEXT_BYTES);
+            if (bytes === undefined) return { kind: "Failure", reason: "too-large", status: response.status };
+            return success(representation === "text" ? new TextDecoder().decode(bytes) : toBase64(bytes));
+          }
+        }
       } catch {
         // A response did arrive — it simply would not decode. Carry the status
         // so the engine can tell a 500 error page apart from a malformed 200.
@@ -622,6 +645,59 @@ export class BrowserKernel {
 const assertNeverEffect = (effect: never): never => {
   throw new Error(`Unsupported effect kind: ${JSON.stringify(effect)}`);
 };
+
+// --- Http protocol 1.3 helpers ------------------------------------------------
+
+// The cookie-to-header XSRF binding: one named cookie's value into one named
+// header, and only for a same-origin URL, so a token never travels to another
+// origin. The value is never logged and never reaches the engine.
+function xsrfHeader(document: Document, effect: HttpEffectRequest): Readonly<Record<string, string>> {
+  if (effect.xsrf === undefined) return {};
+  const origin = document.defaultView?.location.origin;
+  const target = URL.canParse(effect.url, document.baseURI) ? new URL(effect.url, document.baseURI).origin : undefined;
+  if (origin === undefined || target !== origin) return {};
+  const wanted = `${effect.xsrf.cookie}=`;
+  const found = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(wanted));
+  return found === undefined ? {} : { [effect.xsrf.header]: decodeURIComponent(found.slice(wanted.length)) };
+}
+
+// Exactly the response headers the request named, if the response has them.
+function returnedHeaders(response: Response, names: readonly string[] | undefined): Readonly<Record<string, string>> | undefined {
+  if (names === undefined || names.length === 0) return undefined;
+  return Object.fromEntries(names.map((name) => name.toLowerCase()).flatMap((name) => {
+    const value = response.headers.get(name);
+    return value === null ? [] : [[name, value] as const];
+  }));
+}
+
+// The body's bytes, or undefined once it passes `limit` — read incrementally,
+// so an oversized body is abandoned without being held whole.
+async function readBounded(response: Response, limit: number): Promise<Uint8Array | undefined> {
+  const reader = response.body?.getReader();
+  if (reader === undefined) return new Uint8Array(0);
+  const chunks: Uint8Array[] = [];
+  const read = async (total: number): Promise<number | undefined> => {
+    const { done, value } = await reader.read();
+    if (done) return total;
+    const next = total + value.byteLength;
+    if (next > limit) {
+      await reader.cancel();
+      return undefined;
+    }
+    chunks.push(value);
+    return read(next);
+  };
+  const total = await read(0);
+  if (total === undefined) return undefined;
+  const bytes = new Uint8Array(total);
+  chunks.reduce((offset, chunk) => { bytes.set(chunk, offset); return offset + chunk.byteLength; }, 0);
+  return bytes;
+}
+
+function toBase64(bytes: Uint8Array): string {
+  const piece = 0x8000;
+  return btoa(Array.from({ length: Math.ceil(bytes.length / piece) }, (_, index) => String.fromCharCode(...bytes.subarray(index * piece, (index + 1) * piece))).join(""));
+}
 
 function runStorage(effect: StorageEffectRequest): StorageOutcome {
   try {

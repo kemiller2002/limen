@@ -23,6 +23,7 @@ import type { BrowserToEngineMessage, EngineToBrowserMessage } from "./generated
 
 export {
   CONTRACT_IDENTITY as CORE_CONTRACT_IDENTITY,
+  MAX_HTTP_TEXT_BYTES,
   PROTOCOL_MINOR,
   PROTOCOL_VERSION,
 } from "./generated/core.js";
@@ -49,9 +50,11 @@ export type {
   EngineToBrowserMessage,
   HandshakeRejection,
   HostHandshake,
+  HttpCredentials,
   HttpEffectRequest,
   HttpFailureReason,
   HttpMethod,
+  HttpResponseKind,
   NavigationEffectRequest,
   NavigationFailureReason,
   NavigationOutcome,
@@ -64,6 +67,7 @@ export type {
   ViewPrimitive,
   ViewState,
   ViewValue,
+  XsrfBinding,
 } from "./generated/core.js";
 
 // Not a wire type: the in-process seam between the kernel and whatever runs

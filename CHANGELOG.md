@@ -48,6 +48,20 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Core HTTP profile, protocol 1.3 (#47).** The `Http` effect gains optional
+  fields, each absent by default, so the JSON path is unchanged:
+  - `response` (`json`, `text`, `base64`, `none`), so non-JSON bodies no longer
+    fail as `invalid-response`;
+  - `responseHeaders`, which returns exactly the named headers;
+  - explicit `credentials`;
+  - `HEAD` and `OPTIONS`;
+  - a same-origin-only `xsrf` cookie-to-header binding, so the engine never
+    reads `document.cookie`.
+  `Failure` gains `too-large`, for a `text` or `base64` body over 8 MiB.
+  `OutcomeUnknown` semantics and redaction are unchanged. `PROTOCOL_MINOR` is
+  now 3. **F#, C# and Rust engines that construct `HttpEffectRequest` or match
+  `EffectOutcome.Success` must name the new fields**, which is the compile
+  pressure the strong bindings exist for.
 - **Governed adapter pack (#30).** `./capabilities/adapters`
   (`adaptersCapability({ adapters })`, contract unit `limen.adapters`, with
   bindings for TypeScript, F#, C# and Rust):

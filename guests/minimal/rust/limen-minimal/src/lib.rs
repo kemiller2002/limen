@@ -72,7 +72,7 @@ pub fn project(state: &State) -> ViewState {
 }
 
 fn request(label: &str, id: CorrelationId) -> Option<EffectRequest> {
-    let http = |url: &str| Some(EffectRequest::Http(HttpEffectRequest { correlation_id: id.clone(), method: HttpMethod::Get, url: url.to_string(), headers: None, body: None, timeout_ms: 5000 }));
+    let http = |url: &str| Some(EffectRequest::Http(HttpEffectRequest { correlation_id: id.clone(), method: HttpMethod::Get, url: url.to_string(), headers: None, body: None, timeout_ms: 5000, response: None, response_headers: None, credentials: None, xsrf: None }));
     match label {
         "http-ok" => http("/ok.json"),
         "http-missing" => http("/missing.json"),

@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
+// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:41483374105ea30bcc61ed02ba9e684914ee4bcd85028a4b4a26774b8a689a96
+// content-hash: sha256:599eb3fe4432a96d5872c69ce90cfa29af3b295c43c307a09b4defe3d2f4336a
 // </auto-generated>
 //! The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.
 
@@ -18,9 +18,10 @@ use crate::runtime::{wire, DecodeError, RawJson};
 pub mod contract {
     pub const UNIT: &str = "limen.core";
     pub const VERSION: i64 = 1;
-    pub const FINGERPRINT: &str = "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e";
+    pub const FINGERPRINT: &str = "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def";
     pub const PROTOCOL_VERSION: i64 = 1;
-    pub const PROTOCOL_MINOR: i64 = 2;
+    pub const PROTOCOL_MINOR: i64 = 3;
+    pub const MAX_HTTP_TEXT_BYTES: i64 = 8388608;
 }
 
 /// Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected.
@@ -75,11 +76,13 @@ pub struct BrowserLocation {
     pub hash: String,
 }
 
+/// too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HttpFailureReason {
     Network,
     Aborted,
     InvalidResponse,
+    TooLarge,
 }
 
 impl HttpFailureReason {
@@ -89,6 +92,7 @@ impl HttpFailureReason {
             HttpFailureReason::Network => "network",
             HttpFailureReason::Aborted => "aborted",
             HttpFailureReason::InvalidResponse => "invalid-response",
+            HttpFailureReason::TooLarge => "too-large",
         }
     }
 }
@@ -98,8 +102,10 @@ impl HttpFailureReason {
 pub enum EffectOutcome {
     Success {
         status: i64,
-        /// The decoded response body. The engine narrows it with its own typed decoder.
+        /// The response body as the request's response representation asked: decoded JSON (the default), a string for text or base64, or null for none. The engine narrows it with its own typed decoder.
         body: RawJson,
+        /// Protocol 1.3: exactly the response headers the request listed in responseHeaders that the response carried, by lower-case name. Absent when none were asked for. Never surfaced in diagnostics.
+        headers: Option<BTreeMap<String, String>>,
     },
     Failure {
         reason: HttpFailureReason,
@@ -373,6 +379,7 @@ pub enum ViewValue {
 /// A projection, not the engine's internal state: named values a view binds to and named lists it repeats.
 pub type ViewState = BTreeMap<String, ViewValue>;
 
+/// HEAD and OPTIONS are protocol 1.3. A method outside this list is added by a contract revision, never accepted as a free string.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HttpMethod {
     Get,
@@ -380,6 +387,8 @@ pub enum HttpMethod {
     Post,
     Patch,
     Delete,
+    Head,
+    Options,
 }
 
 impl HttpMethod {
@@ -391,8 +400,57 @@ impl HttpMethod {
             HttpMethod::Post => "POST",
             HttpMethod::Patch => "PATCH",
             HttpMethod::Delete => "DELETE",
+            HttpMethod::Head => "HEAD",
+            HttpMethod::Options => "OPTIONS",
         }
     }
+}
+
+/// Protocol 1.3. How the response body is represented: json decodes it (the default, and the only representation before 1.3); text is the body as a string; base64 is its exact bytes; none reads no body (HEAD, 204, or a body the engine does not need).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum HttpResponseKind {
+    Json,
+    Text,
+    Base64,
+    None,
+}
+
+impl HttpResponseKind {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            HttpResponseKind::Json => "json",
+            HttpResponseKind::Text => "text",
+            HttpResponseKind::Base64 => "base64",
+            HttpResponseKind::None => "none",
+        }
+    }
+}
+
+/// Protocol 1.3. fetch's credentials mode: whether cookies and HTTP authentication go with the request. Absent means the browser default, same-origin.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum HttpCredentials {
+    Omit,
+    SameOrigin,
+    Include,
+}
+
+impl HttpCredentials {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            HttpCredentials::Omit => "omit",
+            HttpCredentials::SameOrigin => "same-origin",
+            HttpCredentials::Include => "include",
+        }
+    }
+}
+
+/// Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.
+#[derive(Debug, Clone, PartialEq)]
+pub struct XsrfBinding {
+    pub cookie: String,
+    pub header: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -405,6 +463,14 @@ pub struct HttpEffectRequest {
     /// Pre-serialized by the engine; the kernel never interprets it.
     pub body: Option<String>,
     pub timeout_ms: i64,
+    /// Protocol 1.3. Absent means json.
+    pub response: Option<HttpResponseKind>,
+    /// Protocol 1.3. Response header names to return in Success.headers. Cross-origin, a browser exposes only CORS-safelisted headers and those the server lists in Access-Control-Expose-Headers.
+    pub response_headers: Option<Vec<String>>,
+    /// Protocol 1.3.
+    pub credentials: Option<HttpCredentials>,
+    /// Protocol 1.3.
+    pub xsrf: Option<XsrfBinding>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -508,17 +574,18 @@ pub fn decode_browser_location(value: &Value, path: &str) -> Result<BrowserLocat
 }
 
 pub fn decode_http_failure_reason(value: &Value, path: &str) -> Result<HttpFailureReason, DecodeError> {
-    wire::enumeration(value, path, &[("network", HttpFailureReason::Network), ("aborted", HttpFailureReason::Aborted), ("invalid-response", HttpFailureReason::InvalidResponse)])
+    wire::enumeration(value, path, &[("network", HttpFailureReason::Network), ("aborted", HttpFailureReason::Aborted), ("invalid-response", HttpFailureReason::InvalidResponse), ("too-large", HttpFailureReason::TooLarge)])
 }
 
 pub fn decode_effect_outcome(value: &Value, path: &str) -> Result<EffectOutcome, DecodeError> {
     match wire::tag(value, path, "kind")?.as_str() {
         "Success" => {
-            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "status", "body"])?;
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "status", "body", "headers"])?;
             wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Success"))?;
             let f_status = wire::required(props, path, "status", |v0: &Value, p0: &str| wire::int(v0, p0))?;
             let f_body = wire::required(props, path, "body", |v0: &Value, p0: &str| wire::json(v0, p0))?;
-            Ok(EffectOutcome::Success { status: f_status, body: f_body })
+            let f_headers = wire::optional(props, path, "headers", |v0: &Value, p0: &str| wire::map(v0, p0, |v1: &Value, p1: &str| wire::string(v1, p1)))?;
+            Ok(EffectOutcome::Success { status: f_status, body: f_body, headers: f_headers })
         }
         "Failure" => {
             let props = wire::closed(wire::properties(value, path)?, path, &["kind", "reason", "status"])?;
@@ -842,11 +909,26 @@ pub fn decode_view_state(value: &Value, path: &str) -> Result<ViewState, DecodeE
 }
 
 pub fn decode_http_method(value: &Value, path: &str) -> Result<HttpMethod, DecodeError> {
-    wire::enumeration(value, path, &[("GET", HttpMethod::Get), ("PUT", HttpMethod::Put), ("POST", HttpMethod::Post), ("PATCH", HttpMethod::Patch), ("DELETE", HttpMethod::Delete)])
+    wire::enumeration(value, path, &[("GET", HttpMethod::Get), ("PUT", HttpMethod::Put), ("POST", HttpMethod::Post), ("PATCH", HttpMethod::Patch), ("DELETE", HttpMethod::Delete), ("HEAD", HttpMethod::Head), ("OPTIONS", HttpMethod::Options)])
+}
+
+pub fn decode_http_response_kind(value: &Value, path: &str) -> Result<HttpResponseKind, DecodeError> {
+    wire::enumeration(value, path, &[("json", HttpResponseKind::Json), ("text", HttpResponseKind::Text), ("base64", HttpResponseKind::Base64), ("none", HttpResponseKind::None)])
+}
+
+pub fn decode_http_credentials(value: &Value, path: &str) -> Result<HttpCredentials, DecodeError> {
+    wire::enumeration(value, path, &[("omit", HttpCredentials::Omit), ("same-origin", HttpCredentials::SameOrigin), ("include", HttpCredentials::Include)])
+}
+
+pub fn decode_xsrf_binding(value: &Value, path: &str) -> Result<XsrfBinding, DecodeError> {
+    let props = wire::closed(wire::properties(value, path)?, path, &["cookie", "header"])?;
+    let f_cookie = wire::required(props, path, "cookie", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+    let f_header = wire::required(props, path, "header", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+    Ok(XsrfBinding { cookie: f_cookie, header: f_header })
 }
 
 pub fn decode_http_effect_request(value: &Value, path: &str) -> Result<HttpEffectRequest, DecodeError> {
-    let props = wire::closed(wire::properties(value, path)?, path, &["kind", "correlationId", "method", "url", "headers", "body", "timeoutMs"])?;
+    let props = wire::closed(wire::properties(value, path)?, path, &["kind", "correlationId", "method", "url", "headers", "body", "timeoutMs", "response", "responseHeaders", "credentials", "xsrf"])?;
     wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Http"))?;
     let f_correlation_id = wire::required(props, path, "correlationId", |v0: &Value, p0: &str| decode_correlation_id(v0, p0))?;
     let f_method = wire::required(props, path, "method", |v0: &Value, p0: &str| decode_http_method(v0, p0))?;
@@ -854,7 +936,11 @@ pub fn decode_http_effect_request(value: &Value, path: &str) -> Result<HttpEffec
     let f_headers = wire::optional(props, path, "headers", |v0: &Value, p0: &str| wire::map(v0, p0, |v1: &Value, p1: &str| wire::string(v1, p1)))?;
     let f_body = wire::optional(props, path, "body", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_timeout_ms = wire::required(props, path, "timeoutMs", |v0: &Value, p0: &str| wire::int(v0, p0))?;
-    Ok(HttpEffectRequest { correlation_id: f_correlation_id, method: f_method, url: f_url, headers: f_headers, body: f_body, timeout_ms: f_timeout_ms })
+    let f_response = wire::optional(props, path, "response", |v0: &Value, p0: &str| decode_http_response_kind(v0, p0))?;
+    let f_response_headers = wire::optional(props, path, "responseHeaders", |v0: &Value, p0: &str| wire::list(v0, p0, |v1: &Value, p1: &str| wire::string(v1, p1)))?;
+    let f_credentials = wire::optional(props, path, "credentials", |v0: &Value, p0: &str| decode_http_credentials(v0, p0))?;
+    let f_xsrf = wire::optional(props, path, "xsrf", |v0: &Value, p0: &str| decode_xsrf_binding(v0, p0))?;
+    Ok(HttpEffectRequest { correlation_id: f_correlation_id, method: f_method, url: f_url, headers: f_headers, body: f_body, timeout_ms: f_timeout_ms, response: f_response, response_headers: f_response_headers, credentials: f_credentials, xsrf: f_xsrf })
 }
 
 pub fn decode_storage_effect_request(value: &Value, path: &str) -> Result<StorageEffectRequest, DecodeError> {
@@ -989,12 +1075,13 @@ pub fn encode_http_failure_reason(value: &HttpFailureReason) -> Value {
         HttpFailureReason::Network => wire::of_string("network"),
         HttpFailureReason::Aborted => wire::of_string("aborted"),
         HttpFailureReason::InvalidResponse => wire::of_string("invalid-response"),
+        HttpFailureReason::TooLarge => wire::of_string("too-large"),
     }
 }
 
 pub fn encode_effect_outcome(value: &EffectOutcome) -> Value {
     match value {
-        EffectOutcome::Success { status: f_status, body: f_body } => wire::of_object(vec![Some(("kind", wire::of_string("Success"))), Some(("status", wire::of_int(*f_status))), Some(("body", wire::of_json(f_body)))]),
+        EffectOutcome::Success { status: f_status, body: f_body, headers: f_headers } => wire::of_object(vec![Some(("kind", wire::of_string("Success"))), Some(("status", wire::of_int(*f_status))), Some(("body", wire::of_json(f_body))), (f_headers).as_ref().map(|x0| ("headers", wire::of_map(x0, |x1| wire::of_string(x1))))]),
         EffectOutcome::Failure { reason: f_reason, status: f_status } => wire::of_object(vec![Some(("kind", wire::of_string("Failure"))), Some(("reason", encode_http_failure_reason(f_reason))), (f_status).as_ref().map(|x0| ("status", wire::of_int(*x0)))]),
         EffectOutcome::Cancelled => wire::of_object(vec![Some(("kind", wire::of_string("Cancelled")))]),
         EffectOutcome::OutcomeUnknown => wire::of_object(vec![Some(("kind", wire::of_string("OutcomeUnknown"))), Some(("reason", wire::of_string("timeout-after-dispatch")))]),
@@ -1154,11 +1241,34 @@ pub fn encode_http_method(value: &HttpMethod) -> Value {
         HttpMethod::Post => wire::of_string("POST"),
         HttpMethod::Patch => wire::of_string("PATCH"),
         HttpMethod::Delete => wire::of_string("DELETE"),
+        HttpMethod::Head => wire::of_string("HEAD"),
+        HttpMethod::Options => wire::of_string("OPTIONS"),
     }
 }
 
+pub fn encode_http_response_kind(value: &HttpResponseKind) -> Value {
+    match value {
+        HttpResponseKind::Json => wire::of_string("json"),
+        HttpResponseKind::Text => wire::of_string("text"),
+        HttpResponseKind::Base64 => wire::of_string("base64"),
+        HttpResponseKind::None => wire::of_string("none"),
+    }
+}
+
+pub fn encode_http_credentials(value: &HttpCredentials) -> Value {
+    match value {
+        HttpCredentials::Omit => wire::of_string("omit"),
+        HttpCredentials::SameOrigin => wire::of_string("same-origin"),
+        HttpCredentials::Include => wire::of_string("include"),
+    }
+}
+
+pub fn encode_xsrf_binding(value: &XsrfBinding) -> Value {
+    wire::of_object(vec![Some(("cookie", wire::of_string(&value.cookie))), Some(("header", wire::of_string(&value.header)))])
+}
+
 pub fn encode_http_effect_request(value: &HttpEffectRequest) -> Value {
-    wire::of_object(vec![Some(("kind", wire::of_string("Http"))), Some(("correlationId", encode_correlation_id(&value.correlation_id))), Some(("method", encode_http_method(&value.method))), Some(("url", wire::of_string(&value.url))), (&value.headers).as_ref().map(|x0| ("headers", wire::of_map(x0, |x1| wire::of_string(x1)))), (&value.body).as_ref().map(|x0| ("body", wire::of_string(x0))), Some(("timeoutMs", wire::of_int(*&value.timeout_ms)))])
+    wire::of_object(vec![Some(("kind", wire::of_string("Http"))), Some(("correlationId", encode_correlation_id(&value.correlation_id))), Some(("method", encode_http_method(&value.method))), Some(("url", wire::of_string(&value.url))), (&value.headers).as_ref().map(|x0| ("headers", wire::of_map(x0, |x1| wire::of_string(x1)))), (&value.body).as_ref().map(|x0| ("body", wire::of_string(x0))), Some(("timeoutMs", wire::of_int(*&value.timeout_ms))), (&value.response).as_ref().map(|x0| ("response", encode_http_response_kind(x0))), (&value.response_headers).as_ref().map(|x0| ("responseHeaders", wire::of_list(x0, |x1| wire::of_string(x1)))), (&value.credentials).as_ref().map(|x0| ("credentials", encode_http_credentials(x0))), (&value.xsrf).as_ref().map(|x0| ("xsrf", encode_xsrf_binding(x0)))])
 }
 
 pub fn encode_storage_effect_request(value: &StorageEffectRequest) -> Value {
@@ -1490,6 +1600,36 @@ pub fn serialize_http_method(value: &HttpMethod) -> String {
     encode_http_method(value).to_string()
 }
 
+/// Parses untrusted JSON text into a HttpResponseKind, or says where and why it is not one.
+pub fn parse_http_response_kind(json: &str) -> Result<HttpResponseKind, DecodeError> {
+    wire::parse(json, decode_http_response_kind)
+}
+
+/// Serializes a HttpResponseKind to wire JSON text.
+pub fn serialize_http_response_kind(value: &HttpResponseKind) -> String {
+    encode_http_response_kind(value).to_string()
+}
+
+/// Parses untrusted JSON text into a HttpCredentials, or says where and why it is not one.
+pub fn parse_http_credentials(json: &str) -> Result<HttpCredentials, DecodeError> {
+    wire::parse(json, decode_http_credentials)
+}
+
+/// Serializes a HttpCredentials to wire JSON text.
+pub fn serialize_http_credentials(value: &HttpCredentials) -> String {
+    encode_http_credentials(value).to_string()
+}
+
+/// Parses untrusted JSON text into a XsrfBinding, or says where and why it is not one.
+pub fn parse_xsrf_binding(json: &str) -> Result<XsrfBinding, DecodeError> {
+    wire::parse(json, decode_xsrf_binding)
+}
+
+/// Serializes a XsrfBinding to wire JSON text.
+pub fn serialize_xsrf_binding(value: &XsrfBinding) -> String {
+    encode_xsrf_binding(value).to_string()
+}
+
 /// Parses untrusted JSON text into a HttpEffectRequest, or says where and why it is not one.
 pub fn parse_http_effect_request(json: &str) -> Result<HttpEffectRequest, DecodeError> {
     wire::parse(json, decode_http_effect_request)
@@ -1592,6 +1732,9 @@ pub fn conformance_round_trip(type_name: &str, value: &Value) -> Option<Result<V
         "ViewValue" => Some(decode_view_value(value, "$").map(|decoded| encode_view_value(&decoded))),
         "ViewState" => Some(decode_view_state(value, "$").map(|decoded| encode_view_state(&decoded))),
         "HttpMethod" => Some(decode_http_method(value, "$").map(|decoded| encode_http_method(&decoded))),
+        "HttpResponseKind" => Some(decode_http_response_kind(value, "$").map(|decoded| encode_http_response_kind(&decoded))),
+        "HttpCredentials" => Some(decode_http_credentials(value, "$").map(|decoded| encode_http_credentials(&decoded))),
+        "XsrfBinding" => Some(decode_xsrf_binding(value, "$").map(|decoded| encode_xsrf_binding(&decoded))),
         "HttpEffectRequest" => Some(decode_http_effect_request(value, "$").map(|decoded| encode_http_effect_request(&decoded))),
         "StorageEffectRequest" => Some(decode_storage_effect_request(value, "$").map(|decoded| encode_storage_effect_request(&decoded))),
         "ClipboardEffectRequest" => Some(decode_clipboard_effect_request(value, "$").map(|decoded| encode_clipboard_effect_request(&decoded))),

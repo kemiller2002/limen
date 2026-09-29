@@ -5,7 +5,8 @@
   "doc": "The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.",
   "constants": [
     { "name": "PROTOCOL_VERSION", "type": "int", "value": 1, "doc": "The wire envelope major version. Revision 1.1 added the handshake and the generic capability envelope, both additive." },
-    { "name": "PROTOCOL_MINOR", "type": "int", "value": 2, "doc": "Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine." }
+    { "name": "PROTOCOL_MINOR", "type": "int", "value": 3, "doc": "Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding." },
+    { "name": "MAX_HTTP_TEXT_BYTES", "type": "int", "value": 8388608, "doc": "Protocol 1.3. The largest text or base64 response body, in bytes; a larger one is Failure too-large. Larger transfers belong to the transfer profile pack." }
   ],
   "types": [
     {
@@ -48,7 +49,8 @@
     {
       "name": "HttpFailureReason",
       "kind": "enum",
-      "values": ["network", "aborted", "invalid-response"]
+      "doc": "too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.",
+      "values": ["network", "aborted", "invalid-response", "too-large"]
     },
     {
       "name": "EffectOutcome",
@@ -58,7 +60,8 @@
       "variants": [
         { "name": "Success", "fields": [
           { "name": "status", "type": "int" },
-          { "name": "body", "type": "json", "doc": "The decoded response body. The engine narrows it with its own typed decoder." }
+          { "name": "body", "type": "json", "doc": "The response body as the request's response representation asked: decoded JSON (the default), a string for text or base64, or null for none. The engine narrows it with its own typed decoder." },
+          { "name": "headers", "type": { "map": "string" }, "optional": true, "doc": "Protocol 1.3: exactly the response headers the request listed in responseHeaders that the response carried, by lower-case name. Absent when none were asked for. Never surfaced in diagnostics." }
         ] },
         { "name": "Failure", "fields": [
           { "name": "reason", "type": "HttpFailureReason" },
@@ -296,7 +299,29 @@
     {
       "name": "HttpMethod",
       "kind": "enum",
-      "values": ["GET", "PUT", "POST", "PATCH", "DELETE"]
+      "doc": "HEAD and OPTIONS are protocol 1.3. A method outside this list is added by a contract revision, never accepted as a free string.",
+      "values": ["GET", "PUT", "POST", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+    },
+    {
+      "name": "HttpResponseKind",
+      "kind": "enum",
+      "doc": "Protocol 1.3. How the response body is represented: json decodes it (the default, and the only representation before 1.3); text is the body as a string; base64 is its exact bytes; none reads no body (HEAD, 204, or a body the engine does not need).",
+      "values": ["json", "text", "base64", "none"]
+    },
+    {
+      "name": "HttpCredentials",
+      "kind": "enum",
+      "doc": "Protocol 1.3. fetch's credentials mode: whether cookies and HTTP authentication go with the request. Absent means the browser default, same-origin.",
+      "values": ["omit", "same-origin", "include"]
+    },
+    {
+      "name": "XsrfBinding",
+      "kind": "record",
+      "doc": "Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.",
+      "fields": [
+        { "name": "cookie", "type": "string" },
+        { "name": "header", "type": "string" }
+      ]
     },
     {
       "name": "HttpEffectRequest",
@@ -307,7 +332,11 @@
         { "name": "url", "type": "string" },
         { "name": "headers", "type": { "map": "string" }, "optional": true, "doc": "Never surfaced in diagnostics: headers commonly carry credentials." },
         { "name": "body", "type": "string", "optional": true, "doc": "Pre-serialized by the engine; the kernel never interprets it." },
-        { "name": "timeoutMs", "type": "int" }
+        { "name": "timeoutMs", "type": "int" },
+        { "name": "response", "type": "HttpResponseKind", "optional": true, "doc": "Protocol 1.3. Absent means json." },
+        { "name": "responseHeaders", "type": { "list": "string" }, "optional": true, "doc": "Protocol 1.3. Response header names to return in Success.headers. Cross-origin, a browser exposes only CORS-safelisted headers and those the server lists in Access-Control-Expose-Headers." },
+        { "name": "credentials", "type": "HttpCredentials", "optional": true, "doc": "Protocol 1.3." },
+        { "name": "xsrf", "type": "XsrfBinding", "optional": true, "doc": "Protocol 1.3." }
       ]
     },
     {

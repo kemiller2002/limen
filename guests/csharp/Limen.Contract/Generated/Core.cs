@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
+// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:280eb98b5913ddb16bdef6861b16aa3279051fde5f802da4946b3e9c6bff736e
+// content-hash: sha256:7688f42bee3e6fe73f371a1718b366cf0f9eaed244f294572acc7d18fbb81ee9
 // </auto-generated>
 #nullable enable
 
@@ -17,9 +17,10 @@ public static class Contract
 {
     public const string Unit = "limen.core";
     public const long Version = 1;
-    public const string Fingerprint = "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e";
+    public const string Fingerprint = "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def";
     public const long ProtocolVersion = 1;
-    public const long ProtocolMinor = 2;
+    public const long ProtocolMinor = 3;
+    public const long MaxHttpTextBytes = 8388608;
 }
 
 /// <summary>Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected.</summary>
@@ -57,27 +58,30 @@ public sealed record SemanticEvent(string Name, string? Key, string? Value, bool
 /// <summary>The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this.</summary>
 public sealed record BrowserLocation(string Origin, string Path, string Query, string Hash);
 
+/// <summary>too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.</summary>
 [global::Limen.Contract.ClosedUnion]
 public enum HttpFailureReason
 {
     Network,
     Aborted,
     InvalidResponse,
+    TooLarge,
 }
 
 /// <summary>Exhaustive handling of HttpFailureReason: one handler per value, so a new value is a compile error at every call site.</summary>
 public static class HttpFailureReasonMatch
 {
-    public static TResult Match<TResult>(this HttpFailureReason value, global::System.Func<TResult> network, global::System.Func<TResult> aborted, global::System.Func<TResult> invalidResponse) => value switch
+    public static TResult Match<TResult>(this HttpFailureReason value, global::System.Func<TResult> network, global::System.Func<TResult> aborted, global::System.Func<TResult> invalidResponse, global::System.Func<TResult> tooLarge) => value switch
     {
         HttpFailureReason.Network => network(),
         HttpFailureReason.Aborted => aborted(),
         HttpFailureReason.InvalidResponse => invalidResponse(),
+        HttpFailureReason.TooLarge => tooLarge(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpFailureReason value."),
     };
 
     /// <summary>The wire text of a HttpFailureReason value.</summary>
-    public static string ToWire(this HttpFailureReason value) => value.Match(() => "network", () => "aborted", () => "invalid-response");
+    public static string ToWire(this HttpFailureReason value) => value.Match(() => "network", () => "aborted", () => "invalid-response", () => "too-large");
 }
 
 /// <summary>The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.</summary>
@@ -86,7 +90,7 @@ public abstract record EffectOutcome
 {
     private EffectOutcome() { }
 
-    public sealed record Success(long Status, global::Limen.Contract.RawJson Body) : EffectOutcome;
+    public sealed record Success(long Status, global::Limen.Contract.RawJson Body, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers) : EffectOutcome;
     public sealed record Failure(global::Limen.Contract.Core.HttpFailureReason Reason, long? Status) : EffectOutcome;
     public sealed record Cancelled() : EffectOutcome;
     public sealed record OutcomeUnknown() : EffectOutcome;
@@ -424,6 +428,7 @@ public abstract record ViewValue
     };
 }
 
+/// <summary>HEAD and OPTIONS are protocol 1.3. A method outside this list is added by a contract revision, never accepted as a free string.</summary>
 [global::Limen.Contract.ClosedUnion]
 public enum HttpMethod
 {
@@ -432,26 +437,83 @@ public enum HttpMethod
     Post,
     Patch,
     Delete,
+    Head,
+    Options,
 }
 
 /// <summary>Exhaustive handling of HttpMethod: one handler per value, so a new value is a compile error at every call site.</summary>
 public static class HttpMethodMatch
 {
-    public static TResult Match<TResult>(this HttpMethod value, global::System.Func<TResult> get, global::System.Func<TResult> put, global::System.Func<TResult> post, global::System.Func<TResult> patch, global::System.Func<TResult> delete) => value switch
+    public static TResult Match<TResult>(this HttpMethod value, global::System.Func<TResult> get, global::System.Func<TResult> put, global::System.Func<TResult> post, global::System.Func<TResult> patch, global::System.Func<TResult> delete, global::System.Func<TResult> head, global::System.Func<TResult> options) => value switch
     {
         HttpMethod.Get => get(),
         HttpMethod.Put => put(),
         HttpMethod.Post => post(),
         HttpMethod.Patch => patch(),
         HttpMethod.Delete => delete(),
+        HttpMethod.Head => head(),
+        HttpMethod.Options => options(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpMethod value."),
     };
 
     /// <summary>The wire text of a HttpMethod value.</summary>
-    public static string ToWire(this HttpMethod value) => value.Match(() => "GET", () => "PUT", () => "POST", () => "PATCH", () => "DELETE");
+    public static string ToWire(this HttpMethod value) => value.Match(() => "GET", () => "PUT", () => "POST", () => "PATCH", () => "DELETE", () => "HEAD", () => "OPTIONS");
 }
 
-public sealed record HttpEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, global::Limen.Contract.Core.HttpMethod Method, string Url, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers, string? Body, long TimeoutMs);
+/// <summary>Protocol 1.3. How the response body is represented: json decodes it (the default, and the only representation before 1.3); text is the body as a string; base64 is its exact bytes; none reads no body (HEAD, 204, or a body the engine does not need).</summary>
+[global::Limen.Contract.ClosedUnion]
+public enum HttpResponseKind
+{
+    Json,
+    Text,
+    Base64,
+    None,
+}
+
+/// <summary>Exhaustive handling of HttpResponseKind: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class HttpResponseKindMatch
+{
+    public static TResult Match<TResult>(this HttpResponseKind value, global::System.Func<TResult> json, global::System.Func<TResult> text, global::System.Func<TResult> base64, global::System.Func<TResult> none) => value switch
+    {
+        HttpResponseKind.Json => json(),
+        HttpResponseKind.Text => text(),
+        HttpResponseKind.Base64 => base64(),
+        HttpResponseKind.None => none(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpResponseKind value."),
+    };
+
+    /// <summary>The wire text of a HttpResponseKind value.</summary>
+    public static string ToWire(this HttpResponseKind value) => value.Match(() => "json", () => "text", () => "base64", () => "none");
+}
+
+/// <summary>Protocol 1.3. fetch's credentials mode: whether cookies and HTTP authentication go with the request. Absent means the browser default, same-origin.</summary>
+[global::Limen.Contract.ClosedUnion]
+public enum HttpCredentials
+{
+    Omit,
+    SameOrigin,
+    Include,
+}
+
+/// <summary>Exhaustive handling of HttpCredentials: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class HttpCredentialsMatch
+{
+    public static TResult Match<TResult>(this HttpCredentials value, global::System.Func<TResult> omit, global::System.Func<TResult> sameOrigin, global::System.Func<TResult> include) => value switch
+    {
+        HttpCredentials.Omit => omit(),
+        HttpCredentials.SameOrigin => sameOrigin(),
+        HttpCredentials.Include => include(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpCredentials value."),
+    };
+
+    /// <summary>The wire text of a HttpCredentials value.</summary>
+    public static string ToWire(this HttpCredentials value) => value.Match(() => "omit", () => "same-origin", () => "include");
+}
+
+/// <summary>Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.</summary>
+public sealed record XsrfBinding(string Cookie, string Header);
+
+public sealed record HttpEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, global::Limen.Contract.Core.HttpMethod Method, string Url, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers, string? Body, long TimeoutMs, global::Limen.Contract.Core.HttpResponseKind? Response, global::System.Collections.Generic.IReadOnlyList<string>? ResponseHeaders, global::Limen.Contract.Core.HttpCredentials? Credentials, global::Limen.Contract.Core.XsrfBinding? Xsrf);
 
 [global::Limen.Contract.ClosedUnion]
 public abstract record StorageEffectRequest
@@ -644,6 +706,18 @@ public static class Codec
     public static Decoded<global::Limen.Contract.Core.HttpMethod> ParseHttpMethod(string json) => Wire.Parse(json, ReadHttpMethod);
     public static string SerializeHttpMethod(global::Limen.Contract.Core.HttpMethod value) => Wire.Serialize(EncodeHttpMethod(value));
 
+    public static Decoded<global::Limen.Contract.Core.HttpResponseKind> DecodeHttpResponseKind(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadHttpResponseKind(element, path));
+    public static Decoded<global::Limen.Contract.Core.HttpResponseKind> ParseHttpResponseKind(string json) => Wire.Parse(json, ReadHttpResponseKind);
+    public static string SerializeHttpResponseKind(global::Limen.Contract.Core.HttpResponseKind value) => Wire.Serialize(EncodeHttpResponseKind(value));
+
+    public static Decoded<global::Limen.Contract.Core.HttpCredentials> DecodeHttpCredentials(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadHttpCredentials(element, path));
+    public static Decoded<global::Limen.Contract.Core.HttpCredentials> ParseHttpCredentials(string json) => Wire.Parse(json, ReadHttpCredentials);
+    public static string SerializeHttpCredentials(global::Limen.Contract.Core.HttpCredentials value) => Wire.Serialize(EncodeHttpCredentials(value));
+
+    public static Decoded<global::Limen.Contract.Core.XsrfBinding> DecodeXsrfBinding(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadXsrfBinding(element, path));
+    public static Decoded<global::Limen.Contract.Core.XsrfBinding> ParseXsrfBinding(string json) => Wire.Parse(json, ReadXsrfBinding);
+    public static string SerializeXsrfBinding(global::Limen.Contract.Core.XsrfBinding value) => Wire.Serialize(EncodeXsrfBinding(value));
+
     public static Decoded<global::Limen.Contract.Core.HttpEffectRequest> DecodeHttpEffectRequest(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadHttpEffectRequest(element, path));
     public static Decoded<global::Limen.Contract.Core.HttpEffectRequest> ParseHttpEffectRequest(string json) => Wire.Parse(json, ReadHttpEffectRequest);
     public static string SerializeHttpEffectRequest(global::Limen.Contract.Core.HttpEffectRequest value) => Wire.Serialize(EncodeHttpEffectRequest(value));
@@ -702,7 +776,7 @@ public static class Codec
     }
 
     internal static global::Limen.Contract.Core.HttpFailureReason ReadHttpFailureReason(global::System.Text.Json.JsonElement element, string path) =>
-        Wire.Enumeration(element, path, ("network", global::Limen.Contract.Core.HttpFailureReason.Network), ("aborted", global::Limen.Contract.Core.HttpFailureReason.Aborted), ("invalid-response", global::Limen.Contract.Core.HttpFailureReason.InvalidResponse));
+        Wire.Enumeration(element, path, ("network", global::Limen.Contract.Core.HttpFailureReason.Network), ("aborted", global::Limen.Contract.Core.HttpFailureReason.Aborted), ("invalid-response", global::Limen.Contract.Core.HttpFailureReason.InvalidResponse), ("too-large", global::Limen.Contract.Core.HttpFailureReason.TooLarge));
 
     internal static global::Limen.Contract.Core.EffectOutcome ReadEffectOutcome(global::System.Text.Json.JsonElement element, string path)
     {
@@ -710,11 +784,12 @@ public static class Codec
         {
             case "Success":
             {
-                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "status", "body");
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "status", "body", "headers");
                 Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Success"));
                 var f_status = Wire.Required(props, path, "status", (e0, p0) => Wire.Int(e0, p0));
                 var f_body = Wire.Required(props, path, "body", (e0, p0) => Wire.Json(e0, p0));
-                return new global::Limen.Contract.Core.EffectOutcome.Success(f_status, f_body);
+                var f_headers = Wire.OptionalReference<global::System.Collections.Generic.IReadOnlyDictionary<string, string>>(props, path, "headers", (e0, p0) => Wire.Map(e0, p0, (e1, p1) => Wire.String(e1, p1)));
+                return new global::Limen.Contract.Core.EffectOutcome.Success(f_status, f_body, f_headers);
             }
             case "Failure":
             {
@@ -1088,11 +1163,25 @@ public static class Codec
         Wire.Map(element, path, (e0, p0) => ReadViewValue(e0, p0));
 
     internal static global::Limen.Contract.Core.HttpMethod ReadHttpMethod(global::System.Text.Json.JsonElement element, string path) =>
-        Wire.Enumeration(element, path, ("GET", global::Limen.Contract.Core.HttpMethod.Get), ("PUT", global::Limen.Contract.Core.HttpMethod.Put), ("POST", global::Limen.Contract.Core.HttpMethod.Post), ("PATCH", global::Limen.Contract.Core.HttpMethod.Patch), ("DELETE", global::Limen.Contract.Core.HttpMethod.Delete));
+        Wire.Enumeration(element, path, ("GET", global::Limen.Contract.Core.HttpMethod.Get), ("PUT", global::Limen.Contract.Core.HttpMethod.Put), ("POST", global::Limen.Contract.Core.HttpMethod.Post), ("PATCH", global::Limen.Contract.Core.HttpMethod.Patch), ("DELETE", global::Limen.Contract.Core.HttpMethod.Delete), ("HEAD", global::Limen.Contract.Core.HttpMethod.Head), ("OPTIONS", global::Limen.Contract.Core.HttpMethod.Options));
+
+    internal static global::Limen.Contract.Core.HttpResponseKind ReadHttpResponseKind(global::System.Text.Json.JsonElement element, string path) =>
+        Wire.Enumeration(element, path, ("json", global::Limen.Contract.Core.HttpResponseKind.Json), ("text", global::Limen.Contract.Core.HttpResponseKind.Text), ("base64", global::Limen.Contract.Core.HttpResponseKind.Base64), ("none", global::Limen.Contract.Core.HttpResponseKind.None));
+
+    internal static global::Limen.Contract.Core.HttpCredentials ReadHttpCredentials(global::System.Text.Json.JsonElement element, string path) =>
+        Wire.Enumeration(element, path, ("omit", global::Limen.Contract.Core.HttpCredentials.Omit), ("same-origin", global::Limen.Contract.Core.HttpCredentials.SameOrigin), ("include", global::Limen.Contract.Core.HttpCredentials.Include));
+
+    internal static global::Limen.Contract.Core.XsrfBinding ReadXsrfBinding(global::System.Text.Json.JsonElement element, string path)
+    {
+        var props = Wire.Closed(Wire.Properties(element, path), path, "cookie", "header");
+        var f_cookie = Wire.Required(props, path, "cookie", (e0, p0) => Wire.String(e0, p0));
+        var f_header = Wire.Required(props, path, "header", (e0, p0) => Wire.String(e0, p0));
+        return new global::Limen.Contract.Core.XsrfBinding(f_cookie, f_header);
+    }
 
     internal static global::Limen.Contract.Core.HttpEffectRequest ReadHttpEffectRequest(global::System.Text.Json.JsonElement element, string path)
     {
-        var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "correlationId", "method", "url", "headers", "body", "timeoutMs");
+        var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "correlationId", "method", "url", "headers", "body", "timeoutMs", "response", "responseHeaders", "credentials", "xsrf");
         Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Http"));
         var f_correlationId = Wire.Required(props, path, "correlationId", (e0, p0) => ReadCorrelationId(e0, p0));
         var f_method = Wire.Required(props, path, "method", (e0, p0) => ReadHttpMethod(e0, p0));
@@ -1100,7 +1189,11 @@ public static class Codec
         var f_headers = Wire.OptionalReference<global::System.Collections.Generic.IReadOnlyDictionary<string, string>>(props, path, "headers", (e0, p0) => Wire.Map(e0, p0, (e1, p1) => Wire.String(e1, p1)));
         var f_body = Wire.OptionalReference<string>(props, path, "body", (e0, p0) => Wire.String(e0, p0));
         var f_timeoutMs = Wire.Required(props, path, "timeoutMs", (e0, p0) => Wire.Int(e0, p0));
-        return new global::Limen.Contract.Core.HttpEffectRequest(f_correlationId, f_method, f_url, f_headers, f_body, f_timeoutMs);
+        var f_response = Wire.OptionalValue<global::Limen.Contract.Core.HttpResponseKind>(props, path, "response", (e0, p0) => ReadHttpResponseKind(e0, p0));
+        var f_responseHeaders = Wire.OptionalReference<global::System.Collections.Generic.IReadOnlyList<string>>(props, path, "responseHeaders", (e0, p0) => Wire.List(e0, p0, (e1, p1) => Wire.String(e1, p1)));
+        var f_credentials = Wire.OptionalValue<global::Limen.Contract.Core.HttpCredentials>(props, path, "credentials", (e0, p0) => ReadHttpCredentials(e0, p0));
+        var f_xsrf = Wire.OptionalReference<global::Limen.Contract.Core.XsrfBinding>(props, path, "xsrf", (e0, p0) => ReadXsrfBinding(e0, p0));
+        return new global::Limen.Contract.Core.HttpEffectRequest(f_correlationId, f_method, f_url, f_headers, f_body, f_timeoutMs, f_response, f_responseHeaders, f_credentials, f_xsrf);
     }
 
     internal static global::Limen.Contract.Core.StorageEffectRequest ReadStorageEffectRequest(global::System.Text.Json.JsonElement element, string path)
@@ -1258,12 +1351,13 @@ public static class Codec
             global::Limen.Contract.Core.HttpFailureReason.Network => Wire.OfString("network"),
             global::Limen.Contract.Core.HttpFailureReason.Aborted => Wire.OfString("aborted"),
             global::Limen.Contract.Core.HttpFailureReason.InvalidResponse => Wire.OfString("invalid-response"),
+            global::Limen.Contract.Core.HttpFailureReason.TooLarge => Wire.OfString("too-large"),
             _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpFailureReason value."),
         };
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeEffectOutcome(global::Limen.Contract.Core.EffectOutcome value) =>
         value.Match(
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Success")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("status", Wire.OfInt(v.Status)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("body", Wire.OfJson(v.Body))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Success")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("status", Wire.OfInt(v.Status)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("body", Wire.OfJson(v.Body)), (v.Headers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("headers", Wire.OfMap(v.Headers, x0 => Wire.OfString(x0))))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Failure")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reason", EncodeHttpFailureReason(v.Reason)), (v.Status.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("status", Wire.OfInt(v.Status.Value)) : null)),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Cancelled"))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("OutcomeUnknown")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reason", Wire.OfString("timeout-after-dispatch"))));
@@ -1400,11 +1494,35 @@ public static class Codec
             global::Limen.Contract.Core.HttpMethod.Post => Wire.OfString("POST"),
             global::Limen.Contract.Core.HttpMethod.Patch => Wire.OfString("PATCH"),
             global::Limen.Contract.Core.HttpMethod.Delete => Wire.OfString("DELETE"),
+            global::Limen.Contract.Core.HttpMethod.Head => Wire.OfString("HEAD"),
+            global::Limen.Contract.Core.HttpMethod.Options => Wire.OfString("OPTIONS"),
             _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpMethod value."),
         };
 
+    public static global::System.Text.Json.Nodes.JsonNode? EncodeHttpResponseKind(global::Limen.Contract.Core.HttpResponseKind value) =>
+        value switch
+        {
+            global::Limen.Contract.Core.HttpResponseKind.Json => Wire.OfString("json"),
+            global::Limen.Contract.Core.HttpResponseKind.Text => Wire.OfString("text"),
+            global::Limen.Contract.Core.HttpResponseKind.Base64 => Wire.OfString("base64"),
+            global::Limen.Contract.Core.HttpResponseKind.None => Wire.OfString("none"),
+            _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpResponseKind value."),
+        };
+
+    public static global::System.Text.Json.Nodes.JsonNode? EncodeHttpCredentials(global::Limen.Contract.Core.HttpCredentials value) =>
+        value switch
+        {
+            global::Limen.Contract.Core.HttpCredentials.Omit => Wire.OfString("omit"),
+            global::Limen.Contract.Core.HttpCredentials.SameOrigin => Wire.OfString("same-origin"),
+            global::Limen.Contract.Core.HttpCredentials.Include => Wire.OfString("include"),
+            _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpCredentials value."),
+        };
+
+    public static global::System.Text.Json.Nodes.JsonNode? EncodeXsrfBinding(global::Limen.Contract.Core.XsrfBinding value) =>
+        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("cookie", Wire.OfString(value.Cookie)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("header", Wire.OfString(value.Header)));
+
     public static global::System.Text.Json.Nodes.JsonNode? EncodeHttpEffectRequest(global::Limen.Contract.Core.HttpEffectRequest value) =>
-        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Http")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("correlationId", EncodeCorrelationId(value.CorrelationId)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("method", EncodeHttpMethod(value.Method)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("url", Wire.OfString(value.Url)), (value.Headers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("headers", Wire.OfMap(value.Headers, x0 => Wire.OfString(x0)))), (value.Body is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("body", Wire.OfString(value.Body))), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("timeoutMs", Wire.OfInt(value.TimeoutMs)));
+        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Http")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("correlationId", EncodeCorrelationId(value.CorrelationId)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("method", EncodeHttpMethod(value.Method)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("url", Wire.OfString(value.Url)), (value.Headers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("headers", Wire.OfMap(value.Headers, x0 => Wire.OfString(x0)))), (value.Body is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("body", Wire.OfString(value.Body))), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("timeoutMs", Wire.OfInt(value.TimeoutMs)), (value.Response.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("response", EncodeHttpResponseKind(value.Response.Value)) : null), (value.ResponseHeaders is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("responseHeaders", Wire.OfList(value.ResponseHeaders, x0 => Wire.OfString(x0)))), (value.Credentials.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("credentials", EncodeHttpCredentials(value.Credentials.Value)) : null), (value.Xsrf is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("xsrf", EncodeXsrfBinding(value.Xsrf))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeStorageEffectRequest(global::Limen.Contract.Core.StorageEffectRequest value) =>
         value.Match(
@@ -1473,6 +1591,9 @@ public static class Conformance
             ["ViewValue"] = element => Wire.Run(() => Codec.EncodeViewValue(Codec.ReadViewValue(element, "$"))),
             ["ViewState"] = element => Wire.Run(() => Codec.EncodeViewState(Codec.ReadViewState(element, "$"))),
             ["HttpMethod"] = element => Wire.Run(() => Codec.EncodeHttpMethod(Codec.ReadHttpMethod(element, "$"))),
+            ["HttpResponseKind"] = element => Wire.Run(() => Codec.EncodeHttpResponseKind(Codec.ReadHttpResponseKind(element, "$"))),
+            ["HttpCredentials"] = element => Wire.Run(() => Codec.EncodeHttpCredentials(Codec.ReadHttpCredentials(element, "$"))),
+            ["XsrfBinding"] = element => Wire.Run(() => Codec.EncodeXsrfBinding(Codec.ReadXsrfBinding(element, "$"))),
             ["HttpEffectRequest"] = element => Wire.Run(() => Codec.EncodeHttpEffectRequest(Codec.ReadHttpEffectRequest(element, "$"))),
             ["StorageEffectRequest"] = element => Wire.Run(() => Codec.EncodeStorageEffectRequest(Codec.ReadStorageEffectRequest(element, "$"))),
             ["ClipboardEffectRequest"] = element => Wire.Run(() => Codec.EncodeClipboardEffectRequest(Codec.ReadClipboardEffectRequest(element, "$"))),

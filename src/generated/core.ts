@@ -2,20 +2,23 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
+// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
 // generator: limen-contract-gen/1 (typescript-types)
-// content-hash: sha256:8b1ad39f7e68da3b1dc1297d742dfad2c651619972fade742225cc318a17d227
+// content-hash: sha256:7aae8ca2865290c70b290245250f01d634d968f6491decf25ecb570d98ab1117
 // </auto-generated>
 /** The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand. */
 
 /** The wire envelope major version. Revision 1.1 added the handshake and the generic capability envelope, both additive. */
 export const PROTOCOL_VERSION = 1 as const;
 
-/** Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. */
-export const PROTOCOL_MINOR = 2 as const;
+/** Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding. */
+export const PROTOCOL_MINOR = 3 as const;
+
+/** Protocol 1.3. The largest text or base64 response body, in bytes; a larger one is Failure too-large. Larger transfers belong to the transfer profile pack. */
+export const MAX_HTTP_TEXT_BYTES = 8388608 as const;
 
 /** The identity of this generated contract unit, exchanged in the handshake. */
-export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e" } as const;
+export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def" } as const;
 
 /** Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected. */
 export type CorrelationId = string & { readonly __correlationId: unique symbol };
@@ -29,12 +32,13 @@ export type SemanticEvent = { readonly kind: "Event"; readonly name: string; rea
 /** The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this. */
 export type BrowserLocation = { readonly origin: string; readonly path: string; readonly query: string; readonly hash: string };
 
-export type HttpFailureReason = "network" | "aborted" | "invalid-response";
+/** too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit. */
+export type HttpFailureReason = "network" | "aborted" | "invalid-response" | "too-large";
 
 /** The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure. */
 export type EffectOutcome =
-  | { readonly kind: "Success"; readonly status: number; readonly body: unknown }
-  | { readonly kind: "Failure"; readonly reason: "network" | "aborted" | "invalid-response"; readonly status?: number }
+  | { readonly kind: "Success"; readonly status: number; readonly body: unknown; readonly headers?: Readonly<Record<string, string>> }
+  | { readonly kind: "Failure"; readonly reason: "network" | "aborted" | "invalid-response" | "too-large"; readonly status?: number }
   | { readonly kind: "Cancelled" }
   | { readonly kind: "OutcomeUnknown"; readonly reason: "timeout-after-dispatch" };
 
@@ -117,9 +121,19 @@ export type ViewValue = string | number | boolean | readonly ViewItem[];
 /** A projection, not the engine's internal state: named values a view binds to and named lists it repeats. */
 export type ViewState = { readonly [key: string]: ViewValue };
 
-export type HttpMethod = "GET" | "PUT" | "POST" | "PATCH" | "DELETE";
+/** HEAD and OPTIONS are protocol 1.3. A method outside this list is added by a contract revision, never accepted as a free string. */
+export type HttpMethod = "GET" | "PUT" | "POST" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
-export type HttpEffectRequest = { readonly kind: "Http"; readonly correlationId: CorrelationId; readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE"; readonly url: string; readonly headers?: Readonly<Record<string, string>>; readonly body?: string; readonly timeoutMs: number };
+/** Protocol 1.3. How the response body is represented: json decodes it (the default, and the only representation before 1.3); text is the body as a string; base64 is its exact bytes; none reads no body (HEAD, 204, or a body the engine does not need). */
+export type HttpResponseKind = "json" | "text" | "base64" | "none";
+
+/** Protocol 1.3. fetch's credentials mode: whether cookies and HTTP authentication go with the request. Absent means the browser default, same-origin. */
+export type HttpCredentials = "omit" | "same-origin" | "include";
+
+/** Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added. */
+export type XsrfBinding = { readonly cookie: string; readonly header: string };
+
+export type HttpEffectRequest = { readonly kind: "Http"; readonly correlationId: CorrelationId; readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"; readonly url: string; readonly headers?: Readonly<Record<string, string>>; readonly body?: string; readonly timeoutMs: number; readonly response?: "json" | "text" | "base64" | "none"; readonly responseHeaders?: readonly string[]; readonly credentials?: "omit" | "same-origin" | "include"; readonly xsrf?: XsrfBinding };
 
 export type StorageEffectRequest =
   | { readonly kind: "Storage"; readonly operation: "get"; readonly correlationId: CorrelationId; readonly key: string }

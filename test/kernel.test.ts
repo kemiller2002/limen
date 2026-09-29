@@ -80,9 +80,10 @@ test("start() dispatches Initialize with the protocol version and applies the in
       // link to the current screen — Navigation and Clipboard used together.
       location: { origin: "http://localhost", path: "/", query: "", hash: "" },
       // Protocol 1.1+: the host's side of the compatibility handshake, at the
-      // revision the kernel implements (1.2 adds form-control state). With no
-      // optional capability registered, it offers only the core contract.
-      handshake: { protocol: { major: 1, minor: 2 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] },
+      // revision the kernel implements (1.2 adds form-control state, 1.3 the
+      // Http profile). With no optional capability registered, it offers only
+      // the core contract.
+      handshake: { protocol: { major: 1, minor: 3 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] },
     });
     assert.equal(document.querySelector("p")!.textContent, "ready");
   });

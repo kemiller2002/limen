@@ -34,7 +34,7 @@ let deployment = transition approved (BeginDeploy(DeploySuccess, "deploy-1"))
 equal "approved release can enter deployment" true (match deployment.State.Release.Deployment with | InFlight("deploy-1", DeploySuccess) -> true | _ -> false)
 equal "deployment emits one browser effect" 1 deployment.Effects.Length
 
-let staleDeploy = transition deployment.State (RecordDeploy("deploy-old", EffectOutcome.Success(200L, Limen.Contract.RawJson "null")))
+let staleDeploy = transition deployment.State (RecordDeploy("deploy-old", EffectOutcome.Success(200L, Limen.Contract.RawJson "null", None)))
 equal "stale deploy evidence is discarded" deployment.State.Release.Deployment staleDeploy.State.Release.Deployment
 
 let unknown = transition deployment.State (RecordDeploy("deploy-1", EffectOutcome.OutcomeUnknown))

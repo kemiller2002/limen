@@ -2,11 +2,11 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
+// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:b32b427c1bbe62435fae8aa2b2e405e0369bed9888fe5a2b2559c5dbf029f12e
+// content-hash: sha256:85fad6f96ef405ab955d753d3d8abe6ed492c24598c9c4e896f5afaba6c6fd82
 // </auto-generated>
-import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
+import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
 
 /** Where decoding stopped, and what the contract expected there. */
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
@@ -115,7 +115,7 @@ export const decodeBrowserLocation = (value: unknown, path = "$"): Decoded<Brows
   return ok<BrowserLocation>({ origin: field_origin.value, path: field_path.value, query: field_query.value, hash: field_hash.value });
 };
 
-export const decodeHttpFailureReason = (value: unknown, path = "$"): Decoded<HttpFailureReason> => enumValue(value, path, ["network","aborted","invalid-response"] as const);
+export const decodeHttpFailureReason = (value: unknown, path = "$"): Decoded<HttpFailureReason> => enumValue(value, path, ["network","aborted","invalid-response","too-large"] as const);
 
 export const decodeEffectOutcome = (value: unknown, path = "$"): Decoded<EffectOutcome> => {
   const object = objectValue(value, path, null);
@@ -131,7 +131,7 @@ export const decodeEffectOutcome = (value: unknown, path = "$"): Decoded<EffectO
 };
 
 const decodeEffectOutcome_Success = (value: unknown, path: string): Decoded<EffectOutcome> => {
-  const object = objectValue(value, path, ["kind","status","body"]);
+  const object = objectValue(value, path, ["kind","status","body","headers"]);
   if (!object.ok) return object;
   const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Success");
   if (!kindTag.ok) return kindTag;
@@ -139,7 +139,9 @@ const decodeEffectOutcome_Success = (value: unknown, path: string): Decoded<Effe
   if (!field_status.ok) return field_status;
   const field_body = jsonValue(object.value["body"], `${path}.body`);
   if (!field_body.ok) return field_body;
-  return ok<EffectOutcome>({ kind: "Success", status: field_status.value, body: field_body.value });
+  const field_headers = object.value["headers"] === undefined ? ok(undefined) : mapOf(object.value["headers"], `${path}.headers`, (item, at) => stringValue(item, at));
+  if (!field_headers.ok) return field_headers;
+  return ok<EffectOutcome>({ kind: "Success", status: field_status.value, body: field_body.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}) });
 };
 
 const decodeEffectOutcome_Failure = (value: unknown, path: string): Decoded<EffectOutcome> => {
@@ -637,10 +639,24 @@ export const decodeViewValue = (value: unknown, path = "$"): Decoded<ViewValue> 
 
 export const decodeViewState = (value: unknown, path = "$"): Decoded<ViewState> => mapOf(value, path, (item, at) => decodeViewValue(item, at));
 
-export const decodeHttpMethod = (value: unknown, path = "$"): Decoded<HttpMethod> => enumValue(value, path, ["GET","PUT","POST","PATCH","DELETE"] as const);
+export const decodeHttpMethod = (value: unknown, path = "$"): Decoded<HttpMethod> => enumValue(value, path, ["GET","PUT","POST","PATCH","DELETE","HEAD","OPTIONS"] as const);
+
+export const decodeHttpResponseKind = (value: unknown, path = "$"): Decoded<HttpResponseKind> => enumValue(value, path, ["json","text","base64","none"] as const);
+
+export const decodeHttpCredentials = (value: unknown, path = "$"): Decoded<HttpCredentials> => enumValue(value, path, ["omit","same-origin","include"] as const);
+
+export const decodeXsrfBinding = (value: unknown, path = "$"): Decoded<XsrfBinding> => {
+  const object = objectValue(value, path, ["cookie","header"]);
+  if (!object.ok) return object;
+  const field_cookie = stringValue(object.value["cookie"], `${path}.cookie`);
+  if (!field_cookie.ok) return field_cookie;
+  const field_header = stringValue(object.value["header"], `${path}.header`);
+  if (!field_header.ok) return field_header;
+  return ok<XsrfBinding>({ cookie: field_cookie.value, header: field_header.value });
+};
 
 export const decodeHttpEffectRequest = (value: unknown, path = "$"): Decoded<HttpEffectRequest> => {
-  const object = objectValue(value, path, ["kind","correlationId","method","url","headers","body","timeoutMs"]);
+  const object = objectValue(value, path, ["kind","correlationId","method","url","headers","body","timeoutMs","response","responseHeaders","credentials","xsrf"]);
   if (!object.ok) return object;
   const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Http");
   if (!kindTag.ok) return kindTag;
@@ -656,7 +672,15 @@ export const decodeHttpEffectRequest = (value: unknown, path = "$"): Decoded<Htt
   if (!field_body.ok) return field_body;
   const field_timeoutMs = intValue(object.value["timeoutMs"], `${path}.timeoutMs`);
   if (!field_timeoutMs.ok) return field_timeoutMs;
-  return ok<HttpEffectRequest>({ kind: "Http", correlationId: field_correlationId.value, method: field_method.value, url: field_url.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}), ...(field_body.value !== undefined ? { body: field_body.value } : {}), timeoutMs: field_timeoutMs.value });
+  const field_response = object.value["response"] === undefined ? ok(undefined) : decodeHttpResponseKind(object.value["response"], `${path}.response`);
+  if (!field_response.ok) return field_response;
+  const field_responseHeaders = object.value["responseHeaders"] === undefined ? ok(undefined) : listOf(object.value["responseHeaders"], `${path}.responseHeaders`, (item, at) => stringValue(item, at));
+  if (!field_responseHeaders.ok) return field_responseHeaders;
+  const field_credentials = object.value["credentials"] === undefined ? ok(undefined) : decodeHttpCredentials(object.value["credentials"], `${path}.credentials`);
+  if (!field_credentials.ok) return field_credentials;
+  const field_xsrf = object.value["xsrf"] === undefined ? ok(undefined) : decodeXsrfBinding(object.value["xsrf"], `${path}.xsrf`);
+  if (!field_xsrf.ok) return field_xsrf;
+  return ok<HttpEffectRequest>({ kind: "Http", correlationId: field_correlationId.value, method: field_method.value, url: field_url.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}), ...(field_body.value !== undefined ? { body: field_body.value } : {}), timeoutMs: field_timeoutMs.value, ...(field_response.value !== undefined ? { response: field_response.value } : {}), ...(field_responseHeaders.value !== undefined ? { responseHeaders: field_responseHeaders.value } : {}), ...(field_credentials.value !== undefined ? { credentials: field_credentials.value } : {}), ...(field_xsrf.value !== undefined ? { xsrf: field_xsrf.value } : {}) });
 };
 
 export const decodeStorageEffectRequest = (value: unknown, path = "$"): Decoded<StorageEffectRequest> => {

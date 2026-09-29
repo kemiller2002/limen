@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e
+// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:70ed79878805fffa194cb4cebd140063b1cf97dbbfccb0dd9117db66e0f9d31e
+// content-hash: sha256:b032e4f841cc77d61ef58ef180a7d5dbfc44dc9824e1ac4f277281170632f49e
 // </auto-generated>
 namespace Limen.Contract.Core
 
@@ -52,14 +52,16 @@ module Types =
             Hash: string
         }
 
+    /// too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.
     and [<RequireQualifiedAccess>] HttpFailureReason =
         | Network
         | Aborted
         | InvalidResponse
+        | TooLarge
 
     /// The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.
     and [<RequireQualifiedAccess>] EffectOutcome =
-        | Success of Status: int64 * Body: RawJson
+        | Success of Status: int64 * Body: RawJson * Headers: Map<string, string> option
         | Failure of Reason: HttpFailureReason * Status: int64 option
         | Cancelled
         | OutcomeUnknown
@@ -177,12 +179,35 @@ module Types =
         | Flag of bool
         | Items of Map<string, ViewPrimitive> list
 
+    /// HEAD and OPTIONS are protocol 1.3. A method outside this list is added by a contract revision, never accepted as a free string.
     and [<RequireQualifiedAccess>] HttpMethod =
         | Get
         | Put
         | Post
         | Patch
         | Delete
+        | Head
+        | Options
+
+    /// Protocol 1.3. How the response body is represented: json decodes it (the default, and the only representation before 1.3); text is the body as a string; base64 is its exact bytes; none reads no body (HEAD, 204, or a body the engine does not need).
+    and [<RequireQualifiedAccess>] HttpResponseKind =
+        | Json
+        | Text
+        | Base64
+        | None
+
+    /// Protocol 1.3. fetch's credentials mode: whether cookies and HTTP authentication go with the request. Absent means the browser default, same-origin.
+    and [<RequireQualifiedAccess>] HttpCredentials =
+        | Omit
+        | SameOrigin
+        | Include
+
+    /// Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.
+    and XsrfBinding =
+        {
+            Cookie: string
+            Header: string
+        }
 
     and HttpEffectRequest =
         {
@@ -194,6 +219,14 @@ module Types =
             /// Pre-serialized by the engine; the kernel never interprets it.
             Body: string option
             TimeoutMs: int64
+            /// Protocol 1.3. Absent means json.
+            Response: HttpResponseKind option
+            /// Protocol 1.3. Response header names to return in Success.headers. Cross-origin, a browser exposes only CORS-safelisted headers and those the server lists in Access-Control-Expose-Headers.
+            ResponseHeaders: string list option
+            /// Protocol 1.3.
+            Credentials: HttpCredentials option
+            /// Protocol 1.3.
+            Xsrf: XsrfBinding option
         }
 
     and [<RequireQualifiedAccess>] StorageEffectRequest =
@@ -251,9 +284,10 @@ module Types =
 module Contract =
     let [<Literal>] Unit = "limen.core"
     let [<Literal>] Version = 1L
-    let [<Literal>] Fingerprint = "sha256:6ba4dd46e7a1cd5888fd28e437e7df53555d52f836ef4a489afa29c7f71cba3e"
+    let [<Literal>] Fingerprint = "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def"
     let [<Literal>] ProtocolVersion = 1L
-    let [<Literal>] ProtocolMinor = 2L
+    let [<Literal>] ProtocolMinor = 3L
+    let [<Literal>] MaxHttpTextBytes = 8388608L
 
 /// Strict decoders (untrusted JSON → contract values) and encoders.
 [<RequireQualifiedAccess>]
@@ -290,7 +324,7 @@ module Codec =
         }
 
     and decodeHttpFailureReason (path: string) (element: JsonElement) : Result<HttpFailureReason, DecodeError> =
-        Wire.enumeration [ "network", HttpFailureReason.Network; "aborted", HttpFailureReason.Aborted; "invalid-response", HttpFailureReason.InvalidResponse ] path element
+        Wire.enumeration [ "network", HttpFailureReason.Network; "aborted", HttpFailureReason.Aborted; "invalid-response", HttpFailureReason.InvalidResponse; "too-large", HttpFailureReason.TooLarge ] path element
 
     and decodeEffectOutcome (path: string) (element: JsonElement) : Result<EffectOutcome, DecodeError> =
         Wire.decode {
@@ -298,11 +332,12 @@ module Codec =
             match tag with
             | "Success" ->
                 let! props = Wire.properties path element
-                let! props = Wire.closed [ "kind"; "status"; "body" ] path props
+                let! props = Wire.closed [ "kind"; "status"; "body"; "headers" ] path props
                 let! () = Wire.required "kind" (Wire.literalString "Success") path props
                 let! f_status = Wire.required "status" Wire.int path props
                 let! f_body = Wire.required "body" Wire.json path props
-                return EffectOutcome.Success(f_status, f_body)
+                let! f_headers = Wire.optional "headers" (Wire.map Wire.string) path props
+                return EffectOutcome.Success(f_status, f_body, f_headers)
             | "Failure" ->
                 let! props = Wire.properties path element
                 let! props = Wire.closed [ "kind"; "reason"; "status" ] path props
@@ -628,12 +663,27 @@ module Codec =
         Wire.map decodeViewValue path element
 
     and decodeHttpMethod (path: string) (element: JsonElement) : Result<HttpMethod, DecodeError> =
-        Wire.enumeration [ "GET", HttpMethod.Get; "PUT", HttpMethod.Put; "POST", HttpMethod.Post; "PATCH", HttpMethod.Patch; "DELETE", HttpMethod.Delete ] path element
+        Wire.enumeration [ "GET", HttpMethod.Get; "PUT", HttpMethod.Put; "POST", HttpMethod.Post; "PATCH", HttpMethod.Patch; "DELETE", HttpMethod.Delete; "HEAD", HttpMethod.Head; "OPTIONS", HttpMethod.Options ] path element
+
+    and decodeHttpResponseKind (path: string) (element: JsonElement) : Result<HttpResponseKind, DecodeError> =
+        Wire.enumeration [ "json", HttpResponseKind.Json; "text", HttpResponseKind.Text; "base64", HttpResponseKind.Base64; "none", HttpResponseKind.None ] path element
+
+    and decodeHttpCredentials (path: string) (element: JsonElement) : Result<HttpCredentials, DecodeError> =
+        Wire.enumeration [ "omit", HttpCredentials.Omit; "same-origin", HttpCredentials.SameOrigin; "include", HttpCredentials.Include ] path element
+
+    and decodeXsrfBinding (path: string) (element: JsonElement) : Result<XsrfBinding, DecodeError> =
+        Wire.decode {
+            let! props = Wire.properties path element
+            let! props = Wire.closed [ "cookie"; "header" ] path props
+            let! f_cookie = Wire.required "cookie" Wire.string path props
+            let! f_header = Wire.required "header" Wire.string path props
+            return { Cookie = f_cookie; Header = f_header }
+        }
 
     and decodeHttpEffectRequest (path: string) (element: JsonElement) : Result<HttpEffectRequest, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
-            let! props = Wire.closed [ "kind"; "correlationId"; "method"; "url"; "headers"; "body"; "timeoutMs" ] path props
+            let! props = Wire.closed [ "kind"; "correlationId"; "method"; "url"; "headers"; "body"; "timeoutMs"; "response"; "responseHeaders"; "credentials"; "xsrf" ] path props
             let! () = Wire.required "kind" (Wire.literalString "Http") path props
             let! f_correlationId = Wire.required "correlationId" decodeCorrelationId path props
             let! f_method = Wire.required "method" decodeHttpMethod path props
@@ -641,7 +691,11 @@ module Codec =
             let! f_headers = Wire.optional "headers" (Wire.map Wire.string) path props
             let! f_body = Wire.optional "body" Wire.string path props
             let! f_timeoutMs = Wire.required "timeoutMs" Wire.int path props
-            return { CorrelationId = f_correlationId; Method = f_method; Url = f_url; Headers = f_headers; Body = f_body; TimeoutMs = f_timeoutMs }
+            let! f_response = Wire.optional "response" decodeHttpResponseKind path props
+            let! f_responseHeaders = Wire.optional "responseHeaders" (Wire.list Wire.string) path props
+            let! f_credentials = Wire.optional "credentials" decodeHttpCredentials path props
+            let! f_xsrf = Wire.optional "xsrf" decodeXsrfBinding path props
+            return { CorrelationId = f_correlationId; Method = f_method; Url = f_url; Headers = f_headers; Body = f_body; TimeoutMs = f_timeoutMs; Response = f_response; ResponseHeaders = f_responseHeaders; Credentials = f_credentials; Xsrf = f_xsrf }
         }
 
     and decodeStorageEffectRequest (path: string) (element: JsonElement) : Result<StorageEffectRequest, DecodeError> =
@@ -791,10 +845,11 @@ module Codec =
         | HttpFailureReason.Network -> Wire.ofString "network"
         | HttpFailureReason.Aborted -> Wire.ofString "aborted"
         | HttpFailureReason.InvalidResponse -> Wire.ofString "invalid-response"
+        | HttpFailureReason.TooLarge -> Wire.ofString "too-large"
 
     and encodeEffectOutcome (value: EffectOutcome) : JsonNode =
         match value with
-        | EffectOutcome.Success(f_status, f_body) -> Wire.ofObject [ Some("kind", Wire.ofString "Success"); Some("status", Wire.ofInt f_status); Some("body", Wire.ofJson f_body) ]
+        | EffectOutcome.Success(f_status, f_body, f_headers) -> Wire.ofObject [ Some("kind", Wire.ofString "Success"); Some("status", Wire.ofInt f_status); Some("body", Wire.ofJson f_body); f_headers |> Option.map (fun value -> "headers", (Wire.ofMap Wire.ofString) value) ]
         | EffectOutcome.Failure(f_reason, f_status) -> Wire.ofObject [ Some("kind", Wire.ofString "Failure"); Some("reason", encodeHttpFailureReason f_reason); f_status |> Option.map (fun value -> "status", Wire.ofInt value) ]
         | EffectOutcome.Cancelled -> Wire.ofObject [ Some("kind", Wire.ofString "Cancelled") ]
         | EffectOutcome.OutcomeUnknown -> Wire.ofObject [ Some("kind", Wire.ofString "OutcomeUnknown"); Some("reason", Wire.ofString "timeout-after-dispatch") ]
@@ -916,9 +971,27 @@ module Codec =
         | HttpMethod.Post -> Wire.ofString "POST"
         | HttpMethod.Patch -> Wire.ofString "PATCH"
         | HttpMethod.Delete -> Wire.ofString "DELETE"
+        | HttpMethod.Head -> Wire.ofString "HEAD"
+        | HttpMethod.Options -> Wire.ofString "OPTIONS"
+
+    and encodeHttpResponseKind (value: HttpResponseKind) : JsonNode =
+        match value with
+        | HttpResponseKind.Json -> Wire.ofString "json"
+        | HttpResponseKind.Text -> Wire.ofString "text"
+        | HttpResponseKind.Base64 -> Wire.ofString "base64"
+        | HttpResponseKind.None -> Wire.ofString "none"
+
+    and encodeHttpCredentials (value: HttpCredentials) : JsonNode =
+        match value with
+        | HttpCredentials.Omit -> Wire.ofString "omit"
+        | HttpCredentials.SameOrigin -> Wire.ofString "same-origin"
+        | HttpCredentials.Include -> Wire.ofString "include"
+
+    and encodeXsrfBinding (value: XsrfBinding) : JsonNode =
+        Wire.ofObject [ Some("cookie", Wire.ofString value.Cookie); Some("header", Wire.ofString value.Header) ]
 
     and encodeHttpEffectRequest (value: HttpEffectRequest) : JsonNode =
-        Wire.ofObject [ Some("kind", Wire.ofString "Http"); Some("correlationId", encodeCorrelationId value.CorrelationId); Some("method", encodeHttpMethod value.Method); Some("url", Wire.ofString value.Url); value.Headers |> Option.map (fun value -> "headers", (Wire.ofMap Wire.ofString) value); value.Body |> Option.map (fun value -> "body", Wire.ofString value); Some("timeoutMs", Wire.ofInt value.TimeoutMs) ]
+        Wire.ofObject [ Some("kind", Wire.ofString "Http"); Some("correlationId", encodeCorrelationId value.CorrelationId); Some("method", encodeHttpMethod value.Method); Some("url", Wire.ofString value.Url); value.Headers |> Option.map (fun value -> "headers", (Wire.ofMap Wire.ofString) value); value.Body |> Option.map (fun value -> "body", Wire.ofString value); Some("timeoutMs", Wire.ofInt value.TimeoutMs); value.Response |> Option.map (fun value -> "response", encodeHttpResponseKind value); value.ResponseHeaders |> Option.map (fun value -> "responseHeaders", (Wire.ofList Wire.ofString) value); value.Credentials |> Option.map (fun value -> "credentials", encodeHttpCredentials value); value.Xsrf |> Option.map (fun value -> "xsrf", encodeXsrfBinding value) ]
 
     and encodeStorageEffectRequest (value: StorageEffectRequest) : JsonNode =
         match value with
@@ -964,6 +1037,7 @@ module Codec =
         | HttpFailureReason.Network -> "network"
         | HttpFailureReason.Aborted -> "aborted"
         | HttpFailureReason.InvalidResponse -> "invalid-response"
+        | HttpFailureReason.TooLarge -> "too-large"
 
     /// The wire text of a StorageFailureReason value.
     let wireStorageFailureReason (value: StorageFailureReason) : string =
@@ -1003,6 +1077,23 @@ module Codec =
         | HttpMethod.Post -> "POST"
         | HttpMethod.Patch -> "PATCH"
         | HttpMethod.Delete -> "DELETE"
+        | HttpMethod.Head -> "HEAD"
+        | HttpMethod.Options -> "OPTIONS"
+
+    /// The wire text of a HttpResponseKind value.
+    let wireHttpResponseKind (value: HttpResponseKind) : string =
+        match value with
+        | HttpResponseKind.Json -> "json"
+        | HttpResponseKind.Text -> "text"
+        | HttpResponseKind.Base64 -> "base64"
+        | HttpResponseKind.None -> "none"
+
+    /// The wire text of a HttpCredentials value.
+    let wireHttpCredentials (value: HttpCredentials) : string =
+        match value with
+        | HttpCredentials.Omit -> "omit"
+        | HttpCredentials.SameOrigin -> "same-origin"
+        | HttpCredentials.Include -> "include"
 
     let parseCorrelationId (json: string) = Wire.parse decodeCorrelationId json
     let serializeCorrelationId (value: CorrelationId) = (encodeCorrelationId value).ToJsonString()
@@ -1062,6 +1153,12 @@ module Codec =
     let serializeViewState (value: Map<string, ViewValue>) = (encodeViewState value).ToJsonString()
     let parseHttpMethod (json: string) = Wire.parse decodeHttpMethod json
     let serializeHttpMethod (value: HttpMethod) = (encodeHttpMethod value).ToJsonString()
+    let parseHttpResponseKind (json: string) = Wire.parse decodeHttpResponseKind json
+    let serializeHttpResponseKind (value: HttpResponseKind) = (encodeHttpResponseKind value).ToJsonString()
+    let parseHttpCredentials (json: string) = Wire.parse decodeHttpCredentials json
+    let serializeHttpCredentials (value: HttpCredentials) = (encodeHttpCredentials value).ToJsonString()
+    let parseXsrfBinding (json: string) = Wire.parse decodeXsrfBinding json
+    let serializeXsrfBinding (value: XsrfBinding) = (encodeXsrfBinding value).ToJsonString()
     let parseHttpEffectRequest (json: string) = Wire.parse decodeHttpEffectRequest json
     let serializeHttpEffectRequest (value: HttpEffectRequest) = (encodeHttpEffectRequest value).ToJsonString()
     let parseStorageEffectRequest (json: string) = Wire.parse decodeStorageEffectRequest json
@@ -1111,6 +1208,9 @@ module Conformance =
             "ViewValue", (fun path element -> Codec.decodeViewValue path element |> Result.map Codec.encodeViewValue)
             "ViewState", (fun path element -> Codec.decodeViewState path element |> Result.map Codec.encodeViewState)
             "HttpMethod", (fun path element -> Codec.decodeHttpMethod path element |> Result.map Codec.encodeHttpMethod)
+            "HttpResponseKind", (fun path element -> Codec.decodeHttpResponseKind path element |> Result.map Codec.encodeHttpResponseKind)
+            "HttpCredentials", (fun path element -> Codec.decodeHttpCredentials path element |> Result.map Codec.encodeHttpCredentials)
+            "XsrfBinding", (fun path element -> Codec.decodeXsrfBinding path element |> Result.map Codec.encodeXsrfBinding)
             "HttpEffectRequest", (fun path element -> Codec.decodeHttpEffectRequest path element |> Result.map Codec.encodeHttpEffectRequest)
             "StorageEffectRequest", (fun path element -> Codec.decodeStorageEffectRequest path element |> Result.map Codec.encodeStorageEffectRequest)
             "ClipboardEffectRequest", (fun path element -> Codec.decodeClipboardEffectRequest path element |> Result.map Codec.encodeClipboardEffectRequest)

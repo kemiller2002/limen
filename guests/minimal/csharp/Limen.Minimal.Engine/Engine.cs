@@ -47,8 +47,8 @@ public static class Engine
 
     private static EffectRequest? Request(string label, CorrelationId id) => label switch
     {
-        "http-ok" => new EffectRequest.Http(new HttpEffectRequest(id, HttpMethod.Get, "/ok.json", null, null, 5000)),
-        "http-missing" => new EffectRequest.Http(new HttpEffectRequest(id, HttpMethod.Get, "/missing.json", null, null, 5000)),
+        "http-ok" => new EffectRequest.Http(new HttpEffectRequest(id, HttpMethod.Get, "/ok.json", null, null, 5000, null, null, null, null)),
+        "http-missing" => new EffectRequest.Http(new HttpEffectRequest(id, HttpMethod.Get, "/missing.json", null, null, 5000, null, null, null, null)),
         "storage-set" => new EffectRequest.Storage(new StorageEffectRequest.Set(id, "limen-minimal", "saved")),
         "storage-get" => new EffectRequest.Storage(new StorageEffectRequest.Get(id, "limen-minimal")),
         "clipboard" => new EffectRequest.Clipboard(new ClipboardEffectRequest(id, "limen")),

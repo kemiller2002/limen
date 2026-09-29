@@ -16,6 +16,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { extname, join, normalize } from "node:path";
+import { serveHttp } from "../test/browser/servers/http.ts";
 import { serveRealtime, upgradeRealtime } from "../test/browser/servers/realtime.ts";
 
 type Page = {
@@ -53,8 +54,8 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = { ".html": "text/html; c
 
 const serve = (): Promise<Server> => {
   const server = createServer((request, response) => {
-    // Same-origin test endpoints a pack page may need (realtime); not files.
-    if (serveRealtime(request, response)) return;
+    // Same-origin test endpoints a pack page may need (realtime, HTTP); not files.
+    if (serveRealtime(request, response) || serveHttp(request, response)) return;
     const path = normalize(decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname));
     const file = join(ROOT, path.endsWith("/") ? `${path}index.html` : path);
     if (!file.startsWith(ROOT)) { response.writeHead(403).end(); return; }

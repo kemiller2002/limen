@@ -197,7 +197,7 @@ test("changing the contract without regenerating makes every binding of that uni
   try {
     const path = join(scratch, "contract/core.contract.json");
     const contract = JSON.parse(await readFile(path, "utf8")) as { types: { name: string; values?: string[] }[] };
-    const widened = { ...contract, types: contract.types.map((type) => (type.name === "HttpMethod" ? { ...type, values: [...(type.values ?? []), "HEAD"] } : type)) };
+    const widened = { ...contract, types: contract.types.map((type) => (type.name === "HttpMethod" ? { ...type, values: [...(type.values ?? []), "PROPFIND"] } : type)) };
     await writeFile(path, JSON.stringify(widened, null, 2));
     const findings = await check(scratch);
     const stale = findings.filter((finding) => finding.kind === "stale").map((finding) => finding.path).sort();

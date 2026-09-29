@@ -40,7 +40,7 @@ let project state : ViewState =
               "log", ViewValue.Items(log |> List.map (fun entry -> Map.ofList [ "id", ViewPrimitive.Text(string entry.Id); "text", ViewPrimitive.Text entry.Text ])) ]
 
 let private request (label: string) (correlationId: CorrelationId) : EffectRequest option =
-    let http url = Some(EffectRequest.Http { CorrelationId = correlationId; Method = HttpMethod.Get; Url = url; Headers = None; Body = None; TimeoutMs = 5000L })
+    let http url = Some(EffectRequest.Http { CorrelationId = correlationId; Method = HttpMethod.Get; Url = url; Headers = None; Body = None; TimeoutMs = 5000L; Response = None; ResponseHeaders = None; Credentials = None; Xsrf = None })
     match label with
     | "http-ok" -> http "/ok.json"
     | "http-missing" -> http "/missing.json"
@@ -60,7 +60,7 @@ let describe (result: EffectResult) : string =
     match result with
     | EffectResult.HttpResult(_, outcome) ->
         match outcome with
-        | EffectOutcome.Success(status, _) -> $"success {status}"
+        | EffectOutcome.Success(status, _, _) -> $"success {status}"
         | EffectOutcome.Failure(reason, status) -> failureWithStatus (Codec.wireHttpFailureReason reason) status
         | EffectOutcome.Cancelled -> "cancelled"
         | EffectOutcome.OutcomeUnknown -> "unknown"

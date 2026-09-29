@@ -121,11 +121,16 @@ and eventually wrong.
 type HttpEffectRequest = {
   kind: "Http";
   correlationId: CorrelationId;
-  method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE";
+  method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;
   headers?: Readonly<Record<string, string>>;
   body?: string;              // pre-serialized BY YOU; the kernel never interprets it
   timeoutMs: number;          // required
+  // Protocol 1.3, all optional; absent, the request is the JSON request above.
+  response?: "json" | "text" | "base64" | "none";
+  responseHeaders?: readonly string[];
+  credentials?: "omit" | "same-origin" | "include";
+  xsrf?: { cookie: string; header: string };
 };
 ```
 
@@ -137,6 +142,11 @@ type HttpEffectRequest = {
   yours win on conflict.
 - **`timeoutMs`** — required, no default. After it elapses the request is
   aborted and reported as `OutcomeUnknown`.
+- **Protocol 1.3 options** — how the body comes back (`response`), which
+  response headers come back (`responseHeaders`), whether cookies go
+  (`credentials`), and a same-origin XSRF cookie-to-header binding (`xsrf`).
+  Each is explicit, and each is absent by default. See
+  [43-http-profiles.md](43-http-profiles.md).
 
 ```ts
 const effect: EffectRequest = {
@@ -154,11 +164,15 @@ const effect: EffectRequest = {
 
 ```ts
 type EffectOutcome =
-  | { kind: "Success";        status: number; body: unknown }
-  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response"; status?: number }
+  | { kind: "Success";        status: number; body: unknown; headers?: Readonly<Record<string, string>> }
+  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response" | "too-large"; status?: number }
   | { kind: "Cancelled" }
   | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" };
 ```
+
+`too-large` (protocol 1.3) happens only for a `text` or `base64` response over
+8 MiB, and carries the status. `headers` is present only when the request
+named some.
 
 `status` is present exactly when a response was received — so on
 `invalid-response`, never on `network`/`aborted`. Its absence means nothing came
@@ -169,6 +183,7 @@ back.
 | `Success` | a response arrived and its body parsed as JSON | check `status`, then decode `body` |
 | `Failure { network }` | `fetch` threw — DNS, offline, CORS | retryable |
 | `Failure { invalid-response, status }` | responded, but the body was not JSON | depends on `status`: a 5xx error page is often retryable, a malformed 200 never is |
+| `Failure { too-large, status }` | a `text` or `base64` body passed 8 MiB | use the transfer profile, or ask for less |
 | `Failure { aborted }` | aborted for a reason that was neither cancel nor timeout | rare |
 | `Cancelled` | the engine asked for this | usually return to the prior state |
 | `OutcomeUnknown` | timed out **after dispatch** | see below — this is the important one |
