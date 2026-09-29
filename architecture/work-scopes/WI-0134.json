@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0134",
+  "reference": "kemiller2002/limen#44",
+  "placement": "Guardrail — tools/contract-gen/model.ts gains one well-formedness rule: in a union, a variant's field may not be named like a different variant of the same union (C# nests each variant as a record inside the union class, and the inherited nested type shadows the positional property; limen.media failed only in the C# build). A field named like its own variant stays allowed, as core's Event { event } shows. Tested in test/contract.test.ts. Stricter, never weaker: every existing contract already satisfies it.",
+  "guardrail": true,
+  "paths": ["tools/contract-gen/model.ts", "test/contract.test.ts", "docs/24-contract-and-capabilities.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
