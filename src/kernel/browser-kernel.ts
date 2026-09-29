@@ -2,6 +2,7 @@ import { CORE_CONTRACT_IDENTITY, PROTOCOL_MINOR, PROTOCOL_VERSION, type BrowserL
 import type { CapabilityProvider } from "./capabilities.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
 import { verifyHandshake, type Incompatibility, type Negotiation } from "./handshake.js";
+import { bindableElement, checkUrl, classifyAttribute, type AttributeTarget } from "./binding-policy.js";
 
 // Exceptions to the "click" default: element types whose most natural
 // interaction isn't a click. Any other element (a row, a card, a div acting
@@ -15,9 +16,6 @@ const TRIGGER_BY_TAG: Readonly<Record<string, string>> = {
   TEXTAREA: "change",
 };
 
-// The only attributes the bridge reflects as DOM/IDL boolean properties
-// rather than string attributes, per section 11.3 of the spec.
-const BOOLEAN_PROPS = new Set(["disabled", "checked", "selected", "hidden", "open"]);
 
 // Announced once, in Initialize. This is the list of effect kinds the kernel
 // can execute — not a promise that any of them will succeed in this browser.
@@ -48,7 +46,7 @@ type Phase =
   | { readonly kind: "Faulted" };
 
 type TextBinding = { readonly element: HTMLElement; readonly key: string };
-type AttrBinding = { readonly element: HTMLElement; readonly attr: string; readonly key: string };
+type AttrBinding = { readonly element: HTMLElement; readonly attr: string; readonly key: string; readonly target: AttributeTarget };
 type IfBinding = {
   readonly anchor: Comment;
   readonly template: HTMLTemplateElement;
@@ -79,30 +77,72 @@ function readValue(el: HTMLElement): string | undefined {
   return undefined;
 }
 
+// Bindings inside <template> content are bound only when a row or a
+// conditional section mounts. Refuse a forbidden target there when the page
+// starts, not later in the middle of a projection.
+function auditTemplates(root: ParentNode): void {
+  for (const template of Array.from(root.querySelectorAll("template"))) {
+    for (const el of Array.from(template.content.querySelectorAll("*"))) {
+      const projected = el.getAttributeNames().filter((name) => name.startsWith("data-bind-"));
+      if (el.hasAttribute("data-text") || projected.length > 0) {
+        const unbindable = bindableElement(el.tagName);
+        if (unbindable !== undefined) throw new Error(unbindable);
+      }
+      for (const name of projected) {
+        const target = classifyAttribute(name.slice("data-bind-".length));
+        if (target.kind === "Forbidden") throw new Error(`${name}: ${target.reason}`);
+      }
+    }
+    auditTemplates(template.content);
+  }
+}
+
 function coerceScalar(raw: ViewValue | undefined, key: string): string {
   if (typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean") return String(raw);
   throw new Error(`View value for "${key}" is missing or not scalar`);
 }
 
-function applyBoundAttribute(el: HTMLElement, attr: string, raw: ViewValue | undefined): void {
+// Returns a refusal to report, or undefined when the value was applied. What
+// may be bound where is src/kernel/binding-policy.ts; a Forbidden target never
+// reaches here, because #bindElement refuses it when the page is bound.
+function applyBoundAttribute(bound: AttrBinding, raw: ViewValue | undefined): string | undefined {
+  const { element: el, attr, target } = bound;
   if (typeof raw !== "string" && typeof raw !== "number" && typeof raw !== "boolean") {
     throw new Error(`Attribute binding "${attr}" requires a scalar view value`);
   }
-  // IDL properties are reflected through Reflect rather than a type
-  // assertion: the element's static type does not declare every property in
-  // BOOLEAN_PROPS (e.g. `open` on <details>), and asserting it away would hide
-  // exactly the kind of mistake the restricted TypeScript subset exists to stop.
-  if (BOOLEAN_PROPS.has(attr)) {
-    Reflect.set(el, attr, Boolean(raw));
-    return;
+  switch (target.kind) {
+    // IDL properties are reflected through Reflect rather than a type
+    // assertion: the element's static type does not declare every boolean
+    // property (e.g. `open` on <details>), and asserting it away would hide
+    // exactly the kind of mistake the restricted TypeScript subset exists to stop.
+    case "BooleanProperty":
+      Reflect.set(el, attr, Boolean(raw));
+      return undefined;
+    case "ValueProperty": {
+      if (!("value" in el)) throw new Error(`Element bound to "value" has no value property`);
+      const next = String(raw);
+      if (Reflect.get(el, "value") !== next) Reflect.set(el, "value", next);
+      return undefined;
+    }
+    // The value is often user data, so it is checked on every projection. An
+    // unsafe URL is not written — the attribute is removed, so a stale safe
+    // URL cannot linger either — and the refusal names the scheme, never the
+    // value, which may carry a token.
+    case "Url": {
+      const verdict = checkUrl(String(raw), el.ownerDocument.baseURI);
+      if (verdict.kind === "Safe") {
+        el.setAttribute(attr, String(raw));
+        return undefined;
+      }
+      el.removeAttribute(attr);
+      return `refused a ${verdict.scheme} URL for <${el.tagName.toLowerCase()} ${attr}>; only http, https, mailto, tel and relative URLs are projected`;
+    }
+    case "Attribute":
+      el.setAttribute(attr, String(raw));
+      return undefined;
+    case "Forbidden":
+      throw new Error(`data-bind-${attr}: ${target.reason}`);
   }
-  if (attr === "value") {
-    if (!("value" in el)) throw new Error(`Element bound to "value" has no value property`);
-    const next = String(raw);
-    if (Reflect.get(el, "value") !== next) Reflect.set(el, "value", next);
-    return;
-  }
-  el.setAttribute(attr, String(raw));
 }
 
 function makeEvent(name: string, key: string | undefined, value: string | undefined): SemanticEvent {
@@ -152,6 +192,7 @@ export class BrowserKernel {
       return;
     }
     try {
+      auditTemplates(this.document.body);
       this.#bindElement(this.document.body, this.#root, undefined);
     } catch (error) {
       // A malformed binding is a bridge integration failure, not a domain
@@ -252,9 +293,17 @@ export class BrowserKernel {
       }
     }
     if (el.hasAttribute("data-event")) this.#bindEvent(el, itemKey);
+    const projected = Array.from(el.attributes).filter((attr) => attr.name.startsWith("data-bind-"));
+    if (el.hasAttribute("data-text") || projected.length > 0) {
+      const unbindable = bindableElement(el.tagName);
+      if (unbindable !== undefined) throw new Error(unbindable);
+    }
     if (el.hasAttribute("data-text")) scope.texts.push({ element: el, key: el.getAttribute("data-text")! });
-    for (const attr of Array.from(el.attributes)) {
-      if (attr.name.startsWith("data-bind-")) scope.attrs.push({ element: el, attr: attr.name.slice("data-bind-".length), key: attr.value });
+    for (const attr of projected) {
+      const name = attr.name.slice("data-bind-".length);
+      const target = classifyAttribute(name);
+      if (target.kind === "Forbidden") throw new Error(`${attr.name}: ${target.reason}`);
+      scope.attrs.push({ element: el, attr: name, key: attr.value, target });
     }
     this.#bind(el, scope, itemKey);
   }
@@ -319,7 +368,7 @@ export class BrowserKernel {
 
   async #apply(response: EngineToBrowserMessage): Promise<void> {
     try {
-      this.#applyScope(this.#root, response.view);
+      for (const refusal of this.#applyScope(this.#root, response.view)) this.#diagnostics.report({ kind: "BridgeError", phase: "projection", detail: refusal });
     } catch (error) {
       this.#diagnostics.report({ kind: "BridgeError", phase: "projection", detail: String(error) });
       return;
@@ -328,21 +377,24 @@ export class BrowserKernel {
     await Promise.all(response.effects.map((effect) => this.#executeEffect(effect)));
   }
 
-  #applyScope(scope: Scope, view: ViewState): void {
+  // Returns the refusals the projection produced (an unsafe URL not written);
+  // a malformed projection still throws.
+  #applyScope(scope: Scope, view: ViewState): readonly string[] {
     for (const text of scope.texts) text.element.textContent = coerceScalar(view[text.key], text.key);
-    for (const bound of scope.attrs) applyBoundAttribute(bound.element, bound.attr, view[bound.key]);
-    for (const ifBinding of scope.ifs) this.#applyIf(ifBinding, view);
-    for (const eachBinding of scope.eachs) this.#applyEach(eachBinding, view);
+    return [
+      ...scope.attrs.flatMap((bound) => applyBoundAttribute(bound, view[bound.key]) ?? []),
+      ...scope.ifs.flatMap((ifBinding) => this.#applyIf(ifBinding, view)),
+      ...scope.eachs.flatMap((eachBinding) => this.#applyEach(eachBinding, view)),
+    ];
   }
 
-  #applyIf(binding: IfBinding, view: ViewState): void {
+  #applyIf(binding: IfBinding, view: ViewState): readonly string[] {
     const present = Boolean(view[binding.key]);
     if (binding.mounted) {
-      if (!present) { binding.mounted.root.remove(); binding.mounted = null; return; }
-      this.#applyScope(binding.mounted.scope, view);
-      return;
+      if (!present) { binding.mounted.root.remove(); binding.mounted = null; return []; }
+      return this.#applyScope(binding.mounted.scope, view);
     }
-    if (!present) return;
+    if (!present) return [];
     const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
     const root = fragment.firstElementChild;
     if (!(root instanceof HTMLElement)) throw new Error(`data-if="${binding.key}" template must contain exactly one root element`);
@@ -354,17 +406,18 @@ export class BrowserKernel {
     binding.anchor.after(root);
     const scope = emptyScope();
     this.#bindElement(root, scope, binding.itemKey);
-    this.#applyScope(scope, view);
     binding.mounted = { root, scope };
+    return this.#applyScope(scope, view);
   }
 
-  #applyEach(binding: EachBinding, view: ViewState): void {
+  #applyEach(binding: EachBinding, view: ViewState): readonly string[] {
     const raw = view[binding.listKey];
     if (!Array.isArray(raw)) throw new Error(`data-each="${binding.listKey}" requires an array view value`);
     const items = raw as readonly ViewItem[];
     const parent = binding.anchor.parentNode;
     if (!parent) throw new Error(`data-each anchor for "${binding.listKey}" is detached`);
     const seen = new Set<string>();
+    const refusals: string[] = [];
     let cursor: ChildNode = binding.anchor;
     for (const item of items) {
       const rawKey = item[binding.itemKey];
@@ -384,13 +437,14 @@ export class BrowserKernel {
         instance = { root, scope };
         binding.instances.set(key, instance);
       }
-      this.#applyScope(instance.scope, item);
+      refusals.push(...this.#applyScope(instance.scope, item));
       if (cursor.nextSibling !== instance.root) parent.insertBefore(instance.root, cursor.nextSibling);
       cursor = instance.root;
     }
     for (const [key, instance] of binding.instances) {
       if (!seen.has(key)) { instance.root.remove(); binding.instances.delete(key); }
     }
+    return refusals;
   }
 
   async #executeEffect(effect: EffectRequest): Promise<void> {

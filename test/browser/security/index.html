@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen binding security smoke</title>
+</head>
+<body>
+  <!-- Served by scripts/smoke-security.ts under a strict Content-Security-Policy
+       with Trusted Types enforced and no policy defined. The engine (main.js)
+       projects hostile values into every kind of binding; the page must render
+       them inert and cause no policy violation. -->
+  <p id="text" data-text="payload"></p>
+  <p><a id="unsafe" data-bind-href="unsafeUrl" data-bind-title="payload">unsafe link</a></p>
+  <p><a id="safe" data-bind-href="safeUrl">safe link</a></p>
+  <p><img id="image" data-bind-src="unsafeUrl" alt=""></p>
+  <ul id="rows">
+    <template data-each="rows" data-key="id"><li><span data-text="label"></span> <a data-bind-href="link">open</a></li></template>
+  </ul>
+  <p>Round <span id="round" data-text="round"></span></p>
+  <button id="next" data-event="next">Next</button>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

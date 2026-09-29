@@ -45,6 +45,8 @@ const failing: readonly (readonly [string, RegExp])[] = [
   ["list-as-scalar.html", /data-text: "rows" is list \(expected a string, number, boolean or scalar, not a list/],
   ["misplaced.html", /data-if is only supported on <template>/],
   ["trigger-without-event.html", /data-on without data-event does nothing/],
+  ["forbidden-target.html", /data-bind-onclick is not a projection target: onclick is an event-handler attribute/],
+  ["unbindable-element.html", /<script> loads, runs or rewrites code or other attributes; it takes no data-text or data-bind-\* bindings/],
 ];
 
 for (const [page, pattern] of failing) {
@@ -66,11 +68,12 @@ test("diagnostics are deterministic: the snapshot of every fixture is exact", as
   assert.equal(snapshot, await readFile(path, "utf8"));
 });
 
-test("the tokenizer reads attributes in every quoting style and skips comments, scripts and styles", () => {
+test("the tokenizer reads attributes in every quoting style, skips comments, and reads script and style tags but not their content", () => {
   const tags = tagsOf(`<!-- <b data-text="x"> -->\n<p data-text=bare data-bind-title='single' data-bind-lang="double"></p><style>a[data-text="y"]{}</style>`);
   assert.deepEqual(tags.map((tag) => [tag.line, tag.name, tag.closing, Object.fromEntries(tag.attributes)]), [
     [2, "p", false, { "data-text": "bare", "data-bind-title": "single", "data-bind-lang": "double" }],
     [2, "p", true, {}],
+    [2, "style", false, {}],
   ]);
 });
 

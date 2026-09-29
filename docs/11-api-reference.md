@@ -629,7 +629,14 @@ Default triggers: `<form>` → `submit` (with `preventDefault`);
 
 `data-bind-` targets: `disabled`, `checked`, `selected`, `hidden`, `open` are
 set as **boolean properties**; `value` is set as a property and skipped if
-unchanged; everything else uses `setAttribute`.
+unchanged; URL attributes (`href`, `src`, `action`, `formaction`, …) are written
+only for `http:`, `https:`, `mailto:`, `tel:` or relative URLs, and otherwise
+removed with a `projection` BridgeError that omits the value; `on*`, `style`,
+`srcdoc`, `srcset`, `ping` and `is` are refused at `start()` with a `binding`
+BridgeError, as is any `data-text`/`data-bind-*` on `<script>`, `<style>`,
+`<iframe>`, `<object>`, `<embed>`, `<base>`, `<meta>`, `<link>` or SVG
+animation elements; everything else uses `setAttribute`. See
+[29-binding-security.md](https://github.com/kemiller2002/limen/blob/main/docs/29-binding-security.md).
 
 ---
 

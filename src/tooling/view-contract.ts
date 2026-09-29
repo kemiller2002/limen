@@ -22,6 +22,7 @@
 // expression-free. Tooling, not Core: nothing here runs in a shipped page.
 
 import type { SemanticEvent, ViewState, ViewValue } from "../protocol.js";
+import { bindableElement, classifyAttribute } from "../kernel/binding-policy.js";
 
 export type ValueKind = "string" | "number" | "boolean" | "scalar";
 export type ViewEntry = ValueKind | { readonly list: Readonly<Record<string, ValueKind>> };
@@ -103,25 +104,27 @@ export type Tag = {
   readonly attributes: ReadonlyMap<string, string>;
 };
 
-const TAG = /<!--[\s\S]*?-->|<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>|<(\/?)([a-zA-Z][\w-]*)((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*)\s*\/?>/g;
+const TAG = /<!--[\s\S]*?-->|<(script|style)\b((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*)\s*>[\s\S]*?<\/\1\s*>|<(\/?)([a-zA-Z][\w-]*)((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*)\s*\/?>/g;
 const ATTRIBUTE = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
 
 const lineAt = (html: string, index: number): number => html.slice(0, index).split("\n").length;
 
+// A <script> or <style> element's content is text, never tags; its opening
+// tag is still read, so a binding on the element itself is seen.
 export const tagsOf = (html: string): readonly Tag[] =>
   Array.from(html.matchAll(TAG)).flatMap((match): readonly Tag[] => {
-    const name = match[3];
+    const raw = match[1];
+    const name = raw ?? match[4];
     if (name === undefined) return [];
-    const attributes = new Map(Array.from((match[4] ?? "").matchAll(ATTRIBUTE), (attribute): [string, string] => [attribute[1]?.toLowerCase() ?? "", attribute[2] ?? attribute[3] ?? attribute[4] ?? ""]));
-    return [{ line: lineAt(html, match.index), name: name.toLowerCase(), closing: match[2] === "/", attributes }];
+    const source = (raw === undefined ? match[5] : match[2]) ?? "";
+    const attributes = new Map(Array.from(source.matchAll(ATTRIBUTE), (attribute): [string, string] => [attribute[1]?.toLowerCase() ?? "", attribute[2] ?? attribute[3] ?? attribute[4] ?? ""]));
+    return [{ line: lineAt(html, match.index), name: name.toLowerCase(), closing: raw === undefined && match[3] === "/", attributes }];
   });
 
 // ---------------------------------------------------------------------------
 // checkPage
 // ---------------------------------------------------------------------------
 
-// Properties the kernel sets with Boolean(value): a string "false" would be true.
-const BOOLEAN_PROPERTIES: readonly string[] = ["disabled", "checked", "selected", "hidden", "open"];
 const FORM_CONTROLS: readonly string[] = ["input", "select", "textarea"];
 
 type Frame = { readonly kind: "each"; readonly list: string } | { readonly kind: "other" };
@@ -173,12 +176,20 @@ const checkTag = (file: string, contract: ViewContract, tag: Tag, frames: readon
   const text = attribute("data-text");
   const textChecks = text === undefined ? [] : lookup("data-text", text, scalar);
 
+  // The kernel's own binding policy (src/kernel/binding-policy.ts): a target
+  // it would refuse when the page starts is reported here, before it runs.
+  const projectedNames = Array.from(tag.attributes.keys()).filter((name) => name === "data-text" || name.startsWith("data-bind-"));
+  const unbindable = projectedNames.length > 0 ? bindableElement(tag.name) : undefined;
+  const elementChecks = unbindable === undefined ? [] : [at(projectedNames[0] ?? "data-text", unbindable, "a binding on an element that does not load or run code")];
+
   const bindChecks = Array.from(tag.attributes).filter(([name]) => name.startsWith("data-bind-")).flatMap(([name, key]) => {
     const property = name.slice("data-bind-".length);
+    const target = classifyAttribute(property);
+    if (target.kind === "Forbidden") return [at(name, `${name} is not a projection target: ${target.reason}`, "a safe attribute, a boolean property or value")];
     return lookup(name, key, (entry) => {
       const notScalar = scalar(entry);
       if (notScalar !== undefined) return notScalar;
-      return BOOLEAN_PROPERTIES.includes(property) && entry !== "boolean" ? `boolean — ${property} is set with Boolean(value), so "false" would be true` : undefined;
+      return target.kind === "BooleanProperty" && entry !== "boolean" ? `boolean — ${property} is set with Boolean(value), so "false" would be true` : undefined;
     });
   });
 
@@ -199,7 +210,7 @@ const checkTag = (file: string, contract: ViewContract, tag: Tag, frames: readon
   const trigger = attribute("data-on");
   const triggerChecks = trigger !== undefined && event === undefined ? [at("data-on", "data-on without data-event does nothing", "data-event on the same element")] : [];
 
-  return [...misplaced, ...eachChecks, ...ifChecks, ...textChecks, ...bindChecks, ...eventChecks, ...triggerChecks];
+  return [...misplaced, ...eachChecks, ...ifChecks, ...textChecks, ...elementChecks, ...bindChecks, ...eventChecks, ...triggerChecks];
 };
 
 export const checkPage = (file: string, html: string, contract: ViewContract): readonly Diagnostic[] => {

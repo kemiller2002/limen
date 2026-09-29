@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 52,
+  "nextSeq": 54,
   "items": [
     {
       "id": "WI-0001",
@@ -842,6 +842,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T06:50:58Z",
       "updatedAt": "2026-09-29T06:50:58Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0052",
+      "title": "Guardrail: check:views runs the built checker from dist/ (the checker now shares the kernel's binding policy module) (GH-18)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T06:59:37Z",
+      "updatedAt": "2026-09-29T06:59:38Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0053",
+      "title": "Raise kernel payload budgets for the binding security policy (+2.1 KB gzip, GH-18)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T06:59:39Z",
+      "updatedAt": "2026-09-29T06:59:39Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

@@ -18,6 +18,11 @@ exhaustive lists.
 
 ### Changed
 
+- **Breaking for pages that relied on it: binding targets are policed (#18).**
+  A page that binds a now-forbidden target no longer starts. It reports a
+  `binding` BridgeError naming the target and why. A page that projected a
+  `javascript:` or `data:` URL now has that attribute removed. See
+  `docs/29-binding-security.md`.
 - **Repository renamed to `kemiller2002/limen`.** GitHub repository metadata,
   documentation links, Pages URL, current Praxis/ROS identity, CLI help, and
   validation checks now use the Limen repository name. The published npm
@@ -25,6 +30,17 @@ exhaustive lists.
   unchanged for compatibility.
 
 ### Added
+
+- **Binding security (#18).** `data-bind-on*`, `style`, `srcdoc`, `srcset`,
+  `ping` and `is`, and any `data-text`/`data-bind-*` on elements that load or
+  run code (`<script>`, `<style>`, `<iframe>`, `<object>`, `<base>`, `<meta>`,
+  `<link>`, SVG animation), are refused when the page starts (including
+  inside templates). URL attributes are written only for `http`, `https`,
+  `mailto`, `tel` or relative URLs, resolved as the browser resolves them;
+  anything else is removed and reported without the value. The same rules are
+  reported by `check:views`. `npm run smoke:security` proves in Chromium that
+  the kernel and the F#, C# and Rust guests run under a strict CSP with
+  Trusted Types enforced and no policy, with zero violations.
 
 - **View contracts (#48).** A page may carry a language-neutral
   `*.view.json` beside it, stating what the engine projects and which events

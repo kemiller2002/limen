@@ -114,7 +114,15 @@ The part after `data-bind-` is the target name. Behavior depends on which:
 | --- | --- |
 | `disabled`, `checked`, `selected`, `hidden`, `open` | the DOM **property**, coerced with `Boolean()` |
 | `value` | the `.value` **property**, and only if it differs from the current one |
+| a URL attribute — `href`, `src`, `action`, `formaction`, `xlink:href`, `poster`, `cite`, … | `setAttribute` **only** for an `http:`, `https:`, `mailto:`, `tel:` or relative URL; any other scheme (`javascript:`, `data:`, …) is not written, the attribute is removed, and a `BridgeError` (phase `projection`) names the scheme — never the value |
+| `on*`, `style`, `srcdoc`, `srcset`, `ping`, `is`, … | **refused when the page starts**: `BridgeError` (phase `binding`), and the kernel does not run |
 | anything else | `setAttribute(name, String(value))` |
+
+No `data-text` or `data-bind-*` binding is accepted on an element that loads,
+runs or rewrites code — `<script>`, `<style>`, `<iframe>`, `<object>`,
+`<embed>`, `<base>`, `<meta>`, `<link>`, SVG `<set>`/`<animate…>` — including
+inside `<template>` content. The rules and their reasons are
+[29-binding-security.md](29-binding-security.md).
 
 The boolean-property list exists because `setAttribute("disabled", "false")`
 would *enable* the attribute — the string `"false"` is still a present
