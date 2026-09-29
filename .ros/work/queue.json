@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 38,
+  "nextSeq": 39,
   "items": [
     {
       "id": "WI-0001",
@@ -638,6 +638,22 @@
       "attachments": [],
       "createdAt": "2026-09-29T05:38:10Z",
       "updatedAt": "2026-09-29T05:56:12Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#17"
+    },
+    {
+      "id": "WI-0038",
+      "title": "GH-17 follow-up: move the product site's F# engine off its handwritten Protocol.fs onto the generated F# binding and guest handshake",
+      "description": null,
+      "tags": [
+        "limen,gh-17,site,fsharp"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T05:56:40Z",
+      "updatedAt": "2026-09-29T05:56:40Z",
       "createdBy": "claude-code",
       "source": "github",
       "sourceReference": "kemiller2002/limen#17"

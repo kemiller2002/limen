@@ -49,7 +49,7 @@ function topLevelBindings(document: Document): {
 function fsharpProjectionKeys(engine: string): Set<string> {
   const projection = engine.slice(engine.indexOf("let project state"));
   return new Set(
-    Array.from(projection.matchAll(/"([^"]+)",\s+V(?:String|Number|Bool|Items)/g), (match) => match[1] ?? ""),
+    Array.from(projection.matchAll(/"([^"]+)",\s+ViewValue\.(?:Text|Number|Flag|Items)/g), (match) => match[1] ?? ""),
   );
 }
 

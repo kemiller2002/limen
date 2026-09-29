@@ -5,8 +5,12 @@
     <WarningLevel>5</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Protocol.fs" />
     <Compile Include="Engine.fs" />
     <Compile Include="Dispatch.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The wire contract is generated; this engine declares none of its own. -->
+    <ProjectReference Include="../../../guests/fsharp/Limen.Contract/Limen.Contract.fsproj" />
+    <ProjectReference Include="../../../guests/fsharp/Limen.Guest/Limen.Guest.fsproj" />
   </ItemGroup>
 </Project>

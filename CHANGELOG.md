@@ -101,6 +101,11 @@ exhaustive lists.
   success/failure paths in Chromium. Generated .NET runtimes are now
   trim-safe.
 
+- **The product site's F# engine uses the generated contract.** Its
+  handwritten `Protocol.fs` is gone; the engine speaks the generated F#
+  binding, answers the fingerprint handshake with the shared guest library,
+  and the site's kernel now requires it (`requireHandshake: true`).
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a

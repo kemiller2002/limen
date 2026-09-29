@@ -1,7 +1,7 @@
 open System
 open System.Text.Json.Nodes
 open Limen.Site.Engine
-open Limen.Site.Engine.Protocol
+open Limen.Contract.Core
 open Limen.Site.Engine.Engine
 
 let mutable failures = 0
@@ -34,10 +34,10 @@ let deployment = transition approved (BeginDeploy(DeploySuccess, "deploy-1"))
 equal "approved release can enter deployment" true (match deployment.State.Release.Deployment with | InFlight("deploy-1", DeploySuccess) -> true | _ -> false)
 equal "deployment emits one browser effect" 1 deployment.Effects.Length
 
-let staleDeploy = transition deployment.State (RecordDeploy("deploy-old", HttpSuccess 200))
+let staleDeploy = transition deployment.State (RecordDeploy("deploy-old", EffectOutcome.Success(200L, Limen.Contract.RawJson "null")))
 equal "stale deploy evidence is discarded" deployment.State.Release.Deployment staleDeploy.State.Release.Deployment
 
-let unknown = transition deployment.State (RecordDeploy("deploy-1", HttpOutcomeUnknown))
+let unknown = transition deployment.State (RecordDeploy("deploy-1", EffectOutcome.OutcomeUnknown))
 equal "timeout after dispatch becomes reconciliation" ReconciliationRequired unknown.State.Release.Deployment
 
 let blindRetry = transitionState unknown.State (BeginDeploy(DeploySuccess, "deploy-2"))
@@ -64,11 +64,11 @@ ok "placement explanations are substantive" (placementTasks |> Array.forall (fun
 
 // Projection carries capabilities and obligations rather than making the DOM infer them.
 let initialView = project initialState
-equal "initial approval capability is false" (Some(VBool false)) (Map.tryFind "canApproveRelease" initialView)
-equal "initial obligations exist" (Some(VBool true)) (Map.tryFind "releaseHasObligations" initialView)
+equal "initial approval capability is false" (Some(ViewValue.Flag false)) (Map.tryFind "canApproveRelease" initialView)
+equal "initial obligations exist" (Some(ViewValue.Flag true)) (Map.tryFind "releaseHasObligations" initialView)
 
 let readyView = project securityCleared
-equal "approval capability becomes true" (Some(VBool true)) (Map.tryFind "canApproveRelease" readyView)
+equal "approval capability becomes true" (Some(ViewValue.Flag true)) (Map.tryFind "canApproveRelease" readyView)
 
 // Serialized dispatch is the exact boundary used by the WebAssembly host.
 Dispatch.resetForTests()
@@ -76,7 +76,29 @@ Dispatch.resetForTests()
 let initialize =
     """{"kind":"Initialize","protocolVersion":1,"capabilities":["Http","Storage","Clipboard","Navigation"],"location":{"origin":"https://example.test","path":"/","query":"","hash":""}}"""
 
-let initialized = JsonNode.Parse(Dispatch.handle initialize).AsObject()
+// A kernel older than protocol 1.1 sends no handshake: the engine refuses it,
+// typed, and the (new) kernel would apply nothing from this response.
+let legacy = JsonNode.Parse(Dispatch.handle initialize).AsObject()
+equal "a pre-1.1 kernel is refused as HandshakeMissing" "HandshakeMissing" (legacy.["handshake"].["reason"].["kind"].GetValue<string>())
+
+let offered =
+    initialize.Replace(
+        "\"location\":",
+        $"\"handshake\":{{\"protocol\":{{\"major\":1,\"minor\":1}},\"contract\":{{\"unit\":\"limen.core\",\"version\":1,\"fingerprint\":\"{Contract.Fingerprint}\"}},\"capabilities\":[]}},\"location\":")
+
+let initialized = JsonNode.Parse(Dispatch.handle offered).AsObject()
+equal "a host offering the generated core contract is accepted" "Accepted" (initialized.["handshake"].["kind"].GetValue<string>())
+
+let mismatched = JsonNode.Parse(Dispatch.handle (offered.Replace(Contract.Fingerprint, "sha256:stale"))).AsObject()
+equal "a host on another contract is refused as ContractMismatch" "ContractMismatch" (mismatched.["handshake"].["reason"].["kind"].GetValue<string>())
+
+let outsideContract =
+    try
+        Dispatch.handle """{"kind":"Teleport"}""" |> ignore
+        false
+    with _ -> true
+
+equal "a message outside the contract is refused, not interpreted" true outsideContract
 let initialJsonView = initialized.["view"].AsObject()
 equal "initialize projects tests state" "Unverified" (initialJsonView.["testsStatus"].GetValue<string>())
 

@@ -1,6 +1,6 @@
 namespace Limen.Site.Engine
 
-open Limen.Site.Engine.Protocol
+open Limen.Contract.Core
 
 module Engine =
 
@@ -74,7 +74,7 @@ module Engine =
         | ApproveRelease
         | BeginDeploy of scenario: DeployScenario * correlationId: string
         | InjectOutcomeUnknown
-        | RecordDeploy of correlationId: string * outcome: HttpOutcome
+        | RecordDeploy of correlationId: string * outcome: EffectOutcome
         | ReconcileApplied
         | ReconcileNotApplied
         | ResetRelease
@@ -244,10 +244,19 @@ module Engine =
         | "pick" -> Pick(parsePlacement (event.Key |> Option.defaultValue ""))
         | other -> failwithf "Unrecognized event '%s'." other
 
+    let private httpGet (correlationId: string) (url: string) =
+        EffectRequest.Http
+            { CorrelationId = CorrelationId correlationId
+              Method = HttpMethod.Get
+              Url = url
+              Headers = None
+              Body = None
+              TimeoutMs = 5000L }
+
     let private deploymentEffect scenario correlationId =
         match scenario with
-        | DeploySuccess -> HttpGet(correlationId, "./demo/deploy-applied.json", 5000)
-        | DeployNetworkFailure -> HttpGet(correlationId, "https://limen-demo-unreachable.invalid/deploy.json", 5000)
+        | DeploySuccess -> httpGet correlationId "./demo/deploy-applied.json"
+        | DeployNetworkFailure -> httpGet correlationId "https://limen-demo-unreachable.invalid/deploy.json"
 
     let private commandName = function
         | TestsPassed -> "TestsPassed"
@@ -287,22 +296,22 @@ module Engine =
 
     let private recordDeploymentOutcome release outcome =
         match outcome with
-        | HttpSuccess status when status >= 200 && status < 300 ->
+        | EffectOutcome.Success(status, _) when status >= 200L && status < 300L ->
             { release with Deployment = Deployed }
-        | HttpSuccess status ->
+        | EffectOutcome.Success(status, _) ->
             { release with Deployment = DeploymentFailed($"Server responded {status}.", false) }
-        | HttpFailure("network", _) ->
+        | EffectOutcome.Failure(HttpFailureReason.Network, _) ->
             { release with Deployment = DeploymentFailed("No response was received. Retry is allowed only after the application classifies this as a pre-dispatch transport failure.", true) }
-        | HttpFailure(reason, status) ->
+        | EffectOutcome.Failure(reason, status) ->
             let detail =
                 match status with
-                | Some code -> $"{reason}; server status {code}"
-                | None -> reason
+                | Some code -> $"{Codec.wireHttpFailureReason reason}; server status {code}"
+                | None -> Codec.wireHttpFailureReason reason
 
             { release with Deployment = DeploymentFailed(detail, false) }
-        | HttpCancelled ->
+        | EffectOutcome.Cancelled ->
             { release with Deployment = NotStarted }
-        | HttpOutcomeUnknown ->
+        | EffectOutcome.OutcomeUnknown ->
             { release with Deployment = ReconciliationRequired }
 
     let transition state command =
@@ -341,7 +350,11 @@ module Engine =
                       To = describe next
                       Effect =
                         match effect with
-                        | HttpGet(_, url, timeoutMs) -> $"Http GET {url} ({timeoutMs}ms)" } }
+                        | EffectRequest.Http request -> $"Http GET {request.Url} ({request.TimeoutMs}ms)"
+                        | EffectRequest.Storage _ -> "Storage"
+                        | EffectRequest.Clipboard _ -> "Clipboard"
+                        | EffectRequest.Navigation _ -> "Navigation"
+                        | EffectRequest.Capability _ -> "Capability" } }
 
         | InjectOutcomeUnknown when canDeploy state.Release ->
             let next =
@@ -516,28 +529,28 @@ module Engine =
             releaseObligations release
             |> List.map (fun (id, text, tone) ->
                 Map.ofList
-                    [ "id", VString id
-                      "text", VString text
-                      "tone", VString tone ])
+                    [ "id", ViewPrimitive.Text id
+                      "text", ViewPrimitive.Text text
+                      "tone", ViewPrimitive.Text tone ])
 
         let trace =
             state.Trace
             |> List.map (fun entry ->
                 Map.ofList
-                    [ "id", VString entry.Id
-                      "event", VString entry.Event
-                      "command", VString entry.Command
-                      "from", VString entry.From
-                      "to", VString entry.To
-                      "effect", VString entry.Effect ])
+                    [ "id", ViewPrimitive.Text entry.Id
+                      "event", ViewPrimitive.Text entry.Event
+                      "command", ViewPrimitive.Text entry.Command
+                      "from", ViewPrimitive.Text entry.From
+                      "to", ViewPrimitive.Text entry.To
+                      "effect", ViewPrimitive.Text entry.Effect ])
 
         let choices =
             [ Html; Css; Kernel; Engine; Effect; ProtocolChange ]
             |> List.map (fun placement ->
                 Map.ofList
-                    [ "id", VString(placementId placement)
-                      "label", VString(placementLabel placement)
-                      "pressed", VBool(state.Picked = Some placement) ])
+                    [ "id", ViewPrimitive.Text(placementId placement)
+                      "label", ViewPrimitive.Text(placementLabel placement)
+                      "pressed", ViewPrimitive.Flag(state.Picked = Some placement) ])
 
         let verdict =
             if not revealed then
@@ -548,49 +561,49 @@ module Engine =
                 $"Not quite. {placementLabel task.Answer} — {task.Because}"
 
         Map.ofList
-            [ "testsStatus", VString(evidenceName release.Tests)
-              "testsTone", VString(evidenceTone release.Tests)
-              "securityStatus", VString(evidenceName release.Security)
-              "securityTone", VString(evidenceTone release.Security)
-              "approvalStatus", VString(if release.Approved then "Approved" else "Not approved")
-              "approvalTone", VString(if release.Approved then "ok" else "warn")
-              "deploymentStatus", VString(deploymentName release.Deployment)
-              "deploymentTone", VString(deploymentTone release.Deployment)
-              "releaseDecision", VString(releaseDecision release)
-              "releaseObligations", VItems obligations
-              "releaseHasObligations", VBool(not (List.isEmpty obligations))
-              "releaseNoObligations", VBool(List.isEmpty obligations)
-              "canChangeEvidence", VBool(canChangeEvidence release)
-              "canApproveRelease", VBool(canApprove release)
-              "canDeployRelease", VBool(canDeploy release)
-              "evidenceDisabled", VBool(not (canChangeEvidence release))
-              "approveDisabled", VBool(not (canApprove release))
-              "deployDisabled", VBool(not (canDeploy release))
-              "deploymentBusy", VBool(match release.Deployment with | InFlight _ -> true | _ -> false)
-              "needsReleaseReconciliation", VBool(release.Deployment = ReconciliationRequired)
-              "policyLatest", VString(policy.LatestRequest |> Option.defaultValue "none")
-              "policyAccepted", VString(policy.AcceptedResult |> Option.defaultValue "none")
-              "policyDiscarded", VNumber policy.StaleDiscarded
-              "policyStateText", VString(policyStateText policy)
-              "policyExplanation", VString(policyExplanation policy)
-              "canStartPolicyA", VBool(not policy.StartedA)
-              "canStartPolicyB", VBool(policy.StartedA && not policy.StartedB)
-              "canDeliverPolicyA", VBool(policy.StartedA && not policy.DeliveredA)
-              "canDeliverPolicyB", VBool(policy.StartedB && not policy.DeliveredB)
-              "startPolicyADisabled", VBool policy.StartedA
-              "startPolicyBDisabled", VBool(not (policy.StartedA && not policy.StartedB))
-              "deliverPolicyADisabled", VBool(not (policy.StartedA && not policy.DeliveredA))
-              "deliverPolicyBDisabled", VBool(not (policy.StartedB && not policy.DeliveredB))
-              "trace", VItems trace
-              "traceCount", VNumber state.Trace.Length
-              "traceEmpty", VBool(List.isEmpty state.Trace)
-              "hasTrace", VBool(not (List.isEmpty state.Trace))
-              "taskPrompt", VString task.Prompt
-              "taskNumber", VNumber(state.TaskIndex + 1)
-              "taskTotal", VNumber placementTasks.Length
-              "choices", VItems choices
-              "revealed", VBool revealed
-              "verdictText", VString verdict
-              "verdictTone", VString(if not revealed then "warn" elif right then "ok" else "bad")
-              "scoreText", VString $"{state.Correct} of {state.Answered} so far"
-              "nextDisabled", VBool(not revealed) ]
+            [ "testsStatus", ViewValue.Text(evidenceName release.Tests)
+              "testsTone", ViewValue.Text(evidenceTone release.Tests)
+              "securityStatus", ViewValue.Text(evidenceName release.Security)
+              "securityTone", ViewValue.Text(evidenceTone release.Security)
+              "approvalStatus", ViewValue.Text(if release.Approved then "Approved" else "Not approved")
+              "approvalTone", ViewValue.Text(if release.Approved then "ok" else "warn")
+              "deploymentStatus", ViewValue.Text(deploymentName release.Deployment)
+              "deploymentTone", ViewValue.Text(deploymentTone release.Deployment)
+              "releaseDecision", ViewValue.Text(releaseDecision release)
+              "releaseObligations", ViewValue.Items obligations
+              "releaseHasObligations", ViewValue.Flag(not (List.isEmpty obligations))
+              "releaseNoObligations", ViewValue.Flag(List.isEmpty obligations)
+              "canChangeEvidence", ViewValue.Flag(canChangeEvidence release)
+              "canApproveRelease", ViewValue.Flag(canApprove release)
+              "canDeployRelease", ViewValue.Flag(canDeploy release)
+              "evidenceDisabled", ViewValue.Flag(not (canChangeEvidence release))
+              "approveDisabled", ViewValue.Flag(not (canApprove release))
+              "deployDisabled", ViewValue.Flag(not (canDeploy release))
+              "deploymentBusy", ViewValue.Flag(match release.Deployment with | InFlight _ -> true | _ -> false)
+              "needsReleaseReconciliation", ViewValue.Flag(release.Deployment = ReconciliationRequired)
+              "policyLatest", ViewValue.Text(policy.LatestRequest |> Option.defaultValue "none")
+              "policyAccepted", ViewValue.Text(policy.AcceptedResult |> Option.defaultValue "none")
+              "policyDiscarded", ViewValue.Number(float policy.StaleDiscarded)
+              "policyStateText", ViewValue.Text(policyStateText policy)
+              "policyExplanation", ViewValue.Text(policyExplanation policy)
+              "canStartPolicyA", ViewValue.Flag(not policy.StartedA)
+              "canStartPolicyB", ViewValue.Flag(policy.StartedA && not policy.StartedB)
+              "canDeliverPolicyA", ViewValue.Flag(policy.StartedA && not policy.DeliveredA)
+              "canDeliverPolicyB", ViewValue.Flag(policy.StartedB && not policy.DeliveredB)
+              "startPolicyADisabled", ViewValue.Flag policy.StartedA
+              "startPolicyBDisabled", ViewValue.Flag(not (policy.StartedA && not policy.StartedB))
+              "deliverPolicyADisabled", ViewValue.Flag(not (policy.StartedA && not policy.DeliveredA))
+              "deliverPolicyBDisabled", ViewValue.Flag(not (policy.StartedB && not policy.DeliveredB))
+              "trace", ViewValue.Items trace
+              "traceCount", ViewValue.Number(float state.Trace.Length)
+              "traceEmpty", ViewValue.Flag(List.isEmpty state.Trace)
+              "hasTrace", ViewValue.Flag(not (List.isEmpty state.Trace))
+              "taskPrompt", ViewValue.Text task.Prompt
+              "taskNumber", ViewValue.Number(float (state.TaskIndex + 1))
+              "taskTotal", ViewValue.Number(float placementTasks.Length)
+              "choices", ViewValue.Items choices
+              "revealed", ViewValue.Flag revealed
+              "verdictText", ViewValue.Text verdict
+              "verdictTone", ViewValue.Text(if not revealed then "warn" elif right then "ok" else "bad")
+              "scoreText", ViewValue.Text $"{state.Correct} of {state.Answered} so far"
+              "nextDisabled", ViewValue.Flag(not revealed) ]

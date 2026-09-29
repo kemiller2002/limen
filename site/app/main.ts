@@ -12,4 +12,6 @@ const diagnostics: DiagnosticsSink = {
   },
 };
 
-await new BrowserKernel(new WasmSiteTransport(), document, diagnostics).start();
+// The F# engine answers the contract-fingerprint handshake, so an engine built
+// from a different contract is refused before anything reaches the page.
+await new BrowserKernel(new WasmSiteTransport(), document, diagnostics, { requireHandshake: true }).start();
