@@ -97,5 +97,5 @@
 | WI-0090 | Kernel lifecycle: read-only status and dispose() (removes every kernel listener, aborts in-flight effects, silences the kernel) so a host can restart safely (GH-50) | complete |  | medium |
 | WI-0091 | Optional fatal-fallback host: mechanical host health, a static generic failure surface with a stable redacted error id, explicit restart and reload, bounded repeated restarts, federation unchanged (GH-50) | complete |  | medium |
 | WI-0092 | Route/workflow-driven lazy federation loading: ensure with dependencies, explicit loading/ready/faulted/blocked, release with snapshot and deterministic restore, retry only on request (GH-33) | complete |  | medium |
-| WI-0093 | Resource-hint and View Transition capability pack: idempotent preconnect/preload/modulepreload/prefetch, engine-labelled view transitions around the next projection, unsupported fallback (GH-34) | active |  | medium |
-| WI-0094 | Guardrail: register the limen.presentation contract unit and its generated bindings (GH-34) | ready |  | medium |
+| WI-0093 | Resource-hint and View Transition capability pack: idempotent preconnect/preload/modulepreload/prefetch, engine-labelled view transitions around the next projection, unsupported fallback (GH-34) | complete |  | medium |
+| WI-0094 | Guardrail: register the limen.presentation contract unit and its generated bindings (GH-34) | complete |  | medium |
