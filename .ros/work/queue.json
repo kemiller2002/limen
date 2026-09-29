@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 81,
+  "nextSeq": 83,
   "items": [
     {
       "id": "WI-0001",
@@ -1248,6 +1248,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T09:15:19Z",
       "updatedAt": "2026-09-29T09:27:54Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0081",
+      "title": "Governed third-party widget and custom-element adapter pack: identity and version, mount/update/command/unmount lifecycle, JSON-only facts, fault isolation, reference Web Component adapter and widget stub (GH-30)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T09:28:34Z",
+      "updatedAt": "2026-09-29T09:28:35Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0082",
+      "title": "Guardrail: register the limen.adapters contract unit and its generated bindings (GH-30)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T09:28:35Z",
+      "updatedAt": "2026-09-29T09:28:36Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
