@@ -22,6 +22,7 @@ import { serveRealtime, upgradeRealtime } from "../test/browser/servers/realtime
 
 type Page = {
   goto(url: string): Promise<unknown>;
+  url(): string;
   goBack(options: { waitUntil: "commit" }): Promise<unknown>;
   evaluate<T>(fn: string): Promise<T>;
   addInitScript(script: { content: string }): Promise<void>;
@@ -37,7 +38,15 @@ type Page = {
 };
 type Download = { suggestedFilename(): string; path(): Promise<string | null> };
 type CdpSession = { send(method: string, params: Record<string, unknown>): Promise<unknown> };
-type Context = { newPage(): Promise<Page>; close(): Promise<void>; newCDPSession(page: Page): Promise<CdpSession>; setOffline(offline: boolean): Promise<void> };
+type Context = {
+  newPage(): Promise<Page>;
+  close(): Promise<void>;
+  newCDPSession(page: Page): Promise<CdpSession>;
+  setOffline(offline: boolean): Promise<void>;
+  grantPermissions(permissions: readonly string[], options: { origin: string }): Promise<void>;
+  clearPermissions(): Promise<void>;
+  setGeolocation(geolocation: { latitude: number; longitude: number; accuracy: number }): Promise<void>;
+};
 type Browser = { newContext(): Promise<Context>; close(): Promise<void> };
 type Chromium = { launch(options?: { channel?: string; ignoreDefaultArgs?: readonly string[] }): Promise<Browser> };
 type Check = { readonly name: string; readonly ok: boolean; readonly detail: string };
@@ -85,9 +94,13 @@ const RECORD_VIOLATIONS = `
   });`;
 
 
-// page.evaluate goes through the DevTools protocol, which the page's policy
-// does not govern; Playwright's string waitForFunction would use in-page eval
-// and trip Trusted Types itself. So the runner polls with page.evaluate.
+// The runner reads and writes the page through the DevTools protocol, which
+// the page's policy does not govern; Playwright's string waitForFunction would
+// use in-page eval and trip Trusted Types itself. It evaluates with
+// userGesture: false. Playwright's page.evaluate grants the page transient
+// user activation on every call (measured: navigator.userActivation.isActive
+// turns true), so polling with it would make every "needs a user gesture"
+// check pass vacuously. Only a performed click or key press activates a page.
 //
 // Some facts exist only for trusted input: a real key press, a pointer drag, a
 // native drag and drop, IME composition, a trusted click (user activation),
@@ -113,12 +126,32 @@ type Action =
   // the back/forward cache never fires load again. Needs a pack that asked for
   // the cache (page.json: { "backForwardCache": true }).
   | { readonly kind: "backForward"; readonly url: string }
+  // Browser permissions for the page's origin, and the device's location.
+  | { readonly kind: "grantPermissions"; readonly permissions: readonly string[] }
+  | { readonly kind: "clearPermissions" }
+  | { readonly kind: "setGeolocation"; readonly latitude: number; readonly longitude: number; readonly accuracy: number }
+  // A virtual WebAuthn authenticator (a platform passkey provider) through the
+  // DevTools protocol; a second call changes whether it verifies the user.
+  | { readonly kind: "authenticator"; readonly userVerified: boolean }
   | { readonly kind: "setFiles"; readonly selector: string; readonly files: readonly { readonly name: string; readonly mimeType: string; readonly base64?: string; readonly size?: number }[] };
 
 // A file for setFiles: given bytes, or `size` bytes of the repeating pattern
 // index % 251, which a page can verify without the runner sending it.
 const fileBuffer = (file: { readonly base64?: string; readonly size?: number }): Buffer =>
   file.base64 !== undefined ? Buffer.from(file.base64, "base64") : Buffer.from(Uint8Array.from({ length: file.size ?? 0 }, (_, index) => index % 251));
+
+// The virtual authenticator each page's DevTools session added.
+const authenticators = new WeakMap<CdpSession, string>();
+
+// Evaluates in the page through the DevTools protocol without a user gesture.
+type Quiet = <T>(expression: string) => Promise<T>;
+const quietly = (session: CdpSession): Quiet => async <T>(expression: string): Promise<T> => {
+  const answer = await session.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true, userGesture: false });
+  const exception = typeof answer === "object" && answer !== null ? Reflect.get(answer, "exceptionDetails") : undefined;
+  if (exception !== undefined) throw new Error(`evaluation failed: ${JSON.stringify(exception)}`);
+  const result: unknown = typeof answer === "object" && answer !== null ? Reflect.get(answer, "result") : undefined;
+  return (typeof result === "object" && result !== null ? Reflect.get(result, "value") : undefined) as T;
+};
 
 const perform = async (page: Page, context: Context, cdp: () => Promise<CdpSession>, action: Action): Promise<void> => {
   switch (action.kind) {
@@ -151,9 +184,31 @@ const perform = async (page: Page, context: Context, cdp: () => Promise<CdpSessi
       return;
     }
     case "backForward":
-      await page.goto(`http://127.0.0.1:${PORT}/${action.url}`);
+      await page.goto(new URL(`/${action.url}`, page.url()).href);
       await page.goBack({ waitUntil: "commit" });
       return;
+    case "grantPermissions":
+      await context.grantPermissions(action.permissions, { origin: new URL(page.url()).origin });
+      return;
+    case "clearPermissions":
+      await context.clearPermissions();
+      return;
+    case "setGeolocation":
+      await context.setGeolocation({ latitude: action.latitude, longitude: action.longitude, accuracy: action.accuracy });
+      return;
+    case "authenticator": {
+      const session = await cdp();
+      const existing = authenticators.get(session);
+      if (existing !== undefined) {
+        await session.send("WebAuthn.setUserVerified", { authenticatorId: existing, isUserVerified: action.userVerified });
+        return;
+      }
+      await session.send("WebAuthn.enable", {});
+      const added = await session.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: action.userVerified, automaticPresenceSimulation: true } });
+      const id = typeof added === "object" && added !== null ? Reflect.get(added, "authenticatorId") : undefined;
+      if (typeof id === "string") authenticators.set(session, id);
+      return;
+    }
     case "setFiles":
       await page.setInputFiles(action.selector, action.files.map((file) => ({ name: file.name, mimeType: file.mimeType, buffer: fileBuffer(file) })));
       return;
@@ -167,17 +222,17 @@ const perform = async (page: Page, context: Context, cdp: () => Promise<CdpSessi
   }
 };
 
-const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession>, timeoutMs: number): Promise<boolean> => {
+const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession>, quiet: Quiet, timeoutMs: number): Promise<boolean> => {
   const deadline = Date.now() + timeoutMs;
   const step = async (): Promise<boolean> => {
-    if (await page.evaluate<boolean>("Boolean(window.__limenPackResult)").catch(() => false)) return true;
-    const action = await page.evaluate<Action | null>("window.__limenPackAction ?? null").catch(() => null);
-    if (action !== null) {
-      await page.evaluate("window.__limenPackAction = null");
+    if (await quiet<boolean>("Boolean(window.__limenPackResult)").catch(() => false)) return true;
+    const action = await quiet<Action | null>("window.__limenPackAction ?? null").catch(() => null);
+    if (action !== null && action !== undefined) {
+      await quiet("window.__limenPackAction = null");
       // A failed action is reported to the page (which decides whether that
       // is a failed check), never allowed to end the run.
       const failure = await perform(page, context, cdp, action).then(() => null, (error: unknown) => (error instanceof Error ? error.name : "Error"));
-      await page.evaluate(`window.__limenPackActionError = ${JSON.stringify(failure)}; window.__limenPackActionDone?.()`);
+      await quiet(`window.__limenPackActionError = ${JSON.stringify(failure)}; window.__limenPackActionDone?.()`);
     } else {
       if (Date.now() > deadline) return false;
       await new Promise((resolve) => { setTimeout(resolve, 50); });
@@ -188,7 +243,7 @@ const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession
 };
 
 // What a pack directory's optional page.json may say.
-type PageConfig = { readonly url?: string; readonly backForwardCache?: boolean; readonly trustedTypes?: readonly string[] };
+type PageConfig = { readonly url?: string; readonly host?: "localhost"; readonly backForwardCache?: boolean; readonly trustedTypes?: readonly string[] };
 
 const configOf = (pack: string): Promise<PageConfig> =>
   readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text): PageConfig => {
@@ -197,29 +252,33 @@ const configOf = (pack: string): Promise<PageConfig> =>
     const url = field("url");
     const trustedTypes = field("trustedTypes");
     const names = Array.isArray(trustedTypes) ? trustedTypes.filter((name): name is string => typeof name === "string" && /^[A-Za-z0-9-]+$/.test(name)) : [];
-    return { ...(typeof url === "string" ? { url } : {}), backForwardCache: field("backForwardCache") === true, ...(names.length > 0 ? { trustedTypes: names } : {}) };
+    return { ...(typeof url === "string" ? { url } : {}), ...(field("host") === "localhost" ? { host: "localhost" as const } : {}), backForwardCache: field("backForwardCache") === true, ...(names.length > 0 ? { trustedTypes: names } : {}) };
   }, () => ({}));
 
 const runPack = async (browser: Browser, pack: string, config: PageConfig): Promise<readonly string[]> => {
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
+    const session = await context.newCDPSession(page);
+    const quiet = quietly(session);
     const errors: string[] = [];
     page.on("pageerror", (error) => { errors.push(error.message ?? "page error"); });
     // A download the page starts is handed back to it as window.__limenDownloads.
     page.on("download", (download) => {
       void download.path().then(async (path) => {
         const text = path === null ? "" : await readFile(path, "utf8");
-        await page.evaluate(`(window.__limenDownloads ??= []).push(${JSON.stringify({ name: download.suggestedFilename(), text })})`);
+        await quiet(`(window.__limenDownloads ??= []).push(${JSON.stringify({ name: download.suggestedFilename(), text })})`);
       });
     });
     await page.addInitScript({ content: RECORD_VIOLATIONS });
     // A pack directory may point at a page elsewhere in the repository (an
-    // example that runs its own checks) with page.json: { "url": "…" }.
-    await page.goto(`http://127.0.0.1:${PORT}/${config.url ?? `${PACKS}/${pack}/index.html`}`);
-    const reported = await drive(page, context, () => context.newCDPSession(page), 30000);
-    const checks = reported ? await page.evaluate<readonly Check[]>("window.__limenPackResult.checks") : [];
-    const violations = await page.evaluate<readonly string[]>("window.__limenViolations.slice()");
+    // example that runs its own checks) with page.json: { "url": "…" }, and
+    // ask for localhost (a WebAuthn relying party cannot be an IP address)
+    // with { "host": "localhost" }.
+    await page.goto(`http://${config.host ?? "127.0.0.1"}:${PORT}/${config.url ?? `${PACKS}/${pack}/index.html`}`);
+    const reported = await drive(page, context, async () => session, quiet, 30000);
+    const checks = reported ? await quiet<readonly Check[]>("window.__limenPackResult.checks") : [];
+    const violations = await quiet<readonly string[]>("window.__limenViolations.slice()");
     checks.forEach((check) => { console.log(`${check.ok ? "PASS" : "FAIL"}  ${pack}: ${check.name}`); });
     return [
       ...(reported ? [] : [`${pack}: the page never reported a result`]),

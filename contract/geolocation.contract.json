@@ -1,0 +1,54 @@
+{
+  "unit": "limen.geolocation",
+  "role": "capability",
+  "version": 1,
+  "doc": "The device's location under the permission pattern (LCP-036). Availability, permission and outcome are kept apart: an API that is missing, blocked by policy or needs a secure context is Unavailable, never Denied; the user's choice is the permission state; a denial, an unavailable position and a timeout are distinct outcomes. Permission changes, including revocation, arrive as facts. Nothing is requested at initialization: only locate can cause the browser to ask. A granted permission is evidence, never application authorization.",
+  "types": [
+    { "name": "PermissionState", "kind": "enum", "doc": "Shared by every permission-sensitive pack.", "values": ["granted", "denied", "prompt"] },
+    { "name": "UnavailableReason", "kind": "enum", "doc": "Shared by every permission-sensitive pack.", "values": ["notSupported", "insecureContext", "blockedByPolicy"] },
+    { "name": "Position", "kind": "record", "fields": [
+      { "name": "latitude", "type": "number" },
+      { "name": "longitude", "type": "number" },
+      { "name": "accuracyM", "type": "number" },
+      { "name": "altitudeM", "type": "number", "optional": true },
+      { "name": "headingDeg", "type": "number", "optional": true },
+      { "name": "speedMps", "type": "number", "optional": true },
+      { "name": "timestampMs", "type": "number" } ] },
+    {
+      "name": "GeolocationRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "permission", "doc": "The current permission state, without asking.", "fields": [] },
+        { "name": "watchPermission", "doc": "PermissionChanged facts follow until unwatchPermission.", "fields": [] },
+        { "name": "unwatchPermission", "fields": [] },
+        { "name": "locate", "doc": "May show the browser's permission prompt when the state is prompt.", "fields": [ { "name": "highAccuracy", "type": "bool" }, { "name": "timeoutMs", "type": "int" }, { "name": "maximumAgeMs", "type": "int" } ] }
+      ]
+    },
+    {
+      "name": "GeolocationResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Permission", "doc": "state is absent when this browser cannot report it.", "fields": [ { "name": "state", "type": "PermissionState", "optional": true } ] },
+        { "name": "Watching", "fields": [ { "name": "state", "type": "PermissionState" } ] },
+        { "name": "Unwatched", "fields": [] },
+        { "name": "CannotWatch", "doc": "This browser cannot report permission changes.", "fields": [] },
+        { "name": "Located", "fields": [ { "name": "position", "type": "Position" } ] },
+        { "name": "Denied", "doc": "The user or the browser refused this origin the location.", "fields": [] },
+        { "name": "PositionUnavailable", "doc": "Allowed, but the device could not determine a position.", "fields": [] },
+        { "name": "TimedOut", "fields": [] },
+        { "name": "Unavailable", "fields": [ { "name": "reason", "type": "UnavailableReason" } ] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "GeolocationFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "PermissionChanged", "doc": "A revocation is previous granted, state prompt or denied.", "fields": [ { "name": "state", "type": "PermissionState" }, { "name": "previous", "type": "PermissionState" } ] }
+      ]
+    }
+  ]
+}

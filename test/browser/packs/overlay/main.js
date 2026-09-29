@@ -111,6 +111,12 @@ expect("the dialog's own method=dialog form is a submitted dismissal with the fo
 
 // --- Nested: a popover inside a modal dialog closes first ------------------
 await ask([{ operation: "showModal", target: target("rename") }]);
+// A user opens the hint by interacting with the dialog first. Without that
+// activation Chromium groups both overlays in one close-watcher group and a
+// single Escape closes both (an anti-abuse rule); this check once passed only
+// because the smoke runner's own polling granted activation. Escape itself
+// never counts as activation, so the two presses below still test the rule.
+await trusted({ kind: "click", selector: "#rename-name" });
 const [hint] = await ask([{ operation: "showPopover", target: target("hint"), anchor: target("hintButton"), sides: ["after", "below"] }]);
 await frames();
 expect("a popover inside a modal dialog opens above it, anchored to its button", hint.kind === "Shown" && hint.placement !== undefined && topmostIsInside(document.getElementById("hint")), hint);
