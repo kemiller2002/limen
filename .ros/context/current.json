@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T11:20:14Z",
+  "updatedAt": "2026-09-29T11:35:28Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2108,24 +2108,52 @@
     {
       "id": "WI-0100",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T11:20:13Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/lifecycle/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/lifecycle.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/lifecycle/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:35:28Z",
       "telemetryExecutionIds": [
         "EXE-20260929T112013747Z-90176855"
-      ]
+      ],
+      "completedAt": "2026-09-29T11:35:28Z"
     },
     {
       "id": "WI-0101",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T11:20:14Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/lifecycle/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/lifecycle.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/lifecycle/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:35:27Z",
       "telemetryExecutionIds": [
         "EXE-20260929T112015077Z-c95b87a1"
-      ]
+      ],
+      "completedAt": "2026-09-29T11:35:27Z"
     }
   ]
 }
