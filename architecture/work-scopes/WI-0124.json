@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0124",
+  "reference": "kemiller2002/limen#59",
+  "placement": "Documentation / Governance — docs/ROADMAP.md: the frozen v1 Core boundary up front; the deferred-kernel-responsibility legend and the rows that listed files, geolocation, IndexedDB and similar as future kernel work now point at the optional packs that hold them; and a reconciliation table for #15, #16, #18, #19, #47, #51 and #53 against the manifest, the budget and Core Admission. Documentation only: no guardrail, manifest, baseline or source change.",
+  "guardrail": false,
+  "paths": ["docs/ROADMAP.md", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
