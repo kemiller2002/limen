@@ -20,5 +20,6 @@
     <Compile Include="Generated/Overlay.fs" />
     <Compile Include="Generated/Realtime.fs" />
     <Compile Include="Generated/Files.fs" />
+    <Compile Include="Generated/Store.fs" />
   </ItemGroup>
 </Project>

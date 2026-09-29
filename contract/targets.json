@@ -9,7 +9,8 @@
     "contract/events.contract.json",
     "contract/overlay.contract.json",
     "contract/realtime.contract.json",
-    "contract/files.contract.json"
+    "contract/files.contract.json",
+    "contract/store.contract.json"
   ],
   "outputs": [
     {
@@ -268,6 +269,32 @@
       "unit": "limen.files",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_files.rs"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "typescript-types",
+      "path": "src/capabilities/store/generated/store.ts"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/store/generated/store.codec.ts",
+      "typesModule": "./store.js"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Store.fs"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Store.cs"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_store.rs"
     }
   ]
 }
