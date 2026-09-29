@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0109",
+  "reference": "kemiller2002/limen#41",
+  "placement": "Guardrail — tsconfig.*.json, the guest-site build and the guest-engine smoke are guardrail-owned. tsconfig.guests.json gains the minimal-engine page's worker composition root (guests/minimal/host/worker.ts), compiled under the same strict options as main.ts with no option changes; build-guests-site.ts copies its output; smoke-guests.ts runs every engine a second time in a worker and adds checks (no engine code on the main thread, a terminated worker and an unloadable engine as explicit faults). Every existing check is kept.",
+  "guardrail": true,
+  "paths": [
+    "tsconfig.guests.json",
+    "scripts/build-guests-site.ts",
+    "scripts/smoke-guests.ts"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
