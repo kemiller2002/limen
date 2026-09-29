@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T06:59:39Z",
+  "updatedAt": "2026-09-29T07:03:26Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -958,35 +958,101 @@
     {
       "id": "WI-0051",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T06:50:58Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/binding-policy.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/binding-security.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "scripts/smoke-security.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:25Z",
       "telemetryExecutionIds": [
         "EXE-20260929T065059025Z-8f3746e0"
-      ]
+      ],
+      "completedAt": "2026-09-29T07:03:25Z"
     },
     {
       "id": "WI-0052",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T06:59:38Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/check-views.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/view-contracts.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:24Z",
       "telemetryExecutionIds": [
         "EXE-20260929T065938835Z-1bd45397"
-      ]
+      ],
+      "completedAt": "2026-09-29T07:03:24Z"
     },
     {
       "id": "WI-0053",
       "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/budgets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:25Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T065939942Z-2d1192e6"
+      ],
+      "completedAt": "2026-09-29T07:03:25Z"
+    },
+    {
+      "id": "WI-0054",
+      "type": "task",
       "state": "active",
       "semanticState": "active",
       "evidence": [],
-      "updatedAt": "2026-09-29T06:59:39Z",
+      "updatedAt": "2026-09-29T07:02:47Z",
       "telemetryExecutionIds": [
-        "EXE-20260929T065939942Z-2d1192e6"
+        "EXE-20260929T070247723Z-367326af"
       ]
+    },
+    {
+      "id": "WI-0055",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:26Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T070311911Z-57107020"
+      ],
+      "completedAt": "2026-09-29T07:03:26Z"
     }
   ]
 }
