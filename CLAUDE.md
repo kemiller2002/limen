@@ -250,6 +250,7 @@ npm run check              # alias for npm test (pretest already builds)
 
 npm run check:layers       # dependency directions (architecture/layers.json)
 npm run check:scope        # commits vs. their work items' declared scopes
+npm run check:typescript   # restricted handwritten TypeScript (compiler API)
 npm run contract:generate  # regenerate every binding from contract/*.contract.json
 npm run contract:check     # fail on stale / hand-edited / missing / orphaned bindings
 npm run test:guests        # F#, C#, Rust bindings: strict build + shared vectors

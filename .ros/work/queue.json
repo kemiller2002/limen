@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 35,
+  "nextSeq": 36,
   "items": [
     {
       "id": "WI-0001",
@@ -593,6 +593,22 @@
       "createdBy": "claude-code",
       "source": "github",
       "sourceReference": "kemiller2002/limen#53"
+    },
+    {
+      "id": "WI-0035",
+      "title": "GH-54: restricted handwritten TypeScript boundary checker (compiler-API based) with failing fixtures; remove existing escape hatches from Core and the core WASM transport",
+      "description": "Placement: Tooling / TypeScript Boundary (guardrail-class). Allowed: architecture/typescript-boundary.json, architecture/guardrails.json, tools/guardrails/**, scripts/check-*.ts, test/**, src/kernel/browser-kernel.ts (remove double assertions), site/app/wasm-engine-transport.ts (decode with generated codec), package.json, .github/CODEOWNERS, docs/**, research/decisions/**, CHANGELOG.md, CLAUDE.md, AGENTS.md.",
+      "tags": [
+        "limen,gh-54,guardrail"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T05:21:40Z",
+      "updatedAt": "2026-09-29T05:21:40Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#54"
     }
   ]
 }

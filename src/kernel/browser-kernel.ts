@@ -88,15 +88,18 @@ function applyBoundAttribute(el: HTMLElement, attr: string, raw: ViewValue | und
   if (typeof raw !== "string" && typeof raw !== "number" && typeof raw !== "boolean") {
     throw new Error(`Attribute binding "${attr}" requires a scalar view value`);
   }
+  // IDL properties are reflected through Reflect rather than a type
+  // assertion: the element's static type does not declare every property in
+  // BOOLEAN_PROPS (e.g. `open` on <details>), and asserting it away would hide
+  // exactly the kind of mistake the restricted TypeScript subset exists to stop.
   if (BOOLEAN_PROPS.has(attr)) {
-    (el as unknown as Record<string, boolean>)[attr] = Boolean(raw);
+    Reflect.set(el, attr, Boolean(raw));
     return;
   }
   if (attr === "value") {
     if (!("value" in el)) throw new Error(`Element bound to "value" has no value property`);
     const next = String(raw);
-    const valueEl = el as unknown as { value: string };
-    if (valueEl.value !== next) valueEl.value = next;
+    if (Reflect.get(el, "value") !== next) Reflect.set(el, "value", next);
     return;
   }
   el.setAttribute(attr, String(raw));

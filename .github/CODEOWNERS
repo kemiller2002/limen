@@ -14,3 +14,8 @@
 /guests/**/*.csproj           @kemiller2002
 /guests/**/Cargo.toml         @kemiller2002
 /guests/rust/*/src/lib.rs     @kemiller2002
+/test/fixtures/negative/      @kemiller2002
+/test/guardrails.test.ts      @kemiller2002
+/test/layers.test.ts          @kemiller2002
+/test/scope.test.ts           @kemiller2002
+/test/typescript-boundary.test.ts @kemiller2002

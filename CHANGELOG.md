@@ -69,6 +69,18 @@ exhaustive lists.
   `test/guardrails.test.ts` fails if a required gate leaves `npm test` or CI
   or a strictness setting is weakened. See `docs/25-guardrails.md`.
 
+- **Restricted handwritten TypeScript (#54).** `npm run check:typescript`
+  (in `npm test`) uses the TypeScript compiler API to reject `any`,
+  suppression directives, `eval`/`Function`/string timers, HTML injection
+  sinks, double assertions, `JSON.parse(…) as T`, handwritten copies of
+  contract types, browser objects in capability messages, string-operation /
+  untyped-payload / computed-member dispatch, and non-exhaustive switches over
+  closed unions — each with a failing fixture. The kernel's two
+  `as unknown as` casts are gone (IDL properties go through `Reflect`), and the
+  site's F# WASM transport now decodes every engine response with the
+  generated decoder instead of asserting it. Pre-existing debt in the
+  federated transport is a count-exact ratchet tied to WI-0030.
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a

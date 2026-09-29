@@ -1,0 +1,46 @@
+{
+  "doc": "The restricted handwritten-TypeScript subset (kemiller2002/limen#54), checked by scripts/check-typescript.ts in npm test. Guardrail-owned. `sanctioned` names the one place a rule is deliberately not applied, with the reason; `knownDebt` is a ratchet \u2014 the exact count of pre-existing findings tied to the work item that removes them. A new finding fails; a count that drops fails until the entry is reduced, so debt can only shrink.",
+  "files": [
+    "src/protocol.ts",
+    "src/index.ts",
+    "src/kernel/**",
+    "src/guest/**",
+    "src/capabilities/**",
+    "src/federation.ts",
+    "src/engine/**",
+    "site/app/*-transport.ts"
+  ],
+  "expectErrorAllowed": [
+    "test/fixtures/negative/**"
+  ],
+  "sanctioned": [
+    {
+      "path": "src/kernel/capabilities.ts",
+      "rule": "untyped-capability-dispatch",
+      "reason": "The generic capability seam: Core carries an opaque request it must not interpret. defineCapability is the only way a provider receives it, and it decodes with the pack's generated decoder or answers Rejected. Every other file is checked."
+    }
+  ],
+  "knownDebt": [
+    {
+      "path": "site/app/federated-wasm-module-transport.ts",
+      "rule": "assertion-bypasses-decoder",
+      "count": 4,
+      "workItem": "WI-0030",
+      "reason": "The federation envelope protocol is still defined only in TypeScript (src/federation.ts), so no generated decoder exists for manifests, dispatch results, snapshots or envelopes. WI-0030 brings it under the neutral contract and removes these."
+    },
+    {
+      "path": "site/app/federated-wasm-module-transport.ts",
+      "rule": "double-assertion",
+      "count": 1,
+      "workItem": "WI-0030",
+      "reason": "The .NET runtime module is typed by assertion; removed with the federation transport's decoders in WI-0030."
+    },
+    {
+      "path": "site/app/federated-wasm-module-transport.ts",
+      "rule": "untyped-capability-dispatch",
+      "count": 1,
+      "workItem": "WI-0030",
+      "reason": "invokeEnvelope(operation: string) calls a .NET export by name; the federation operations become a closed generated union in WI-0030."
+    }
+  ]
+}

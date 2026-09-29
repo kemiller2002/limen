@@ -48,8 +48,26 @@ separate work, capture it with `./ros add` and do it under its own item.
 | `out-of-scope` | a commit changes a path its manifest does not cover | expansion with a reason, or a separate item |
 | `guardrail-modification` | a non-guardrail item touches a guardrail-owned path | stop; record the evidence; change the guardrail under its own `"guardrail": true` item |
 | `foreign-scope-edit` | a feature item edits another item's manifest | only your own |
+| `any-type` | `any` in handwritten boundary TypeScript | `unknown`, narrowed; or the generated type |
+| `suppression-directive` | `@ts-ignore`, `@ts-nocheck`, or `@ts-expect-error` outside `test/fixtures/negative/typescript/allowed/` | fix the type error |
+| `double-assertion` | `x as unknown as T` | decode with the generated decoder, or narrow with a guard |
+| `assertion-bypasses-decoder` | `JSON.parse(…) as T` | `decodeX(JSON.parse(…) as unknown)` from `./contract` |
+| `duplicate-protocol-type` | a handwritten type named like a contract type | import the generated one |
+| `browser-object-in-message` | a `defineCapability` result or fact type reaches a `lib.dom` type (`Element`, `File`, …) | serialized value or opaque handle id |
+| `untyped-capability-dispatch` / `dynamic-dispatch` | `operation: string`, `payload: unknown`, or calling `handlers[name]` directly | a closed generated union, switched exhaustively |
+| `non-exhaustive-union` | a `switch` over a literal union misses a variant, or its `default` does not hand the value to a `never` parameter | cover every case, or `default: return assertNever(value)` |
+| `script-execution` / `html-injection-sink` | `eval`, `Function`, string timers, `innerHTML`, `insertAdjacentHTML`, `document.write`, `srcdoc` | data the engine projects; `textContent`; an effect |
 | generated `stale` / `hand-edited` / `orphan` | see [docs/24](24-contract-and-capabilities.md) | change the contract, regenerate |
 | `test/guardrails.test.ts` | a required gate left `npm test` or CI, or a strictness setting was weakened | restore it |
+
+The TypeScript rules apply to the files listed in
+[`architecture/typescript-boundary.json`](../architecture/typescript-boundary.json)
+(Core, capability packs, the reference engine, the site's WASM transports),
+excluding registered contract-gen outputs — pasting the generated marker into
+a handwritten file exempts nothing. The same file holds the one sanctioned
+exception (the generic capability seam) and a **ratchet** of pre-existing debt:
+exact counts tied to the work item that removes them. A new finding fails; a
+count that drops fails until the entry is lowered. Debt only shrinks.
 
 ## What is guardrail-owned
 
@@ -64,6 +82,7 @@ attributes, and the guardrail tests. The same paths are in
 
 ```sh
 npm run check:layers    # dependency directions (part of npm test)
+npm run check:typescript # restricted handwritten TypeScript (part of npm test)
 npm run check:scope     # this branch's commits against their scopes (needs origin/main fetched)
 npm run contract:check  # generated bindings current (part of npm test)
 ```
