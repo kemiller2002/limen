@@ -170,6 +170,13 @@ jobs:
         env:
           LIMEN_REQUIRE_BROWSER: "1"
 
+      # Every capability pack's page (test/browser/packs/) in Chromium under
+      # the same strict policy: real focus, selection, scrolling, and so on.
+      - name: Capability packs in a real browser
+        run: npm run smoke:packs
+        env:
+          LIMEN_REQUIRE_BROWSER: "1"
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.
