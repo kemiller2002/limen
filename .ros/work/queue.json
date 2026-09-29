@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 62,
+  "nextSeq": 63,
   "items": [
     {
       "id": "WI-0001",
@@ -982,6 +982,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T07:26:23Z",
       "updatedAt": "2026-09-29T07:47:14Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0062",
+      "title": "Language-neutral async-resource and optimistic-mutation semantics with the F# reference engine library (GH-22)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:48:37Z",
+      "updatedAt": "2026-09-29T07:48:38Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

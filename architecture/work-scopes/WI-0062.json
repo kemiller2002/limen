@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0062",
+  "reference": "kemiller2002/limen#22 (LCP-009, LCP-011)",
+  "placement": "Engine Library — what a read is waiting for and what a mutation has done are application state. Language-neutral semantics (conformance/resources/) and a pure F# reference library (libraries/fsharp/Limen.Resources); no hidden cache, no renderer state, no protocol change.",
+  "guardrail": false,
+  "paths": ["conformance/resources/**", "libraries/**", "package.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
