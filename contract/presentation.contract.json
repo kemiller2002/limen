@@ -1,0 +1,44 @@
+{
+  "unit": "limen.presentation",
+  "role": "capability",
+  "version": 1,
+  "doc": "Browser-native performance and polish mechanisms (LCP-025, LCP-026): resource hints the static HTML cannot express, and view transitions around the engine's next projection. The engine decides what to hint and which transition to run; the pack only performs the browser mechanism. Animation stays in CSS, reduced motion stays in CSS, and a browser without view transitions simply renders.",
+  "types": [
+    { "name": "HintKind", "kind": "enum", "values": ["preconnect", "dns-prefetch", "preload", "modulepreload", "prefetch"] },
+    { "name": "PreloadAs", "kind": "enum", "doc": "Required for preload; ignored otherwise.", "values": ["script", "style", "font", "image", "fetch", "document"] },
+    { "name": "TransitionEnd", "kind": "enum", "doc": "finished: the transition ran. skipped: the browser skipped it (for example the document was hidden). timedOut: the page did not change within timeoutMs (typically the engine had not answered Ready yet), so the transition ended without animating and the page was not held. The kernel rewrites bound text on every projection, so any answer at all ends the wait.", "values": ["finished", "skipped", "timedOut"] },
+    {
+      "name": "PresentationRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "hint", "doc": "Add <link rel=kind href> to the document head, once. A link with the same rel and resolved href already present — including one written in the static HTML — is left alone.", "fields": [
+          { "name": "kind", "type": "HintKind" }, { "name": "href", "type": "string" }, { "name": "as", "type": "PreloadAs", "optional": true }, { "name": "crossOrigin", "type": "bool" } ] },
+        { "name": "prepareTransition", "doc": "Start a view transition labelled label (a CSS identifier, exposed as the transition's type and as data-view-transition on the root element). The browser captures the current view; the pack answers Ready, and the engine's next projection is the new view. If no projection changes the page within timeoutMs, the transition ends without animating.", "fields": [ { "name": "label", "type": "string" }, { "name": "timeoutMs", "type": "int" } ] }
+      ]
+    },
+    {
+      "name": "PresentationResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Added", "fields": [] },
+        { "name": "AlreadyPresent", "fields": [] },
+        { "name": "Ready", "doc": "The old view is captured; project the new one.", "fields": [] },
+        { "name": "Busy", "doc": "A transition is already waiting for its projection.", "fields": [] },
+        { "name": "InvalidUrl", "doc": "Named by scheme only.", "fields": [ { "name": "scheme", "type": "string" } ] },
+        { "name": "InvalidRequest", "fields": [ { "name": "problem", "type": "string" } ] },
+        { "name": "Unsupported", "doc": "This browser lacks the mechanism: render normally.", "fields": [] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "PresentationFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "TransitionFinished", "fields": [ { "name": "label", "type": "string" }, { "name": "outcome", "type": "TransitionEnd" } ] }
+      ]
+    }
+  ]
+}

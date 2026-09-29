@@ -1,0 +1,9 @@
+{
+  "doc": "The presentation pack's real-browser page (scripts/smoke-packs.ts). Its engine is main.js.",
+  "view": {
+    "screen": "string"
+  },
+  "events": {
+    "poke": {}
+  }
+}

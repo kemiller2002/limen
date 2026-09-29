@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen presentation pack in a real browser</title>
+  <link rel="preconnect" href="/already-in-html">
+  <link rel="stylesheet" href="./page.css">
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types.
+       main.js drives hints and view transitions and reports
+       window.__limenPackResult. -->
+  <button id="poke" data-event="poke">Ask</button>
+  <p id="screen" data-text="screen"></p>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

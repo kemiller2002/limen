@@ -67,6 +67,10 @@
       "types": "./dist/capabilities/transfer/index.d.ts",
       "import": "./dist/capabilities/transfer/index.js"
     },
+    "./capabilities/presentation": {
+      "types": "./dist/capabilities/presentation/index.d.ts",
+      "import": "./dist/capabilities/presentation/index.js"
+    },
     "./hosts/fallback": {
       "types": "./dist/hosts/fallback.d.ts",
       "import": "./dist/hosts/fallback.js"

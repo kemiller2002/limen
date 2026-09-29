@@ -56,6 +56,10 @@
     {
       "workItem": "WI-0091",
       "change": "Added kernel-with-fallback-host (kemiller2002/limen#50): the optional fatal-fallback host adds 2340 bytes gzip over the kernel, and only to applications that use it."
+    },
+    {
+      "workItem": "WI-0093",
+      "change": "Added kernel-with-presentation (kemiller2002/limen#34): the resource-hint and view-transition pack adds 4060 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/presentation/."
     }
   ],
   "profiles": [
@@ -120,7 +124,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 103024,
@@ -149,7 +154,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 102812,
@@ -178,7 +184,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 105920,
@@ -207,7 +214,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 122768,
@@ -237,7 +245,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 115285,
@@ -267,7 +276,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 132137,
@@ -299,7 +309,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 132375,
@@ -330,7 +341,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 131934,
@@ -361,7 +373,8 @@
         "dist/capabilities/files/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 133014,
@@ -392,7 +405,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 134030,
@@ -424,7 +438,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/adapters/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 151216,
@@ -456,7 +471,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/transfer/"
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 137357,
@@ -488,7 +504,8 @@
         "dist/capabilities/realtime/",
         "dist/capabilities/files/",
         "dist/capabilities/store/",
-        "dist/capabilities/adapters/"
+        "dist/capabilities/adapters/",
+        "dist/capabilities/presentation/"
       ],
       "baseline": {
         "rawBytes": 130595,
@@ -522,6 +539,39 @@
       "budget": {
         "rawBytes": 125952,
         "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "name": "kernel-with-presentation",
+      "doc": "The kernel plus the resource-hint and view-transition capability pack (./capabilities/presentation), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/presentation/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/"
+      ],
+      "baseline": {
+        "rawBytes": 127635,
+        "gzipBytesBundled": 25551
+      },
+      "budget": {
+        "rawBytes": 141312,
+        "gzipBytesBundled": 28672
       }
     }
   ]

@@ -48,6 +48,17 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Resource-hint and view-transition pack (#34).**
+  `./capabilities/presentation` (`presentationCapability()`, contract unit
+  `limen.presentation`, with bindings for TypeScript, F#, C# and Rust):
+  - idempotent preconnect, dns-prefetch, preload, modulepreload and prefetch
+    hints, never duplicating one already in the HTML;
+  - labelled view transitions around the engine's next projection, where the
+    engine asks first, the browser captures the old view, and
+    `TransitionFinished` reports how it ended;
+  - an `Unsupported` answer where the browser lacks the API, so the engine
+    renders as usual.
+  Animation and reduced motion stay in CSS.
 - **Lazy federation loading (#33).** `createLazyFederation(federation)` loads
   modules when a route or workflow asks:
   - dependencies start first, and failures stay isolated;
