@@ -31,6 +31,15 @@ exhaustive lists.
 
 ### Added
 
+- **Language-neutral form semantics and the F# reference library (#21).**
+  `conformance/forms/` defines engine-owned form state as data: nine
+  scenarios, 87 steps. It covers typed sync validation, conditional
+  requirement and visibility, correlated stale-safe async validation, keyed
+  repeated rows, autofill reconciliation, server field and global errors,
+  reset, and a submission lifecycle whose `unknown` outcome blocks
+  resubmission until reconciled. `libraries/fsharp/Limen.Forms` is a pure
+  engine library that agrees with every step. The kernel is unchanged; its
+  form-control value gap is tracked separately.
 - **Language-neutral routing semantics and the F# reference library (#20).**
   `conformance/routing/` defines routing as data: 40 resolutions, 12 builds
   and a deep-link, navigation and history session. It covers nested routes,
