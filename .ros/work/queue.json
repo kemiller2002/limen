@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 120,
+  "nextSeq": 124,
   "items": [
     {
       "id": "WI-0001",
@@ -1794,6 +1794,62 @@
       "attachments": [],
       "createdAt": "2026-09-29T14:50:03Z",
       "updatedAt": "2026-09-29T14:50:04Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0120",
+      "title": "Core manifest and physical source boundary (kemiller2002/limen#60): architecture/core.json names the architecture version, Core paths, entrypoints, export families, dependencies, the six binding primitives, the four built-in capability families and the seven canonical concept ids; the architecture checker consumes it; every runtime path maps to exactly one layer; negative fixtures",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-29T16:18:48.386Z",
+      "updatedAt": "2026-09-29T16:18:48.386Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0121",
+      "title": "Remove federation and the reference engine from the root Core surface (kemiller2002/limen#61): explicit ./federation and ./reference-engine subpaths, a minimal root consumer whose transitive graph excludes every optional layer, migration record, docs",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-29T16:18:56.263Z",
+      "updatedAt": "2026-09-29T16:18:56.263Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0122",
+      "title": "Core complexity-budget report and CI gate (kemiller2002/limen#62): deterministic report of Core size, exports, variants, primitives, families, dependencies, concepts and the minimal graph; reference baseline at 9a835cc; approved baseline; hard gates and 10% review triggers with failing fixtures",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-29T16:18:56.560Z",
+      "updatedAt": "2026-09-29T16:18:56.560Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0123",
+      "title": "Core Admission record and minimal-agent learning contract (kemiller2002/limen#63): admission template with 15 required fields, admission validation, canonical Core mental model, AGENTS reading order, docs check that optional systems never become required learning",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-29T16:18:56.896Z",
+      "updatedAt": "2026-09-29T16:18:56.896Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
