@@ -189,7 +189,8 @@ const checkTag = (file: string, contract: ViewContract, tag: Tag, frames: readon
     return lookup(name, key, (entry) => {
       const notScalar = scalar(entry);
       if (notScalar !== undefined) return notScalar;
-      return target.kind === "BooleanProperty" && entry !== "boolean" ? `boolean — ${property} is set with Boolean(value), so "false" would be true` : undefined;
+      if (target.kind === "BooleanProperty" && entry !== "boolean") return `boolean — ${property} is set with Boolean(value), so "false" would be true`;
+      return target.kind === "BooleanAttribute" && entry !== "boolean" ? `boolean — ${property} is a boolean attribute, present whenever the value is truthy` : undefined;
     });
   });
 

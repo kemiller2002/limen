@@ -114,6 +114,7 @@ The part after `data-bind-` is the target name. Behavior depends on which:
 | --- | --- |
 | `disabled`, `checked`, `selected`, `hidden`, `open` | the DOM **property**, coerced with `Boolean()` |
 | `value` | the `.value` **property**, and only if it differs from the current one |
+| an HTML boolean attribute — `inert`, `required`, `readonly`, `multiple`, `autofocus`, `novalidate`, `controls`, `loop`, `muted`, … | toggled by presence: present when the value is truthy, removed otherwise. `setAttribute("inert", "false")` would make the element inert, so the kernel never writes a value. |
 | a URL attribute — `href`, `src`, `action`, `formaction`, `xlink:href`, `poster`, `cite`, … | `setAttribute` **only** for an `http:`, `https:`, `mailto:`, `tel:` or relative URL; any other scheme (`javascript:`, `data:`, …) is not written, the attribute is removed, and a `BridgeError` (phase `projection`) names the scheme — never the value |
 | `on*`, `style`, `srcdoc`, `srcset`, `ping`, `is`, … | **refused when the page starts**: `BridgeError` (phase `binding`), and the kernel does not run |
 | anything else | `setAttribute(name, String(value))` |

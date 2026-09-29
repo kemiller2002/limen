@@ -197,3 +197,24 @@ test("no diagnostic ever carries a header, body, query, clipboard text, projecte
   assert.ok(events.some((event) => event.kind === "EffectTiming"), "the effects ran");
   for (const secret of SECRETS) assert.ok(!logged.includes(secret), `diagnostics leaked ${secret}: ${logged}`);
 });
+
+// ---------------------------------------------------------------------------
+// Boolean attributes
+// ---------------------------------------------------------------------------
+
+test("HTML boolean attributes are toggled by presence: false removes them, true adds them, never the string \"false\"", async () => {
+  const body = `<main data-bind-inert="modal"><input data-bind-required="mandatory" data-bind-readonly="locked"></main><button id="b" data-event="next">n</button>`;
+  const { html } = await run(body, { modal: true, mandatory: false, locked: true }, [{ modal: false, mandatory: true, locked: false }], [], async (document) => {
+    const main = document.querySelector("main");
+    const input = document.querySelector("input");
+    assert.ok(main !== null && input !== null);
+    assert.deepEqual([main.hasAttribute("inert"), input.hasAttribute("required"), input.hasAttribute("readonly")], [true, false, true]);
+    document.getElementById("b")?.click();
+    await flush();
+  });
+  assert.doesNotMatch(html, /="false"/, "no boolean attribute ever holds the string false");
+  assert.match(html, /<main data-bind-inert="modal">/, "inert removed");
+  assert.match(html, / required=""/, "required added");
+  assert.doesNotMatch(html, / readonly=/, "readonly removed");
+  assert.equal(classifyAttribute("inert").kind, "BooleanAttribute");
+});

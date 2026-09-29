@@ -141,6 +141,9 @@ function applyBoundAttribute(bound: AttrBinding, raw: ViewValue | undefined): st
     case "BooleanProperty":
       Reflect.set(el, attr, Boolean(raw));
       return undefined;
+    case "BooleanAttribute":
+      el.toggleAttribute(attr, Boolean(raw));
+      return undefined;
     case "ValueProperty": {
       if (!("value" in el)) throw new Error(`Element bound to "value" has no value property`);
       const next = String(raw);

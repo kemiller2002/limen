@@ -20,12 +20,23 @@
 
 export type AttributeTarget =
   | { readonly kind: "BooleanProperty" }
+  // Present when the value is truthy, absent otherwise: for an HTML boolean
+  // attribute, any value — including the string "false" — means true.
+  | { readonly kind: "BooleanAttribute" }
   | { readonly kind: "ValueProperty" }
   | { readonly kind: "Url" }
   | { readonly kind: "Attribute" }
   | { readonly kind: "Forbidden"; readonly reason: string };
 
 const BOOLEAN_PROPERTIES: readonly string[] = ["disabled", "checked", "selected", "hidden", "open"];
+
+// HTML's other boolean attributes (the HTML Living Standard's attribute
+// index). setAttribute("inert", "false") makes an element inert, so these are
+// toggled by presence.
+const BOOLEAN_ATTRIBUTES: readonly string[] = [
+  "inert", "required", "readonly", "multiple", "autofocus", "novalidate", "formnovalidate", "autoplay", "controls",
+  "loop", "muted", "playsinline", "default", "reversed", "ismap", "itemscope", "allowfullscreen", "nomodule", "async", "defer",
+];
 
 // Elements whose content or attributes load, run or restyle code, or rewrite
 // other attributes. Embedding one with engine-supplied values is a trust
@@ -58,6 +69,7 @@ export const classifyAttribute = (attribute: string): AttributeTarget => {
   const forbidden = FORBIDDEN_ATTRIBUTES[name];
   if (forbidden !== undefined) return { kind: "Forbidden", reason: forbidden };
   if (BOOLEAN_PROPERTIES.includes(name)) return { kind: "BooleanProperty" };
+  if (BOOLEAN_ATTRIBUTES.includes(name)) return { kind: "BooleanAttribute" };
   if (name === "value") return { kind: "ValueProperty" };
   if (URL_ATTRIBUTES.includes(name)) return { kind: "Url" };
   return { kind: "Attribute" };

@@ -18,6 +18,11 @@ exhaustive lists.
 
 ### Changed
 
+- **HTML boolean attributes are toggled by presence (#31).** `data-bind-inert`,
+  `-required`, `-readonly`, `-multiple` and every other boolean attribute are
+  now present when the value is truthy and removed otherwise. Before, the
+  kernel wrote `"false"`, which the browser reads as true. `check:views`
+  requires a boolean kind for them.
 - **`data-on="input"` no longer reports uncommitted IME composition text
   (#29).** Input events fired during composition are skipped. The committed
   value is reported once, at `compositionend`.
