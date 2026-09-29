@@ -31,6 +31,14 @@
       "types": "./dist/hosts/raw-wasm-transport.d.ts",
       "import": "./dist/hosts/raw-wasm-transport.js"
     },
+    "./testing": {
+      "types": "./dist/tooling/fake-host.d.ts",
+      "import": "./dist/tooling/fake-host.js"
+    },
+    "./trace": {
+      "types": "./dist/tooling/trace.d.ts",
+      "import": "./dist/tooling/trace.js"
+    },
     "./kernel": {
       "types": "./dist/kernel/browser-kernel.d.ts",
       "import": "./dist/kernel/browser-kernel.js"

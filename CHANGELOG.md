@@ -111,6 +111,14 @@ exhaustive lists.
   overwrite the first effect's abort controller); it reports a protocol
   diagnostic instead. Ids may be reused after completion.
 
+- **Fake host, trace and replay (#32, LCP-029/031).** `./testing` exports
+  `createFakeHost` (a DOM-free kernel stand-in with a fake clock, location,
+  history and storage, scripted or held outcomes, and timeout → OutcomeUnknown);
+  `./trace` exports `tracingTransport` (a no-op when disabled), a redacting
+  `exportTrace`, and `replay`, which reproduces a deterministic engine's final
+  projection from a trace and reports divergences. Tooling layer; Core
+  unchanged.
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a

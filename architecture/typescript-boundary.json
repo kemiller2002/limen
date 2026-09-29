@@ -6,6 +6,7 @@
     "src/kernel/**",
     "src/guest/**",
     "src/hosts/**",
+    "src/tooling/**",
     "src/capabilities/**",
     "src/federation.ts",
     "src/engine/**",

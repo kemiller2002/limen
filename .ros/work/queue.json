@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 39,
+  "nextSeq": 41,
   "items": [
     {
       "id": "WI-0001",
@@ -657,6 +657,38 @@
       "createdBy": "claude-code",
       "source": "github",
       "sourceReference": "kemiller2002/limen#17"
+    },
+    {
+      "id": "WI-0039",
+      "title": "GH-32 part 1 (LCP-029/031): fake host with deterministic clock/location/outcomes, and redacted trace + replay tooling outside Core",
+      "description": null,
+      "tags": [
+        "limen,gh-32,tooling,conformance"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T06:04:26Z",
+      "updatedAt": "2026-09-29T06:04:26Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#32"
+    },
+    {
+      "id": "WI-0040",
+      "title": "Federation WASM projects publish into their own project directory, so repeated local builds nest publish/publish/... until MSB3030; exclude publish/** from their items",
+      "description": null,
+      "tags": [
+        "build,site,federation"
+      ],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-29T06:08:07Z",
+      "updatedAt": "2026-09-29T06:08:07Z",
+      "createdBy": "claude-code",
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }

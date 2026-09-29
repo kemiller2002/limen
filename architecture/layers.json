@@ -82,6 +82,18 @@
         "core-kernel",
         "same-instance"
       ]
+    },
+    {
+      "name": "tooling",
+      "doc": "Development and conformance tooling (fake host, trace, replay). Never imported by Core; test and diagnostic authority only.",
+      "paths": [
+        "src/tooling/**"
+      ],
+      "mayImport": [
+        "core-contract",
+        "core-kernel",
+        "tooling"
+      ]
     }
   ],
   "externalImports": {
