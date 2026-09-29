@@ -13,8 +13,13 @@ export type Learning = {
   readonly path: readonly string[];
   readonly requiredReading: { readonly file: string; readonly start: string; readonly end: string };
   readonly quickStarts: readonly string[];
-  readonly optionalDocs: readonly string[];
+  // Which documents are optional subsystem documents: a pattern, so a new one
+  // is covered without editing the manifest.
+  readonly optionalDocs: { readonly pattern: RegExp; readonly except: readonly string[] };
 };
+
+export const isOptionalDoc = (learning: Learning, path: string): boolean =>
+  learning.optionalDocs.pattern.test(path) && !learning.optionalDocs.except.includes(path);
 
 export type Document = { readonly path: string; readonly text: string };
 
@@ -37,7 +42,10 @@ export const parseLearning = (rawManifest: unknown): Learning => {
     path: strings(learning.path),
     requiredReading: { file: text(reading.file, "requiredReading.file"), start: text(reading.start, "requiredReading.start"), end: text(reading.end, "requiredReading.end") },
     quickStarts: strings(learning.quickStarts),
-    optionalDocs: strings(learning.optionalDocs),
+    optionalDocs: (() => {
+      const optional = isRecord(learning.optionalDocs) ? learning.optionalDocs : {};
+      return { pattern: new RegExp(text(optional.pattern, "optionalDocs.pattern")), except: strings(optional.except) };
+    })(),
   };
 };
 
@@ -98,14 +106,12 @@ export const checkLearning = (manifest: CoreManifest, learning: Learning, docume
 
   // 3. The learning path holds no optional document, and every path entry exists.
   const pathViolations = [
-    ...learning.path.filter((path) => learning.optionalDocs.includes(path)).map((path) => violation("optional-in-learning-path", "architecture/core.json", `${path} is both on the Core learning path and an optional document`, ADMISSION)),
+    ...learning.path.filter((path) => isOptionalDoc(learning, path)).map((path) => violation("optional-in-learning-path", "architecture/core.json", `${path} is both on the Core learning path and an optional document`, ADMISSION)),
     ...learning.path.filter((path) => !textOf.has(path)).map((path) => violation("learning-path-missing", path, "on the Core learning path but does not exist", "Restore it, or change the path under Core Admission.")),
   ];
 
   // 4. Each optional document opens by naming the Core concept it composes with.
-  const bannerViolations = learning.optionalDocs.flatMap((path) => {
-    const text = textOf.get(path);
-    if (text === undefined) return [violation("optional-doc-missing", path, "listed as an optional document but does not exist", "Remove it from learning.optionalDocs in the same guardrail item that deletes it.")];
+  const bannerViolations = documents.filter((document) => isOptionalDoc(learning, document.path)).flatMap(({ path, text }) => {
     const banner = text.split("\n").slice(0, BANNER_LINES).find((line) => /^>\s*\*\*Optional\b/.test(line));
     const bannerText = text.split("\n").slice(0, BANNER_LINES + 4).join(" ");
     const named = Array.from(bannerText.matchAll(/`([a-z][a-z-]*)`/g), (match) => match[1] ?? "").filter((id) => manifest.concepts.includes(id));
