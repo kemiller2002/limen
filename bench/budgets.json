@@ -52,6 +52,10 @@
     {
       "workItem": "WI-0086",
       "change": "Added kernel-with-transfer (kemiller2002/limen#47): the transfer profile pack adds 5340 bytes gzip over the kernel, and only to applications that register it. The files pack gained its explicit fileFor accessor (+157 raw bytes, within its budget). Earlier kernel-with-* profiles now also forbid dist/capabilities/transfer/."
+    },
+    {
+      "workItem": "WI-0091",
+      "change": "Added kernel-with-fallback-host (kemiller2002/limen#50): the optional fatal-fallback host adds 2340 bytes gzip over the kernel, and only to applications that use it."
     }
   ],
   "profiles": [
@@ -493,6 +497,31 @@
       "budget": {
         "rawBytes": 144384,
         "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "name": "kernel-with-fallback-host",
+      "doc": "The kernel plus the optional fatal-fallback host (./hosts/fallback), as a composition root that uses it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/fallback.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/",
+        "dist/hosts/dotnet-wasm-transport.js",
+        "dist/hosts/raw-wasm-transport.js"
+      ],
+      "baseline": {
+        "rawBytes": 114331,
+        "gzipBytesBundled": 23831
+      },
+      "budget": {
+        "rawBytes": 125952,
+        "gzipBytesBundled": 26624
       }
     }
   ]

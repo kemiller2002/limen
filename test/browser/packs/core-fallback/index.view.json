@@ -1,0 +1,11 @@
+{
+  "doc": "The fatal fallback host's real-browser page (scripts/smoke-packs.ts). Its engine is main.js.",
+  "view": {
+    "title": "string",
+    "count": "string"
+  },
+  "events": {
+    "add": {},
+    "crash": {}
+  }
+}

@@ -292,7 +292,7 @@ It is the bridge's own state, never the application's. A host reads it after
 
 A kernel disposed while its transport is still starting never binds.
 `dispose()` does not touch the DOM and decides nothing: restoring or replacing
-the page is the host's policy. For a normal page
+the page is the host's policy ([44](44-fatal-fallback.md)). For a normal page
 load you never call it; listeners live as long as the page.
 
 ### Never call `start()` twice

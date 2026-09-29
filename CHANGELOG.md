@@ -48,6 +48,17 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Optional fatal-fallback host (#50).** `./hosts/fallback`
+  (`startWithFallback`):
+  - mechanical host health (`starting`, `available`, `unavailable`);
+  - for an engine that cannot start, cannot initialize, is incompatible, or
+    throws while running, the host preserves the last view as inert and
+    covers it with a static, generic failure surface;
+  - a stable, redacted error id (`LIMEN-<PHASE>-<ErrorName>`);
+  - an explicit restart that restores the page's pre-start DOM with a fresh
+    engine, bounded by `maxRestarts`, after which only reload is offered.
+  Domain errors, malformed projections and federated module faults never
+  take this path.
 - **Kernel lifecycle for hosts (#50).** `BrowserKernel` gains a read-only
   `status` (`unstarted`, `starting`, `running`, `incompatible`, `faulted`,
   `disposed`) and `dispose()`. `dispose()` removes every listener the kernel

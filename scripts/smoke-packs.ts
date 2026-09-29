@@ -25,7 +25,7 @@ type Page = {
   addInitScript(script: { content: string }): Promise<void>;
   on(event: "pageerror", handler: (error: { message?: string }) => void): void;
   on(event: "download", handler: (download: Download) => void): void;
-  click(selector: string): Promise<void>;
+  click(selector: string, options?: { force?: boolean; timeout?: number }): Promise<void>;
   reload(): Promise<unknown>;
   setInputFiles(selector: string, files: readonly { name: string; mimeType: string; buffer: Buffer }[]): Promise<void>;
   focus(selector: string): Promise<void>;
@@ -90,7 +90,9 @@ type Action =
   | { readonly kind: "drag"; readonly from: readonly [number, number]; readonly to: readonly [number, number]; readonly steps: number }
   | { readonly kind: "dragAndDrop"; readonly source: string; readonly target: string }
   | { readonly kind: "compose"; readonly selector: string; readonly steps: readonly string[]; readonly commit: string }
-  | { readonly kind: "click"; readonly selector: string }
+  // force: dispatch a real mouse click at the element's position even if the
+  // browser says something else would receive it (an inert page, a cover).
+  | { readonly kind: "click"; readonly selector: string; readonly force?: boolean }
   | { readonly kind: "reload" }
   | { readonly kind: "setFiles"; readonly selector: string; readonly files: readonly { readonly name: string; readonly mimeType: string; readonly base64?: string; readonly size?: number }[] };
 
@@ -115,7 +117,7 @@ const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Actio
       await page.dragAndDrop(action.source, action.target);
       return;
     case "click":
-      await page.click(action.selector);
+      await page.click(action.selector, { force: action.force === true, timeout: 5000 });
       return;
     case "reload":
       await page.reload();
@@ -140,8 +142,10 @@ const drive = async (page: Page, cdp: () => Promise<CdpSession>, timeoutMs: numb
     const action = await page.evaluate<Action | null>("window.__limenPackAction ?? null").catch(() => null);
     if (action !== null) {
       await page.evaluate("window.__limenPackAction = null");
-      await perform(page, cdp, action);
-      await page.evaluate("window.__limenPackActionDone?.()");
+      // A failed action is reported to the page (which decides whether that
+      // is a failed check), never allowed to end the run.
+      const failure = await perform(page, cdp, action).then(() => null, (error: unknown) => (error instanceof Error ? error.name : "Error"));
+      await page.evaluate(`window.__limenPackActionError = ${JSON.stringify(failure)}; window.__limenPackActionDone?.()`);
     } else {
       if (Date.now() > deadline) return false;
       await new Promise((resolve) => { setTimeout(resolve, 50); });
