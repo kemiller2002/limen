@@ -1,0 +1,32 @@
+{
+  "workItem": "WI-0103",
+  "reference": "kemiller2002/limen#40 (LCP-034; defect found proving the outbox; the rule that OutcomeUnknown is never collapsed into Failure)",
+  "placement": "Core (kernel mechanism + contract, protocol 1.4). Verified in Chromium: when a connection drops after a POST reached the server, fetch rejects with TypeError (and Chromium may already have resent it), and the kernel reported Failure{network}, documented as retryable: an unknown outcome collapsed into a confident failure. Only the one fetch call can classify this, so no pack can fix it. The fix: for POST, PUT, PATCH and DELETE, a thrown fetch while the browser was online is OutcomeUnknown{connection-lost}; safe methods, and any request made while navigator.onLine is false, stay Failure{network}. A 1.3 engine cannot decode the new reason, so it hears OutcomeUnknown{timeout-after-dispatch}: the outcome kept safe, the reason approximated and documented. Retry stays the engine's.",
+  "guardrail": false,
+  "paths": [
+    "contract/core.contract.json",
+    "src/**",
+    "test/**",
+    "conformance/**",
+    "guests/fsharp/Limen.Contract/Generated/**",
+    "guests/csharp/Limen.Contract/Generated/**",
+    "guests/rust/limen-contract/src/limen_core.rs",
+    "guests/**/*.fs",
+    "guests/**/*.cs",
+    "guests/**/*.rs",
+    "site/fsharp/**/*.fs",
+    "site/app/**",
+    "site/pages/**",
+    "examples/**",
+    "scripts/smoke-packs.ts",
+    "docs/**",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "architecture.yaml",
+    "bench/budgets.json",
+    "research/**"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
