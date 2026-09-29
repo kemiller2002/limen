@@ -75,6 +75,7 @@ Then, for depth:
 | 34 | [Scheduling](https://github.com/kemiller2002/limen/blob/main/docs/34-scheduling.md) | How does an engine wait — a timeout, the next frame, an idle moment — and cancel it, without timers hidden in application JavaScript? |
 | 35 | [Measurement and observers](https://github.com/kemiller2002/limen/blob/main/docs/35-measurement.md) | How does an engine learn sizes, scroll position and visibility — and when a target disappears — without DOM nodes? |
 | 36 | [Rich event facts](https://github.com/kemiller2002/limen/blob/main/docs/36-rich-events.md) | How does an engine get keyboard, pointer, drag, IME and selection facts — opt-in, JSON, with no synchronous DOM decision? |
+| 37 | [Accessible interaction patterns](https://github.com/kemiller2002/limen/blob/main/docs/37-accessible-patterns.md) | Can tabs, menus, listboxes, comboboxes, trees, grids and dialogs be built accessibly with no widget logic in the kernel — and who owns such patterns? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 

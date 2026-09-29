@@ -39,6 +39,15 @@ exhaustive lists.
 
 ### Added
 
+- **Accessible interaction reference patterns (#31).**
+  `examples/09-accessible-patterns` covers tabs, a menu button, a listbox, a
+  combobox, a tree, a right-to-left grid and a dialog. Each is a pure state
+  machine, and every ARIA state is projected. Keys come from the events
+  capability and focus moves through the focus capability; the kernel holds
+  no widget logic. The patterns are proven with real key presses in Chromium
+  and are reference proofs for the Forma project, which owns reusable
+  patterns. The events capability gains a `direction` fact group and the
+  `Space` key alias.
 - **Rich browser event facts capability pack (#29).** `./capabilities/events`
   (`eventsCapability()`, contract unit `limen.events`, with bindings for
   TypeScript, F#, C# and Rust):

@@ -130,7 +130,10 @@ const runPack = async (browser: Browser, pack: string): Promise<readonly string[
     const errors: string[] = [];
     page.on("pageerror", (error) => { errors.push(error.message ?? "page error"); });
     await page.addInitScript({ content: RECORD_VIOLATIONS });
-    await page.goto(`http://127.0.0.1:${PORT}/${PACKS}/${pack}/index.html`);
+    // A pack directory may point at a page elsewhere in the repository (an
+    // example that runs its own checks) with page.json: { "url": "…" }.
+    const pointer = await readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text) => (JSON.parse(text) as { url: string }).url, () => `${PACKS}/${pack}/index.html`);
+    await page.goto(`http://127.0.0.1:${PORT}/${pointer}`);
     const reported = await drive(page, () => context.newCDPSession(page), 30000);
     const checks = reported ? await page.evaluate<readonly Check[]>("window.__limenPackResult.checks") : [];
     const violations = await page.evaluate<readonly string[]>("window.__limenViolations.slice()");

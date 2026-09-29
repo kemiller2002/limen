@@ -2,19 +2,19 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/events.contract.json
 // unit: limen.events@1
-// contract-fingerprint: sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd
+// contract-fingerprint: sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390
 // generator: limen-contract-gen/1 (typescript-types)
-// content-hash: sha256:7ce6a7a151f10928686febf8882fb7e9a4650c0ea95606b58c27009990fbe89e
+// content-hash: sha256:38b1d9fbedd4733289730f1c102ff2fca448ad8f68b196f4e20028542336604a
 // </auto-generated>
 /** Rich browser event facts without DOM Event objects (LCP-020). A listener is declared in HTML with data-rich-event and data-rich-on, and opts into exactly the fact groups it needs with data-rich-facts; everything the browser must decide synchronously (preventDefault, stopPropagation, capture, passive, once, pointer capture) is declared there too, so the engine is never asked for a synchronous DOM decision. The simple data-event path is untouched. The pack interprets no shortcut or gesture: it reports facts. */
 
 
 
 /** The identity of this generated contract unit, exchanged in the handshake. */
-export const CONTRACT_IDENTITY = { unit: "limen.events", version: 1, fingerprint: "sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd" } as const;
+export const CONTRACT_IDENTITY = { unit: "limen.events", version: 1, fingerprint: "sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390" } as const;
 
 /** What a host offers, and an engine selects, to use this capability. */
-export const CAPABILITY_OFFER = { id: "limen.events", version: 1, fingerprint: "sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd" } as const;
+export const CAPABILITY_OFFER = { id: "limen.events", version: 1, fingerprint: "sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390" } as const;
 
 export type Modifiers = { readonly alt: boolean; readonly ctrl: boolean; readonly meta: boolean; readonly shift: boolean };
 
@@ -36,11 +36,13 @@ export type CompositionFacts = { readonly phase: "start" | "update" | "end"; rea
 /** A text control's selection, in UTF-16 code units as the browser reports it. */
 export type SelectionFacts = { readonly start: number; readonly end: number; readonly direction: string };
 
+export type TextDirection = "ltr" | "rtl";
+
 /** beforeinput / input: the kind of edit, and its data when not composing. */
 export type InputFacts = { readonly inputType: string; readonly data?: string };
 
 /** One declared listener fired. Only the groups the listener asked for are present. */
-export type RichEvent = { readonly name: string; readonly type: string; readonly key?: string; readonly value?: string; readonly modifiers?: Modifiers; readonly keyboard?: KeyboardFacts; readonly pointer?: PointerFacts; readonly drag?: DragFacts; readonly composition?: CompositionFacts; readonly selection?: SelectionFacts; readonly input?: InputFacts };
+export type RichEvent = { readonly name: string; readonly type: string; readonly key?: string; readonly value?: string; readonly modifiers?: Modifiers; readonly keyboard?: KeyboardFacts; readonly pointer?: PointerFacts; readonly drag?: DragFacts; readonly composition?: CompositionFacts; readonly selection?: SelectionFacts; readonly input?: InputFacts; readonly direction?: "ltr" | "rtl" };
 
 export type Listener = { readonly name: string; readonly type: string; readonly refused?: string };
 

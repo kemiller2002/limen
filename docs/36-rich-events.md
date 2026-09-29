@@ -32,8 +32,8 @@ handler returns.
 | --- | --- |
 | `data-rich-event="name"` | the fact's name (required) |
 | `data-rich-on="type …"` | one or more DOM event types sharing these settings (required) |
-| `data-rich-facts="…"` | the groups to include: `keyboard`, `modifiers`, `pointer`, `coordinates`, `drag`, `composition`, `selection`, `input`, `value` |
-| `data-rich-keys="Enter Escape"` | only these `key` values count; others are ignored entirely, neither reported nor prevented |
+| `data-rich-facts="…"` | the groups to include: `keyboard`, `modifiers`, `pointer`, `coordinates`, `drag`, `composition`, `selection`, `input`, `value`, `direction` |
+| `data-rich-keys="Enter Escape"` | only these `key` values count; others are ignored entirely, neither reported nor prevented. The space bar, whose `key` is `" "`, is written `Space`. |
 | `data-rich-prevent` / `data-rich-stop` | `preventDefault()` / `stopPropagation()`, applied mechanically to every counted event |
 | `data-rich-capture` / `data-rich-passive` / `data-rich-once` | the listener options of the same names. Passive together with prevent is refused. |
 | `data-rich-pointer-capture` | on `pointerdown`, capture the pointer to this element, so the drag keeps reporting when the pointer leaves it |
@@ -61,6 +61,9 @@ construction.
 - **composition:** `phase`. `committed` is present only at `end`.
 - **input:** `inputType`, and `data` only when not composing.
 - **selection:** a text control's `start`, `end` and `direction`.
+- **direction:** the element's computed text direction (`ltr` or `rtl`). This
+  is the environment fact a right-to-left interaction needs; which arrow
+  means "next" is the engine's decision.
 
 ## IME composition
 

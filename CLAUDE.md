@@ -209,7 +209,7 @@ code, not after.
   interactive reference for every bridge primitive and every
   `EffectOutcome`, driven by a throwaway demo engine (not part of the
   published package).
-- `examples/01-counter/` … `examples/08-routing/` — eight progressive example
+- `examples/01-counter/` … `examples/09-accessible-patterns/` — nine progressive example
   applications, each driven by `test/examples.test.ts` against its own real
   `index.html`, so none can silently rot, and each with its own README. Start
   at `01-counter`. `07-clipboard` and `08-routing` cover the two newest

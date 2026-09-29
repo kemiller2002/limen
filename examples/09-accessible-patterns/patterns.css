@@ -1,0 +1,9 @@
+/* Appearance only. Every state shown here is an attribute the engine projected. */
+[role="tab"][aria-selected="true"], [role="option"][data-active="true"], [role="option"][aria-selected="true"] { outline: 2px solid currentColor; }
+[aria-disabled="true"] { opacity: .5; }
+[role="treeitem"][aria-level="2"] { padding-inline-start: 1.5rem; }
+[role="grid"] { display: grid; gap: .25rem; }
+[role="row"] { display: flex; gap: .25rem; }
+[role="gridcell"] { padding: .5rem 1rem; border: 1px solid; }
+[role="dialog"] { position: fixed; inset: 20% 30%; background: Canvas; border: 2px solid; padding: 1rem; }
+main[inert] { opacity: .4; }

@@ -14,6 +14,7 @@
     { "name": "CompositionPhase", "kind": "enum", "values": ["start", "update", "end"] },
     { "name": "CompositionFacts", "kind": "record", "doc": "committed is present only at end: text during composition is not the user's yet.", "fields": [ { "name": "phase", "type": "CompositionPhase" }, { "name": "committed", "type": "string", "optional": true } ] },
     { "name": "SelectionFacts", "kind": "record", "doc": "A text control's selection, in UTF-16 code units as the browser reports it.", "fields": [ { "name": "start", "type": "int" }, { "name": "end", "type": "int" }, { "name": "direction", "type": "string" } ] },
+    { "name": "TextDirection", "kind": "enum", "values": ["ltr", "rtl"] },
     { "name": "InputFacts", "kind": "record", "doc": "beforeinput / input: the kind of edit, and its data when not composing.", "fields": [ { "name": "inputType", "type": "string" }, { "name": "data", "type": "string", "optional": true } ] },
     {
       "name": "RichEvent",
@@ -30,7 +31,8 @@
         { "name": "drag", "type": "DragFacts", "optional": true },
         { "name": "composition", "type": "CompositionFacts", "optional": true },
         { "name": "selection", "type": "SelectionFacts", "optional": true },
-        { "name": "input", "type": "InputFacts", "optional": true }
+        { "name": "input", "type": "InputFacts", "optional": true },
+        { "name": "direction", "type": "TextDirection", "optional": true, "doc": "The element's computed text direction: the explicit environment fact an RTL-aware interaction needs (which arrow means next)." }
       ]
     },
     { "name": "Listener", "kind": "record", "fields": [ { "name": "name", "type": "string" }, { "name": "type", "type": "string" }, { "name": "refused", "type": "string", "optional": true, "doc": "Why the declaration was not bound, e.g. passive with preventDefault." } ] },

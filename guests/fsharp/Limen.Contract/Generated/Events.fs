@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/events.contract.json
 // unit: limen.events@1
-// contract-fingerprint: sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd
+// contract-fingerprint: sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:fd8f641905e6f7b5cea57a6915349edd7d1d7cb78c23c44479ff5c50225c97db
+// content-hash: sha256:31a97616389b89dba7b02696de1ffb479ba92d4bb56ec9af761c152a48d0d1d3
 // </auto-generated>
 namespace Limen.Contract.Events
 
@@ -79,6 +79,10 @@ module Types =
             Direction: string
         }
 
+    and [<RequireQualifiedAccess>] TextDirection =
+        | Ltr
+        | Rtl
+
     /// beforeinput / input: the kind of edit, and its data when not composing.
     and InputFacts =
         {
@@ -102,6 +106,8 @@ module Types =
             Composition: CompositionFacts option
             Selection: SelectionFacts option
             Input: InputFacts option
+            /// The element's computed text direction: the explicit environment fact an RTL-aware interaction needs (which arrow means next).
+            Direction: TextDirection option
         }
 
     and Listener =
@@ -125,7 +131,7 @@ module Types =
 module Contract =
     let [<Literal>] Unit = "limen.events"
     let [<Literal>] Version = 1L
-    let [<Literal>] Fingerprint = "sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd"
+    let [<Literal>] Fingerprint = "sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390"
 
 /// Strict decoders (untrusted JSON → contract values) and encoders.
 [<RequireQualifiedAccess>]
@@ -201,6 +207,9 @@ module Codec =
             return { Start = f_start; End = f_end; Direction = f_direction }
         }
 
+    and decodeTextDirection (path: string) (element: JsonElement) : Result<TextDirection, DecodeError> =
+        Wire.enumeration [ "ltr", TextDirection.Ltr; "rtl", TextDirection.Rtl ] path element
+
     and decodeInputFacts (path: string) (element: JsonElement) : Result<InputFacts, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
@@ -213,7 +222,7 @@ module Codec =
     and decodeRichEvent (path: string) (element: JsonElement) : Result<RichEvent, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
-            let! props = Wire.closed [ "name"; "type"; "key"; "value"; "modifiers"; "keyboard"; "pointer"; "drag"; "composition"; "selection"; "input" ] path props
+            let! props = Wire.closed [ "name"; "type"; "key"; "value"; "modifiers"; "keyboard"; "pointer"; "drag"; "composition"; "selection"; "input"; "direction" ] path props
             let! f_name = Wire.required "name" Wire.string path props
             let! f_type = Wire.required "type" Wire.string path props
             let! f_key = Wire.optional "key" Wire.string path props
@@ -225,7 +234,8 @@ module Codec =
             let! f_composition = Wire.optional "composition" decodeCompositionFacts path props
             let! f_selection = Wire.optional "selection" decodeSelectionFacts path props
             let! f_input = Wire.optional "input" decodeInputFacts path props
-            return { Name = f_name; Type = f_type; Key = f_key; Value = f_value; Modifiers = f_modifiers; Keyboard = f_keyboard; Pointer = f_pointer; Drag = f_drag; Composition = f_composition; Selection = f_selection; Input = f_input }
+            let! f_direction = Wire.optional "direction" decodeTextDirection path props
+            return { Name = f_name; Type = f_type; Key = f_key; Value = f_value; Modifiers = f_modifiers; Keyboard = f_keyboard; Pointer = f_pointer; Drag = f_drag; Composition = f_composition; Selection = f_selection; Input = f_input; Direction = f_direction }
         }
 
     and decodeListener (path: string) (element: JsonElement) : Result<Listener, DecodeError> =
@@ -301,11 +311,16 @@ module Codec =
     and encodeSelectionFacts (value: SelectionFacts) : JsonNode =
         Wire.ofObject [ Some("start", Wire.ofInt value.Start); Some("end", Wire.ofInt value.End); Some("direction", Wire.ofString value.Direction) ]
 
+    and encodeTextDirection (value: TextDirection) : JsonNode =
+        match value with
+        | TextDirection.Ltr -> Wire.ofString "ltr"
+        | TextDirection.Rtl -> Wire.ofString "rtl"
+
     and encodeInputFacts (value: InputFacts) : JsonNode =
         Wire.ofObject [ Some("inputType", Wire.ofString value.InputType); value.Data |> Option.map (fun value -> "data", Wire.ofString value) ]
 
     and encodeRichEvent (value: RichEvent) : JsonNode =
-        Wire.ofObject [ Some("name", Wire.ofString value.Name); Some("type", Wire.ofString value.Type); value.Key |> Option.map (fun value -> "key", Wire.ofString value); value.Value |> Option.map (fun value -> "value", Wire.ofString value); value.Modifiers |> Option.map (fun value -> "modifiers", encodeModifiers value); value.Keyboard |> Option.map (fun value -> "keyboard", encodeKeyboardFacts value); value.Pointer |> Option.map (fun value -> "pointer", encodePointerFacts value); value.Drag |> Option.map (fun value -> "drag", encodeDragFacts value); value.Composition |> Option.map (fun value -> "composition", encodeCompositionFacts value); value.Selection |> Option.map (fun value -> "selection", encodeSelectionFacts value); value.Input |> Option.map (fun value -> "input", encodeInputFacts value) ]
+        Wire.ofObject [ Some("name", Wire.ofString value.Name); Some("type", Wire.ofString value.Type); value.Key |> Option.map (fun value -> "key", Wire.ofString value); value.Value |> Option.map (fun value -> "value", Wire.ofString value); value.Modifiers |> Option.map (fun value -> "modifiers", encodeModifiers value); value.Keyboard |> Option.map (fun value -> "keyboard", encodeKeyboardFacts value); value.Pointer |> Option.map (fun value -> "pointer", encodePointerFacts value); value.Drag |> Option.map (fun value -> "drag", encodeDragFacts value); value.Composition |> Option.map (fun value -> "composition", encodeCompositionFacts value); value.Selection |> Option.map (fun value -> "selection", encodeSelectionFacts value); value.Input |> Option.map (fun value -> "input", encodeInputFacts value); value.Direction |> Option.map (fun value -> "direction", encodeTextDirection value) ]
 
     and encodeListener (value: Listener) : JsonNode =
         Wire.ofObject [ Some("name", Wire.ofString value.Name); Some("type", Wire.ofString value.Type); value.Refused |> Option.map (fun value -> "refused", Wire.ofString value) ]
@@ -336,6 +351,12 @@ module Codec =
         | CompositionPhase.Update -> "update"
         | CompositionPhase.End -> "end"
 
+    /// The wire text of a TextDirection value.
+    let wireTextDirection (value: TextDirection) : string =
+        match value with
+        | TextDirection.Ltr -> "ltr"
+        | TextDirection.Rtl -> "rtl"
+
     let parseModifiers (json: string) = Wire.parse decodeModifiers json
     let serializeModifiers (value: Modifiers) = (encodeModifiers value).ToJsonString()
     let parseKeyboardFacts (json: string) = Wire.parse decodeKeyboardFacts json
@@ -352,6 +373,8 @@ module Codec =
     let serializeCompositionFacts (value: CompositionFacts) = (encodeCompositionFacts value).ToJsonString()
     let parseSelectionFacts (json: string) = Wire.parse decodeSelectionFacts json
     let serializeSelectionFacts (value: SelectionFacts) = (encodeSelectionFacts value).ToJsonString()
+    let parseTextDirection (json: string) = Wire.parse decodeTextDirection json
+    let serializeTextDirection (value: TextDirection) = (encodeTextDirection value).ToJsonString()
     let parseInputFacts (json: string) = Wire.parse decodeInputFacts json
     let serializeInputFacts (value: InputFacts) = (encodeInputFacts value).ToJsonString()
     let parseRichEvent (json: string) = Wire.parse decodeRichEvent json
@@ -376,6 +399,7 @@ module Conformance =
             "CompositionPhase", (fun path element -> Codec.decodeCompositionPhase path element |> Result.map Codec.encodeCompositionPhase)
             "CompositionFacts", (fun path element -> Codec.decodeCompositionFacts path element |> Result.map Codec.encodeCompositionFacts)
             "SelectionFacts", (fun path element -> Codec.decodeSelectionFacts path element |> Result.map Codec.encodeSelectionFacts)
+            "TextDirection", (fun path element -> Codec.decodeTextDirection path element |> Result.map Codec.encodeTextDirection)
             "InputFacts", (fun path element -> Codec.decodeInputFacts path element |> Result.map Codec.encodeInputFacts)
             "RichEvent", (fun path element -> Codec.decodeRichEvent path element |> Result.map Codec.encodeRichEvent)
             "Listener", (fun path element -> Codec.decodeListener path element |> Result.map Codec.encodeListener)

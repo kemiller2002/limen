@@ -36,6 +36,7 @@ python3 -m http.server 4173
 | Time entries | <http://localhost:4173/examples/06-time-entries/> |
 | Clipboard | <http://localhost:4173/examples/07-clipboard/> |
 | Routing | <http://localhost:4173/examples/08-routing/> |
+| Accessible patterns | <http://localhost:4173/examples/09-accessible-patterns/> |
 | Kitchen sink | <http://localhost:4173/examples/kitchen-sink.html> |
 
 [`minimal/`](minimal/) is not in that list because it is not built from this
@@ -78,6 +79,7 @@ without reproducing any kernel behavior.
 | **06-time-entries** | A realistic feature assembled only from the above: load on startup, validate, add, mark processed, refresh. A failed refresh keeps the list; a failed initial load does not. |
 | **07-clipboard** | The `Clipboard` capability. Three distinct failure reasons, only one of which is worth offering a retry for. Waiting is a state. No `navigator` call appears anywhere in the engine — the architecture check would fail the build if it did. |
 | **08-routing** | The `Navigation` capability. Typed routes, parse and format side by side, the initial screen taken from the address bar, and the asymmetry that matters: an application-initiated move pushes, a browser-initiated move adopts and pushes nothing. |
+| **09-accessible-patterns** | Two optional capabilities (events, focus) and pure pattern state machines: tabs, menu button, listbox, combobox, tree, a right-to-left grid and a dialog, with every ARIA state projected and no widget logic in the kernel. |
 | **minimal** | The npm-shipped copy: four files, plain JavaScript, no build step, imported by package name exactly as a consumer would. |
 
 ## Deliberately absent
@@ -100,6 +102,7 @@ would be the beginning of the second framework
 | 06 | [Time entries](https://github.com/kemiller2002/limen/blob/main/examples/06-time-entries/README.md) |
 | 07 | [Clipboard](https://github.com/kemiller2002/limen/blob/main/examples/07-clipboard/README.md) |
 | 08 | [Routing](https://github.com/kemiller2002/limen/blob/main/examples/08-routing/README.md) |
+| 09 | [Accessible patterns](https://github.com/kemiller2002/limen/blob/main/examples/09-accessible-patterns/README.md) |
 | — | [Minimal (npm)](minimal/README.md) |
 
 ## Related

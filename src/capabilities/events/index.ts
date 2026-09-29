@@ -22,7 +22,7 @@ export { CAPABILITY_OFFER as EVENTS_CAPABILITY } from "./generated/events.js";
 export type { EventsRequest, EventsResult, Listener, RichEvent } from "./generated/events.js";
 export { decodeEventsRequest, decodeEventsResult, decodeRichEvent } from "./generated/events.codec.js";
 
-const GROUPS = ["keyboard", "modifiers", "pointer", "coordinates", "drag", "composition", "selection", "input", "value"] as const;
+const GROUPS = ["keyboard", "modifiers", "pointer", "coordinates", "drag", "composition", "selection", "input", "value", "direction"] as const;
 type Group = (typeof GROUPS)[number];
 const isGroup = (word: string): word is Group => GROUPS.some((group) => group === word);
 
@@ -114,6 +114,15 @@ const selectionFacts = (element: Element): RichEvent["selection"] => {
   return typeof start === "number" && typeof end === "number" ? { start, end, direction: typeof direction === "string" ? direction : "none" } : undefined;
 };
 
+// The computed direction (dir attribute, inherited, or CSS): an environment
+// fact, reported only — which arrow means "next" is the engine's decision.
+const directionOf = (element: Element): "ltr" | "rtl" => {
+  const view = element.ownerDocument.defaultView;
+  const computed = view === null ? "" : view.getComputedStyle(element).direction;
+  const declared = element.closest("[dir]")?.getAttribute("dir");
+  return (computed === "rtl" || computed === "ltr" ? computed : declared) === "rtl" ? "rtl" : "ltr";
+};
+
 // Pure: the fact for one event, carrying only the groups the listener asked for.
 export const factOf = (event: Event, declaration: Declaration, element: Element): RichEvent => {
   const wants = (group: Group): boolean => declaration.groups.has(group);
@@ -144,6 +153,7 @@ export const factOf = (event: Event, declaration: Declaration, element: Element)
     ...(selection !== undefined ? { selection } : {}),
     // Data typed during composition is not the user's yet: it is withheld.
     ...(wants("input") && inputType !== undefined ? { input: { inputType, ...(data !== undefined && !composing(event) ? { data } : {}) } } : {}),
+    ...(wants("direction") ? { direction: directionOf(element) } : {}),
   };
 };
 
@@ -185,7 +195,9 @@ export const eventsCapability = (): CapabilityProvider => {
     };
     const listen = (type: string): void => element.addEventListener(type, (event) => {
       const keyName = text(event, "key");
-      if (declaration.keys !== undefined && (keyName === undefined || !declaration.keys.includes(keyName))) return;
+      // data-rich-keys is whitespace-separated, so the space bar (key " ") is named "Space" there.
+      const listed = keyName === " " ? "Space" : keyName;
+      if (declaration.keys !== undefined && (listed === undefined || !declaration.keys.includes(listed))) return;
       if (declaration.prevent) event.preventDefault();
       if (declaration.stop) event.stopPropagation();
       if (declaration.pointerCapture && event.type === "pointerdown") {

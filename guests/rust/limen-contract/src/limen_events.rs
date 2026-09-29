@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/events.contract.json
 // unit: limen.events@1
-// contract-fingerprint: sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd
+// contract-fingerprint: sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:018bb2882c0cb18fe2e48d1a7560c8638e6887af096e6d73dc242fe403d60e0d
+// content-hash: sha256:7f4bc285f141c5af7705b655e9be39a655883a3bd5c7feaf5128d2e4c426d980
 // </auto-generated>
 //! Rich browser event facts without DOM Event objects (LCP-020). A listener is declared in HTML with data-rich-event and data-rich-on, and opts into exactly the fact groups it needs with data-rich-facts; everything the browser must decide synchronously (preventDefault, stopPropagation, capture, passive, once, pointer capture) is declared there too, so the engine is never asked for a synchronous DOM decision. The simple data-event path is untouched. The pack interprets no shortcut or gesture: it reports facts.
 
@@ -17,7 +17,7 @@ use crate::runtime::{wire, DecodeError};
 pub mod contract {
     pub const UNIT: &str = "limen.events";
     pub const VERSION: i64 = 1;
-    pub const FINGERPRINT: &str = "sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd";
+    pub const FINGERPRINT: &str = "sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390";
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -113,6 +113,22 @@ pub struct SelectionFacts {
     pub direction: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum TextDirection {
+    Ltr,
+    Rtl,
+}
+
+impl TextDirection {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            TextDirection::Ltr => "ltr",
+            TextDirection::Rtl => "rtl",
+        }
+    }
+}
+
 /// beforeinput / input: the kind of edit, and its data when not composing.
 #[derive(Debug, Clone, PartialEq)]
 pub struct InputFacts {
@@ -136,6 +152,8 @@ pub struct RichEvent {
     pub composition: Option<CompositionFacts>,
     pub selection: Option<SelectionFacts>,
     pub input: Option<InputFacts>,
+    /// The element's computed text direction: the explicit environment fact an RTL-aware interaction needs (which arrow means next).
+    pub direction: Option<TextDirection>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -221,6 +239,10 @@ pub fn decode_selection_facts(value: &Value, path: &str) -> Result<SelectionFact
     Ok(SelectionFacts { start: f_start, end: f_end, direction: f_direction })
 }
 
+pub fn decode_text_direction(value: &Value, path: &str) -> Result<TextDirection, DecodeError> {
+    wire::enumeration(value, path, &[("ltr", TextDirection::Ltr), ("rtl", TextDirection::Rtl)])
+}
+
 pub fn decode_input_facts(value: &Value, path: &str) -> Result<InputFacts, DecodeError> {
     let props = wire::closed(wire::properties(value, path)?, path, &["inputType", "data"])?;
     let f_input_type = wire::required(props, path, "inputType", |v0: &Value, p0: &str| wire::string(v0, p0))?;
@@ -229,7 +251,7 @@ pub fn decode_input_facts(value: &Value, path: &str) -> Result<InputFacts, Decod
 }
 
 pub fn decode_rich_event(value: &Value, path: &str) -> Result<RichEvent, DecodeError> {
-    let props = wire::closed(wire::properties(value, path)?, path, &["name", "type", "key", "value", "modifiers", "keyboard", "pointer", "drag", "composition", "selection", "input"])?;
+    let props = wire::closed(wire::properties(value, path)?, path, &["name", "type", "key", "value", "modifiers", "keyboard", "pointer", "drag", "composition", "selection", "input", "direction"])?;
     let f_name = wire::required(props, path, "name", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_type = wire::required(props, path, "type", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_key = wire::optional(props, path, "key", |v0: &Value, p0: &str| wire::string(v0, p0))?;
@@ -241,7 +263,8 @@ pub fn decode_rich_event(value: &Value, path: &str) -> Result<RichEvent, DecodeE
     let f_composition = wire::optional(props, path, "composition", |v0: &Value, p0: &str| decode_composition_facts(v0, p0))?;
     let f_selection = wire::optional(props, path, "selection", |v0: &Value, p0: &str| decode_selection_facts(v0, p0))?;
     let f_input = wire::optional(props, path, "input", |v0: &Value, p0: &str| decode_input_facts(v0, p0))?;
-    Ok(RichEvent { name: f_name, r#type: f_type, key: f_key, value: f_value, modifiers: f_modifiers, keyboard: f_keyboard, pointer: f_pointer, drag: f_drag, composition: f_composition, selection: f_selection, input: f_input })
+    let f_direction = wire::optional(props, path, "direction", |v0: &Value, p0: &str| decode_text_direction(v0, p0))?;
+    Ok(RichEvent { name: f_name, r#type: f_type, key: f_key, value: f_value, modifiers: f_modifiers, keyboard: f_keyboard, pointer: f_pointer, drag: f_drag, composition: f_composition, selection: f_selection, input: f_input, direction: f_direction })
 }
 
 pub fn decode_listener(value: &Value, path: &str) -> Result<Listener, DecodeError> {
@@ -323,12 +346,19 @@ pub fn encode_selection_facts(value: &SelectionFacts) -> Value {
     wire::of_object(vec![Some(("start", wire::of_int(*&value.start))), Some(("end", wire::of_int(*&value.end))), Some(("direction", wire::of_string(&value.direction)))])
 }
 
+pub fn encode_text_direction(value: &TextDirection) -> Value {
+    match value {
+        TextDirection::Ltr => wire::of_string("ltr"),
+        TextDirection::Rtl => wire::of_string("rtl"),
+    }
+}
+
 pub fn encode_input_facts(value: &InputFacts) -> Value {
     wire::of_object(vec![Some(("inputType", wire::of_string(&value.input_type))), (&value.data).as_ref().map(|x0| ("data", wire::of_string(x0)))])
 }
 
 pub fn encode_rich_event(value: &RichEvent) -> Value {
-    wire::of_object(vec![Some(("name", wire::of_string(&value.name))), Some(("type", wire::of_string(&value.r#type))), (&value.key).as_ref().map(|x0| ("key", wire::of_string(x0))), (&value.value).as_ref().map(|x0| ("value", wire::of_string(x0))), (&value.modifiers).as_ref().map(|x0| ("modifiers", encode_modifiers(x0))), (&value.keyboard).as_ref().map(|x0| ("keyboard", encode_keyboard_facts(x0))), (&value.pointer).as_ref().map(|x0| ("pointer", encode_pointer_facts(x0))), (&value.drag).as_ref().map(|x0| ("drag", encode_drag_facts(x0))), (&value.composition).as_ref().map(|x0| ("composition", encode_composition_facts(x0))), (&value.selection).as_ref().map(|x0| ("selection", encode_selection_facts(x0))), (&value.input).as_ref().map(|x0| ("input", encode_input_facts(x0)))])
+    wire::of_object(vec![Some(("name", wire::of_string(&value.name))), Some(("type", wire::of_string(&value.r#type))), (&value.key).as_ref().map(|x0| ("key", wire::of_string(x0))), (&value.value).as_ref().map(|x0| ("value", wire::of_string(x0))), (&value.modifiers).as_ref().map(|x0| ("modifiers", encode_modifiers(x0))), (&value.keyboard).as_ref().map(|x0| ("keyboard", encode_keyboard_facts(x0))), (&value.pointer).as_ref().map(|x0| ("pointer", encode_pointer_facts(x0))), (&value.drag).as_ref().map(|x0| ("drag", encode_drag_facts(x0))), (&value.composition).as_ref().map(|x0| ("composition", encode_composition_facts(x0))), (&value.selection).as_ref().map(|x0| ("selection", encode_selection_facts(x0))), (&value.input).as_ref().map(|x0| ("input", encode_input_facts(x0))), (&value.direction).as_ref().map(|x0| ("direction", encode_text_direction(x0)))])
 }
 
 pub fn encode_listener(value: &Listener) -> Value {
@@ -428,6 +458,16 @@ pub fn serialize_selection_facts(value: &SelectionFacts) -> String {
     encode_selection_facts(value).to_string()
 }
 
+/// Parses untrusted JSON text into a TextDirection, or says where and why it is not one.
+pub fn parse_text_direction(json: &str) -> Result<TextDirection, DecodeError> {
+    wire::parse(json, decode_text_direction)
+}
+
+/// Serializes a TextDirection to wire JSON text.
+pub fn serialize_text_direction(value: &TextDirection) -> String {
+    encode_text_direction(value).to_string()
+}
+
 /// Parses untrusted JSON text into a InputFacts, or says where and why it is not one.
 pub fn parse_input_facts(json: &str) -> Result<InputFacts, DecodeError> {
     wire::parse(json, decode_input_facts)
@@ -489,6 +529,7 @@ pub fn conformance_round_trip(type_name: &str, value: &Value) -> Option<Result<V
         "CompositionPhase" => Some(decode_composition_phase(value, "$").map(|decoded| encode_composition_phase(&decoded))),
         "CompositionFacts" => Some(decode_composition_facts(value, "$").map(|decoded| encode_composition_facts(&decoded))),
         "SelectionFacts" => Some(decode_selection_facts(value, "$").map(|decoded| encode_selection_facts(&decoded))),
+        "TextDirection" => Some(decode_text_direction(value, "$").map(|decoded| encode_text_direction(&decoded))),
         "InputFacts" => Some(decode_input_facts(value, "$").map(|decoded| encode_input_facts(&decoded))),
         "RichEvent" => Some(decode_rich_event(value, "$").map(|decoded| encode_rich_event(&decoded))),
         "Listener" => Some(decode_listener(value, "$").map(|decoded| encode_listener(&decoded))),

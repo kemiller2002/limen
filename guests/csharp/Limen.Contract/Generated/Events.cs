@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/events.contract.json
 // unit: limen.events@1
-// contract-fingerprint: sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd
+// contract-fingerprint: sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:7c433546e55d587032993e89b2138568c16b5699d93b63d4cba379de16e9a654
+// content-hash: sha256:1844255e627492146cce4e2e95c5f87095edc423583a0c4d4ba845e65eacacf9
 // </auto-generated>
 #nullable enable
 
@@ -17,7 +17,7 @@ public static class Contract
 {
     public const string Unit = "limen.events";
     public const long Version = 1;
-    public const string Fingerprint = "sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd";
+    public const string Fingerprint = "sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390";
 }
 
 public sealed record Modifiers(bool Alt, bool Ctrl, bool Meta, bool Shift);
@@ -88,11 +88,32 @@ public sealed record CompositionFacts(global::Limen.Contract.Events.CompositionP
 /// <summary>A text control's selection, in UTF-16 code units as the browser reports it.</summary>
 public sealed record SelectionFacts(long Start, long End, string Direction);
 
+[global::Limen.Contract.ClosedUnion]
+public enum TextDirection
+{
+    Ltr,
+    Rtl,
+}
+
+/// <summary>Exhaustive handling of TextDirection: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class TextDirectionMatch
+{
+    public static TResult Match<TResult>(this TextDirection value, global::System.Func<TResult> ltr, global::System.Func<TResult> rtl) => value switch
+    {
+        TextDirection.Ltr => ltr(),
+        TextDirection.Rtl => rtl(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a TextDirection value."),
+    };
+
+    /// <summary>The wire text of a TextDirection value.</summary>
+    public static string ToWire(this TextDirection value) => value.Match(() => "ltr", () => "rtl");
+}
+
 /// <summary>beforeinput / input: the kind of edit, and its data when not composing.</summary>
 public sealed record InputFacts(string InputType, string? Data);
 
 /// <summary>One declared listener fired. Only the groups the listener asked for are present.</summary>
-public sealed record RichEvent(string Name, string Type, string? Key, string? Value, global::Limen.Contract.Events.Modifiers? Modifiers, global::Limen.Contract.Events.KeyboardFacts? Keyboard, global::Limen.Contract.Events.PointerFacts? Pointer, global::Limen.Contract.Events.DragFacts? Drag, global::Limen.Contract.Events.CompositionFacts? Composition, global::Limen.Contract.Events.SelectionFacts? Selection, global::Limen.Contract.Events.InputFacts? Input);
+public sealed record RichEvent(string Name, string Type, string? Key, string? Value, global::Limen.Contract.Events.Modifiers? Modifiers, global::Limen.Contract.Events.KeyboardFacts? Keyboard, global::Limen.Contract.Events.PointerFacts? Pointer, global::Limen.Contract.Events.DragFacts? Drag, global::Limen.Contract.Events.CompositionFacts? Composition, global::Limen.Contract.Events.SelectionFacts? Selection, global::Limen.Contract.Events.InputFacts? Input, global::Limen.Contract.Events.TextDirection? Direction);
 
 public sealed record Listener(string Name, string Type, string? Refused);
 
@@ -163,6 +184,10 @@ public static class Codec
     public static Decoded<global::Limen.Contract.Events.SelectionFacts> DecodeSelectionFacts(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadSelectionFacts(element, path));
     public static Decoded<global::Limen.Contract.Events.SelectionFacts> ParseSelectionFacts(string json) => Wire.Parse(json, ReadSelectionFacts);
     public static string SerializeSelectionFacts(global::Limen.Contract.Events.SelectionFacts value) => Wire.Serialize(EncodeSelectionFacts(value));
+
+    public static Decoded<global::Limen.Contract.Events.TextDirection> DecodeTextDirection(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadTextDirection(element, path));
+    public static Decoded<global::Limen.Contract.Events.TextDirection> ParseTextDirection(string json) => Wire.Parse(json, ReadTextDirection);
+    public static string SerializeTextDirection(global::Limen.Contract.Events.TextDirection value) => Wire.Serialize(EncodeTextDirection(value));
 
     public static Decoded<global::Limen.Contract.Events.InputFacts> DecodeInputFacts(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadInputFacts(element, path));
     public static Decoded<global::Limen.Contract.Events.InputFacts> ParseInputFacts(string json) => Wire.Parse(json, ReadInputFacts);
@@ -249,6 +274,9 @@ public static class Codec
         return new global::Limen.Contract.Events.SelectionFacts(f_start, f_end, f_direction);
     }
 
+    internal static global::Limen.Contract.Events.TextDirection ReadTextDirection(global::System.Text.Json.JsonElement element, string path) =>
+        Wire.Enumeration(element, path, ("ltr", global::Limen.Contract.Events.TextDirection.Ltr), ("rtl", global::Limen.Contract.Events.TextDirection.Rtl));
+
     internal static global::Limen.Contract.Events.InputFacts ReadInputFacts(global::System.Text.Json.JsonElement element, string path)
     {
         var props = Wire.Closed(Wire.Properties(element, path), path, "inputType", "data");
@@ -259,7 +287,7 @@ public static class Codec
 
     internal static global::Limen.Contract.Events.RichEvent ReadRichEvent(global::System.Text.Json.JsonElement element, string path)
     {
-        var props = Wire.Closed(Wire.Properties(element, path), path, "name", "type", "key", "value", "modifiers", "keyboard", "pointer", "drag", "composition", "selection", "input");
+        var props = Wire.Closed(Wire.Properties(element, path), path, "name", "type", "key", "value", "modifiers", "keyboard", "pointer", "drag", "composition", "selection", "input", "direction");
         var f_name = Wire.Required(props, path, "name", (e0, p0) => Wire.String(e0, p0));
         var f_type = Wire.Required(props, path, "type", (e0, p0) => Wire.String(e0, p0));
         var f_key = Wire.OptionalReference<string>(props, path, "key", (e0, p0) => Wire.String(e0, p0));
@@ -271,7 +299,8 @@ public static class Codec
         var f_composition = Wire.OptionalReference<global::Limen.Contract.Events.CompositionFacts>(props, path, "composition", (e0, p0) => ReadCompositionFacts(e0, p0));
         var f_selection = Wire.OptionalReference<global::Limen.Contract.Events.SelectionFacts>(props, path, "selection", (e0, p0) => ReadSelectionFacts(e0, p0));
         var f_input = Wire.OptionalReference<global::Limen.Contract.Events.InputFacts>(props, path, "input", (e0, p0) => ReadInputFacts(e0, p0));
-        return new global::Limen.Contract.Events.RichEvent(f_name, f_type, f_key, f_value, f_modifiers, f_keyboard, f_pointer, f_drag, f_composition, f_selection, f_input);
+        var f_direction = Wire.OptionalValue<global::Limen.Contract.Events.TextDirection>(props, path, "direction", (e0, p0) => ReadTextDirection(e0, p0));
+        return new global::Limen.Contract.Events.RichEvent(f_name, f_type, f_key, f_value, f_modifiers, f_keyboard, f_pointer, f_drag, f_composition, f_selection, f_input, f_direction);
     }
 
     internal static global::Limen.Contract.Events.Listener ReadListener(global::System.Text.Json.JsonElement element, string path)
@@ -359,11 +388,19 @@ public static class Codec
     public static global::System.Text.Json.Nodes.JsonNode? EncodeSelectionFacts(global::Limen.Contract.Events.SelectionFacts value) =>
         Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("start", Wire.OfInt(value.Start)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("end", Wire.OfInt(value.End)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("direction", Wire.OfString(value.Direction)));
 
+    public static global::System.Text.Json.Nodes.JsonNode? EncodeTextDirection(global::Limen.Contract.Events.TextDirection value) =>
+        value switch
+        {
+            global::Limen.Contract.Events.TextDirection.Ltr => Wire.OfString("ltr"),
+            global::Limen.Contract.Events.TextDirection.Rtl => Wire.OfString("rtl"),
+            _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a TextDirection value."),
+        };
+
     public static global::System.Text.Json.Nodes.JsonNode? EncodeInputFacts(global::Limen.Contract.Events.InputFacts value) =>
         Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("inputType", Wire.OfString(value.InputType)), (value.Data is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("data", Wire.OfString(value.Data))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeRichEvent(global::Limen.Contract.Events.RichEvent value) =>
-        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("type", Wire.OfString(value.Type)), (value.Key is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("key", Wire.OfString(value.Key))), (value.Value is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("value", Wire.OfString(value.Value))), (value.Modifiers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("modifiers", EncodeModifiers(value.Modifiers))), (value.Keyboard is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyboard", EncodeKeyboardFacts(value.Keyboard))), (value.Pointer is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("pointer", EncodePointerFacts(value.Pointer))), (value.Drag is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("drag", EncodeDragFacts(value.Drag))), (value.Composition is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("composition", EncodeCompositionFacts(value.Composition))), (value.Selection is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("selection", EncodeSelectionFacts(value.Selection))), (value.Input is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("input", EncodeInputFacts(value.Input))));
+        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("type", Wire.OfString(value.Type)), (value.Key is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("key", Wire.OfString(value.Key))), (value.Value is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("value", Wire.OfString(value.Value))), (value.Modifiers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("modifiers", EncodeModifiers(value.Modifiers))), (value.Keyboard is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyboard", EncodeKeyboardFacts(value.Keyboard))), (value.Pointer is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("pointer", EncodePointerFacts(value.Pointer))), (value.Drag is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("drag", EncodeDragFacts(value.Drag))), (value.Composition is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("composition", EncodeCompositionFacts(value.Composition))), (value.Selection is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("selection", EncodeSelectionFacts(value.Selection))), (value.Input is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("input", EncodeInputFacts(value.Input))), (value.Direction.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("direction", EncodeTextDirection(value.Direction.Value)) : null));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeListener(global::Limen.Contract.Events.Listener value) =>
         Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("type", Wire.OfString(value.Type)), (value.Refused is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("refused", Wire.OfString(value.Refused))));
@@ -393,6 +430,7 @@ public static class Conformance
             ["CompositionPhase"] = element => Wire.Run(() => Codec.EncodeCompositionPhase(Codec.ReadCompositionPhase(element, "$"))),
             ["CompositionFacts"] = element => Wire.Run(() => Codec.EncodeCompositionFacts(Codec.ReadCompositionFacts(element, "$"))),
             ["SelectionFacts"] = element => Wire.Run(() => Codec.EncodeSelectionFacts(Codec.ReadSelectionFacts(element, "$"))),
+            ["TextDirection"] = element => Wire.Run(() => Codec.EncodeTextDirection(Codec.ReadTextDirection(element, "$"))),
             ["InputFacts"] = element => Wire.Run(() => Codec.EncodeInputFacts(Codec.ReadInputFacts(element, "$"))),
             ["RichEvent"] = element => Wire.Run(() => Codec.EncodeRichEvent(Codec.ReadRichEvent(element, "$"))),
             ["Listener"] = element => Wire.Run(() => Codec.EncodeListener(Codec.ReadListener(element, "$"))),

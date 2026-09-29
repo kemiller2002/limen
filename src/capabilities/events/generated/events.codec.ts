@@ -2,11 +2,11 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/events.contract.json
 // unit: limen.events@1
-// contract-fingerprint: sha256:d72c2fac6cfca243fd024e12f659e000a217863bc933f74d0cef089dcb0a19bd
+// contract-fingerprint: sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:72ba9fa796b34b02530e870c03feeda8e0ac9b2933d1ed5825597cc24c70967c
+// content-hash: sha256:1f0bcdb3bb68d1c79aae4a46bddb435dd346c1f7af4fae10ee33d6b4b6667956
 // </auto-generated>
-import type { Modifiers, KeyboardFacts, PointerFacts, DragPhase, DragFacts, CompositionPhase, CompositionFacts, SelectionFacts, InputFacts, RichEvent, Listener, EventsRequest, EventsResult } from "./events.js";
+import type { Modifiers, KeyboardFacts, PointerFacts, DragPhase, DragFacts, CompositionPhase, CompositionFacts, SelectionFacts, TextDirection, InputFacts, RichEvent, Listener, EventsRequest, EventsResult } from "./events.js";
 
 /** Where decoding stopped, and what the contract expected there. */
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
@@ -163,6 +163,8 @@ export const decodeSelectionFacts = (value: unknown, path = "$"): Decoded<Select
   return ok<SelectionFacts>({ start: field_start.value, end: field_end.value, direction: field_direction.value });
 };
 
+export const decodeTextDirection = (value: unknown, path = "$"): Decoded<TextDirection> => enumValue(value, path, ["ltr","rtl"] as const);
+
 export const decodeInputFacts = (value: unknown, path = "$"): Decoded<InputFacts> => {
   const object = objectValue(value, path, ["inputType","data"]);
   if (!object.ok) return object;
@@ -174,7 +176,7 @@ export const decodeInputFacts = (value: unknown, path = "$"): Decoded<InputFacts
 };
 
 export const decodeRichEvent = (value: unknown, path = "$"): Decoded<RichEvent> => {
-  const object = objectValue(value, path, ["name","type","key","value","modifiers","keyboard","pointer","drag","composition","selection","input"]);
+  const object = objectValue(value, path, ["name","type","key","value","modifiers","keyboard","pointer","drag","composition","selection","input","direction"]);
   if (!object.ok) return object;
   const field_name = stringValue(object.value["name"], `${path}.name`);
   if (!field_name.ok) return field_name;
@@ -198,7 +200,9 @@ export const decodeRichEvent = (value: unknown, path = "$"): Decoded<RichEvent> 
   if (!field_selection.ok) return field_selection;
   const field_input = object.value["input"] === undefined ? ok(undefined) : decodeInputFacts(object.value["input"], `${path}.input`);
   if (!field_input.ok) return field_input;
-  return ok<RichEvent>({ name: field_name.value, type: field_type.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}), ...(field_value.value !== undefined ? { value: field_value.value } : {}), ...(field_modifiers.value !== undefined ? { modifiers: field_modifiers.value } : {}), ...(field_keyboard.value !== undefined ? { keyboard: field_keyboard.value } : {}), ...(field_pointer.value !== undefined ? { pointer: field_pointer.value } : {}), ...(field_drag.value !== undefined ? { drag: field_drag.value } : {}), ...(field_composition.value !== undefined ? { composition: field_composition.value } : {}), ...(field_selection.value !== undefined ? { selection: field_selection.value } : {}), ...(field_input.value !== undefined ? { input: field_input.value } : {}) });
+  const field_direction = object.value["direction"] === undefined ? ok(undefined) : decodeTextDirection(object.value["direction"], `${path}.direction`);
+  if (!field_direction.ok) return field_direction;
+  return ok<RichEvent>({ name: field_name.value, type: field_type.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}), ...(field_value.value !== undefined ? { value: field_value.value } : {}), ...(field_modifiers.value !== undefined ? { modifiers: field_modifiers.value } : {}), ...(field_keyboard.value !== undefined ? { keyboard: field_keyboard.value } : {}), ...(field_pointer.value !== undefined ? { pointer: field_pointer.value } : {}), ...(field_drag.value !== undefined ? { drag: field_drag.value } : {}), ...(field_composition.value !== undefined ? { composition: field_composition.value } : {}), ...(field_selection.value !== undefined ? { selection: field_selection.value } : {}), ...(field_input.value !== undefined ? { input: field_input.value } : {}), ...(field_direction.value !== undefined ? { direction: field_direction.value } : {}) });
 };
 
 export const decodeListener = (value: unknown, path = "$"): Decoded<Listener> => {
