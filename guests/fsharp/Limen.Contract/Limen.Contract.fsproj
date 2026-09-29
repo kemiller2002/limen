@@ -17,5 +17,6 @@
     <Compile Include="Generated/Schedule.fs" />
     <Compile Include="Generated/Measure.fs" />
     <Compile Include="Generated/Events.fs" />
+    <Compile Include="Generated/Overlay.fs" />
   </ItemGroup>
 </Project>

@@ -22,6 +22,7 @@ pub mod limen_measure;
 
 /// The optional rich browser event facts capability (limen.events).
 pub mod limen_events;
+pub mod limen_overlay;
 
 /// A test-only capability unit, compiled only for the conformance tests.
 #[cfg(test)]

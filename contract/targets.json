@@ -6,7 +6,8 @@
     "contract/focus.contract.json",
     "contract/schedule.contract.json",
     "contract/measure.contract.json",
-    "contract/events.contract.json"
+    "contract/events.contract.json",
+    "contract/overlay.contract.json"
   ],
   "outputs": [
     {
@@ -187,6 +188,32 @@
       "unit": "limen.events",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_events.rs"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "typescript-types",
+      "path": "src/capabilities/overlay/generated/overlay.ts"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/overlay/generated/overlay.codec.ts",
+      "typesModule": "./overlay.js"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Overlay.fs"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Overlay.cs"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_overlay.rs"
     }
   ]
 }
