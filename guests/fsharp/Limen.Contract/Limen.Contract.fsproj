@@ -27,5 +27,7 @@
     <Compile Include="Generated/Environment.fs" />
     <Compile Include="Generated/Lifecycle.fs" />
     <Compile Include="Generated/Offline.fs" />
+    <Compile Include="Generated/Geolocation.fs" />
+    <Compile Include="Generated/Credentials.fs" />
   </ItemGroup>
 </Project>
