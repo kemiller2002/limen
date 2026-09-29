@@ -268,12 +268,32 @@ receives request headers or body"). Preserve that invariant in your own sink.
 
 ---
 
-## Shutdown
+## Status and shutdown
 
-There isn't one. `BrowserKernel` has no `stop()`, `destroy()`, or `unbind()`.
-Listeners live as long as the page. For a normal page load this is correct; if
-you need to tear a kernel down inside a longer-lived host, that capability does
-not exist today.
+`kernel.status` reports the kernel's phase:
+
+- `unstarted`, `starting`, `running`;
+- `incompatible` (the handshake was refused);
+- `faulted` (the transport could not start, `Initialize` failed, or a binding
+  was refused at start);
+- `disposed`.
+
+It is the bridge's own state, never the application's. A host reads it after
+`start()` to know whether the engine is available.
+
+`kernel.dispose()` ends a kernel so another can take the page
+(kemiller2002/limen#50):
+
+- every listener the kernel registered is removed, because each carried one
+  signal from the document's own window;
+- every in-flight effect is aborted, and its result is never delivered, since
+  the engine it belonged to is gone;
+- the kernel sends nothing afterwards, including capability facts.
+
+A kernel disposed while its transport is still starting never binds.
+`dispose()` does not touch the DOM and decides nothing: restoring or replacing
+the page is the host's policy. For a normal page
+load you never call it; listeners live as long as the page.
 
 ### Never call `start()` twice
 

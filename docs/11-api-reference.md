@@ -82,7 +82,9 @@ class BrowserKernel {
   constructor(transport: EngineTransport, document: Document, diagnostics?: DiagnosticsSink);
   readonly transport: EngineTransport;
   readonly document: Document;
+  readonly status: KernelStatus; // "unstarted" | "starting" | "running" | "incompatible" | "faulted" | "disposed"
   start(): Promise<void>;
+  dispose(): void;
 }
 ```
 
@@ -130,8 +132,11 @@ real event instead); expecting a throw on failure (install a sink); binding
 elements added to the DOM afterwards (only `data-if`/`data-each` add bindable
 content later).
 
-**There is no `stop()`, `destroy()`, or `unbind()`.** Listeners live as long as
-the page.
+**`dispose()`** ends a kernel for a host that replaces it: it removes every
+listener, aborts in-flight effects without delivering their results, and makes
+the kernel silent. It does not touch the DOM. For a normal page load you never
+call it. See
+[03-kernel-lifecycle.md](https://github.com/kemiller2002/limen/blob/main/docs/03-kernel-lifecycle.md#status-and-shutdown).
 
 ---
 

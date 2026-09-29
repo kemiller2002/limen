@@ -43,7 +43,14 @@ type Phase =
   | { readonly kind: "Starting" }
   | { readonly kind: "Running"; readonly negotiation: Negotiation }
   | { readonly kind: "Incompatible"; readonly reason: Incompatibility }
-  | { readonly kind: "Faulted" };
+  | { readonly kind: "Faulted" }
+  // dispose() was called: every listener is removed, in-flight effects are
+  // aborted, and the kernel is silent. Terminal, like Incompatible.
+  | { readonly kind: "Disposed" };
+
+// The kernel's phase, for a host that must know whether it is running — never
+// the application's state. See docs/44 for what a host may do with it.
+export type KernelStatus = "unstarted" | "starting" | "running" | "incompatible" | "faulted" | "disposed";
 
 type TextBinding = { readonly element: HTMLElement; readonly key: string };
 type AttrBinding = { readonly element: HTMLElement; readonly attr: string; readonly key: string; readonly target: AttributeTarget };
@@ -262,12 +269,17 @@ export class BrowserKernel {
   readonly #providers: ReadonlyMap<CapabilityId, CapabilityProvider>;
   readonly #requireHandshake: boolean;
   #phase: Phase = { kind: "Unstarted" };
+  // Every listener the kernel registers carries this signal, so dispose()
+  // removes them all at once. Made by the document's own window: a signal
+  // from another realm is not accepted by that realm's addEventListener.
+  readonly #lifetime: AbortController;
   readonly transport: EngineTransport;
   readonly document: Document;
 
   constructor(transport: EngineTransport, document: Document, diagnostics: DiagnosticsSink = noopDiagnostics, options: KernelOptions = {}) {
     this.transport = transport;
     this.document = document;
+    this.#lifetime = new (document.defaultView?.AbortController ?? AbortController)();
     this.#diagnostics = diagnostics;
     const providers = options.capabilities ?? [];
     const duplicate = providers.find((provider, index) => providers.findIndex((other) => other.descriptor.id === provider.descriptor.id) !== index);
@@ -285,10 +297,13 @@ export class BrowserKernel {
     try {
       await this.transport.start();
     } catch (error) {
+      if (this.#disposed) return;
       this.#phase = { kind: "Faulted" };
       this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
       return;
     }
+    // Disposed while the transport was starting: this kernel never binds.
+    if (this.#disposed) return;
     try {
       auditTemplates(this.document.body);
       this.#bindElement(this.document.body, this.#root, undefined);
@@ -307,8 +322,37 @@ export class BrowserKernel {
     // EffectResult. An engine that does not route simply never reacts to it.
     window.addEventListener("popstate", () => {
       void this.#send({ kind: "LocationChanged", location: readLocation() });
-    });
+    }, { signal: this.#lifetime.signal });
     await this.#initialize();
+  }
+
+  // Read through a method so TypeScript does not narrow it away across awaits.
+  get #disposed(): boolean {
+    return this.#lifetime.signal.aborted;
+  }
+
+  get status(): KernelStatus {
+    switch (this.#phase.kind) {
+      case "Unstarted": return "unstarted";
+      case "Starting": return "starting";
+      case "Running": return "running";
+      case "Incompatible": return "incompatible";
+      case "Faulted": return "faulted";
+      case "Disposed": return "disposed";
+    }
+  }
+
+  // Ends this kernel so another can take the page: every listener it
+  // registered is removed, every in-flight effect is aborted (its result is
+  // never delivered — the engine it belonged to is gone), and from now on it
+  // sends nothing. It does not touch the DOM or decide anything; restoring or
+  // replacing the page is the host's policy. Idempotent.
+  dispose(): void {
+    if (this.#phase.kind === "Disposed") return;
+    this.#phase = { kind: "Disposed" };
+    this.#lifetime.abort();
+    for (const controller of this.#controllers.values()) controller.abort("disposed");
+    this.#controllers.clear();
   }
 
   get #offer(): HostHandshake {
@@ -328,10 +372,12 @@ export class BrowserKernel {
     try {
       response = await this.transport.dispatch({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: CAPABILITIES, location: readLocation(), handshake: offer });
     } catch (error) {
+      if (this.#disposed) return;
       this.#phase = { kind: "Faulted" };
       this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
       return;
     }
+    if (this.#disposed) return;
     const verdict = verifyHandshake(offer, response.handshake, this.#requireHandshake);
     this.#diagnostics.report({ kind: "Handshake", verdict });
     if (verdict.kind === "Incompatible") {
@@ -418,8 +464,8 @@ export class BrowserKernel {
       if ("isComposing" in domEvent && domEvent.isComposing === true) return;
       const submitter = "submitter" in domEvent && domEvent.submitter instanceof HTMLElement ? domEvent.submitter : null;
       void this.#fire(el, name, itemKey, submitter);
-    });
-    if (trigger === "input") el.addEventListener("compositionend", () => { void this.#fire(el, name, itemKey, null); });
+    }, { signal: this.#lifetime.signal });
+    if (trigger === "input") el.addEventListener("compositionend", () => { void this.#fire(el, name, itemKey, null); }, { signal: this.#lifetime.signal });
     const form = "form" in el ? (el as HTMLInputElement).form : null;
     if (trigger !== "submit" && form !== null) {
       const pending = this.#flushable.get(form) ?? [];
@@ -457,6 +503,8 @@ export class BrowserKernel {
   // bad projection or a dead transport cannot crash the page or silently
   // corrupt already-applied view state.
   async #send(message: BrowserToEngineMessage): Promise<void> {
+    // A disposed kernel is silent: its page belongs to another kernel now.
+    if (this.#phase.kind === "Disposed") return;
     // Nothing flows before the handshake is verified, or ever after it failed.
     if (this.#phase.kind !== "Running") {
       this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: `${message.kind} not dispatched: kernel is ${this.#phase.kind}` });

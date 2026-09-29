@@ -5,7 +5,7 @@ export {
   noopFederationDiagnostics,
 } from "./federation.js";
 export { BrowserKernel } from "./kernel/browser-kernel.js";
-export type { KernelOptions } from "./kernel/browser-kernel.js";
+export type { KernelOptions, KernelStatus } from "./kernel/browser-kernel.js";
 export { defineCapability } from "./kernel/capabilities.js";
 export type { CapabilityDefinition, CapabilityDescriptor, CapabilityHost, CapabilityProvider, CapabilityRequestContext, ProviderResult } from "./kernel/capabilities.js";
 export { verifyHandshake } from "./kernel/handshake.js";

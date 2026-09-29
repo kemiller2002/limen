@@ -48,6 +48,11 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Kernel lifecycle for hosts (#50).** `BrowserKernel` gains a read-only
+  `status` (`unstarted`, `starting`, `running`, `incompatible`, `faulted`,
+  `disposed`) and `dispose()`. `dispose()` removes every listener the kernel
+  registered, aborts in-flight effects without delivering their results, and
+  silences the kernel, so a host can replace it. `KernelStatus` is exported.
 - **Fixed: a malformed projection partially mutated the view (#50).** Values
   were written in document order, so a projection with, for example, a
   non-array `data-each` value still rewrote an earlier `data-text`. The kernel
