@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 74,
+  "nextSeq": 75,
   "items": [
     {
       "id": "WI-0001",
@@ -1150,6 +1150,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T08:34:58Z",
       "updatedAt": "2026-09-29T08:48:43Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0074",
+      "title": "Fix: smoke:packs must build the examples it serves (patterns page never reported in CI) (GH-31)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:50:07Z",
+      "updatedAt": "2026-09-29T08:50:07Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
