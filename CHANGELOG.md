@@ -31,6 +31,17 @@ exhaustive lists.
 
 ### Added
 
+- **Focus, selection and scroll capability pack (#23).** The first shipped
+  optional pack: `./capabilities/focus` (`focusCapability()`, contract unit
+  `limen.focus`, with bindings for TypeScript, F#, C# and Rust). It supports
+  focus, blur, focusFirst/focusLast within a scope, text selection and
+  scrollIntoView. Targets are named in HTML (`data-focus-target`, with an
+  optional row key and screen generation), so no DOM node crosses the
+  boundary. Outcomes are typed: `Done`, `NotFound`, `Ambiguous`,
+  `NotFocusable`, `NotSelectable`, `InvalidRange`, `Stale`, `Unavailable`,
+  `Cancelled`. Core is unchanged, and applications that do not register the
+  pack do not load it. `npm run smoke:packs` proves every pack in Chromium
+  under a strict CSP with Trusted Types.
 - **Binding security (#18).** `data-bind-on*`, `style`, `srcdoc`, `srcset`,
   `ping` and `is`, and any `data-text`/`data-bind-*` on elements that load or
   run code (`<script>`, `<style>`, `<iframe>`, `<object>`, `<base>`, `<meta>`,

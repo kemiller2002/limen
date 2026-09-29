@@ -23,6 +23,10 @@
       "types": "./dist/kernel/capabilities.d.ts",
       "import": "./dist/kernel/capabilities.js"
     },
+    "./capabilities/focus": {
+      "types": "./dist/capabilities/focus/index.d.ts",
+      "import": "./dist/capabilities/focus/index.js"
+    },
     "./capability-support/handles": {
       "types": "./dist/capability-support/handles.d.ts",
       "import": "./dist/capability-support/handles.js"
@@ -153,6 +157,7 @@
     "test:guests:pressure": "node --experimental-strip-types scripts/guest-pressure.ts",
     "build:guests": "node --experimental-strip-types scripts/build-guests-site.ts",
     "smoke:guests": "node --experimental-strip-types scripts/smoke-guests.ts",
+    "smoke:packs": "npm run build && node --experimental-strip-types scripts/smoke-packs.ts",
     "smoke:security": "npm run build && node --experimental-strip-types scripts/smoke-security.ts",
     "check:views": "node --experimental-strip-types scripts/check-views.ts",
     "build:bench": "tsc -p tsconfig.bench.json",

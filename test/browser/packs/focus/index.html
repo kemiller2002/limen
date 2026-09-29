@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen focus pack in a real browser</title>
+  <link rel="stylesheet" href="./page.css">
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types.
+       main.js drives the scenarios and reports window.__limenPackResult. -->
+  <input id="keep" data-focus-target="keep" value="where the user was">
+  <button id="open" data-event="open">Open dialog</button>
+  <button id="poke" data-event="poke">Ask</button>
+  <template data-if="dialogOpen">
+    <section id="dialog" data-focus-target="dialog" role="dialog" aria-label="Rename">
+      <button id="dialog-off" data-focus-target="off" disabled>off</button>
+      <input id="dialog-name" data-focus-target="name" value="report.csv">
+      <input id="dialog-email" type="email" data-focus-target="email" value="a@example.com">
+      <button id="dialog-save">Save</button>
+    </section>
+  </template>
+  <main data-bind-data-focus-generation="screen">
+    <button id="add" data-focus-target="add">Add</button>
+    <ul>
+      <template data-each="rows" data-key="id">
+        <li data-bind-data-focus-key="id"><span data-text="label"></span> <button data-event="remove" data-focus-target="remove">Remove</button></li>
+      </template>
+    </ul>
+    <button id="next" data-event="next">Next screen</button>
+  </main>
+  <div class="spacer"></div>
+  <p id="far" data-focus-target="far" tabindex="-1">far below the fold</p>
+  <div class="spacer"></div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

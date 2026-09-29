@@ -198,7 +198,7 @@ A host registers the packs it implements:
 
 ```ts
 import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
-import { focusCapability } from "…/focus";          // an optional pack; not imported, not loaded
+import { focusCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/focus"; // optional; loaded only if imported
 
 new BrowserKernel(transport, document, diagnostics, { capabilities: [focusCapability()] });
 ```
@@ -235,7 +235,9 @@ Rules a pack must follow:
 An application that registers no pack loads no pack code: packs are separate
 modules that Core never imports.
 
-The repository's test-only pack,
+The first shipped pack is focus, selection and scroll
+([30-focus-selection-scroll.md](30-focus-selection-scroll.md)). The
+repository's test-only pack,
 [`test/fixtures/capabilities/echo.contract.json`](../test/fixtures/capabilities/echo.contract.json),
 is the executable proof that a capability family can be added without touching
 Core; [`test/handshake.test.ts`](../test/handshake.test.ts) exercises every rule

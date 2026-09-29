@@ -258,6 +258,7 @@ npm run smoke:guests       # each WASM engine drives every capability in Chromiu
 npm run bench              # performance baseline → bench/results/latest.json (docs/27)
 npm run check:views        # every page against its *.view.json contract (docs/28)
 npm run smoke:security     # strict CSP + Trusted Types in Chromium: kernel and guests (docs/29)
+npm run smoke:packs        # every capability pack page in Chromium under strict CSP (test/browser/packs/)
 npm run test:guests        # F#, C#, Rust bindings: strict build + shared vectors
                            #   (needs .NET SDK 8 and cargo; crates.io is reachable)
 npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)

@@ -68,6 +68,7 @@ Then, for depth:
 | 27 | [Performance baseline](https://github.com/kemiller2002/limen/blob/main/docs/27-performance-baseline.md) | What does Limen cost today — round trips, lists, forms, guest engines, payload — and where is the evidence for any optimization? |
 | 28 | [View contracts](https://github.com/kemiller2002/limen/blob/main/docs/28-view-contracts.md) | How do I check a page's bindings and events against what the engine projects and accepts, before anything runs? |
 | 29 | [Binding security](https://github.com/kemiller2002/limen/blob/main/docs/29-binding-security.md) | What may a projection write, and where? How are unsafe URLs, event-handler attributes and strict CSP / Trusted Types handled? |
+| 30 | [Focus, selection and scroll](https://github.com/kemiller2002/limen/blob/main/docs/30-focus-selection-scroll.md) | How does an engine move focus, select text or scroll — and learn exactly what happened — without the kernel holding focus state? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 

@@ -8,6 +8,10 @@
     {
       "workItem": "WI-0053",
       "change": "Re-baselined every profile after the binding security policy (src/kernel/binding-policy.ts, kemiller2002/limen#18): each profile that loads the kernel grew by about 2.1 KB gzip (6.8 KB raw). kernel-only and kernel-with-handles exceeded their budgets; the rest had not, but are re-baselined by the same rule so every budget keeps 10% headroom over what ships."
+    },
+    {
+      "workItem": "WI-0056",
+      "change": "Added kernel-with-focus (kemiller2002/limen#23): the focus pack adds 3876 bytes gzip over kernel-only, and only to applications that register it."
     }
   ],
   "profiles": [
@@ -121,6 +125,29 @@
       "budget": {
         "rawBytes": 105472,
         "gzipBytesBundled": 21504
+      }
+    },
+    {
+      "name": "kernel-with-focus",
+      "doc": "The kernel plus the focus, selection and scroll capability pack (./capabilities/focus), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/focus/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/"
+      ],
+      "baseline": {
+        "rawBytes": 112426,
+        "gzipBytesBundled": 21355
+      },
+      "budget": {
+        "rawBytes": 123904,
+        "gzipBytesBundled": 23552
       }
     }
   ]
