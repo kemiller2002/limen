@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0102",
+  "reference": "kemiller2002/limen#40 (LCP-034)",
+  "placement": "Engine Library — libraries/fsharp/Limen.Outbox with its language-neutral definition in conformance/outbox/. Pending operations, their order, conflicts, unknown outcomes and reconciliation are application meaning, so they live in the engine: pure, persisted by the engine through its own storage, never in a service worker or the kernel. Core unchanged.",
+  "guardrail": false,
+  "paths": ["libraries/fsharp/Limen.Outbox/**", "conformance/outbox/**", "conformance/README.md", "package.json", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
