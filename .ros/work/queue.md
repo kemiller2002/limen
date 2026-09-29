@@ -79,3 +79,5 @@
 | WI-0072 | Overlay and top-layer capability pack, native-first: dialog showModal/close, popover show/hide, dismissal facts, anchored placement fallback (GH-49) | complete |  | medium |
 | WI-0073 | Guardrail: register the limen.overlay contract unit and its generated bindings (GH-49) | complete |  | medium |
 | WI-0074 | Fix: smoke:packs must build the examples it serves (patterns page never reported in CI) (GH-31) | complete |  | medium |
+| WI-0075 | Realtime capability pack: WebSocket and Server-Sent Events lifecycle facts, connection identity, explicit close, engine-directed reconnect only (GH-26) | active |  | medium |
+| WI-0076 | Guardrail: register the limen.realtime contract unit and its generated bindings (GH-26) | ready |  | medium |

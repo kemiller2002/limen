@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 75,
+  "nextSeq": 77,
   "items": [
     {
       "id": "WI-0001",
@@ -1164,6 +1164,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T08:50:07Z",
       "updatedAt": "2026-09-29T08:50:34Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0075",
+      "title": "Realtime capability pack: WebSocket and Server-Sent Events lifecycle facts, connection identity, explicit close, engine-directed reconnect only (GH-26)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:51:45Z",
+      "updatedAt": "2026-09-29T08:51:45Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0076",
+      "title": "Guardrail: register the limen.realtime contract unit and its generated bindings (GH-26)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:51:46Z",
+      "updatedAt": "2026-09-29T08:51:47Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
