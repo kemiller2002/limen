@@ -682,10 +682,10 @@
         "build,site,federation"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T06:08:07Z",
-      "updatedAt": "2026-09-29T06:09:39Z",
+      "updatedAt": "2026-09-29T06:12:35Z",
       "createdBy": "claude-code",
       "source": "manual",
       "sourceReference": null
