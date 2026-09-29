@@ -25,7 +25,12 @@
     "guests/csharp/Limen.Contract.Analyzers/**",
     "guests/csharp/Limen.Contract.Pressure/**",
     "guests/fsharp/Limen.Contract.Pressure/**",
-    "guests/rust/limen-contract/examples/consumer.rs"
+    "guests/rust/limen-contract/examples/consumer.rs",
+    "guests/minimal/rust/limen-minimal-wasm/**",
+    "guests/**/Limen.Minimal.Wasm/*.csproj",
+    "tsconfig.guests.json",
+    "scripts/build-guests-site.ts",
+    "scripts/smoke-guests.ts"
   ],
   "exemptPaths": [
     ".ros/**",
@@ -55,7 +60,8 @@
       "npm run check",
       "npm run contract:check",
       "npm run test:guests",
-      "npm run check:scope"
+      "npm run check:scope",
+      "npm run smoke:guests"
     ],
     "tsconfigCompilerOptions": {
       "strict": true,
@@ -73,6 +79,12 @@
     "rustLibAttributes": [
       "#![forbid(unsafe_code)]",
       "#![deny(warnings)]"
-    ]
+    ],
+    "unsafeAbiCrates": {
+      "doc": "The only Rust guest crates allowed to use unsafe code: WebAssembly ABI shims with no decision, state or decoding of their own. Each must carry the JUSTIFIED UNSAFE BOUNDARY comment and still deny warnings.",
+      "paths": [
+        "guests/minimal/rust/limen-minimal-wasm/src/lib.rs"
+      ]
+    }
   }
 }

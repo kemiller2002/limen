@@ -37,6 +37,10 @@ site/fsharp/federation/*/publish/
 guests/**/bin/
 guests/**/obj/
 guests/rust/**/target/
+guests/minimal/**/target/
+guests/minimal/out/
+guests/minimal/host/*.js
+dist-guests/
 
 # BEGIN echelon:visual-engineering
 # Installed Visual Engineering context. Refresh it with:

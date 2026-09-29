@@ -4,7 +4,7 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:47306501efb51c1e3525095909c16fa9257d0a9f28d5d4d79e5bb88c7790bcd5
+// content-hash: sha256:48c9ac02d34729da3803b205235d7bba62042cb6b05c795a06b113fa1b426264
 // </auto-generated>
 //! The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.
 
@@ -36,6 +36,18 @@ pub enum Capability {
     Navigation,
 }
 
+impl Capability {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            Capability::Http => "Http",
+            Capability::Storage => "Storage",
+            Capability::Clipboard => "Clipboard",
+            Capability::Navigation => "Navigation",
+        }
+    }
+}
+
 /// `name` is a domain-chosen identifier (the value of a data-event attribute). The bridge does not know its meaning; only the engine interprets it.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SemanticEvent {
@@ -64,6 +76,17 @@ pub enum HttpFailureReason {
     InvalidResponse,
 }
 
+impl HttpFailureReason {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            HttpFailureReason::Network => "network",
+            HttpFailureReason::Aborted => "aborted",
+            HttpFailureReason::InvalidResponse => "invalid-response",
+        }
+    }
+}
+
 /// The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.
 #[derive(Debug, Clone, PartialEq)]
 pub enum EffectOutcome {
@@ -87,6 +110,16 @@ pub enum StorageFailureReason {
     QuotaExceeded,
 }
 
+impl StorageFailureReason {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            StorageFailureReason::Unavailable => "unavailable",
+            StorageFailureReason::QuotaExceeded => "quota-exceeded",
+        }
+    }
+}
+
 /// A single localStorage call is atomic, so there is no dispatched-but-uncertain case. Success.value is null when a key was absent or the operation was set/remove.
 #[derive(Debug, Clone, PartialEq)]
 pub enum StorageOutcome {
@@ -106,6 +139,17 @@ pub enum ClipboardFailureReason {
     Unknown,
 }
 
+impl ClipboardFailureReason {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            ClipboardFailureReason::Denied => "denied",
+            ClipboardFailureReason::Unavailable => "unavailable",
+            ClipboardFailureReason::Unknown => "unknown",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum ClipboardOutcome {
     Success,
@@ -118,6 +162,16 @@ pub enum ClipboardOutcome {
 pub enum NavigationFailureReason {
     Unavailable,
     NotSameOrigin,
+}
+
+impl NavigationFailureReason {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            NavigationFailureReason::Unavailable => "unavailable",
+            NavigationFailureReason::NotSameOrigin => "not-same-origin",
+        }
+    }
 }
 
 /// Dispatched is not a weaker Success: back/forward only ask the browser to move, and the move arrives later as LocationChanged, or never.
@@ -142,9 +196,28 @@ pub enum CapabilityUnsupportedReason {
     VersionUnsupported,
 }
 
+impl CapabilityUnsupportedReason {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            CapabilityUnsupportedReason::NotNegotiated => "not-negotiated",
+            CapabilityUnsupportedReason::VersionUnsupported => "version-unsupported",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CapabilityRejectedReason {
     MalformedRequest,
+}
+
+impl CapabilityRejectedReason {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            CapabilityRejectedReason::MalformedRequest => "malformed-request",
+        }
+    }
 }
 
 /// How Core answers a capability effect. Completed carries the capability's own closed outcome, which is where its success, failure, cancellation and unknown variants live. Unsupported and Rejected are compatibility facts, never effect outcomes: they mean the request was not executed.
@@ -301,6 +374,19 @@ pub enum HttpMethod {
     Post,
     Patch,
     Delete,
+}
+
+impl HttpMethod {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            HttpMethod::Get => "GET",
+            HttpMethod::Put => "PUT",
+            HttpMethod::Post => "POST",
+            HttpMethod::Patch => "PATCH",
+            HttpMethod::Delete => "DELETE",
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -1,0 +1,3672 @@
+{
+ "doc": "Normative message-by-message vectors for the minimal engine (conformance/sessions/minimal-engine.md). Each session starts from a fresh engine. Every implementation must produce exactly `expect` (compared as JSON values) for each `send`. {{core.fingerprint}} stands for the generated core contract fingerprint.",
+ "sessions": [
+  {
+   "name": "every built-in capability, success and failure",
+   "steps": [
+    {
+     "send": {
+      "kind": "Initialize",
+      "protocolVersion": 1,
+      "capabilities": [
+       "Http",
+       "Storage",
+       "Clipboard",
+       "Navigation"
+      ],
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/",
+       "query": "",
+       "hash": ""
+      },
+      "handshake": {
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 1,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": [],
+      "handshake": {
+       "kind": "Accepted",
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "http-ok"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 2,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Http",
+        "method": "GET",
+        "url": "/ok.json",
+        "timeoutMs": 5000,
+        "correlationId": "c1"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c1",
+       "outcome": {
+        "kind": "Success",
+        "status": 200,
+        "body": {
+         "ok": true
+        }
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 3,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "http-missing"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 4,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Http",
+        "method": "GET",
+        "url": "/missing.json",
+        "timeoutMs": 5000,
+        "correlationId": "c2"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c2",
+       "outcome": {
+        "kind": "Failure",
+        "reason": "invalid-response",
+        "status": 404
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 5,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "storage-set"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 6,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Storage",
+        "operation": "set",
+        "key": "limen-minimal",
+        "value": "saved",
+        "correlationId": "c3"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "StorageResult",
+       "correlationId": "c3",
+       "outcome": {
+        "kind": "Success",
+        "value": null
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 7,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "storage-get"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 8,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Storage",
+        "operation": "get",
+        "key": "limen-minimal",
+        "correlationId": "c4"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "StorageResult",
+       "correlationId": "c4",
+       "outcome": {
+        "kind": "Success",
+        "value": "saved"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 9,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        },
+        {
+         "id": "9",
+         "text": "storage-get: success saved"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "clipboard"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 10,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        },
+        {
+         "id": "9",
+         "text": "storage-get: success saved"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Clipboard",
+        "operation": "writeText",
+        "text": "limen",
+        "correlationId": "c5"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "ClipboardResult",
+       "correlationId": "c5",
+       "outcome": {
+        "kind": "Failure",
+        "reason": "denied"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 11,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        },
+        {
+         "id": "9",
+         "text": "storage-get: success saved"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        },
+        {
+         "id": "11",
+         "text": "clipboard: failure denied"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "nav-push"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 12,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        },
+        {
+         "id": "9",
+         "text": "storage-get: success saved"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        },
+        {
+         "id": "11",
+         "text": "clipboard: failure denied"
+        },
+        {
+         "id": "12",
+         "text": "requested nav-push"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Navigation",
+        "operation": "push",
+        "url": "?screen=two",
+        "correlationId": "c6"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "NavigationResult",
+       "correlationId": "c6",
+       "outcome": {
+        "kind": "Success",
+        "location": {
+         "origin": "http://127.0.0.1:4180",
+         "path": "/",
+         "query": "?screen=two",
+         "hash": ""
+        }
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 13,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        },
+        {
+         "id": "9",
+         "text": "storage-get: success saved"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        },
+        {
+         "id": "11",
+         "text": "clipboard: failure denied"
+        },
+        {
+         "id": "12",
+         "text": "requested nav-push"
+        },
+        {
+         "id": "13",
+         "text": "nav-push: success /?screen=two"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "nav-away"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 14,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        },
+        {
+         "id": "9",
+         "text": "storage-get: success saved"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        },
+        {
+         "id": "11",
+         "text": "clipboard: failure denied"
+        },
+        {
+         "id": "12",
+         "text": "requested nav-push"
+        },
+        {
+         "id": "13",
+         "text": "nav-push: success /?screen=two"
+        },
+        {
+         "id": "14",
+         "text": "requested nav-away"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Navigation",
+        "operation": "push",
+        "url": "https://example.org/elsewhere",
+        "correlationId": "c7"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "NavigationResult",
+       "correlationId": "c7",
+       "outcome": {
+        "kind": "Failure",
+        "reason": "not-same-origin"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 15,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "4",
+         "text": "requested http-missing"
+        },
+        {
+         "id": "5",
+         "text": "http-missing: failure invalid-response 404"
+        },
+        {
+         "id": "6",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "7",
+         "text": "storage-set: success null"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-get"
+        },
+        {
+         "id": "9",
+         "text": "storage-get: success saved"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        },
+        {
+         "id": "11",
+         "text": "clipboard: failure denied"
+        },
+        {
+         "id": "12",
+         "text": "requested nav-push"
+        },
+        {
+         "id": "13",
+         "text": "nav-push: success /?screen=two"
+        },
+        {
+         "id": "14",
+         "text": "requested nav-away"
+        },
+        {
+         "id": "15",
+         "text": "nav-away: failure not-same-origin"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "uncertain, cancelled and failed outcomes stay distinct",
+   "steps": [
+    {
+     "send": {
+      "kind": "Initialize",
+      "protocolVersion": 1,
+      "capabilities": [
+       "Http",
+       "Storage",
+       "Clipboard",
+       "Navigation"
+      ],
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/",
+       "query": "",
+       "hash": ""
+      },
+      "handshake": {
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 1,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": [],
+      "handshake": {
+       "kind": "Accepted",
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "http-ok"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 2,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Http",
+        "method": "GET",
+        "url": "/ok.json",
+        "timeoutMs": 5000,
+        "correlationId": "c1"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c1",
+       "outcome": {
+        "kind": "OutcomeUnknown",
+        "reason": "timeout-after-dispatch"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 3,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "http-ok"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 4,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Http",
+        "method": "GET",
+        "url": "/ok.json",
+        "timeoutMs": 5000,
+        "correlationId": "c2"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c2",
+       "outcome": {
+        "kind": "Cancelled"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 5,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "5",
+         "text": "http-ok: cancelled"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "http-ok"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 6,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "5",
+         "text": "http-ok: cancelled"
+        },
+        {
+         "id": "6",
+         "text": "requested http-ok"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Http",
+        "method": "GET",
+        "url": "/ok.json",
+        "timeoutMs": 5000,
+        "correlationId": "c3"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c3",
+       "outcome": {
+        "kind": "Failure",
+        "reason": "network"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 7,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "5",
+         "text": "http-ok: cancelled"
+        },
+        {
+         "id": "6",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "7",
+         "text": "http-ok: failure network"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "storage-set"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 8,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "5",
+         "text": "http-ok: cancelled"
+        },
+        {
+         "id": "6",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "7",
+         "text": "http-ok: failure network"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-set"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Storage",
+        "operation": "set",
+        "key": "limen-minimal",
+        "value": "saved",
+        "correlationId": "c4"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "StorageResult",
+       "correlationId": "c4",
+       "outcome": {
+        "kind": "Failure",
+        "reason": "quota-exceeded"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 9,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "5",
+         "text": "http-ok: cancelled"
+        },
+        {
+         "id": "6",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "7",
+         "text": "http-ok: failure network"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "9",
+         "text": "storage-set: failure quota-exceeded"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "clipboard"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 10,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "5",
+         "text": "http-ok: cancelled"
+        },
+        {
+         "id": "6",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "7",
+         "text": "http-ok: failure network"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "9",
+         "text": "storage-set: failure quota-exceeded"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Clipboard",
+        "operation": "writeText",
+        "text": "limen",
+        "correlationId": "c5"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "ClipboardResult",
+       "correlationId": "c5",
+       "outcome": {
+        "kind": "Success"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 11,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "http-ok: unknown"
+        },
+        {
+         "id": "4",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "5",
+         "text": "http-ok: cancelled"
+        },
+        {
+         "id": "6",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "7",
+         "text": "http-ok: failure network"
+        },
+        {
+         "id": "8",
+         "text": "requested storage-set"
+        },
+        {
+         "id": "9",
+         "text": "storage-set: failure quota-exceeded"
+        },
+        {
+         "id": "10",
+         "text": "requested clipboard"
+        },
+        {
+         "id": "11",
+         "text": "clipboard: success"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "stale results, browser moves and unknown input change nothing but the log",
+   "steps": [
+    {
+     "send": {
+      "kind": "Initialize",
+      "protocolVersion": 1,
+      "capabilities": [
+       "Http",
+       "Storage",
+       "Clipboard",
+       "Navigation"
+      ],
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/",
+       "query": "",
+       "hash": ""
+      },
+      "handshake": {
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 1,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": [],
+      "handshake": {
+       "kind": "Accepted",
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "http-ok"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 2,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        }
+       ]
+      },
+      "effects": [
+       {
+        "kind": "Http",
+        "method": "GET",
+        "url": "/ok.json",
+        "timeoutMs": 5000,
+        "correlationId": "c1"
+       }
+      ],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c9",
+       "outcome": {
+        "kind": "Success",
+        "status": 200,
+        "body": null
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 3,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "stale c9"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c1",
+       "outcome": {
+        "kind": "Success",
+        "status": 200,
+        "body": null
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 4,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "stale c9"
+        },
+        {
+         "id": "4",
+         "text": "http-ok: success 200"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c1",
+       "outcome": {
+        "kind": "Success",
+        "status": 200,
+        "body": null
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 5,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "stale c9"
+        },
+        {
+         "id": "4",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "5",
+         "text": "stale c1"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "LocationChanged",
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/back",
+       "query": "?x=1",
+       "hash": ""
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 6,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "stale c9"
+        },
+        {
+         "id": "4",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "5",
+         "text": "stale c1"
+        },
+        {
+         "id": "6",
+         "text": "location /back?x=1"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "teleport"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 7,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "stale c9"
+        },
+        {
+         "id": "4",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "5",
+         "text": "stale c1"
+        },
+        {
+         "id": "6",
+         "text": "location /back?x=1"
+        },
+        {
+         "id": "7",
+         "text": "ignored teleport"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "CapabilityFact",
+      "capability": "limen.focus",
+      "version": 1,
+      "fact": {}
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 8,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "stale c9"
+        },
+        {
+         "id": "4",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "5",
+         "text": "stale c1"
+        },
+        {
+         "id": "6",
+         "text": "location /back?x=1"
+        },
+        {
+         "id": "7",
+         "text": "ignored teleport"
+        },
+        {
+         "id": "8",
+         "text": "unexpected fact limen.focus"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "CapabilityResult",
+       "correlationId": "c77",
+       "capability": "limen.focus",
+       "version": 1,
+       "outcome": {
+        "kind": "Unsupported",
+        "reason": "not-negotiated"
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 9,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "requested http-ok"
+        },
+        {
+         "id": "3",
+         "text": "stale c9"
+        },
+        {
+         "id": "4",
+         "text": "http-ok: success 200"
+        },
+        {
+         "id": "5",
+         "text": "stale c1"
+        },
+        {
+         "id": "6",
+         "text": "location /back?x=1"
+        },
+        {
+         "id": "7",
+         "text": "ignored teleport"
+        },
+        {
+         "id": "8",
+         "text": "unexpected fact limen.focus"
+        },
+        {
+         "id": "9",
+         "text": "stale c77"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "a pre-1.1 kernel is refused and the engine stays inert",
+   "steps": [
+    {
+     "send": {
+      "kind": "Initialize",
+      "protocolVersion": 1,
+      "capabilities": [
+       "Http",
+       "Storage",
+       "Clipboard",
+       "Navigation"
+      ],
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/",
+       "query": "",
+       "hash": ""
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "incompatible",
+       "count": 0,
+       "log": []
+      },
+      "effects": [],
+      "cancellations": [],
+      "handshake": {
+       "kind": "Rejected",
+       "reason": {
+        "kind": "HandshakeMissing"
+       }
+      }
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "http-ok"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "incompatible",
+       "count": 0,
+       "log": []
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "EffectResult",
+      "result": {
+       "kind": "HttpResult",
+       "correlationId": "c1",
+       "outcome": {
+        "kind": "Success",
+        "status": 200,
+        "body": null
+       }
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "incompatible",
+       "count": 0,
+       "log": []
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "a different core contract is refused",
+   "steps": [
+    {
+     "send": {
+      "kind": "Initialize",
+      "protocolVersion": 1,
+      "capabilities": [
+       "Http",
+       "Storage",
+       "Clipboard",
+       "Navigation"
+      ],
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/",
+       "query": "",
+       "hash": ""
+      },
+      "handshake": {
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "sha256:0000"
+       },
+       "capabilities": []
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "incompatible",
+       "count": 0,
+       "log": []
+      },
+      "effects": [],
+      "cancellations": [],
+      "handshake": {
+       "kind": "Rejected",
+       "reason": {
+        "kind": "ContractMismatch",
+        "expected": {
+         "unit": "limen.core",
+         "version": 1,
+         "fingerprint": "{{core.fingerprint}}"
+        },
+        "offered": {
+         "unit": "limen.core",
+         "version": 1,
+         "fingerprint": "sha256:0000"
+        }
+       }
+      }
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "storage-get"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "incompatible",
+       "count": 0,
+       "log": []
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "an unsupported protocol revision is refused",
+   "steps": [
+    {
+     "send": {
+      "kind": "Initialize",
+      "protocolVersion": 1,
+      "capabilities": [
+       "Http",
+       "Storage",
+       "Clipboard",
+       "Navigation"
+      ],
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/",
+       "query": "",
+       "hash": ""
+      },
+      "handshake": {
+       "protocol": {
+        "major": 2,
+        "minor": 0
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "incompatible",
+       "count": 0,
+       "log": []
+      },
+      "effects": [],
+      "cancellations": [],
+      "handshake": {
+       "kind": "Rejected",
+       "reason": {
+        "kind": "ProtocolUnsupported",
+        "offered": {
+         "major": 2,
+         "minor": 0
+        }
+       }
+      }
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "clipboard"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "incompatible",
+       "count": 0,
+       "log": []
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "only the last twenty log entries are kept",
+   "steps": [
+    {
+     "send": {
+      "kind": "Initialize",
+      "protocolVersion": 1,
+      "capabilities": [
+       "Http",
+       "Storage",
+       "Clipboard",
+       "Navigation"
+      ],
+      "location": {
+       "origin": "http://127.0.0.1:4180",
+       "path": "/",
+       "query": "",
+       "hash": ""
+      },
+      "handshake": {
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 1,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": [],
+      "handshake": {
+       "kind": "Accepted",
+       "protocol": {
+        "major": 1,
+        "minor": 1
+       },
+       "contract": {
+        "unit": "limen.core",
+        "version": 1,
+        "fingerprint": "{{core.fingerprint}}"
+       },
+       "capabilities": []
+      }
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-1"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 2,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-2"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 3,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-3"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 4,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-4"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 5,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-5"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 6,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-6"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 7,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-7"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 8,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-8"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 9,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-9"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 10,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-10"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 11,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-11"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 12,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-12"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 13,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-13"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 14,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-14"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 15,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-15"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 16,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-16"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 17,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        },
+        {
+         "id": "17",
+         "text": "ignored noise-16"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-17"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 18,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        },
+        {
+         "id": "17",
+         "text": "ignored noise-16"
+        },
+        {
+         "id": "18",
+         "text": "ignored noise-17"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-18"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 19,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        },
+        {
+         "id": "17",
+         "text": "ignored noise-16"
+        },
+        {
+         "id": "18",
+         "text": "ignored noise-17"
+        },
+        {
+         "id": "19",
+         "text": "ignored noise-18"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-19"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 20,
+       "log": [
+        {
+         "id": "1",
+         "text": "ready"
+        },
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        },
+        {
+         "id": "17",
+         "text": "ignored noise-16"
+        },
+        {
+         "id": "18",
+         "text": "ignored noise-17"
+        },
+        {
+         "id": "19",
+         "text": "ignored noise-18"
+        },
+        {
+         "id": "20",
+         "text": "ignored noise-19"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-20"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 20,
+       "log": [
+        {
+         "id": "2",
+         "text": "ignored noise-1"
+        },
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        },
+        {
+         "id": "17",
+         "text": "ignored noise-16"
+        },
+        {
+         "id": "18",
+         "text": "ignored noise-17"
+        },
+        {
+         "id": "19",
+         "text": "ignored noise-18"
+        },
+        {
+         "id": "20",
+         "text": "ignored noise-19"
+        },
+        {
+         "id": "21",
+         "text": "ignored noise-20"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-21"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 20,
+       "log": [
+        {
+         "id": "3",
+         "text": "ignored noise-2"
+        },
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        },
+        {
+         "id": "17",
+         "text": "ignored noise-16"
+        },
+        {
+         "id": "18",
+         "text": "ignored noise-17"
+        },
+        {
+         "id": "19",
+         "text": "ignored noise-18"
+        },
+        {
+         "id": "20",
+         "text": "ignored noise-19"
+        },
+        {
+         "id": "21",
+         "text": "ignored noise-20"
+        },
+        {
+         "id": "22",
+         "text": "ignored noise-21"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    },
+    {
+     "send": {
+      "kind": "Event",
+      "event": {
+       "kind": "Event",
+       "name": "noise-22"
+      }
+     },
+     "expect": {
+      "view": {
+       "status": "ready",
+       "count": 20,
+       "log": [
+        {
+         "id": "4",
+         "text": "ignored noise-3"
+        },
+        {
+         "id": "5",
+         "text": "ignored noise-4"
+        },
+        {
+         "id": "6",
+         "text": "ignored noise-5"
+        },
+        {
+         "id": "7",
+         "text": "ignored noise-6"
+        },
+        {
+         "id": "8",
+         "text": "ignored noise-7"
+        },
+        {
+         "id": "9",
+         "text": "ignored noise-8"
+        },
+        {
+         "id": "10",
+         "text": "ignored noise-9"
+        },
+        {
+         "id": "11",
+         "text": "ignored noise-10"
+        },
+        {
+         "id": "12",
+         "text": "ignored noise-11"
+        },
+        {
+         "id": "13",
+         "text": "ignored noise-12"
+        },
+        {
+         "id": "14",
+         "text": "ignored noise-13"
+        },
+        {
+         "id": "15",
+         "text": "ignored noise-14"
+        },
+        {
+         "id": "16",
+         "text": "ignored noise-15"
+        },
+        {
+         "id": "17",
+         "text": "ignored noise-16"
+        },
+        {
+         "id": "18",
+         "text": "ignored noise-17"
+        },
+        {
+         "id": "19",
+         "text": "ignored noise-18"
+        },
+        {
+         "id": "20",
+         "text": "ignored noise-19"
+        },
+        {
+         "id": "21",
+         "text": "ignored noise-20"
+        },
+        {
+         "id": "22",
+         "text": "ignored noise-21"
+        },
+        {
+         "id": "23",
+         "text": "ignored noise-22"
+        }
+       ]
+      },
+      "effects": [],
+      "cancellations": []
+     }
+    }
+   ]
+  }
+ ]
+}

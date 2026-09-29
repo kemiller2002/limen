@@ -1,0 +1,22 @@
+{
+  // Type-checks and emits the minimal-engine host page
+  // (guests/minimal/host/main.ts → main.js, in place), importing the package
+  // from dist/ exactly as a consumer would. scripts/build-guests-site.ts
+  // assembles the served tree so the ../../../dist specifiers resolve there.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmitOnError": true,
+    "declaration": false,
+    "sourceMap": false,
+    "skipLibCheck": false,
+    "rootDir": "guests/minimal/host",
+    "outDir": "guests/minimal/host"
+  },
+  "files": ["guests/minimal/host/main.ts", "guests/minimal/host/runtime-modules.d.ts"]
+}

@@ -4,7 +4,7 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:73162ec962ff6b95c31b0a73463d71977f9fce03bd2de095209094b2541f71fa
+// content-hash: sha256:4a50c61a1a5f7cdc59cbebcc7f7e2ed248c85146aa38b9be3c87934cc82a3f92
 // </auto-generated>
 #nullable enable
 
@@ -46,6 +46,9 @@ public static class CapabilityMatch
         Capability.Navigation => navigation(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a Capability value."),
     };
+
+    /// <summary>The wire text of a Capability value.</summary>
+    public static string ToWire(this Capability value) => value.Match(() => "Http", () => "Storage", () => "Clipboard", () => "Navigation");
 }
 
 /// <summary>`name` is a domain-chosen identifier (the value of a data-event attribute). The bridge does not know its meaning; only the engine interprets it.</summary>
@@ -72,6 +75,9 @@ public static class HttpFailureReasonMatch
         HttpFailureReason.InvalidResponse => invalidResponse(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpFailureReason value."),
     };
+
+    /// <summary>The wire text of a HttpFailureReason value.</summary>
+    public static string ToWire(this HttpFailureReason value) => value.Match(() => "network", () => "aborted", () => "invalid-response");
 }
 
 /// <summary>The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.</summary>
@@ -112,6 +118,9 @@ public static class StorageFailureReasonMatch
         StorageFailureReason.QuotaExceeded => quotaExceeded(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a StorageFailureReason value."),
     };
+
+    /// <summary>The wire text of a StorageFailureReason value.</summary>
+    public static string ToWire(this StorageFailureReason value) => value.Match(() => "unavailable", () => "quota-exceeded");
 }
 
 /// <summary>A single localStorage call is atomic, so there is no dispatched-but-uncertain case. Success.value is null when a key was absent or the operation was set/remove.</summary>
@@ -151,6 +160,9 @@ public static class ClipboardFailureReasonMatch
         ClipboardFailureReason.Unknown => unknown(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a ClipboardFailureReason value."),
     };
+
+    /// <summary>The wire text of a ClipboardFailureReason value.</summary>
+    public static string ToWire(this ClipboardFailureReason value) => value.Match(() => "denied", () => "unavailable", () => "unknown");
 }
 
 [global::Limen.Contract.ClosedUnion]
@@ -186,6 +198,9 @@ public static class NavigationFailureReasonMatch
         NavigationFailureReason.NotSameOrigin => notSameOrigin(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a NavigationFailureReason value."),
     };
+
+    /// <summary>The wire text of a NavigationFailureReason value.</summary>
+    public static string ToWire(this NavigationFailureReason value) => value.Match(() => "unavailable", () => "not-same-origin");
 }
 
 /// <summary>Dispatched is not a weaker Success: back/forward only ask the browser to move, and the move arrives later as LocationChanged, or never.</summary>
@@ -227,6 +242,9 @@ public static class CapabilityUnsupportedReasonMatch
         CapabilityUnsupportedReason.VersionUnsupported => versionUnsupported(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a CapabilityUnsupportedReason value."),
     };
+
+    /// <summary>The wire text of a CapabilityUnsupportedReason value.</summary>
+    public static string ToWire(this CapabilityUnsupportedReason value) => value.Match(() => "not-negotiated", () => "version-unsupported");
 }
 
 [global::Limen.Contract.ClosedUnion]
@@ -243,6 +261,9 @@ public static class CapabilityRejectedReasonMatch
         CapabilityRejectedReason.MalformedRequest => malformedRequest(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a CapabilityRejectedReason value."),
     };
+
+    /// <summary>The wire text of a CapabilityRejectedReason value.</summary>
+    public static string ToWire(this CapabilityRejectedReason value) => value.Match(() => "malformed-request");
 }
 
 /// <summary>How Core answers a capability effect. Completed carries the capability's own closed outcome, which is where its success, failure, cancellation and unknown variants live. Unsupported and Rejected are compatibility facts, never effect outcomes: they mean the request was not executed.</summary>
@@ -425,6 +446,9 @@ public static class HttpMethodMatch
         HttpMethod.Delete => delete(),
         _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpMethod value."),
     };
+
+    /// <summary>The wire text of a HttpMethod value.</summary>
+    public static string ToWire(this HttpMethod value) => value.Match(() => "GET", () => "PUT", () => "POST", () => "PATCH", () => "DELETE");
 }
 
 public sealed record HttpEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, global::Limen.Contract.Core.HttpMethod Method, string Url, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers, string? Body, long TimeoutMs);

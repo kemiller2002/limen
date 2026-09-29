@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+  <!-- .NET WebAssembly host for the C# engine. One [JSExport] method that
+       forwards one serialized Limen message; no decision is made here.
+       AllowUnsafeBlocks is required by the JSExport source generator's
+       emitted marshalling code, not by anything written here. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Limen.Minimal.Wasm</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Limen.Minimal.Engine/Limen.Minimal.Engine.csproj" />
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+</Project>

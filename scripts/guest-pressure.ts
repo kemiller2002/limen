@@ -43,7 +43,7 @@ const analyzerFixtures: readonly Expectation[] = [
 
 const withAddedVariant = async (): Promise<string> => {
   const scratch = await mkdtemp(join(tmpdir(), "limen-pressure-"));
-  const skip = (source: string): boolean => /\/(bin|obj|target)(\/|$)/.test(source);
+  const skip = (source: string): boolean => /\/(bin|obj|target|out)(\/|$)/.test(source);
   await Promise.all([
     cp(join(ROOT, "contract"), join(scratch, "contract"), { recursive: true }),
     cp(join(ROOT, "architecture/layers.json"), join(scratch, "architecture/layers.json")),

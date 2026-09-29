@@ -112,6 +112,9 @@ const typeDecl = (decl: TypeDecl, decls: Decls, ns: string): readonly string[] =
         ...decl.values.map((wire) => indent(2, `${decl.name}.${pascal(wire)} => ${identifier(camel(wire))}(),`)),
         indent(2, `_ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a ${decl.name} value."),`),
         indent(1, "};"),
+        "",
+        indent(1, `/// <summary>The wire text of a ${decl.name} value.</summary>`),
+        indent(1, `public static string ToWire(this ${decl.name} value) => value.Match(${decl.values.map((wire) => `() => ${quoted(wire)}`).join(", ")});`),
         "}",
       ];
     case "record": {
@@ -411,11 +414,31 @@ public static class Wire
         _ => "undefined",
     };
 
+    // JSON string quoting without reflection (trim-safe in WebAssembly): the
+    // same text JSON.stringify produces for ASCII. Written with character
+    // codes so the generated source needs no escape sequences.
+    private static readonly string Backslash = ((char)92).ToString();
+    private static readonly string QuoteMark = ((char)34).ToString();
+
+    public static string Quote(string text) =>
+        QuoteMark + string.Concat(text.Select(character => (int)character switch
+        {
+            34 => Backslash + QuoteMark,
+            92 => Backslash + Backslash,
+            10 => Backslash + "n",
+            13 => Backslash + "r",
+            9 => Backslash + "t",
+            8 => Backslash + "b",
+            12 => Backslash + "f",
+            < 32 => Backslash + "u" + ((int)character).ToString("x4", System.Globalization.CultureInfo.InvariantCulture),
+            _ => character.ToString(),
+        })) + QuoteMark;
+
     public static DecodeException Mismatch(string expected, string path, JsonElement element) => new(new DecodeError(path, expected, KindOf(element)));
 
     public static DecodeException Missing(string path) => new(new DecodeError(path, "a value", "undefined"));
 
-    public static DecodeException UnknownVariant(string path, string found) => new(new DecodeError(path, "a known variant", JsonSerializer.Serialize(found)));
+    public static DecodeException UnknownVariant(string path, string found) => new(new DecodeError(path, "a known variant", Quote(found)));
 
     public static Decoded<T> Run<T>(Func<T> read)
     {
@@ -465,7 +488,7 @@ public static class Wire
     public static RawJson Json(JsonElement element, string path) => new(element.GetRawText());
 
     public static bool LiteralString(JsonElement element, string path, string expected) =>
-        element.ValueKind == JsonValueKind.String && element.GetString() == expected ? true : throw Mismatch(JsonSerializer.Serialize(expected), path, element);
+        element.ValueKind == JsonValueKind.String && element.GetString() == expected ? true : throw Mismatch(Quote(expected), path, element);
 
     public static bool LiteralInt(JsonElement element, string path, long expected) =>
         Int(element, path) == expected ? true : throw Mismatch(expected.ToString(System.Globalization.CultureInfo.InvariantCulture), path, element);
@@ -505,7 +528,7 @@ public static class Wire
         var properties = Properties(element, path);
         return properties.Keys
             .OrderBy(key => key, StringComparer.Ordinal)
-            .ToDictionary(key => key, key => read(properties[key], path + "[" + JsonSerializer.Serialize(key) + "]"), StringComparer.Ordinal);
+            .ToDictionary(key => key, key => read(properties[key], path + "[" + Quote(key) + "]"), StringComparer.Ordinal);
     }
 
     // A closed key set: an unexpected field is corrupted or mismatched wire

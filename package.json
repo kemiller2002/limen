@@ -23,6 +23,14 @@
       "types": "./dist/kernel/capabilities.d.ts",
       "import": "./dist/kernel/capabilities.js"
     },
+    "./hosts/dotnet-wasm": {
+      "types": "./dist/hosts/dotnet-wasm-transport.d.ts",
+      "import": "./dist/hosts/dotnet-wasm-transport.js"
+    },
+    "./hosts/raw-wasm": {
+      "types": "./dist/hosts/raw-wasm-transport.d.ts",
+      "import": "./dist/hosts/raw-wasm-transport.js"
+    },
     "./kernel": {
       "types": "./dist/kernel/browser-kernel.d.ts",
       "import": "./dist/kernel/browser-kernel.js"
@@ -115,14 +123,17 @@
     "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh",
     "contract:generate": "node --experimental-strip-types tools/contract-gen/main.ts generate",
     "contract:check": "node --experimental-strip-types tools/contract-gen/main.ts check",
-    "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust && npm run test:guests:pressure",
+    "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust && npm run test:guests:sessions && npm run test:guests:pressure",
     "test:guests:fsharp": "dotnet run --project guests/fsharp/Limen.Contract.Conformance/Limen.Contract.Conformance.fsproj -c Release --nologo",
     "test:guests:csharp": "dotnet run --project guests/csharp/Limen.Contract.Conformance/Limen.Contract.Conformance.csproj -c Release --nologo",
     "test:guests:rust": "cargo test --manifest-path guests/rust/limen-contract/Cargo.toml --locked",
     "check:layers": "node --experimental-strip-types scripts/check-layers.ts",
     "check:scope": "node --experimental-strip-types scripts/check-scope.ts",
     "check:typescript": "node --experimental-strip-types scripts/check-typescript.ts",
-    "test:guests:pressure": "node --experimental-strip-types scripts/guest-pressure.ts"
+    "test:guests:pressure": "node --experimental-strip-types scripts/guest-pressure.ts",
+    "build:guests": "node --experimental-strip-types scripts/build-guests-site.ts",
+    "smoke:guests": "node --experimental-strip-types scripts/smoke-guests.ts",
+    "test:guests:sessions": "dotnet run --project guests/minimal/fsharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.fsproj -c Release --nologo && dotnet run --project guests/minimal/csharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.csproj -c Release --nologo && cargo test --quiet --manifest-path guests/minimal/rust/limen-minimal/Cargo.toml"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",

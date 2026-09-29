@@ -18,6 +18,7 @@ type Gates = {
   readonly fsprojProperties: Readonly<Record<string, string>>;
   readonly csprojProperties: Readonly<Record<string, string>>;
   readonly rustLibAttributes: readonly string[];
+  readonly unsafeAbiCrates: { readonly paths: readonly string[] };
 };
 
 const gates = (JSON.parse(await read("architecture/guardrails.json")) as { requiredGates: Gates }).requiredGates;
@@ -73,11 +74,18 @@ test("every F# and C# guest project keeps its strict settings", async () => {
   }
 });
 
-test("every Rust guest crate forbids unsafe code and denies warnings", async () => {
-  const libraries = (await findFiles("guests/rust", "lib.rs"));
-  assert.ok(libraries.length >= 1);
+test("every Rust guest crate forbids unsafe code and denies warnings, except the sanctioned ABI shims", async () => {
+  const libraries = await findFiles("guests", "lib.rs");
+  assert.ok(libraries.length >= 3);
+  const shims = gates.unsafeAbiCrates.paths;
   for (const library of libraries) {
     const source = await read(library);
+    if (shims.includes(library)) {
+      assert.match(source, /JUSTIFIED UNSAFE BOUNDARY/, `${library}: an unsafe ABI shim must state its justification`);
+      assert.ok(source.includes("#![deny(warnings)]"), `${library}: #![deny(warnings)] is required`);
+      assert.doesNotMatch(source, /#!\[allow\((?!unsafe_code\))/, `${library}: only unsafe_code may be allowed, and only here`);
+      continue;
+    }
     for (const attribute of gates.rustLibAttributes) assert.ok(source.includes(attribute), `${library}: ${attribute} is required`);
     assert.doesNotMatch(source, /#!\[allow\(/, `${library}: crate-wide allow() is a guardrail change`);
   }

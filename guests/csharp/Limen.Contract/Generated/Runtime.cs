@@ -4,7 +4,7 @@
 // unit: (runtime: shared by every unit)
 // contract-fingerprint: (none)
 // generator: limen-contract-gen/1 (csharp-runtime)
-// content-hash: sha256:f1d2db50e19a69e3f654ba5bc4f4a01b8fdbd33774e5b62ae6fb201757887bce
+// content-hash: sha256:8a2d8841fa5ccb2a4f59f8082c5eef2534766b133f5abd9a3699f70a3ea5ea57
 // </auto-generated>
 #nullable enable
 
@@ -66,11 +66,31 @@ public static class Wire
         _ => "undefined",
     };
 
+    // JSON string quoting without reflection (trim-safe in WebAssembly): the
+    // same text JSON.stringify produces for ASCII. Written with character
+    // codes so the generated source needs no escape sequences.
+    private static readonly string Backslash = ((char)92).ToString();
+    private static readonly string QuoteMark = ((char)34).ToString();
+
+    public static string Quote(string text) =>
+        QuoteMark + string.Concat(text.Select(character => (int)character switch
+        {
+            34 => Backslash + QuoteMark,
+            92 => Backslash + Backslash,
+            10 => Backslash + "n",
+            13 => Backslash + "r",
+            9 => Backslash + "t",
+            8 => Backslash + "b",
+            12 => Backslash + "f",
+            < 32 => Backslash + "u" + ((int)character).ToString("x4", System.Globalization.CultureInfo.InvariantCulture),
+            _ => character.ToString(),
+        })) + QuoteMark;
+
     public static DecodeException Mismatch(string expected, string path, JsonElement element) => new(new DecodeError(path, expected, KindOf(element)));
 
     public static DecodeException Missing(string path) => new(new DecodeError(path, "a value", "undefined"));
 
-    public static DecodeException UnknownVariant(string path, string found) => new(new DecodeError(path, "a known variant", JsonSerializer.Serialize(found)));
+    public static DecodeException UnknownVariant(string path, string found) => new(new DecodeError(path, "a known variant", Quote(found)));
 
     public static Decoded<T> Run<T>(Func<T> read)
     {
@@ -120,7 +140,7 @@ public static class Wire
     public static RawJson Json(JsonElement element, string path) => new(element.GetRawText());
 
     public static bool LiteralString(JsonElement element, string path, string expected) =>
-        element.ValueKind == JsonValueKind.String && element.GetString() == expected ? true : throw Mismatch(JsonSerializer.Serialize(expected), path, element);
+        element.ValueKind == JsonValueKind.String && element.GetString() == expected ? true : throw Mismatch(Quote(expected), path, element);
 
     public static bool LiteralInt(JsonElement element, string path, long expected) =>
         Int(element, path) == expected ? true : throw Mismatch(expected.ToString(System.Globalization.CultureInfo.InvariantCulture), path, element);
@@ -160,7 +180,7 @@ public static class Wire
         var properties = Properties(element, path);
         return properties.Keys
             .OrderBy(key => key, StringComparer.Ordinal)
-            .ToDictionary(key => key, key => read(properties[key], path + "[" + JsonSerializer.Serialize(key) + "]"), StringComparer.Ordinal);
+            .ToDictionary(key => key, key => read(properties[key], path + "[" + Quote(key) + "]"), StringComparer.Ordinal);
     }
 
     // A closed key set: an unexpected field is corrupted or mismatched wire

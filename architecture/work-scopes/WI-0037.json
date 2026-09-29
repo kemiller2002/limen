@@ -1,13 +1,45 @@
 {
   "workItem": "WI-0037",
   "reference": "kemiller2002/limen#17",
-  "placement": "Tooling / Conformance + Optional Host (WASM host transports) — guardrail-class because it declares a new layer for host adapters",
+  "placement": "Tooling / Conformance + Optional Host (WASM host transports) \u2014 guardrail-class because it declares a new layer for host adapters",
   "guardrail": true,
   "paths": [
-    "guests/**", "conformance/**", "src/hosts/**", "src/index.ts", "architecture/layers.json", "architecture/typescript-boundary.json",
-    "architecture/guardrails.json", "test/**", "scripts/**", "package.json", "tsconfig.json", ".github/workflows/ci.yml", ".github/CODEOWNERS",
-    ".gitignore", "docs/**", "research/decisions/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "README.md"
+    "guests/**",
+    "conformance/**",
+    "src/hosts/**",
+    "src/index.ts",
+    "architecture/layers.json",
+    "architecture/typescript-boundary.json",
+    "architecture/guardrails.json",
+    "test/**",
+    "scripts/**",
+    "package.json",
+    "tsconfig.json",
+    ".github/workflows/ci.yml",
+    ".github/CODEOWNERS",
+    ".gitignore",
+    "docs/**",
+    "research/decisions/**",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "README.md"
   ],
-  "expansions": [],
+  "expansions": [
+    {
+      "paths": [
+        "tsconfig.guests.json"
+      ],
+      "reason": "The minimal-engine host page needs its own in-place type-check/emit config, like tsconfig.examples.json; it imports the package from dist/ as a consumer would."
+    },
+    {
+      "paths": [
+        "tools/contract-gen/emit-fsharp.ts",
+        "tools/contract-gen/emit-csharp.ts",
+        "tools/contract-gen/emit-rust.ts"
+      ],
+      "reason": "Required to build and write the engines: WebAssembly publishing failed trim analysis on the generated .NET runtimes' reflection-based string quoting (now reflection-free), and each engine needs the generated wire text of enum values (wireX / ToWire / as_wire) instead of re-deriving it by hand."
+    }
+  ],
   "recordedAfterCompletion": false
 }

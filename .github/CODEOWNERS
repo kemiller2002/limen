@@ -24,3 +24,7 @@
 /test/layers.test.ts          @kemiller2002
 /test/scope.test.ts           @kemiller2002
 /test/typescript-boundary.test.ts @kemiller2002
+/guests/minimal/rust/limen-minimal-wasm/ @kemiller2002
+/tsconfig.guests.json         @kemiller2002
+/scripts/build-guests-site.ts @kemiller2002
+/scripts/smoke-guests.ts      @kemiller2002

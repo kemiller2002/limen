@@ -79,7 +79,18 @@ const typeDecl = (decl: TypeDecl, decls: Decls): readonly string[] => {
     case "brand":
       return [...doc(decl.doc, 0), "#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]", `pub struct ${decl.name}(pub ${decl.of === "int" ? "i64" : "String"});`];
     case "enum":
-      return [...doc(decl.doc, 0), "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]", `pub enum ${decl.name} {`, ...decl.values.map((value) => indent(1, `${pascal(value)},`)), "}"];
+      return [
+        ...doc(decl.doc, 0), "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]", `pub enum ${decl.name} {`, ...decl.values.map((value) => indent(1, `${pascal(value)},`)), "}",
+        "",
+        `impl ${decl.name} {`,
+        indent(1, `/// The wire text of this value.`),
+        indent(1, "pub fn as_wire(&self) -> &'static str {"),
+        indent(2, "match self {"),
+        ...decl.values.map((value) => indent(3, `${decl.name}::${pascal(value)} => ${quoted(value)},`)),
+        indent(2, "}"),
+        indent(1, "}"),
+        "}",
+      ];
     case "record": {
       const data = dataFields(decl.fields);
       if (data.length === 0) throw new Error(`Rust: record ${decl.name} needs at least one non-literal field`);

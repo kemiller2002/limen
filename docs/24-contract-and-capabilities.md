@@ -84,6 +84,26 @@ Common rules, identical in every language:
 - **`json` slots are `RawJson`** — the serialized text, to be decoded by the
   capability's own generated binding, never inspected generically.
 
+### Three engines, one spec: the minimal engine
+
+[`conformance/sessions/minimal-engine.md`](../conformance/sessions/minimal-engine.md)
+specifies a small capability-probe engine language-neutrally;
+[`minimal.session.json`](../conformance/sessions/minimal.session.json) turns it
+into 65 message-by-message vectors. It is implemented three times — F#, C# and
+Rust under `guests/minimal/` — each against its own generated binding and its
+own guest handshake library, and each must reproduce every vector
+(`npm run test:guests:sessions`).
+
+Compiled to WebAssembly, the three run behind the same unmodified kernel via
+two generic, optional host adapters — `DotnetWasmTransport` (any .NET
+language; one `[JSExport]` method) and `RawWasmTransport` (any language that
+exports `limen_alloc`/`limen_dispatch`/`limen_free`) — exported as
+`./hosts/dotnet-wasm` and `./hosts/raw-wasm`. Both decode every engine response
+with the generated decoder. `npm run build:guests && npm run smoke:guests`
+proves, in Chromium, a negotiated handshake and success/failure paths for Http,
+Storage, Clipboard and Navigation in each language. See
+[DF-LIMEN-2026-0003](../research/decisions/DF-LIMEN-2026-0003--multi-language-wasm-guests.md).
+
 ### Shared vectors
 
 [`conformance/vectors/core.vectors.json`](../conformance/vectors/core.vectors.json)

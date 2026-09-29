@@ -275,6 +275,13 @@ export const emitFSharpUnit = (unit: ContractUnit): string => {
     "module Codec =",
     codecs.flatMap((decl, index) => [...decoderDecl(decl, decls, inherited, index === 0), ""]),
     codecs.flatMap((decl) => [...encoderDecl(decl, decls, inherited), ""]),
+    ...unit.types.flatMap((decl) => decl.kind !== "enum" ? [] : [
+      indent(1, `/// The wire text of a ${decl.name} value.`),
+      indent(1, `let wire${decl.name} (value: ${decl.name}) : string =`),
+      indent(2, "match value with"),
+      ...decl.values.map((wire) => indent(2, `| ${decl.name}.${pascal(wire)} -> ${quoted(wire)}`)),
+      "",
+    ]),
     ...codecs.flatMap((decl) => [
       indent(1, `let parse${decl.name} (json: string) = Wire.parse ${decoderRef(decl.name)} json`),
       indent(1, `let serialize${decl.name} (value: ${fsDeclType(decl, decls)}) = (encode${decl.name} value).ToJsonString()`),
@@ -326,6 +333,26 @@ module Wire =
         | JsonValueKind.False -> "boolean"
         | _ -> "undefined"
 
+    /// JSON string quoting without reflection (trim-safe in WebAssembly):
+    /// the same text JSON.stringify produces for ASCII. Written with
+    /// character codes so the generated source needs no escape sequences.
+    let private backslash = string (char 92)
+    let private quoteMark = string (char 34)
+
+    let quote (text: string) : string =
+        let escape (character: char) =
+            match int character with
+            | 34 -> backslash + quoteMark
+            | 92 -> backslash + backslash
+            | 10 -> backslash + "n"
+            | 13 -> backslash + "r"
+            | 9 -> backslash + "t"
+            | 8 -> backslash + "b"
+            | 12 -> backslash + "f"
+            | code when code < 32 -> backslash + "u" + code.ToString("x4")
+            | _ -> string character
+        quoteMark + String.Join("", text |> Seq.map escape) + quoteMark
+
     let mismatch (expected: string) (path: string) (element: JsonElement) : Result<'a, DecodeError> =
         Error { Path = path; Expected = expected; Found = kindOf element }
 
@@ -333,7 +360,7 @@ module Wire =
         Error { Path = path; Expected = "a value"; Found = "undefined" }
 
     let unknownVariant (path: string) (found: string) : Result<'a, DecodeError> =
-        Error { Path = path; Expected = "a known variant"; Found = JsonSerializer.Serialize found }
+        Error { Path = path; Expected = "a known variant"; Found = quote found }
 
     let string (path: string) (element: JsonElement) =
         if element.ValueKind = JsonValueKind.String then Ok(element.GetString()) else mismatch "string" path element
@@ -365,7 +392,7 @@ module Wire =
     let json (_: string) (element: JsonElement) : Result<RawJson, DecodeError> = Ok(RawJson(element.GetRawText()))
 
     let literalString (expected: string) (path: string) (element: JsonElement) =
-        if element.ValueKind = JsonValueKind.String && element.GetString() = expected then Ok() else mismatch (JsonSerializer.Serialize expected) path element
+        if element.ValueKind = JsonValueKind.String && element.GetString() = expected then Ok() else mismatch (quote expected) path element
 
     let literalInt (expected: int64) (path: string) (element: JsonElement) =
         match int path element with
@@ -411,7 +438,7 @@ module Wire =
             properties
             |> Map.keys
             |> ordinal
-            |> Seq.map (fun key -> decoder $"{path}[{JsonSerializer.Serialize key}]" properties[key] |> Result.map (fun value -> key, value))
+            |> Seq.map (fun key -> decoder $"{path}[{quote key}]" properties[key] |> Result.map (fun value -> key, value))
             |> Seq.toList
             |> firstError
             |> Result.map Map.ofList)

@@ -89,6 +89,18 @@ exhaustive lists.
   F#, C# and Rust reference consumers fail to compile, each with its own
   compiler error.
 
+- **Multi-language WebAssembly parity proof (#17, LCP-001).** A minimal
+  engine, specified language-neutrally with 65 normative session steps
+  (`conformance/sessions/`), is implemented in F#, C# and Rust on the
+  generated bindings, each with a guest handshake library; all three
+  reproduce every step. Two optional host adapters — `DotnetWasmTransport`
+  (`./hosts/dotnet-wasm`) and `RawWasmTransport` (`./hosts/raw-wasm`) — run
+  them behind the unmodified kernel, decoding every response with the
+  generated decoder. `npm run smoke:guests` (CI job) proves each engine's
+  negotiated handshake and Http, Storage, Clipboard and Navigation
+  success/failure paths in Chromium. Generated .NET runtimes are now
+  trim-safe.
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a

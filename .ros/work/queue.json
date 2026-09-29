@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 37,
+  "nextSeq": 38,
   "items": [
     {
       "id": "WI-0001",
@@ -625,6 +625,22 @@
       "createdBy": "claude-code",
       "source": "github",
       "sourceReference": "kemiller2002/limen#55"
+    },
+    {
+      "id": "WI-0037",
+      "title": "GH-17 LCP-001: minimal F#, C# and Rust WASM engines on the generated contract — guest handshake, shared session vectors, generic .NET and raw-wasm host transports, real-browser proof of Http/Storage/Clipboard/Navigation per guest",
+      "description": null,
+      "tags": [
+        "limen,gh-17,lcp-001,wasm,guests"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T05:38:10Z",
+      "updatedAt": "2026-09-29T05:38:11Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#17"
     }
   ]
 }

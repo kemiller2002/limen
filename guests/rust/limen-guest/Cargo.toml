@@ -1,0 +1,14 @@
+[package]
+name = "limen-guest"
+version = "0.1.0"
+edition = "2021"
+description = "Handwritten guest-side Limen protocol support for Rust engines: the engine's half of the handshake."
+license = "MIT"
+publish = false
+
+[dependencies]
+limen-contract = { path = "../limen-contract" }
+
+[lints.rust]
+unsafe_code = "forbid"
+warnings = "deny"

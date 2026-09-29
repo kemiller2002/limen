@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen minimal engine</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 46rem; }
+    button { margin: 0 .25rem .5rem 0; }
+    ol { font-family: ui-monospace, monospace; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <!-- One page, three engines. ?engine=fsharp | csharp | rust picks the
+       WebAssembly module; the HTML and the kernel are identical for all three.
+       Every decision below is made by the engine; this page only binds. -->
+  <h1>Limen minimal engine (<span id="engine"></span>)</h1>
+  <p>Status: <strong data-text="status"></strong> · entries: <span data-text="count"></span></p>
+  <div>
+    <button data-event="http-ok">Http ok</button>
+    <button data-event="http-missing">Http missing</button>
+    <button data-event="storage-set">Storage set</button>
+    <button data-event="storage-get">Storage get</button>
+    <button data-event="clipboard">Clipboard write</button>
+    <button data-event="nav-push">Navigate (same origin)</button>
+    <button data-event="nav-away">Navigate (other origin)</button>
+  </div>
+  <ol>
+    <template data-each="log" data-key="id"><li data-text="text"></li></template>
+  </ol>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

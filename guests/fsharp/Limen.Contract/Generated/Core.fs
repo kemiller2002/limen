@@ -4,7 +4,7 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:c4ecbfad699125298fba33122c47349868b29ba98a468b7ca5bb629c9ec8ad10
+// content-hash: sha256:77a6a9171b54f807454d3a69af30b128a469b76b4e07d7d9caf86b0df5b0ce87
 // </auto-generated>
 namespace Limen.Contract.Core
 
@@ -940,6 +940,60 @@ module Codec =
 
     and encodeEngineToBrowserMessage (value: EngineToBrowserMessage) : JsonNode =
         Wire.ofObject [ Some("view", encodeViewState value.View); Some("effects", (Wire.ofList encodeEffectRequest) value.Effects); Some("cancellations", (Wire.ofList encodeCorrelationId) value.Cancellations); value.Handshake |> Option.map (fun value -> "handshake", encodeEngineHandshake value) ]
+
+    /// The wire text of a Capability value.
+    let wireCapability (value: Capability) : string =
+        match value with
+        | Capability.Http -> "Http"
+        | Capability.Storage -> "Storage"
+        | Capability.Clipboard -> "Clipboard"
+        | Capability.Navigation -> "Navigation"
+
+    /// The wire text of a HttpFailureReason value.
+    let wireHttpFailureReason (value: HttpFailureReason) : string =
+        match value with
+        | HttpFailureReason.Network -> "network"
+        | HttpFailureReason.Aborted -> "aborted"
+        | HttpFailureReason.InvalidResponse -> "invalid-response"
+
+    /// The wire text of a StorageFailureReason value.
+    let wireStorageFailureReason (value: StorageFailureReason) : string =
+        match value with
+        | StorageFailureReason.Unavailable -> "unavailable"
+        | StorageFailureReason.QuotaExceeded -> "quota-exceeded"
+
+    /// The wire text of a ClipboardFailureReason value.
+    let wireClipboardFailureReason (value: ClipboardFailureReason) : string =
+        match value with
+        | ClipboardFailureReason.Denied -> "denied"
+        | ClipboardFailureReason.Unavailable -> "unavailable"
+        | ClipboardFailureReason.Unknown -> "unknown"
+
+    /// The wire text of a NavigationFailureReason value.
+    let wireNavigationFailureReason (value: NavigationFailureReason) : string =
+        match value with
+        | NavigationFailureReason.Unavailable -> "unavailable"
+        | NavigationFailureReason.NotSameOrigin -> "not-same-origin"
+
+    /// The wire text of a CapabilityUnsupportedReason value.
+    let wireCapabilityUnsupportedReason (value: CapabilityUnsupportedReason) : string =
+        match value with
+        | CapabilityUnsupportedReason.NotNegotiated -> "not-negotiated"
+        | CapabilityUnsupportedReason.VersionUnsupported -> "version-unsupported"
+
+    /// The wire text of a CapabilityRejectedReason value.
+    let wireCapabilityRejectedReason (value: CapabilityRejectedReason) : string =
+        match value with
+        | CapabilityRejectedReason.MalformedRequest -> "malformed-request"
+
+    /// The wire text of a HttpMethod value.
+    let wireHttpMethod (value: HttpMethod) : string =
+        match value with
+        | HttpMethod.Get -> "GET"
+        | HttpMethod.Put -> "PUT"
+        | HttpMethod.Post -> "POST"
+        | HttpMethod.Patch -> "PATCH"
+        | HttpMethod.Delete -> "DELETE"
 
     let parseCorrelationId (json: string) = Wire.parse decodeCorrelationId json
     let serializeCorrelationId (value: CorrelationId) = (encodeCorrelationId value).ToJsonString()

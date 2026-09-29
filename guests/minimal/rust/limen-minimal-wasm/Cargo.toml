@@ -1,0 +1,23 @@
+[package]
+name = "limen-minimal-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "The WASM ABI for the Rust minimal engine: three exported functions that move UTF-8 JSON across linear memory. The only unsafe code in the Rust guests, and nothing else."
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+limen-minimal = { path = "../limen-minimal" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[lints.rust]
+warnings = "deny"

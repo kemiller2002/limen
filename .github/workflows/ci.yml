@@ -123,6 +123,46 @@ jobs:
       - name: F#, C# and Rust bindings compile strictly and agree on the shared vectors
         run: npm run test:guests
 
+  # LCP-001: the F#, C# and Rust minimal engines compiled to WebAssembly, each
+  # driving every built-in capability through the same kernel in real Chromium.
+  guest-engines-browser:
+    name: Guest engines in a real browser (F#, C#, Rust WASM)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up Rust for wasm32
+        run: rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown && rustup default stable
+
+      - name: Install dependencies and the .NET WebAssembly workload
+        run: |
+          npm ci
+          dotnet workload restore guests/minimal/fsharp/Limen.Minimal.Wasm/Limen.Minimal.Wasm.csproj
+          dotnet workload restore guests/minimal/csharp/Limen.Minimal.Wasm/Limen.Minimal.Wasm.csproj
+
+      - name: Install Playwright's Chromium (not a package dependency)
+        run: npm install --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+
+      - name: Build the three WebAssembly engines
+        run: npm run build:guests
+
+      - name: Every engine drives every built-in capability in Chromium
+        run: npm run smoke:guests
+        env:
+          LIMEN_REQUIRE_BROWSER: "1"
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.
