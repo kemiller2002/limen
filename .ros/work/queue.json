@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 93,
+  "nextSeq": 95,
   "items": [
     {
       "id": "WI-0001",
@@ -1416,6 +1416,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T10:41:25Z",
       "updatedAt": "2026-09-29T10:46:03Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0093",
+      "title": "Resource-hint and View Transition capability pack: idempotent preconnect/preload/modulepreload/prefetch, engine-labelled view transitions around the next projection, unsupported fallback (GH-34)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:46:33Z",
+      "updatedAt": "2026-09-29T10:46:33Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0094",
+      "title": "Guardrail: register the limen.presentation contract unit and its generated bindings (GH-34)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T10:46:34Z",
+      "updatedAt": "2026-09-29T10:46:34Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
