@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0101",
+  "reference": "kemiller2002/limen#43",
+  "placement": "Guardrail — contract/targets.json and the guest projects are guardrail-owned. Registers the limen.lifecycle unit and includes its generated bindings.",
+  "guardrail": true,
+  "paths": ["contract/targets.json", "src/capabilities/lifecycle/generated/**", "guests/fsharp/Limen.Contract/**", "guests/csharp/Limen.Contract/**", "guests/rust/limen-contract/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
