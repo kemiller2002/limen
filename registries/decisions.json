@@ -1,1 +1,40 @@
-[]
+[
+  {
+    "author_agent": "claude-code",
+    "created": "2026-09-29",
+    "external_references": [
+      "kemiller2002/limen#16",
+      "kemiller2002/limen#52",
+      "kemiller2002/limen#51"
+    ],
+    "id": "DF-LIMEN-2026-0001",
+    "path": "research/decisions/DF-LIMEN-2026-0001--neutral-contract-and-capability-extension.md",
+    "related_documents": [
+      "src/protocol.ts",
+      "contract/core.contract.json",
+      "tools/contract-gen/README.md",
+      "docs/24-contract-and-capabilities.md"
+    ],
+    "related_projects": [
+      "limen"
+    ],
+    "status": "accepted",
+    "superseded_by": [],
+    "supersedes": [],
+    "tags": [
+      "contract",
+      "protocol",
+      "capability",
+      "handshake",
+      "wasm",
+      "lcp-002"
+    ],
+    "title": "One language-neutral contract, a fingerprint handshake, and a generic capability envelope",
+    "type": "decision-record",
+    "updated": "2026-09-29",
+    "version": "1.0.0",
+    "work_items": [
+      "WI-0028"
+    ]
+  }
+]

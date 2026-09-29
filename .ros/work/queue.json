@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 29,
+  "nextSeq": 30,
   "items": [
     {
       "id": "WI-0001",
@@ -490,13 +490,29 @@
         "limen,gh-16,lcp-002,core,contract"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T04:32:49Z",
-      "updatedAt": "2026-09-29T04:32:53Z",
+      "updatedAt": "2026-09-29T04:54:08Z",
       "createdBy": "claude-code",
       "source": "github",
       "sourceReference": "kemiller2002/limen#16"
+    },
+    {
+      "id": "WI-0029",
+      "title": "Repair ROS validation findings from WI-0028: DF identifier format and invalid telemetry classification",
+      "description": null,
+      "tags": [
+        "ros,mechanical"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T04:55:07Z",
+      "updatedAt": "2026-09-29T04:55:08Z",
+      "createdBy": "claude-code",
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }

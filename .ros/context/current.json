@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T04:32:54Z",
+  "updatedAt": "2026-09-29T04:55:08Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -544,12 +544,45 @@
     {
       "id": "WI-0028",
       "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/handshake.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/main.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/handshake.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        },
+        {
+          "type": "decision",
+          "path": "research/decisions/DF-LIMEN-2026-0001--neutral-contract-and-capability-extension.md"
+        }
+      ],
+      "updatedAt": "2026-09-29T04:54:08Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T043254320Z-e858b3ca"
+      ],
+      "completedAt": "2026-09-29T04:54:08Z"
+    },
+    {
+      "id": "WI-0029",
+      "type": "mechanical",
       "state": "active",
       "semanticState": "active",
       "evidence": [],
-      "updatedAt": "2026-09-29T04:32:54Z",
+      "updatedAt": "2026-09-29T04:55:08Z",
       "telemetryExecutionIds": [
-        "EXE-20260929T043254320Z-e858b3ca"
+        "EXE-20260929T045508726Z-d5fe65e9"
       ]
     }
   ]

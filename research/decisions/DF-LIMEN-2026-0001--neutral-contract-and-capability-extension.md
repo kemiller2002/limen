@@ -1,5 +1,5 @@
 ---
-identifier: DF-LIMEN-2026-001
+identifier: DF-LIMEN-2026-0001
 title: One language-neutral contract, a fingerprint handshake, and a generic capability envelope
 type: decision-record
 status: accepted
@@ -20,7 +20,7 @@ work_items: [WI-0028]
 external_references: ["kemiller2002/limen#16", "kemiller2002/limen#52", "kemiller2002/limen#51"]
 ---
 
-# DF-LIMEN-2026-001 — One language-neutral contract, a fingerprint handshake, and a generic capability envelope
+# DF-LIMEN-2026-0001 — One language-neutral contract, a fingerprint handshake, and a generic capability envelope
 
 ## Context
 

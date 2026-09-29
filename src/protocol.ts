@@ -3,7 +3,7 @@
 // Every wire type below is GENERATED from the language-neutral source of truth,
 // contract/core.contract.json, by tools/contract-gen. This file only re-exports
 // them under their long-standing public names; it must never declare a wire
-// shape of its own (see research/decisions/DF-LIMEN-2026-001). To change the
+// shape of its own (see research/decisions/DF-LIMEN-2026-0001). To change the
 // protocol, change the contract and run `npm run contract:generate`.
 //
 // Rationale that used to live in comments here now lives with the contract

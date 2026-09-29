@@ -3,7 +3,7 @@
 // equality — the engine chooses what it uses; the host only checks that the
 // choice is something it offered, exactly.
 //
-// See research/decisions/DF-LIMEN-2026-001 for the state model.
+// See research/decisions/DF-LIMEN-2026-0001 for the state model.
 
 import { decodeEngineHandshake, type DecodeError } from "../generated/core.codec.js";
 import type { CapabilityId, CapabilityOffer, ContractIdentity, HandshakeRejection, HostHandshake, ProtocolRevision } from "../protocol.js";

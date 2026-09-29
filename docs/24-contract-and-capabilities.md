@@ -5,7 +5,7 @@ for each language are produced, how a host and an engine agree they speak the
 same contract before anything else happens, and how an optional browser
 capability is added without changing Core.
 
-Decision record: [DF-LIMEN-2026-001](../research/decisions/DF-LIMEN-2026-001--neutral-contract-and-capability-extension.md).
+Decision record: [DF-LIMEN-2026-0001](../research/decisions/DF-LIMEN-2026-0001--neutral-contract-and-capability-extension.md).
 
 ---
 

@@ -39,7 +39,7 @@ export type KernelOptions = {
 
 // The kernel's own lifecycle. Normal traffic — events, effects, facts — flows
 // only in Running. Incompatible is terminal: nothing from that engine is ever
-// applied. See research/decisions/DF-LIMEN-2026-001.
+// applied. See research/decisions/DF-LIMEN-2026-0001.
 type Phase =
   | { readonly kind: "Unstarted" }
   | { readonly kind: "Starting" }
