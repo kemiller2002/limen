@@ -48,6 +48,12 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **State-safe hot reload (#36).** `./tooling/hot-reload` and `npm run dev`:
+  - a pure reload plan: CSS swaps in place, HTML remounts, and an engine is
+    restored only from a snapshot with exactly its version (otherwise it is
+    reset); anything else reloads the page;
+  - a dev server that streams file changes.
+  Development only; nothing in Core imports it.
 - **Localization engine library and semantics (#35).**
   `conformance/localization/` (34 cases) and `libraries/fsharp/Limen.Localization`:
   - BCP 47 negotiation;

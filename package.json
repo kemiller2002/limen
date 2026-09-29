@@ -99,6 +99,10 @@
       "types": "./dist/tooling/provider-conformance.d.ts",
       "import": "./dist/tooling/provider-conformance.js"
     },
+    "./tooling/hot-reload": {
+      "types": "./dist/tooling/hot-reload.d.ts",
+      "import": "./dist/tooling/hot-reload.js"
+    },
     "./testing/views": {
       "types": "./dist/tooling/view-contract.d.ts",
       "import": "./dist/tooling/view-contract.js"
@@ -180,6 +184,7 @@
     "build": "tsc -p tsconfig.json",
     "build:examples": "tsc -p tsconfig.examples.json",
     "build:site": "npm run build:site:wasm && npm run test:site:fsharp && tsc -p tsconfig.site.json && node --experimental-strip-types scripts/build-site.ts",
+    "dev": "node --experimental-strip-types scripts/dev-server.ts",
     "serve:site": "npm run build:site && python3 -m http.server 4174 -d dist-site",
     "check:architecture": "node --experimental-strip-types scripts/check-architecture.ts",
     "check:docs": "node --experimental-strip-types scripts/check-docs.ts",

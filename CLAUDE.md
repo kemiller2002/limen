@@ -256,6 +256,7 @@ npm run contract:generate  # regenerate every binding from contract/*.contract.j
 npm run contract:check     # fail on stale / hand-edited / missing / orphaned bindings
 npm run build:guests       # F#, C#, Rust minimal engines → WebAssembly → dist-guests/
 npm run smoke:guests       # each WASM engine drives every capability in Chromium
+npm run dev                # dev server + change stream for hot reload (docs/47)
 npm run bench              # performance baseline → bench/results/latest.json (docs/27)
 npm run check:views        # every page against its *.view.json contract (docs/28)
 npm run smoke:security     # strict CSP + Trusted Types in Chromium: kernel and guests (docs/29)

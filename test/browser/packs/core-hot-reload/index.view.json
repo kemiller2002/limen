@@ -1,0 +1,10 @@
+{
+  "doc": "The hot-reload page (scripts/smoke-packs.ts). Its engines are in main.js.",
+  "view": {
+    "count": "string",
+    "label": "string"
+  },
+  "events": {
+    "add": {}
+  }
+}
