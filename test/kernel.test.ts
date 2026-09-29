@@ -378,6 +378,25 @@ async function tick(document: Document): Promise<void> {
   await flush();
 }
 
+// WI-0044 (evidence: a keyed removal cost twice the mutations of an insertion).
+test("removing a keyed row removes that row and moves no other", async () => {
+  const lists = [["a", "b", "c", "d", "e"], ["a", "b", "d", "e"]];
+  const transport = new ScriptedTransport((_message, calls) => respond({ view: { rows: (lists[Math.min(calls.length - 1, 1)] ?? []).map((id) => ({ id, name: id.toUpperCase() })) } }));
+  await withDom(`<button data-event="tick">t</button><ul><template data-each="rows" data-key="id"><li data-text="name"></li></template></ul>`, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    const before = Array.from(document.querySelectorAll("li"));
+    const records: MutationRecord[] = [];
+    const observer = new window.MutationObserver((batch) => { records.push(...batch); });
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
+    await tick(document);
+    observer.disconnect();
+    const after = Array.from(document.querySelectorAll("li"));
+    assert.deepEqual(after.map((row) => row.textContent), ["A", "B", "D", "E"]);
+    assert.deepEqual(after, [before[0], before[1], before[3], before[4]], "every surviving row is the same node");
+    assert.deepEqual(records.map((record) => [record.type, record.removedNodes.length, record.addedNodes.length]), [["childList", 1, 0]], "exactly one removal, no moves");
+  });
+});
+
 // WI-0043 (evidence: a no-op list projection was one DOM mutation per row).
 test("an unchanged projection writes nothing to the DOM, and a node changed outside the kernel is still corrected", async () => {
   const transport = new ScriptedTransport(() => respond({ view: { message: "hello", label: "Save", link: "/home", rows: [{ id: "a", name: "A" }, { id: "b", name: "B" }] } }));

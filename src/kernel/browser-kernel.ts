@@ -600,14 +600,21 @@ export class BrowserKernel {
     const items = raw as readonly ViewItem[];
     const parent = binding.anchor.parentNode;
     if (!parent) throw new Error(`data-each anchor for "${binding.listKey}" is detached`);
-    const seen = new Set<string>();
+    const keyOf = (item: ViewItem): string => {
+      const rawKey = item[binding.itemKey];
+      if (rawKey === undefined) throw new Error(`data-each item missing key field "${binding.itemKey}"`);
+      return String(rawKey);
+    };
+    const seen = new Set(items.map(keyOf));
+    // Rows whose keys left the list go first: removed after the reorder pass,
+    // each following row looked out of place and was moved (WI-0044).
+    for (const [key, instance] of binding.instances) {
+      if (!seen.has(key)) { instance.root.remove(); binding.instances.delete(key); }
+    }
     const refusals: string[] = [];
     let cursor: ChildNode = binding.anchor;
     for (const item of items) {
-      const rawKey = item[binding.itemKey];
-      if (rawKey === undefined) throw new Error(`data-each item missing key field "${binding.itemKey}"`);
-      const key = String(rawKey);
-      seen.add(key);
+      const key = keyOf(item);
       let instance = binding.instances.get(key);
       if (!instance) {
         const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
@@ -624,9 +631,6 @@ export class BrowserKernel {
       refusals.push(...this.#applyScope(instance.scope, item));
       if (cursor.nextSibling !== instance.root) parent.insertBefore(instance.root, cursor.nextSibling);
       cursor = instance.root;
-    }
-    for (const [key, instance] of binding.instances) {
-      if (!seen.has(key)) { instance.root.remove(); binding.instances.delete(key); }
     }
     return refusals;
   }

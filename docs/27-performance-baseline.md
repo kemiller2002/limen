@@ -172,13 +172,18 @@ acted on here.
    | list-10k one-row update, DOM mutations | 10,000 | 1 |
    | list-10k removal, DOM mutations | 20,001 | 10,001 |
 
-   The removal figure is halved. What remains of it is WI-0044. A node
+   The removal figure is halved; WI-0044 (item 2) removes the rest. A node
    changed outside the kernel is still corrected, because the comparison is
    with the DOM, not a cache (`test/kernel.test.ts`).
 2. **Removing a keyed row moves every row after it** (WI-0044). A middle
    removal costs twice the mutations of a middle insertion. The stale row
    leaves only after the reorder pass, so each following row fails the
    `nextSibling` check and is re-inserted.
+   *Done in WI-0044:* rows whose keys left the list are removed before the
+   reorder pass. A middle removal is now one DOM mutation: on list-10k it
+   went from 10,001 mutations to 1, and from 26.2 ms to 11.4 ms. Every
+   surviving row keeps its node, and no other row moves
+   (`test/kernel.test.ts`).
 3. **Strict decoding dominates the boundary cost** (WI-0045). Decoding a
    10k-row view takes 17.1ms, ten times `JSON.parse`, and roughly doubles the
    unchanged-list cost at the JSON boundary. The fix is decoder throughput

@@ -143,6 +143,10 @@ exhaustive lists.
 
 ### Changed
 
+- **Removing a keyed row moves no other row (WI-0044, #19).**
+  - Rows whose keys left the list are removed before the reorder pass.
+  - A middle removal from a 10k-row list went from 10,001 DOM mutations to
+    1, and from 26.2 ms to 11.4 ms.
 - **Projection skips unchanged writes (WI-0043, #19).**
   - The kernel compares each `data-text` and each plain or URL attribute with
     the live DOM before writing.
