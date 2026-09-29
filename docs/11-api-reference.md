@@ -462,14 +462,15 @@ type EffectOutcome =
   | { kind: "Success";        status: number; body: unknown; headers?: Readonly<Record<string, string>> }
   | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response" | "too-large"; status?: number }
   | { kind: "Cancelled" }
-  | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" };
+  | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" | "connection-lost" };
 ```
 
 | Outcome | Produced when |
 | --- | --- |
 | `Success` | a response arrived **and its body was read as the request asked** (`.json()` parsed, by default) — any status, including 500 |
 | `Failure { too-large, status }` | a `text` or `base64` body passed `MAX_HTTP_TEXT_BYTES` (8 MiB) |
-| `Failure { network }` | `fetch` threw and was not aborted. **No `status`** — nothing came back |
+| `Failure { network }` | `fetch` threw and was not aborted, and nothing can have changed: the method is `GET`, `HEAD` or `OPTIONS`, or the browser was offline when the request was made. **No `status`** — nothing came back |
+| `OutcomeUnknown { connection-lost }` | protocol 1.4: `fetch` threw for `POST`, `PUT`, `PATCH` or `DELETE` while the browser was online. The server may have it, possibly twice. A 1.3 engine hears `timeout-after-dispatch` instead |
 | `Failure { invalid-response, status }` | a response arrived but would not decode. **Carries the status** |
 
 > **`status` is present exactly when a response was received.** Its absence

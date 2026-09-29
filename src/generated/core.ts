@@ -2,23 +2,23 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
+// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
 // generator: limen-contract-gen/1 (typescript-types)
-// content-hash: sha256:7aae8ca2865290c70b290245250f01d634d968f6491decf25ecb570d98ab1117
+// content-hash: sha256:b06ff59b5e3fd2c496ec5d3a99583b0804cb28de150bfd8807d202abdc7c4c6c
 // </auto-generated>
 /** The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand. */
 
 /** The wire envelope major version. Revision 1.1 added the handshake and the generic capability envelope, both additive. */
 export const PROTOCOL_VERSION = 1 as const;
 
-/** Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding. */
-export const PROTOCOL_MINOR = 3 as const;
+/** Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding; 1.4 added OutcomeUnknown{connection-lost}. */
+export const PROTOCOL_MINOR = 4 as const;
 
 /** Protocol 1.3. The largest text or base64 response body, in bytes; a larger one is Failure too-large. Larger transfers belong to the transfer profile pack. */
 export const MAX_HTTP_TEXT_BYTES = 8388608 as const;
 
 /** The identity of this generated contract unit, exchanged in the handshake. */
-export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def" } as const;
+export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c" } as const;
 
 /** Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected. */
 export type CorrelationId = string & { readonly __correlationId: unique symbol };
@@ -32,15 +32,18 @@ export type SemanticEvent = { readonly kind: "Event"; readonly name: string; rea
 /** The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this. */
 export type BrowserLocation = { readonly origin: string; readonly path: string; readonly query: string; readonly hash: string };
 
-/** too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit. */
+/** network: fetch threw and the request cannot have changed anything, because the method is safe (GET, HEAD, OPTIONS) or the browser was offline when it was made (protocol 1.4; before, any thrown fetch). too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit. */
 export type HttpFailureReason = "network" | "aborted" | "invalid-response" | "too-large";
 
-/** The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure. */
+/** timeout-after-dispatch: the request timed out after fetch was called. connection-lost (protocol 1.4): fetch threw for POST, PUT, PATCH or DELETE while the browser was online, so the request may have reached the server (and the browser may have resent it). An engine that negotiated protocol 1.3 or earlier hears timeout-after-dispatch for both. */
+export type OutcomeUnknownReason = "timeout-after-dispatch" | "connection-lost";
+
+/** The outcome of an Http effect. OutcomeUnknown exists because a request that timed out, or whose connection was lost, may already have reached the server; it must never be collapsed into Failure. */
 export type EffectOutcome =
   | { readonly kind: "Success"; readonly status: number; readonly body: unknown; readonly headers?: Readonly<Record<string, string>> }
   | { readonly kind: "Failure"; readonly reason: "network" | "aborted" | "invalid-response" | "too-large"; readonly status?: number }
   | { readonly kind: "Cancelled" }
-  | { readonly kind: "OutcomeUnknown"; readonly reason: "timeout-after-dispatch" };
+  | { readonly kind: "OutcomeUnknown"; readonly reason: "timeout-after-dispatch" | "connection-lost" };
 
 export type StorageFailureReason = "unavailable" | "quota-exceeded";
 

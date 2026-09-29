@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
+// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:b032e4f841cc77d61ef58ef180a7d5dbfc44dc9824e1ac4f277281170632f49e
+// content-hash: sha256:ad00b345cfc1583fc7979a5b7b0980bc36b5be4a3e5bf17955dfbd779cb0ea2f
 // </auto-generated>
 namespace Limen.Contract.Core
 
@@ -52,19 +52,24 @@ module Types =
             Hash: string
         }
 
-    /// too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.
+    /// network: fetch threw and the request cannot have changed anything, because the method is safe (GET, HEAD, OPTIONS) or the browser was offline when it was made (protocol 1.4; before, any thrown fetch). too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.
     and [<RequireQualifiedAccess>] HttpFailureReason =
         | Network
         | Aborted
         | InvalidResponse
         | TooLarge
 
-    /// The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.
+    /// timeout-after-dispatch: the request timed out after fetch was called. connection-lost (protocol 1.4): fetch threw for POST, PUT, PATCH or DELETE while the browser was online, so the request may have reached the server (and the browser may have resent it). An engine that negotiated protocol 1.3 or earlier hears timeout-after-dispatch for both.
+    and [<RequireQualifiedAccess>] OutcomeUnknownReason =
+        | TimeoutAfterDispatch
+        | ConnectionLost
+
+    /// The outcome of an Http effect. OutcomeUnknown exists because a request that timed out, or whose connection was lost, may already have reached the server; it must never be collapsed into Failure.
     and [<RequireQualifiedAccess>] EffectOutcome =
         | Success of Status: int64 * Body: RawJson * Headers: Map<string, string> option
         | Failure of Reason: HttpFailureReason * Status: int64 option
         | Cancelled
-        | OutcomeUnknown
+        | OutcomeUnknown of Reason: OutcomeUnknownReason
 
     and [<RequireQualifiedAccess>] StorageFailureReason =
         | Unavailable
@@ -284,9 +289,9 @@ module Types =
 module Contract =
     let [<Literal>] Unit = "limen.core"
     let [<Literal>] Version = 1L
-    let [<Literal>] Fingerprint = "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def"
+    let [<Literal>] Fingerprint = "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c"
     let [<Literal>] ProtocolVersion = 1L
-    let [<Literal>] ProtocolMinor = 3L
+    let [<Literal>] ProtocolMinor = 4L
     let [<Literal>] MaxHttpTextBytes = 8388608L
 
 /// Strict decoders (untrusted JSON → contract values) and encoders.
@@ -326,6 +331,9 @@ module Codec =
     and decodeHttpFailureReason (path: string) (element: JsonElement) : Result<HttpFailureReason, DecodeError> =
         Wire.enumeration [ "network", HttpFailureReason.Network; "aborted", HttpFailureReason.Aborted; "invalid-response", HttpFailureReason.InvalidResponse; "too-large", HttpFailureReason.TooLarge ] path element
 
+    and decodeOutcomeUnknownReason (path: string) (element: JsonElement) : Result<OutcomeUnknownReason, DecodeError> =
+        Wire.enumeration [ "timeout-after-dispatch", OutcomeUnknownReason.TimeoutAfterDispatch; "connection-lost", OutcomeUnknownReason.ConnectionLost ] path element
+
     and decodeEffectOutcome (path: string) (element: JsonElement) : Result<EffectOutcome, DecodeError> =
         Wire.decode {
             let! tag = Wire.tag "kind" path element
@@ -354,8 +362,8 @@ module Codec =
                 let! props = Wire.properties path element
                 let! props = Wire.closed [ "kind"; "reason" ] path props
                 let! () = Wire.required "kind" (Wire.literalString "OutcomeUnknown") path props
-                let! () = Wire.required "reason" (Wire.literalString "timeout-after-dispatch") path props
-                return EffectOutcome.OutcomeUnknown
+                let! f_reason = Wire.required "reason" decodeOutcomeUnknownReason path props
+                return EffectOutcome.OutcomeUnknown(f_reason)
             | other -> return! Wire.unknownVariant (path + ".kind") other
         }
 
@@ -847,12 +855,17 @@ module Codec =
         | HttpFailureReason.InvalidResponse -> Wire.ofString "invalid-response"
         | HttpFailureReason.TooLarge -> Wire.ofString "too-large"
 
+    and encodeOutcomeUnknownReason (value: OutcomeUnknownReason) : JsonNode =
+        match value with
+        | OutcomeUnknownReason.TimeoutAfterDispatch -> Wire.ofString "timeout-after-dispatch"
+        | OutcomeUnknownReason.ConnectionLost -> Wire.ofString "connection-lost"
+
     and encodeEffectOutcome (value: EffectOutcome) : JsonNode =
         match value with
         | EffectOutcome.Success(f_status, f_body, f_headers) -> Wire.ofObject [ Some("kind", Wire.ofString "Success"); Some("status", Wire.ofInt f_status); Some("body", Wire.ofJson f_body); f_headers |> Option.map (fun value -> "headers", (Wire.ofMap Wire.ofString) value) ]
         | EffectOutcome.Failure(f_reason, f_status) -> Wire.ofObject [ Some("kind", Wire.ofString "Failure"); Some("reason", encodeHttpFailureReason f_reason); f_status |> Option.map (fun value -> "status", Wire.ofInt value) ]
         | EffectOutcome.Cancelled -> Wire.ofObject [ Some("kind", Wire.ofString "Cancelled") ]
-        | EffectOutcome.OutcomeUnknown -> Wire.ofObject [ Some("kind", Wire.ofString "OutcomeUnknown"); Some("reason", Wire.ofString "timeout-after-dispatch") ]
+        | EffectOutcome.OutcomeUnknown(f_reason) -> Wire.ofObject [ Some("kind", Wire.ofString "OutcomeUnknown"); Some("reason", encodeOutcomeUnknownReason f_reason) ]
 
     and encodeStorageFailureReason (value: StorageFailureReason) : JsonNode =
         match value with
@@ -1039,6 +1052,12 @@ module Codec =
         | HttpFailureReason.InvalidResponse -> "invalid-response"
         | HttpFailureReason.TooLarge -> "too-large"
 
+    /// The wire text of a OutcomeUnknownReason value.
+    let wireOutcomeUnknownReason (value: OutcomeUnknownReason) : string =
+        match value with
+        | OutcomeUnknownReason.TimeoutAfterDispatch -> "timeout-after-dispatch"
+        | OutcomeUnknownReason.ConnectionLost -> "connection-lost"
+
     /// The wire text of a StorageFailureReason value.
     let wireStorageFailureReason (value: StorageFailureReason) : string =
         match value with
@@ -1105,6 +1124,8 @@ module Codec =
     let serializeBrowserLocation (value: BrowserLocation) = (encodeBrowserLocation value).ToJsonString()
     let parseHttpFailureReason (json: string) = Wire.parse decodeHttpFailureReason json
     let serializeHttpFailureReason (value: HttpFailureReason) = (encodeHttpFailureReason value).ToJsonString()
+    let parseOutcomeUnknownReason (json: string) = Wire.parse decodeOutcomeUnknownReason json
+    let serializeOutcomeUnknownReason (value: OutcomeUnknownReason) = (encodeOutcomeUnknownReason value).ToJsonString()
     let parseEffectOutcome (json: string) = Wire.parse decodeEffectOutcome json
     let serializeEffectOutcome (value: EffectOutcome) = (encodeEffectOutcome value).ToJsonString()
     let parseStorageFailureReason (json: string) = Wire.parse decodeStorageFailureReason json
@@ -1184,6 +1205,7 @@ module Conformance =
             "SemanticEvent", (fun path element -> Codec.decodeSemanticEvent path element |> Result.map Codec.encodeSemanticEvent)
             "BrowserLocation", (fun path element -> Codec.decodeBrowserLocation path element |> Result.map Codec.encodeBrowserLocation)
             "HttpFailureReason", (fun path element -> Codec.decodeHttpFailureReason path element |> Result.map Codec.encodeHttpFailureReason)
+            "OutcomeUnknownReason", (fun path element -> Codec.decodeOutcomeUnknownReason path element |> Result.map Codec.encodeOutcomeUnknownReason)
             "EffectOutcome", (fun path element -> Codec.decodeEffectOutcome path element |> Result.map Codec.encodeEffectOutcome)
             "StorageFailureReason", (fun path element -> Codec.decodeStorageFailureReason path element |> Result.map Codec.encodeStorageFailureReason)
             "StorageOutcome", (fun path element -> Codec.decodeStorageOutcome path element |> Result.map Codec.encodeStorageOutcome)

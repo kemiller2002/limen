@@ -18,6 +18,19 @@ exhaustive lists.
 
 ### Changed
 
+- **Breaking for engines that retry on `Failure { network }`: a write whose
+  connection drops is `OutcomeUnknown` (#40, protocol 1.4).**
+  - Before: a thrown `fetch` was always `Failure { network }`, documented as
+    retryable.
+  - Proven in Chromium: a reset `POST` reached the server twice before `fetch`
+    rejected. For `POST`, `PUT`, `PATCH` and `DELETE` while online, the outcome
+    is now `OutcomeUnknown { reason: "connection-lost" }`.
+  - Safe methods and requests made offline stay `Failure { network }`.
+  - A 1.3 engine hears `OutcomeUnknown { timeout-after-dispatch }` instead.
+  - `OutcomeUnknownReason` is a new contract enum; F#, C# and Rust consumers
+    that matched `OutcomeUnknown` without a field must now name it (P-4 in
+    `docs/DOCUMENTATION-AUDIT.md`).
+
 - **HTML boolean attributes are toggled by presence (#31).** `data-bind-inert`,
   `-required`, `-readonly`, `-multiple` and every other boolean attribute are
   now present when the value is truthy and removed otherwise. Before, the

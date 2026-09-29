@@ -37,6 +37,7 @@ non-release work, and the starting commit is recorded above.
 | **P-1** | P | `data-if`/`data-each` fields skip the form pending-field flush | ✅ **FIXED** — insert before binding; regression tests |
 | **P-2** | P | `data-if`/`data-each` on a non-`<template>` silently ignored | ✅ **FIXED** — now a reported binding error; found externally (L-2) |
 | **P-3** | P | An undecodable response discarded its status code | ✅ **FIXED** — `Failure` now carries `status`; found by building the site |
+| **P-4** | P | A write whose connection dropped was reported as a retryable `Failure { network }` | ✅ **FIXED** — `OutcomeUnknown { connection-lost }`, protocol 1.4; found proving the offline outbox |
 | **D-9** | D | `dist/main.js` ships and auto-starts the demo on import | ✅ **FIXED** — excluded from the published package |
 | N-1 | N | "kernel" and "capability" each carry two meanings | documented |
 | N-2 | N | `any`/`dynamic` check is raw-text, matches comments | documented |
@@ -228,6 +229,35 @@ carries the meaning "nothing came back". Additive, so no consumer breaks.
 
 Covered by three tests (a 503 error page, a malformed 200, and a network failure
 that must carry no status), plus two at the site level.
+
+### P-4 · A write whose connection dropped was a retryable failure
+
+✅ **FIXED** (kemiller2002/limen#40, protocol 1.4). Found while proving the
+offline outbox's unknown-outcome case in Chromium.
+
+**Behavior.** When `fetch` threw, the kernel reported `Failure { network }`,
+and the documentation called it retryable. But `fetch` throws the same
+`TypeError` whether a request never left or the connection dropped after the
+server had it. In Chromium, a `POST` whose connection the server reset
+**reached the server twice**, because the network stack resent it, and then
+`fetch` rejected. The kernel called that a confident failure. For a payment, an
+engine following the documentation would retry and charge a third time. This
+is exactly the collapse of `OutcomeUnknown` into `Failure` that the contract
+forbids.
+
+**Fix.** A thrown `fetch` is `Failure { network }` only when nothing can have
+changed: the method is `GET`, `HEAD` or `OPTIONS`, or `navigator.onLine` was
+already `false`. A thrown `POST`, `PUT`, `PATCH` or `DELETE` while online is
+`OutcomeUnknown { connection-lost }`. That is a new `OutcomeUnknownReason`, so
+protocol 1.4. An engine that negotiated 1.3 or earlier cannot decode the new
+reason, so it hears `OutcomeUnknown { timeout-after-dispatch }`: the outcome
+stays safe and only the reason is approximated. A failed CORS preflight on a
+write is also reported as unknown. From inside `fetch` it cannot be told apart,
+and "unknown" is the claim that stays true.
+
+Covered by `test/http-unknown.test.ts` (every method, offline, and a 1.3
+engine), a site-engine test, two shared wire vectors, and a real reset in
+Chromium (`test/browser/packs/core-http/`).
 
 ## N — Naming
 

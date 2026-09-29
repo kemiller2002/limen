@@ -9,7 +9,7 @@ const engine = {
   start: async () => {},
   dispatch: async (message) => {
     if (message.kind === "Initialize") {
-      return { view: {}, effects: [], cancellations: [], handshake: { kind: "Accepted", protocol: { major: 1, minor: 3 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] } };
+      return { view: {}, effects: [], cancellations: [], handshake: { kind: "Accepted", protocol: { major: 1, minor: 4 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] } };
     }
     if (message.kind === "EffectResult") {
       const resolve = state.waiting;
@@ -70,6 +70,15 @@ expect("the XSRF binding copies the cookie into the header, and only when asked;
 // --- OutcomeUnknown ------------------------------------------------------------
 const slow = await http({ url: "/__limen/http/slow", method: "POST", body: "{}", timeoutMs: 100, response: "text" });
 expect("a timeout after dispatch is OutcomeUnknown, never a confident failure", slow.kind === "OutcomeUnknown" && slow.reason === "timeout-after-dispatch", slow);
+
+// A write whose connection drops after the server has it (protocol 1.4).
+// Chromium resends a reset POST once before fetch rejects, so the server may
+// have it twice: calling that a retryable Failure would invite a third.
+const lost = await http({ url: "/__limen/http/reset", method: "POST", body: "{\"pay\":10}" });
+const receivedAfterPost = (await http({ url: "/__limen/http/reset-count" })).body.received;
+expect("a POST whose connection drops after the server received it is OutcomeUnknown{connection-lost}, never Failure{network}", lost.kind === "OutcomeUnknown" && lost.reason === "connection-lost" && receivedAfterPost >= 1, { lost, receivedAfterPost });
+const lostRead = await http({ url: "/__limen/http/reset" });
+expect("a GET whose connection drops is still Failure{network}: reading again changes nothing", lostRead.kind === "Failure" && lostRead.reason === "network", lostRead);
 
 expect("no diagnostic carries a cookie, a token or a header value", !state.diagnostics.some((line) => /tok-789|abc|req-42|v7/.test(line)), state.diagnostics);
 window.__limenPackResult = { pack: "core-http", checks };

@@ -96,6 +96,19 @@ typing for everyone to serve one server.
 - **The kernel decides nothing.** It does not interpret status codes, retry,
   cache, or pick credentials on its own.
 
+### When the connection drops (protocol 1.4)
+
+`fetch` throws one `TypeError` for "never sent" and for "sent, then the
+connection dropped". Chromium even resends a reset `POST` once before it
+rejects. So a thrown `POST`, `PUT`, `PATCH` or `DELETE` while online is
+`OutcomeUnknown { connection-lost }`: the server may have it, possibly twice.
+A thrown `GET`, `HEAD` or `OPTIONS`, or any request made while
+`navigator.onLine` is `false`, is `Failure { network }`, because nothing can
+have changed. Reconciling an unknown write is the engine's job. Send an
+idempotency key, then ask the server; the offline outbox
+([conformance/outbox](../conformance/outbox/README.md)) is one way to structure
+that. See P-4 in [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
+
 ### Deliberately not in Core
 
 `redirect`, `cache`, `mode`, `integrity` and `referrerPolicy` are not in the

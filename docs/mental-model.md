@@ -137,7 +137,7 @@ Full detail: [rendering](https://github.com/kemiller2002/limen/blob/main/docs/06
 Every effect outcome is a closed set, and "we don't know" is one of the members:
 
 ```text
-Http     Success | Failure(network|aborted|invalid-response) | Cancelled | OutcomeUnknown(timeout-after-dispatch)
+Http     Success | Failure(network|aborted|invalid-response) | Cancelled | OutcomeUnknown(timeout-after-dispatch|connection-lost)
 Storage  Success | Failure(unavailable|quota-exceeded)
 Clipboard Success | Failure(denied|unavailable|unknown)
 Navigation Success(location) | Dispatched | Failure(unavailable|not-same-origin)

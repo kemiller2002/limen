@@ -46,8 +46,8 @@ const sequentially = <T, R>(items: readonly T[], each: (item: T) => Promise<R>):
 const headersOf = (seen: readonly Seen[]): Record<string, string> => Object.fromEntries(Object.entries((seen[0]?.init?.headers ?? {}) as Record<string, string>));
 const GET = { method: "GET", url: "/api", timeoutMs: 1000 } as const;
 
-test("protocol 1.3 is what the kernel offers", () => {
-  assert.equal(PROTOCOL_MINOR, 3);
+test("protocol 1.4 is what the kernel offers (1.3 added this profile; 1.4, connection-lost)", () => {
+  assert.equal(PROTOCOL_MINOR, 4);
 });
 
 test("JSON stays the smallest default path: no new field, the same request and the same outcome as before", async () => {

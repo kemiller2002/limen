@@ -74,7 +74,7 @@ every caller to handle variants that cannot occur.
 
 | Capability | Variants |
 | --- | --- |
-| Http | `Success` · `Failure{network\|aborted\|invalid-response}` · `Cancelled` · `OutcomeUnknown{timeout-after-dispatch}` |
+| Http | `Success` · `Failure{network\|aborted\|invalid-response}` · `Cancelled` · `OutcomeUnknown{timeout-after-dispatch\|connection-lost}` |
 | Storage | `Success{value}` · `Failure{unavailable\|quota-exceeded}` |
 | Clipboard | `Success` · `Failure{denied\|unavailable\|unknown}` |
 | Navigation | `Success{location}` · `Dispatched` · `Failure{unavailable\|not-same-origin}` |

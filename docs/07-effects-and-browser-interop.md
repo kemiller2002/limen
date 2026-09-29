@@ -167,7 +167,7 @@ type EffectOutcome =
   | { kind: "Success";        status: number; body: unknown; headers?: Readonly<Record<string, string>> }
   | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response" | "too-large"; status?: number }
   | { kind: "Cancelled" }
-  | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" };
+  | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" | "connection-lost" };
 ```
 
 `too-large` (protocol 1.3) happens only for a `text` or `base64` response over
@@ -181,12 +181,12 @@ back.
 | Outcome | Means | Typically |
 | --- | --- | --- |
 | `Success` | a response arrived and its body parsed as JSON | check `status`, then decode `body` |
-| `Failure { network }` | `fetch` threw — DNS, offline, CORS | retryable |
+| `Failure { network }` | `fetch` threw for `GET`, `HEAD` or `OPTIONS`, or while offline — nothing can have changed | retryable |
 | `Failure { invalid-response, status }` | responded, but the body was not JSON | depends on `status`: a 5xx error page is often retryable, a malformed 200 never is |
 | `Failure { too-large, status }` | a `text` or `base64` body passed 8 MiB | use the transfer profile, or ask for less |
 | `Failure { aborted }` | aborted for a reason that was neither cancel nor timeout | rare |
 | `Cancelled` | the engine asked for this | usually return to the prior state |
-| `OutcomeUnknown` | timed out **after dispatch** | see below — this is the important one |
+| `OutcomeUnknown` | timed out **after dispatch**, or (protocol 1.4) `fetch` threw for a write while online (`connection-lost`) | see below — this is the important one |
 
 #### `Success` does not mean the server agreed
 
@@ -228,6 +228,13 @@ nothing. Narrow it explicitly — see `decodeCustomers` in
 A timeout fires after `fetch` has already sent the request. The server may have
 processed it. The kernel cannot know, so it refuses to guess — reporting a
 confident `Failure` would be a lie.
+
+The same holds when the connection drops under a write. `fetch` throws one
+`TypeError` whether a `POST` never left or was cut off after the server had
+it, and Chromium may already have resent it once. So from protocol 1.4 a
+thrown `POST`, `PUT`, `PATCH` or `DELETE` is `OutcomeUnknown { connection-lost }`
+unless the browser was offline when the request was made. A thrown `GET` is
+still `Failure { network }`: reading twice changes nothing.
 
 **What to do depends entirely on the method, and only the engine knows:**
 

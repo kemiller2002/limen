@@ -315,7 +315,7 @@ module Engine =
             { release with Deployment = DeploymentFailed(detail, false) }
         | EffectOutcome.Cancelled ->
             { release with Deployment = NotStarted }
-        | EffectOutcome.OutcomeUnknown ->
+        | EffectOutcome.OutcomeUnknown _ ->
             { release with Deployment = ReconciliationRequired }
 
     let transition state command =

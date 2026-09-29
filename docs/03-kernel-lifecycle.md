@@ -233,7 +233,8 @@ Classification is transport-level only — never business meaning:
 | Situation | Outcome |
 | --- | --- |
 | Response received and `.json()` parsed | `Success { status, body }` — *any* status, including 500 |
-| `fetch` threw, not aborted | `Failure { reason: "network" }` |
+| `fetch` threw, not aborted, for `GET`/`HEAD`/`OPTIONS`, or while the browser was offline | `Failure { reason: "network" }` |
+| `fetch` threw, not aborted, for `POST`/`PUT`/`PATCH`/`DELETE` while online | `OutcomeUnknown { reason: "connection-lost" }` (protocol 1.4; a 1.3 engine hears `timeout-after-dispatch`) |
 | Body was not valid JSON | `Failure { reason: "invalid-response", status }` — the status rides along, since a response *did* arrive |
 | Aborted with reason `"cancelled"` | `Cancelled` |
 | Aborted with reason `"timeout"` | `OutcomeUnknown { reason: "timeout-after-dispatch" }` |
@@ -243,6 +244,13 @@ what a status code means. Your engine checks `outcome.status`.
 
 **A timeout is never a `Failure`.** `fetch` may already have sent the request,
 so the kernel cannot claim it did not happen.
+
+**Nor is a lost connection on a write.** `fetch` throws the same `TypeError`
+whether the request never left or the connection dropped after the server had
+it. Chromium may even have resent it: a POST whose connection was reset reached
+the test server twice before `fetch` rejected. A throw is a confident `Failure`
+only when nothing can have changed: the method is safe, or `navigator.onLine`
+was already `false`.
 
 ### Storage
 

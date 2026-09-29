@@ -37,8 +37,11 @@ equal "deployment emits one browser effect" 1 deployment.Effects.Length
 let staleDeploy = transition deployment.State (RecordDeploy("deploy-old", EffectOutcome.Success(200L, Limen.Contract.RawJson "null", None)))
 equal "stale deploy evidence is discarded" deployment.State.Release.Deployment staleDeploy.State.Release.Deployment
 
-let unknown = transition deployment.State (RecordDeploy("deploy-1", EffectOutcome.OutcomeUnknown))
+let unknown = transition deployment.State (RecordDeploy("deploy-1", EffectOutcome.OutcomeUnknown OutcomeUnknownReason.TimeoutAfterDispatch))
 equal "timeout after dispatch becomes reconciliation" ReconciliationRequired unknown.State.Release.Deployment
+
+let lost = transition deployment.State (RecordDeploy("deploy-1", EffectOutcome.OutcomeUnknown OutcomeUnknownReason.ConnectionLost))
+equal "a lost connection after dispatch becomes reconciliation too" ReconciliationRequired lost.State.Release.Deployment
 
 let blindRetry = transitionState unknown.State (BeginDeploy(DeploySuccess, "deploy-2"))
 equal "blind retry is illegal while outcome is unknown" ReconciliationRequired blindRetry.Release.Deployment

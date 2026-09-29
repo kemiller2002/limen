@@ -1,4 +1,4 @@
-import { CORE_CONTRACT_IDENTITY, MAX_HTTP_TEXT_BYTES, PROTOCOL_MINOR, PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type CapabilityEffectRequest, type CapabilityId, type CapabilityOutcome, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HostHandshake, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { CORE_CONTRACT_IDENTITY, MAX_HTTP_TEXT_BYTES, PROTOCOL_MINOR, PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type CapabilityEffectRequest, type CapabilityId, type CapabilityOutcome, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HostHandshake, type HttpEffectRequest, type HttpMethod, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
 import type { CapabilityProvider } from "./capabilities.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
 import { verifyHandshake, type Incompatibility, type Negotiation } from "./handshake.js";
@@ -24,6 +24,15 @@ const TRIGGER_BY_TAG: Readonly<Record<string, string>> = {
 // capability here. Keeping the announcement static means an engine's startup
 // branch does not silently change between browsers.
 const CAPABILITIES: readonly Capability[] = ["Http", "Storage", "Clipboard", "Navigation"];
+
+// A method whose request changes nothing on the server, so sending it twice,
+// or not at all, is harmless.
+const safeMethod = (method: HttpMethod): boolean => {
+  switch (method) {
+    case "GET": case "HEAD": case "OPTIONS": return true;
+    case "POST": case "PUT": case "PATCH": case "DELETE": return false;
+  }
+};
 
 export type KernelOptions = {
   // Optional capability packs this host implements. Each is offered in the
@@ -699,6 +708,9 @@ export class BrowserKernel {
   // request is exactly the JSON request of 1.0.
   async #runHttp(effect: HttpEffectRequest, controller: AbortController): Promise<EffectOutcome> {
     const representation = effect.response ?? "json";
+    // navigator.onLine false proves the browser has no network, so a request
+    // made now cannot have left it.
+    const offlineAtDispatch = this.document.defaultView?.navigator.onLine === false;
     try {
       const response = await fetch(effect.url, {
         method: effect.method,
@@ -730,18 +742,28 @@ export class BrowserKernel {
         // A response did arrive — it simply would not decode. Carry the status
         // so the engine can tell a 500 error page apart from a malformed 200.
         return controller.signal.aborted
-          ? this.#classifyAbort(controller)
+          ? this.#classifyAbort(controller, effect.method, offlineAtDispatch)
           : { kind: "Failure", reason: "invalid-response", status: response.status };
       }
     } catch {
-      return this.#classifyAbort(controller);
+      return this.#classifyAbort(controller, effect.method, offlineAtDispatch);
     }
   }
 
-  #classifyAbort(controller: AbortController): EffectOutcome {
+  // fetch() throws the same TypeError whether the request never left (DNS,
+  // refused, offline, a failed CORS preflight) or the connection dropped after
+  // the server had it — and Chromium may already have resent it. A throw is a
+  // confident Failure only when nothing can have changed: the method is safe,
+  // or the browser was offline when the request was made. Otherwise the
+  // outcome is unknown (protocol 1.4). An engine that negotiated 1.3 or
+  // earlier cannot decode connection-lost, so it hears the one unknown reason
+  // it can: the outcome stays safe, and only the reason is approximated.
+  #classifyAbort(controller: AbortController, method: HttpMethod, offlineAtDispatch: boolean): EffectOutcome {
     if (controller.signal.reason === "cancelled") return { kind: "Cancelled" };
     if (controller.signal.reason === "timeout") return { kind: "OutcomeUnknown", reason: "timeout-after-dispatch" };
-    return { kind: "Failure", reason: controller.signal.aborted ? "aborted" : "network" };
+    if (controller.signal.aborted) return { kind: "Failure", reason: "aborted" };
+    if (offlineAtDispatch || safeMethod(method)) return { kind: "Failure", reason: "network" };
+    return { kind: "OutcomeUnknown", reason: this.#speaks(4) ? "connection-lost" : "timeout-after-dispatch" };
   }
 
   // Synchronous by nature (localStorage has no async API), so unlike Http

@@ -63,7 +63,7 @@ let describe (result: EffectResult) : string =
         | EffectOutcome.Success(status, _, _) -> $"success {status}"
         | EffectOutcome.Failure(reason, status) -> failureWithStatus (Codec.wireHttpFailureReason reason) status
         | EffectOutcome.Cancelled -> "cancelled"
-        | EffectOutcome.OutcomeUnknown -> "unknown"
+        | EffectOutcome.OutcomeUnknown _ -> "unknown"
     | EffectResult.StorageResult(_, outcome) ->
         match outcome with
         | StorageOutcome.Success(Some value) -> $"success {value}"

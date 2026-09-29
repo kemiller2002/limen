@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
+// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:7688f42bee3e6fe73f371a1718b366cf0f9eaed244f294572acc7d18fbb81ee9
+// content-hash: sha256:a65eb10aa9ab6de68b9f6dfd2f0080256a0f0e73ca0705fa027ebdc61d8472bd
 // </auto-generated>
 #nullable enable
 
@@ -17,9 +17,9 @@ public static class Contract
 {
     public const string Unit = "limen.core";
     public const long Version = 1;
-    public const string Fingerprint = "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def";
+    public const string Fingerprint = "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c";
     public const long ProtocolVersion = 1;
-    public const long ProtocolMinor = 3;
+    public const long ProtocolMinor = 4;
     public const long MaxHttpTextBytes = 8388608;
 }
 
@@ -58,7 +58,7 @@ public sealed record SemanticEvent(string Name, string? Key, string? Value, bool
 /// <summary>The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this.</summary>
 public sealed record BrowserLocation(string Origin, string Path, string Query, string Hash);
 
-/// <summary>too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.</summary>
+/// <summary>network: fetch threw and the request cannot have changed anything, because the method is safe (GET, HEAD, OPTIONS) or the browser was offline when it was made (protocol 1.4; before, any thrown fetch). too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.</summary>
 [global::Limen.Contract.ClosedUnion]
 public enum HttpFailureReason
 {
@@ -84,7 +84,29 @@ public static class HttpFailureReasonMatch
     public static string ToWire(this HttpFailureReason value) => value.Match(() => "network", () => "aborted", () => "invalid-response", () => "too-large");
 }
 
-/// <summary>The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.</summary>
+/// <summary>timeout-after-dispatch: the request timed out after fetch was called. connection-lost (protocol 1.4): fetch threw for POST, PUT, PATCH or DELETE while the browser was online, so the request may have reached the server (and the browser may have resent it). An engine that negotiated protocol 1.3 or earlier hears timeout-after-dispatch for both.</summary>
+[global::Limen.Contract.ClosedUnion]
+public enum OutcomeUnknownReason
+{
+    TimeoutAfterDispatch,
+    ConnectionLost,
+}
+
+/// <summary>Exhaustive handling of OutcomeUnknownReason: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class OutcomeUnknownReasonMatch
+{
+    public static TResult Match<TResult>(this OutcomeUnknownReason value, global::System.Func<TResult> timeoutAfterDispatch, global::System.Func<TResult> connectionLost) => value switch
+    {
+        OutcomeUnknownReason.TimeoutAfterDispatch => timeoutAfterDispatch(),
+        OutcomeUnknownReason.ConnectionLost => connectionLost(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a OutcomeUnknownReason value."),
+    };
+
+    /// <summary>The wire text of a OutcomeUnknownReason value.</summary>
+    public static string ToWire(this OutcomeUnknownReason value) => value.Match(() => "timeout-after-dispatch", () => "connection-lost");
+}
+
+/// <summary>The outcome of an Http effect. OutcomeUnknown exists because a request that timed out, or whose connection was lost, may already have reached the server; it must never be collapsed into Failure.</summary>
 [global::Limen.Contract.ClosedUnion]
 public abstract record EffectOutcome
 {
@@ -93,7 +115,7 @@ public abstract record EffectOutcome
     public sealed record Success(long Status, global::Limen.Contract.RawJson Body, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers) : EffectOutcome;
     public sealed record Failure(global::Limen.Contract.Core.HttpFailureReason Reason, long? Status) : EffectOutcome;
     public sealed record Cancelled() : EffectOutcome;
-    public sealed record OutcomeUnknown() : EffectOutcome;
+    public sealed record OutcomeUnknown(global::Limen.Contract.Core.OutcomeUnknownReason Reason) : EffectOutcome;
 
     /// <summary>Exhaustive by construction: one handler per variant, so a new variant is a compile error at every call site.</summary>
     public TResult Match<TResult>(global::System.Func<Success, TResult> success, global::System.Func<Failure, TResult> failure, global::System.Func<Cancelled, TResult> cancelled, global::System.Func<OutcomeUnknown, TResult> outcomeUnknown) => this switch
@@ -610,6 +632,10 @@ public static class Codec
     public static Decoded<global::Limen.Contract.Core.HttpFailureReason> ParseHttpFailureReason(string json) => Wire.Parse(json, ReadHttpFailureReason);
     public static string SerializeHttpFailureReason(global::Limen.Contract.Core.HttpFailureReason value) => Wire.Serialize(EncodeHttpFailureReason(value));
 
+    public static Decoded<global::Limen.Contract.Core.OutcomeUnknownReason> DecodeOutcomeUnknownReason(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadOutcomeUnknownReason(element, path));
+    public static Decoded<global::Limen.Contract.Core.OutcomeUnknownReason> ParseOutcomeUnknownReason(string json) => Wire.Parse(json, ReadOutcomeUnknownReason);
+    public static string SerializeOutcomeUnknownReason(global::Limen.Contract.Core.OutcomeUnknownReason value) => Wire.Serialize(EncodeOutcomeUnknownReason(value));
+
     public static Decoded<global::Limen.Contract.Core.EffectOutcome> DecodeEffectOutcome(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadEffectOutcome(element, path));
     public static Decoded<global::Limen.Contract.Core.EffectOutcome> ParseEffectOutcome(string json) => Wire.Parse(json, ReadEffectOutcome);
     public static string SerializeEffectOutcome(global::Limen.Contract.Core.EffectOutcome value) => Wire.Serialize(EncodeEffectOutcome(value));
@@ -778,6 +804,9 @@ public static class Codec
     internal static global::Limen.Contract.Core.HttpFailureReason ReadHttpFailureReason(global::System.Text.Json.JsonElement element, string path) =>
         Wire.Enumeration(element, path, ("network", global::Limen.Contract.Core.HttpFailureReason.Network), ("aborted", global::Limen.Contract.Core.HttpFailureReason.Aborted), ("invalid-response", global::Limen.Contract.Core.HttpFailureReason.InvalidResponse), ("too-large", global::Limen.Contract.Core.HttpFailureReason.TooLarge));
 
+    internal static global::Limen.Contract.Core.OutcomeUnknownReason ReadOutcomeUnknownReason(global::System.Text.Json.JsonElement element, string path) =>
+        Wire.Enumeration(element, path, ("timeout-after-dispatch", global::Limen.Contract.Core.OutcomeUnknownReason.TimeoutAfterDispatch), ("connection-lost", global::Limen.Contract.Core.OutcomeUnknownReason.ConnectionLost));
+
     internal static global::Limen.Contract.Core.EffectOutcome ReadEffectOutcome(global::System.Text.Json.JsonElement element, string path)
     {
         switch (Wire.Tag(element, path, "kind"))
@@ -809,8 +838,8 @@ public static class Codec
             {
                 var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "reason");
                 Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "OutcomeUnknown"));
-                Wire.Required(props, path, "reason", (e0, p0) => Wire.LiteralString(e0, p0, "timeout-after-dispatch"));
-                return new global::Limen.Contract.Core.EffectOutcome.OutcomeUnknown();
+                var f_reason = Wire.Required(props, path, "reason", (e0, p0) => ReadOutcomeUnknownReason(e0, p0));
+                return new global::Limen.Contract.Core.EffectOutcome.OutcomeUnknown(f_reason);
             }
             case var other:
                 throw Wire.UnknownVariant(path + ".kind", other);
@@ -1355,12 +1384,20 @@ public static class Codec
             _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpFailureReason value."),
         };
 
+    public static global::System.Text.Json.Nodes.JsonNode? EncodeOutcomeUnknownReason(global::Limen.Contract.Core.OutcomeUnknownReason value) =>
+        value switch
+        {
+            global::Limen.Contract.Core.OutcomeUnknownReason.TimeoutAfterDispatch => Wire.OfString("timeout-after-dispatch"),
+            global::Limen.Contract.Core.OutcomeUnknownReason.ConnectionLost => Wire.OfString("connection-lost"),
+            _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a OutcomeUnknownReason value."),
+        };
+
     public static global::System.Text.Json.Nodes.JsonNode? EncodeEffectOutcome(global::Limen.Contract.Core.EffectOutcome value) =>
         value.Match(
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Success")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("status", Wire.OfInt(v.Status)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("body", Wire.OfJson(v.Body)), (v.Headers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("headers", Wire.OfMap(v.Headers, x0 => Wire.OfString(x0))))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Failure")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reason", EncodeHttpFailureReason(v.Reason)), (v.Status.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("status", Wire.OfInt(v.Status.Value)) : null)),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Cancelled"))),
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("OutcomeUnknown")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reason", Wire.OfString("timeout-after-dispatch"))));
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("OutcomeUnknown")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reason", EncodeOutcomeUnknownReason(v.Reason))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeStorageFailureReason(global::Limen.Contract.Core.StorageFailureReason value) =>
         value switch
@@ -1567,6 +1604,7 @@ public static class Conformance
             ["SemanticEvent"] = element => Wire.Run(() => Codec.EncodeSemanticEvent(Codec.ReadSemanticEvent(element, "$"))),
             ["BrowserLocation"] = element => Wire.Run(() => Codec.EncodeBrowserLocation(Codec.ReadBrowserLocation(element, "$"))),
             ["HttpFailureReason"] = element => Wire.Run(() => Codec.EncodeHttpFailureReason(Codec.ReadHttpFailureReason(element, "$"))),
+            ["OutcomeUnknownReason"] = element => Wire.Run(() => Codec.EncodeOutcomeUnknownReason(Codec.ReadOutcomeUnknownReason(element, "$"))),
             ["EffectOutcome"] = element => Wire.Run(() => Codec.EncodeEffectOutcome(Codec.ReadEffectOutcome(element, "$"))),
             ["StorageFailureReason"] = element => Wire.Run(() => Codec.EncodeStorageFailureReason(Codec.ReadStorageFailureReason(element, "$"))),
             ["StorageOutcome"] = element => Wire.Run(() => Codec.EncodeStorageOutcome(Codec.ReadStorageOutcome(element, "$"))),

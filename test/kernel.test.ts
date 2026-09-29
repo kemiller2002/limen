@@ -83,7 +83,7 @@ test("start() dispatches Initialize with the protocol version and applies the in
       // revision the kernel implements (1.2 adds form-control state, 1.3 the
       // Http profile). With no optional capability registered, it offers only
       // the core contract.
-      handshake: { protocol: { major: 1, minor: 3 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] },
+      handshake: { protocol: { major: 1, minor: 4 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] },
     });
     assert.equal(document.querySelector("p")!.textContent, "ready");
   });

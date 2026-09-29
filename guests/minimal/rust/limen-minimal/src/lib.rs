@@ -92,7 +92,7 @@ pub fn describe(result: &EffectResult) -> String {
             EffectOutcome::Failure { reason, status: Some(status) } => format!("failure {} {}", reason.as_wire(), status),
             EffectOutcome::Failure { reason, status: None } => format!("failure {}", reason.as_wire()),
             EffectOutcome::Cancelled => "cancelled".to_string(),
-            EffectOutcome::OutcomeUnknown => "unknown".to_string(),
+            EffectOutcome::OutcomeUnknown { .. } => "unknown".to_string(),
         },
         EffectResult::StorageResult { outcome, .. } => match outcome {
             StorageOutcome::Success { value: Some(value) } => format!("success {}", value),

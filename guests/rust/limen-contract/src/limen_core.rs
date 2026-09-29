@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
+// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:599eb3fe4432a96d5872c69ce90cfa29af3b295c43c307a09b4defe3d2f4336a
+// content-hash: sha256:ccdf3271530d4bf59111edf934275bb42d84ca81bc965deff1d9857135bf088f
 // </auto-generated>
 //! The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.
 
@@ -18,9 +18,9 @@ use crate::runtime::{wire, DecodeError, RawJson};
 pub mod contract {
     pub const UNIT: &str = "limen.core";
     pub const VERSION: i64 = 1;
-    pub const FINGERPRINT: &str = "sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def";
+    pub const FINGERPRINT: &str = "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c";
     pub const PROTOCOL_VERSION: i64 = 1;
-    pub const PROTOCOL_MINOR: i64 = 3;
+    pub const PROTOCOL_MINOR: i64 = 4;
     pub const MAX_HTTP_TEXT_BYTES: i64 = 8388608;
 }
 
@@ -76,7 +76,7 @@ pub struct BrowserLocation {
     pub hash: String,
 }
 
-/// too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.
+/// network: fetch threw and the request cannot have changed anything, because the method is safe (GET, HEAD, OPTIONS) or the browser was offline when it was made (protocol 1.4; before, any thrown fetch). too-large (protocol 1.3) happens only for a text or base64 response larger than MAX_HTTP_TEXT_BYTES; a JSON response has no such limit.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HttpFailureReason {
     Network,
@@ -97,7 +97,24 @@ impl HttpFailureReason {
     }
 }
 
-/// The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.
+/// timeout-after-dispatch: the request timed out after fetch was called. connection-lost (protocol 1.4): fetch threw for POST, PUT, PATCH or DELETE while the browser was online, so the request may have reached the server (and the browser may have resent it). An engine that negotiated protocol 1.3 or earlier hears timeout-after-dispatch for both.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum OutcomeUnknownReason {
+    TimeoutAfterDispatch,
+    ConnectionLost,
+}
+
+impl OutcomeUnknownReason {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            OutcomeUnknownReason::TimeoutAfterDispatch => "timeout-after-dispatch",
+            OutcomeUnknownReason::ConnectionLost => "connection-lost",
+        }
+    }
+}
+
+/// The outcome of an Http effect. OutcomeUnknown exists because a request that timed out, or whose connection was lost, may already have reached the server; it must never be collapsed into Failure.
 #[derive(Debug, Clone, PartialEq)]
 pub enum EffectOutcome {
     Success {
@@ -113,7 +130,9 @@ pub enum EffectOutcome {
         status: Option<i64>,
     },
     Cancelled,
-    OutcomeUnknown,
+    OutcomeUnknown {
+        reason: OutcomeUnknownReason,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -577,6 +596,10 @@ pub fn decode_http_failure_reason(value: &Value, path: &str) -> Result<HttpFailu
     wire::enumeration(value, path, &[("network", HttpFailureReason::Network), ("aborted", HttpFailureReason::Aborted), ("invalid-response", HttpFailureReason::InvalidResponse), ("too-large", HttpFailureReason::TooLarge)])
 }
 
+pub fn decode_outcome_unknown_reason(value: &Value, path: &str) -> Result<OutcomeUnknownReason, DecodeError> {
+    wire::enumeration(value, path, &[("timeout-after-dispatch", OutcomeUnknownReason::TimeoutAfterDispatch), ("connection-lost", OutcomeUnknownReason::ConnectionLost)])
+}
+
 pub fn decode_effect_outcome(value: &Value, path: &str) -> Result<EffectOutcome, DecodeError> {
     match wire::tag(value, path, "kind")?.as_str() {
         "Success" => {
@@ -602,8 +625,8 @@ pub fn decode_effect_outcome(value: &Value, path: &str) -> Result<EffectOutcome,
         "OutcomeUnknown" => {
             let props = wire::closed(wire::properties(value, path)?, path, &["kind", "reason"])?;
             wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "OutcomeUnknown"))?;
-            wire::required(props, path, "reason", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "timeout-after-dispatch"))?;
-            Ok(EffectOutcome::OutcomeUnknown)
+            let f_reason = wire::required(props, path, "reason", |v0: &Value, p0: &str| decode_outcome_unknown_reason(v0, p0))?;
+            Ok(EffectOutcome::OutcomeUnknown { reason: f_reason })
         }
         other => Err(wire::unknown_variant(&format!("{}.kind", path), other)),
     }
@@ -1079,12 +1102,19 @@ pub fn encode_http_failure_reason(value: &HttpFailureReason) -> Value {
     }
 }
 
+pub fn encode_outcome_unknown_reason(value: &OutcomeUnknownReason) -> Value {
+    match value {
+        OutcomeUnknownReason::TimeoutAfterDispatch => wire::of_string("timeout-after-dispatch"),
+        OutcomeUnknownReason::ConnectionLost => wire::of_string("connection-lost"),
+    }
+}
+
 pub fn encode_effect_outcome(value: &EffectOutcome) -> Value {
     match value {
         EffectOutcome::Success { status: f_status, body: f_body, headers: f_headers } => wire::of_object(vec![Some(("kind", wire::of_string("Success"))), Some(("status", wire::of_int(*f_status))), Some(("body", wire::of_json(f_body))), (f_headers).as_ref().map(|x0| ("headers", wire::of_map(x0, |x1| wire::of_string(x1))))]),
         EffectOutcome::Failure { reason: f_reason, status: f_status } => wire::of_object(vec![Some(("kind", wire::of_string("Failure"))), Some(("reason", encode_http_failure_reason(f_reason))), (f_status).as_ref().map(|x0| ("status", wire::of_int(*x0)))]),
         EffectOutcome::Cancelled => wire::of_object(vec![Some(("kind", wire::of_string("Cancelled")))]),
-        EffectOutcome::OutcomeUnknown => wire::of_object(vec![Some(("kind", wire::of_string("OutcomeUnknown"))), Some(("reason", wire::of_string("timeout-after-dispatch")))]),
+        EffectOutcome::OutcomeUnknown { reason: f_reason } => wire::of_object(vec![Some(("kind", wire::of_string("OutcomeUnknown"))), Some(("reason", encode_outcome_unknown_reason(f_reason)))]),
     }
 }
 
@@ -1358,6 +1388,16 @@ pub fn parse_http_failure_reason(json: &str) -> Result<HttpFailureReason, Decode
 /// Serializes a HttpFailureReason to wire JSON text.
 pub fn serialize_http_failure_reason(value: &HttpFailureReason) -> String {
     encode_http_failure_reason(value).to_string()
+}
+
+/// Parses untrusted JSON text into a OutcomeUnknownReason, or says where and why it is not one.
+pub fn parse_outcome_unknown_reason(json: &str) -> Result<OutcomeUnknownReason, DecodeError> {
+    wire::parse(json, decode_outcome_unknown_reason)
+}
+
+/// Serializes a OutcomeUnknownReason to wire JSON text.
+pub fn serialize_outcome_unknown_reason(value: &OutcomeUnknownReason) -> String {
+    encode_outcome_unknown_reason(value).to_string()
 }
 
 /// Parses untrusted JSON text into a EffectOutcome, or says where and why it is not one.
@@ -1708,6 +1748,7 @@ pub fn conformance_round_trip(type_name: &str, value: &Value) -> Option<Result<V
         "SemanticEvent" => Some(decode_semantic_event(value, "$").map(|decoded| encode_semantic_event(&decoded))),
         "BrowserLocation" => Some(decode_browser_location(value, "$").map(|decoded| encode_browser_location(&decoded))),
         "HttpFailureReason" => Some(decode_http_failure_reason(value, "$").map(|decoded| encode_http_failure_reason(&decoded))),
+        "OutcomeUnknownReason" => Some(decode_outcome_unknown_reason(value, "$").map(|decoded| encode_outcome_unknown_reason(&decoded))),
         "EffectOutcome" => Some(decode_effect_outcome(value, "$").map(|decoded| encode_effect_outcome(&decoded))),
         "StorageFailureReason" => Some(decode_storage_failure_reason(value, "$").map(|decoded| encode_storage_failure_reason(&decoded))),
         "StorageOutcome" => Some(decode_storage_outcome(value, "$").map(|decoded| encode_storage_outcome(&decoded))),

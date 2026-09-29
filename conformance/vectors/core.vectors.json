@@ -189,6 +189,33 @@
       }
     },
     {
+      "name": "http outcome unknown: connection lost (protocol 1.4)",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c1",
+        "outcome": {
+          "kind": "OutcomeUnknown",
+          "reason": "connection-lost"
+        }
+      }
+    },
+    {
+      "name": "http outcome unknown with an undeclared reason",
+      "type": "EffectResult",
+      "valid": false,
+      "errorPath": "$.outcome.reason",
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c1",
+        "outcome": {
+          "kind": "OutcomeUnknown",
+          "reason": "guessing"
+        }
+      }
+    },
+    {
       "name": "storage success with value",
       "type": "EffectResult",
       "valid": true,

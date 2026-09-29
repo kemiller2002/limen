@@ -2,11 +2,11 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:e1e42f9451b13e1a1ed49db1aed6225da4be34b9177a2ad6b98eb79e16160def
+// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:85fad6f96ef405ab955d753d3d8abe6ed492c24598c9c4e896f5afaba6c6fd82
+// content-hash: sha256:41dfa7adb15274f33261b61dc60054793d858e5a508a57b5d62e2f1b0f8b0a67
 // </auto-generated>
-import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
+import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, OutcomeUnknownReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
 
 /** Where decoding stopped, and what the contract expected there. */
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
@@ -117,6 +117,8 @@ export const decodeBrowserLocation = (value: unknown, path = "$"): Decoded<Brows
 
 export const decodeHttpFailureReason = (value: unknown, path = "$"): Decoded<HttpFailureReason> => enumValue(value, path, ["network","aborted","invalid-response","too-large"] as const);
 
+export const decodeOutcomeUnknownReason = (value: unknown, path = "$"): Decoded<OutcomeUnknownReason> => enumValue(value, path, ["timeout-after-dispatch","connection-lost"] as const);
+
 export const decodeEffectOutcome = (value: unknown, path = "$"): Decoded<EffectOutcome> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
@@ -169,7 +171,7 @@ const decodeEffectOutcome_OutcomeUnknown = (value: unknown, path: string): Decod
   if (!object.ok) return object;
   const kindTag = literalValue(object.value["kind"], `${path}.kind`, "OutcomeUnknown");
   if (!kindTag.ok) return kindTag;
-  const field_reason = literalValue(object.value["reason"], `${path}.reason`, "timeout-after-dispatch");
+  const field_reason = decodeOutcomeUnknownReason(object.value["reason"], `${path}.reason`);
   if (!field_reason.ok) return field_reason;
   return ok<EffectOutcome>({ kind: "OutcomeUnknown", reason: field_reason.value });
 };

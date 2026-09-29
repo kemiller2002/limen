@@ -9,6 +9,9 @@ const cookiesOf = (request: IncomingMessage): Readonly<Record<string, string>> =
     return [part.slice(0, at), part.slice(at + 1)] as const;
   }));
 
+// How many requests /__limen/http/reset received before dropping them.
+const dropped = { count: 0 };
+
 export const serveHttp = (request: IncomingMessage, response: ServerResponse): boolean => {
   const url = new URL(request.url ?? "/", "http://localhost");
   switch (url.pathname) {
@@ -58,6 +61,15 @@ export const serveHttp = (request: IncomingMessage, response: ServerResponse): b
     }
     case "/__limen/http/download":
       response.writeHead(200, { "Content-Type": "application/octet-stream", "Content-Length": String(3 * 1024 * 1024) }).end(Buffer.alloc(3 * 1024 * 1024, 7));
+      return true;
+    case "/__limen/http/reset":
+      // Reads the whole request, counts it, then drops the connection without
+      // answering: the server has the request, the browser has no response.
+      request.on("data", () => {});
+      request.on("end", () => { dropped.count += 1; request.socket.destroy(); });
+      return true;
+    case "/__limen/http/reset-count":
+      response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ received: dropped.count }));
       return true;
     case "/__limen/http/slow":
       setTimeout(() => { if (!response.writableEnded) response.writeHead(200, { "Content-Type": "application/json" }).end("{}"); }, 2000);

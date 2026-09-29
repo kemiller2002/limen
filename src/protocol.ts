@@ -58,6 +58,7 @@ export type {
   NavigationEffectRequest,
   NavigationFailureReason,
   NavigationOutcome,
+  OutcomeUnknownReason,
   ProtocolRevision,
   SemanticEvent,
   StorageEffectRequest,
