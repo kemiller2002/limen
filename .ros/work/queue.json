@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 71,
+  "nextSeq": 72,
   "items": [
     {
       "id": "WI-0001",
@@ -1108,6 +1108,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T08:21:31Z",
       "updatedAt": "2026-09-29T08:21:32Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0071",
+      "title": "Kernel: HTML boolean attributes (inert, required, readonly, multiple, ...) are toggled by presence, never set to the string \"false\" (GH-31, found building the dialog pattern)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:22:26Z",
+      "updatedAt": "2026-09-29T08:22:26Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

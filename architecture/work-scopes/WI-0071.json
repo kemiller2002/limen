@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0071",
+  "reference": "kemiller2002/limen#31 (found while building the dialog pattern), kemiller2002/limen#18 (binding policy)",
+  "placement": "Core (kernel binding mechanism) — data-bind-<attr> is a Core primitive; setAttribute(\"inert\", \"false\") makes an element inert, so every HTML boolean attribute must be toggled by presence. No protocol change.",
+  "guardrail": false,
+  "paths": ["src/kernel/**", "src/tooling/**", "test/**", "docs/**", "bench/budgets.json", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
