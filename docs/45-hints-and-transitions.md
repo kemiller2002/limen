@@ -1,5 +1,7 @@
 # Resource hints and view transitions
 
+> **Optional — not Limen Core.** This is resource hints and view transitions, a capability pack. It composes with the Core concepts `typed-capabilities` and `css-owns-presentation`: they are requested through the Capability seam and styled by CSS. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Browser-native loading and polish, with the decisions left to the engine
 (kemiller2002/limen#34, LCP-025 and LCP-026).
 

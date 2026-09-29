@@ -1,5 +1,7 @@
 # Federated WebAssembly modules
 
+> **Optional — not Limen Core.** This is federation, an optional composition. It composes with the Core concepts `engine-owns-meaning` and `correlation-compatibility`: several engines each own their own meaning, and correlated, versioned envelopes connect them. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 **What this answers:** how to split a Limen application across multiple independently
 loaded engines without creating shared mutable state, browser-side application
 authority, or a distributed monolith inside one page.

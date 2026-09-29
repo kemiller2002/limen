@@ -10,7 +10,10 @@
 //                                              fail unless the recorded reference
 //                                              reproduces exactly from Git (CI)
 //
-// The measuring is tools/guardrails/core-metrics.ts; this file only reads.
+// The measuring is tools/guardrails/core-metrics.ts; this file only reads. The
+// check also validates every Core Admission record (architecture/core-admissions/,
+// tools/guardrails/admission.ts) and that the approved baseline rests on one
+// that exists and was not rejected.
 // The baseline, architecture/core-baseline.json, is guardrail-owned: feature
 // work cannot raise it to make itself pass.
 
@@ -20,9 +23,11 @@ import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { promisify } from "node:util";
 import { measureProfile } from "../bench/size.ts";
+import { checkAdmissions, parseAdmission } from "../tools/guardrails/admission.ts";
 import { comparisonTable, coreReport, judge, type CoreReport } from "../tools/guardrails/core-metrics.ts";
 import { emittedPath, isCoreLayer, parseCoreManifest, type CoreFile } from "../tools/guardrails/core.ts";
 import { matches, parseLayerMap, placementOf } from "../tools/guardrails/layers.ts";
+import { parseManifest } from "../tools/guardrails/scope.ts";
 
 const run = promisify(execFile);
 const ROOT = process.cwd();
@@ -87,7 +92,10 @@ const atReference = async (): Promise<{ readonly report: CoreReport; readonly cl
   return { report: await measure(tree), cleanup: () => rm(directory, { recursive: true, force: true }) };
 };
 
-type Baseline = { readonly reference: { readonly commit: string; readonly report: CoreReport }; readonly approved: { readonly report: CoreReport } };
+type Baseline = {
+  readonly reference: { readonly commit: string; readonly report: CoreReport };
+  readonly approved: { readonly authority: { readonly workItem: string; readonly admission?: string }; readonly report: CoreReport };
+};
 const readBaseline = async (): Promise<Baseline> => (await readJson(join(ROOT, "architecture/core-baseline.json"))) as Baseline;
 
 switch (mode) {
@@ -125,15 +133,28 @@ switch (mode) {
     const baseline = await readBaseline();
     const current = await measure(workingCopy);
     const findings = judge(baseline.approved.report, current, manifest.limits);
+    const admissionFiles = (await readdir(join(ROOT, "architecture/core-admissions")).catch(() => [])).filter((name) => /^CA-\d{4}\.json$/.test(name)).sort();
+    const admissions = await Promise.all(admissionFiles.map(async (name) => parseAdmission(`architecture/core-admissions/${name}`, await readJson(join(ROOT, "architecture/core-admissions", name)))));
+    const scopeFiles = (await readdir(join(ROOT, "architecture/work-scopes"))).filter((name) => /^WI-\d{4}\.json$/.test(name));
+    const scopes = new Map(await Promise.all(scopeFiles.map(async (name) => {
+      const scope = parseManifest(await readJson(join(ROOT, "architecture/work-scopes", name)), name);
+      return [scope.workItem, scope] as const;
+    })));
+    const admission = checkAdmissions(admissions, scopes, { workItem: baseline.approved.authority.workItem, admission: baseline.approved.authority.admission });
     console.log(`Core complexity (architecture ${current.architectureVersion}; reference ${baseline.reference.commit.slice(0, 7)}):\n${comparisonTable(baseline.reference.report, baseline.approved.report, current)}`);
     if (current.core.emitted === null) {
       console.error("dist/ is missing or incomplete: build first (npm run build). Emitted Core size cannot be judged without it.");
       process.exitCode = 1;
     }
+    admission.notices.forEach((notice) => console.log(`\nNOTICE: ${notice}`));
+    if (admission.violations.length > 0) {
+      console.error(`\nCore Admission records failed (${admission.violations.length}):\n${admission.violations.map((found) => `[${found.rule}] ${found.path}: ${found.detail}\n    → ${found.remedy}`).join("\n")}`);
+      process.exitCode = 1;
+    }
     if (findings.length > 0) {
       console.error(`\nCore budget failed (${findings.length}):\n${findings.map((finding) => `[${finding.kind}] ${finding.dimension}: approved ${finding.approved}, now ${finding.current}\n    → ${finding.detail}`).join("\n")}`);
       process.exitCode = 1;
-    } else if (current.core.emitted !== null) {
+    } else if (current.core.emitted !== null && admission.violations.length === 0) {
       console.log("Core budget passed: no hard gate breached, no dimension more than 10% over the approved baseline.");
     }
   }

@@ -1,5 +1,7 @@
 # Async resources and optimistic state
 
+> **Optional — not Limen Core.** This is the resources and optimistic-state libraries, an engine library. It composes with the Core concepts `engine-owns-meaning` and `correlation-compatibility`: they keep asynchronous server state in the engine, keyed by correlation. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Two engine-side patterns for talking to a server
 (kemiller2002/limen#22, LCP-009 and LCP-011):
 

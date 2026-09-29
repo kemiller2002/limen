@@ -1,0 +1,24 @@
+{
+  "id": "CA-####",
+  "title": "One line naming what would enter Core",
+  "workItem": "WI-#### (a guardrail work item)",
+  "kind": "new-concept | new-root-export-family | new-binding-primitive | new-capability-family | runtime-dependency | core-file | budget-growth | correctness-or-security-fix",
+  "proposedAddition": "Exactly what enters Core.",
+  "invariantOrUseCase": "The universal invariant or use case; why every ordinary application needs it.",
+  "whyNotHtmlCss": "Why native HTML, CSS or browser behavior cannot satisfy it.",
+  "whyNotEngineLibrary": "Why an engine library cannot.",
+  "whyNotCapabilityPack": "Why an optional capability pack cannot.",
+  "whyNotForma": "Why Forma cannot.",
+  "whyNotGovernedAdapter": "Why a governed adapter cannot.",
+  "whyNotTooling": "Why tooling or conformance cannot.",
+  "whyNotHostRenderer": "Why an optional host or renderer cannot.",
+  "consumerEvidence": [
+    { "consumer": "An independent real consumer", "evidence": "Where it needs this, as a path or link" },
+    { "consumer": "A second independent consumer (required for a new concept, export family, primitive or family)", "evidence": "…" }
+  ],
+  "complexityDelta": "The change on every dimension of npm run check:core-budget -- --report.",
+  "compatibilityImpact": "What breaks, what migrates, and how.",
+  "negativeBoundaryTests": "The tests proving optional layers still cannot leak into Core.",
+  "guestLanguageImpact": "Impact on F#, C# and Rust engines and bindings.",
+  "decision": { "outcome": "pending", "by": "", "date": "", "evidence": "" }
+}

@@ -1,5 +1,7 @@
 # Accessible interaction patterns
 
+> **Optional — not Limen Core.** This is the accessible interaction patterns, an engine library and HTML patterns. It composes with the Core concepts `html-owns-structure` and `engine-owns-meaning`: native HTML carries the semantics and the engine carries the state. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Can Limen's small set of mechanics carry mature, accessible interactions —
 tabs, menus, listboxes, comboboxes, trees, grids and dialogs — without widget
 meaning in the kernel (kemiller2002/limen#31, LCP-008)? The answer is

@@ -1,5 +1,7 @@
 # User-mediated files
 
+> **Optional — not Limen Core.** This is the files pack, a capability pack. It composes with the Core concept `typed-capabilities`: user-mediated files are requested through the Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Choosing, reading and downloading files without filesystem authority, and
 without a `File` object crossing the boundary (kemiller2002/limen#27,
 LCP-017).

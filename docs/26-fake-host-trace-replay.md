@@ -1,5 +1,7 @@
 # Testing engines: the fake host, traces and replay
 
+> **Optional — not Limen Core.** This is the fake host, traces and replay, a tooling. It composes with the Core concepts `semantic-input` and `projection-output`: it records and replays what crosses the boundary. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 **What this answers:** how to test an engine deterministically without a
 browser, and how to see — and replay — exactly what crossed the boundary.
 

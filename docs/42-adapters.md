@@ -1,5 +1,7 @@
 # Governed adapters
 
+> **Optional — not Limen Core.** This is governed adapters, a governed adapter. It composes with the Core concepts `typed-capabilities` and `projection-output`: a third-party surface is hosted with no application authority. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Maps, charts, rich-text editors, payment fields and third-party Web Components,
 without granting them application authority (kemiller2002/limen#30,
 LCP-021).

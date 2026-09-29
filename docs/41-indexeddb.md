@@ -1,5 +1,7 @@
 # Structured storage (IndexedDB)
 
+> **Optional — not Limen Core.** This is the IndexedDB store pack, a capability pack. It composes with the Core concept `typed-capabilities`: structured storage is requested through the Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Durable, structured browser storage with the schema declared by the engine,
 and every outcome typed (kemiller2002/limen#28, LCP-018).
 

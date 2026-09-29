@@ -102,6 +102,22 @@
     "seam": "Capability",
     "contract": "contract/core.contract.json"
   },
+  "learning": {
+    "doc": "The minimal-agent learning contract (kemiller2002/limen#63). canonical is the one Core mental-model document; its concept list must be exactly concepts, in order. path is the required reading, in order; AGENTS.md's block between the requiredReading markers must link exactly these. optionalDocs each open with an Optional banner naming the Core concept(s) they compose with, and none may be in path. quickStarts import Core entrypoints only. Checked by scripts/check-docs.ts through tools/guardrails/learning.ts.",
+    "canonical": "docs/core-mental-model.md",
+    "path": ["docs/core-mental-model.md", "docs/where-code-goes.md", "src/protocol.ts", "examples/minimal/README.md"],
+    "requiredReading": { "file": "AGENTS.md", "start": "<!-- core-learning-path:start -->", "end": "<!-- core-learning-path:end -->" },
+    "quickStarts": ["docs/quick-start.md", "docs/02-getting-started.md"],
+    "optionalDocs": [
+      "docs/20-lifecycle-cli.md", "docs/21-installation-and-upgrade.md", "docs/22-lifecycle-conversion-report.md", "docs/23-wasm-federation.md",
+      "docs/26-fake-host-trace-replay.md", "docs/27-performance-baseline.md", "docs/28-view-contracts.md",
+      "docs/30-focus-selection-scroll.md", "docs/31-routing.md", "docs/32-forms.md", "docs/33-resources-and-optimistic-state.md", "docs/34-scheduling.md",
+      "docs/35-measurement.md", "docs/36-rich-events.md", "docs/37-accessible-patterns.md", "docs/38-overlays.md", "docs/39-realtime.md", "docs/40-files.md",
+      "docs/41-indexeddb.md", "docs/42-adapters.md", "docs/43-http-profiles.md", "docs/44-fatal-fallback.md", "docs/45-hints-and-transitions.md",
+      "docs/46-environment-and-formatting.md", "docs/47-hot-reload.md", "docs/48-page-lifecycle.md", "docs/49-offline-and-updates.md", "docs/50-worker-hosting.md",
+      "docs/51-permission-sensitive-capabilities.md", "docs/52-rendering-surfaces.md", "docs/53-cross-context-coordination.md"
+    ]
+  },
   "limits": {
     "doc": "Frozen at architectureVersion 1.0.0. Raising one needs an approved Core Admission and a new architecture version.",
     "runtimeDependencies": 0,

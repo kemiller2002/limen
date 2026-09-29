@@ -1,5 +1,8 @@
 # The Limen mental model
 
+> The short, canonical version is [Limen Core, in seven concepts](core-mental-model.md);
+> this document is the longer explanation of the same model.
+
 *If you read one document before writing Limen code, read this one.* It answers
 the ownership questions — who decides what — because almost every mistake people
 make with Limen is an ownership mistake, not a syntax mistake.

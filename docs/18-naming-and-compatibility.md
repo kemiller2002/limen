@@ -109,9 +109,8 @@ existed.
 | everything else | `…typescript-wasm-kernel` | unchanged |
 
 ```ts
-// before
-import { BrowserKernel, ModuleFederation, DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel";
-// now
+// before: BrowserKernel, ModuleFederation and DirectTypeScriptTransport all
+// came from the package root. Now:
 import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
 import { ModuleFederation } from "@echelon-foundry/typescript-wasm-kernel/federation";
 import { DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel/reference-engine";

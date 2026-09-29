@@ -1,5 +1,7 @@
 # Permission-sensitive capabilities
 
+> **Optional — not Limen Core.** This is permission-sensitive capabilities, a capability packs. It composes with the Core concept `typed-capabilities`: each is requested through the Capability seam with typed outcomes. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 One pattern for every browser feature that needs a permission, a secure
 context or a user gesture (kemiller2002/limen#42, LCP-036). Examples are
 location, notifications, camera and microphone, passkeys, sharing, wake lock

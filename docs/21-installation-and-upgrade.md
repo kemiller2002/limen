@@ -1,5 +1,7 @@
 # Installation, ownership, and upgrade
 
+> **Optional — not Limen Core.** This is installation and upgrade, a tooling. It composes with the Core concept `engine-owns-meaning`: it governs how the boundary is installed into a repository. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 What `init` does to your repository, which files are yours, and what an upgrade
 is allowed to change. If you want to know whether running `init` is safe without
 reading the source, this is the page.

@@ -1,5 +1,7 @@
 # Cross-context coordination
 
+> **Optional — not Limen Core.** This is the coordination pack, a capability pack. It composes with the Core concepts `semantic-input` and `correlation-compatibility`: coordination messages arrive as facts, correlated across contexts. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Tabs, windows, frames and workers of one application coordinate, without
 shared mutable state (kemiller2002/limen#46, LCP-040).
 

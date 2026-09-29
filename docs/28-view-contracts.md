@@ -1,5 +1,7 @@
 # View contracts: checking pages before they run
 
+> **Optional — not Limen Core.** This is view contracts, a tooling. It composes with the Core concepts `html-owns-structure` and `projection-output`: it checks that a page's bindings and an engine's projection agree. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 A Limen page binds names: `data-text="count"`, `data-each="rows"`,
 `data-event="remove"`. The engine projects and accepts the same names. If the
 two disagree, the kernel reports it at runtime (`BridgeError`, phase

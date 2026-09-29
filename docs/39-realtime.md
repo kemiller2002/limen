@@ -1,5 +1,7 @@
 # Realtime and streaming
 
+> **Optional — not Limen Core.** This is the realtime pack, a capability pack. It composes with the Core concepts `typed-capabilities` and `correlation-compatibility`: connections are opaque handles requested through the Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 WebSocket and Server-Sent Events without hidden connection policy
 (kemiller2002/limen#26, LCP-016).
 

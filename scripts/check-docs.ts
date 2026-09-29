@@ -8,9 +8,19 @@
 //   3. Every document under docs/ is reachable from the README, so nothing
 //      becomes an orphan nobody can find.
 //
+//   6. The minimal-agent learning contract (kemiller2002/limen#63): the
+//      canonical Core document teaches exactly the manifest's seven concepts,
+//      AGENTS.md's required reading is exactly the Core learning path, every
+//      optional subsystem document opens by naming the Core concept it composes
+//      with, quick starts import Core entrypoints only, and no document or
+//      example imports an optional name from the package root
+//      (tools/guardrails/learning.ts).
+//
 // It deliberately does not check prose quality or external URLs.
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, normalize, relative, resolve } from "node:path";
+import { parseCoreManifest } from "../tools/guardrails/core.ts";
+import { checkLearning, parseLearning } from "../tools/guardrails/learning.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 
@@ -252,6 +262,24 @@ for (const page of await readdir(join(ROOT, "site/pages"))) {
       );
     }
   }
+}
+
+// --- 6: the minimal-agent learning contract -----------------------------------
+
+const rawManifest = JSON.parse(await readFile(join(ROOT, "architecture/core.json"), "utf8")) as unknown;
+const learning = parseLearning(rawManifest);
+const exampleSources = async (directory: string): Promise<readonly string[]> => {
+  const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+  return (await Promise.all(entries.map((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return entry.name === "node_modules" ? Promise.resolve([]) : exampleSources(path);
+    return Promise.resolve(/\.(ts|js|html)$/.test(entry.name) ? [path] : []);
+  }))).flat();
+};
+const learningDocuments = await Promise.all([...files, ...(await exampleSources(join(ROOT, "examples"))), ...learning.path.filter((path) => !path.endsWith(".md")).map((path) => join(ROOT, path))]
+  .map(async (path) => ({ path: relative(ROOT, path).split("\\").join("/"), text: await readFile(path, "utf8").catch(() => "") })));
+for (const found of checkLearning(parseCoreManifest(rawManifest), learning, learningDocuments)) {
+  violations.push(`[${found.rule}] ${found.path}: ${found.detail}\n    → ${found.remedy}`);
 }
 
 if (violations.length > 0) {

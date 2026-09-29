@@ -1,5 +1,7 @@
 # Routing
 
+> **Optional — not Limen Core.** This is the routing library, an engine library. It composes with the Core concept `engine-owns-meaning`: what a URL means is engine state; the built-in Navigation family moves the browser. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 How a Limen application routes (kemiller2002/limen#20, LCP-005). Routing is
 **application meaning**: which screen a URL names, whether its identifier is
 valid, where an old URL now lives, and whether this user should see the page.

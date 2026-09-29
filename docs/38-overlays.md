@@ -1,5 +1,7 @@
 # Overlays and the top layer
 
+> **Optional — not Limen Core.** This is the overlay pack, a capability pack. It composes with the Core concept `typed-capabilities`: the top layer is requested through the Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Modal dialogs, popovers, menus and anchored popups, native-first
 (kemiller2002/limen#49, LCP-013).
 

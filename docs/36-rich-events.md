@@ -1,5 +1,7 @@
 # Rich event facts
 
+> **Optional — not Limen Core.** This is the rich events pack, a capability pack. It composes with the Core concept `semantic-input`: richer event facts arrive through the Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Keyboard, pointer, drag-and-drop, composition, selection and input facts,
 without DOM Event objects (kemiller2002/limen#29, LCP-020).
 

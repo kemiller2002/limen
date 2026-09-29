@@ -1,5 +1,7 @@
 # Measurement and observers
 
+> **Optional — not Limen Core.** This is the measurement pack, a capability pack. It composes with the Core concepts `typed-capabilities` and `semantic-input`: layout facts are requested through the Capability seam and arrive as facts. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Layout and visibility facts without DOM nodes
 (kemiller2002/limen#25, LCP-014). The engine can ask:
 

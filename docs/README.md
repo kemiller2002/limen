@@ -1,7 +1,7 @@
 # Limen documentation
 
-> **Reading this inside `node_modules`?** Six documents ship in the npm package
-> and are right beside this one: [quick start](quick-start.md),
+> **Reading this inside `node_modules`?** Seven documents ship in the npm package
+> and are right beside this one: [Core in seven concepts](core-mental-model.md), [quick start](quick-start.md),
 > [mental model](mental-model.md),
 > [where does code go?](where-code-goes.md),
 > [API reference](11-api-reference.md),
@@ -19,6 +19,14 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 > see [naming and compatibility](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md).
 > Throughout these documents, **"the kernel"** means the browser-side bridge
 > and **"the engine"** means the application side.
+
+## Limen Core: the mandatory model
+
+[**Limen Core, in seven concepts**](core-mental-model.md) is the one canonical
+document of what every Limen application shares. Everything else below is
+either an elaboration of it or an optional subsystem, and each optional
+document opens by saying which of the seven concepts it composes with. How
+Core itself may grow: [Core Admission](https://github.com/kemiller2002/limen/blob/main/docs/core-admission.md).
 
 ## Start here
 

@@ -59,6 +59,25 @@ exhaustive lists.
     generated). That growth predates the freeze and is recorded for the
     owner's decision in CA-0001.
 
+- **Core Admission and the minimal-agent learning contract (#63).**
+  - `docs/core-mental-model.md` is the one canonical Core document: the seven
+    concepts, by the manifest's ids.
+  - `AGENTS.md` now opens with exactly four required documents: the model,
+    placement, `src/protocol.ts`, `examples/minimal`. Everything else is
+    optional reading.
+  - Every optional subsystem document (31 of them) opens by naming the Core
+    concept it composes with.
+  - `npm run check:docs` fails if any of this drifts, a quick start imports a
+    non-Core entrypoint, or anything imports an optional name from the root.
+  - `docs/core-admission.md` and `architecture/core-admissions/` define the
+    15-field Core Admission record.
+    - Records are guardrail-owned.
+    - A new concept, export family, primitive or family needs two independent
+      consumers.
+    - A decision must name a person and link where it was made.
+    - `npm run check:core-budget` validates every record.
+  - CA-0001 records the growth that predates the freeze, pending the owner.
+
 ### Breaking
 
 - **The package root exports Limen Core only (#61).**

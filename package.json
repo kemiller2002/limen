@@ -173,6 +173,7 @@
     "CHANGELOG.md",
     "LICENSE",
     "architecture.yaml",
+    "docs/core-mental-model.md",
     "docs/quick-start.md",
     "docs/mental-model.md",
     "docs/where-code-goes.md",

@@ -1,5 +1,7 @@
 # Worker-hosted engines
 
+> **Optional — not Limen Core.** This is worker hosting, an optional host. It composes with the Core concept `correlation-compatibility`: the same boundary and handshake run with the engine in a worker. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 The engine can run in a dedicated worker, off the main thread. The boundary,
 the kernel and the page stay the same, whatever language the engine is
 written in (kemiller2002/limen#41, LCP-035).

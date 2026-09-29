@@ -1,5 +1,7 @@
 # Page, connectivity and lifecycle evidence
 
+> **Optional — not Limen Core.** This is the page lifecycle pack, a capability pack. It composes with the Core concept `semantic-input`: lifecycle and connectivity arrive as facts through the Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Online and offline, visibility, the back/forward cache, freezing, prerendering
 and connection quality, as typed facts the engine subscribes to
 (kemiller2002/limen#43, LCP-037).

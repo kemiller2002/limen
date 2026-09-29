@@ -47,6 +47,7 @@ const REQUIRED = [
   "dist/engine/transport.js", "dist/engine/transport.d.ts",
   // The documentation set. README.md alone leaves a consumer with links they
   // cannot follow offline; these six are the ones worth carrying.
+  "docs/core-mental-model.md",
   "docs/quick-start.md",
   "docs/mental-model.md",
   "docs/where-code-goes.md",

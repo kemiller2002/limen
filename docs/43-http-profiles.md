@@ -1,5 +1,7 @@
 # HTTP profiles
 
+> **Optional — not Limen Core.** This is HTTP profiles, a capability pack and engine library. It composes with the Core concept `typed-capabilities`: they build on the built-in Http family; the family itself is Core and documented in docs/07. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Closing the practical HTTP gaps without turning Limen into an HTTP framework
 (kemiller2002/limen#47, LCP-041).
 

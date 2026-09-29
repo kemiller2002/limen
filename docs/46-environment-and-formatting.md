@@ -1,5 +1,7 @@
 # Environment evidence and formatting
 
+> **Optional — not Limen Core.** This is environment evidence and formatting, a capability pack and engine library. It composes with the Core concept `semantic-input`: locale and time zone arrive as evidence the engine formats with. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Locale, time zone and direction as explicit evidence, and correct formatting
 in every engine language (kemiller2002/limen#35, LCP-028).
 

@@ -1,5 +1,7 @@
 # The lifecycle CLI
 
+> **Optional — not Limen Core.** This is the lifecycle CLI, a tooling. It composes with the Core concept `engine-owns-meaning`: it installs and verifies the boundary that keeps meaning in the engine. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Limen ships a command-line tool that installs the Limen boundary into a
 repository, verifies it, explains it when it breaks, and upgrades it. It is the
 same npm package as the library — installing one gives you both.

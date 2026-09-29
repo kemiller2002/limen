@@ -24,6 +24,8 @@
 /test/layers.test.ts          @kemiller2002
 /test/core-boundary.test.ts   @kemiller2002
 /test/core-budget.test.ts     @kemiller2002
+/test/core-admission.test.ts  @kemiller2002
+/test/learning-contract.test.ts @kemiller2002
 /test/scope.test.ts           @kemiller2002
 /test/typescript-boundary.test.ts @kemiller2002
 /guests/minimal/rust/limen-minimal-wasm/ @kemiller2002

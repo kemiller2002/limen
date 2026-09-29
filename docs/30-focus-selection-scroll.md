@@ -1,5 +1,7 @@
 # Focus, selection and scroll
 
+> **Optional — not Limen Core.** This is the focus, selection and scroll pack, a capability pack. It composes with the Core concept `typed-capabilities`: it is requested through the generic Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 The first complete optional capability pack (kemiller2002/limen#23, LCP-007).
 It covers presentation mechanics a projection cannot express: moving focus,
 selecting text, scrolling an element into view.

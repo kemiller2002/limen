@@ -107,6 +107,11 @@ Read the proxy's own state instead — `curl -sS "$HTTPS_PROXY/__agentproxy/stat
   ambiguities, and open questions
 - [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) —
   what Limen renamed and what it deliberately did not
+- [docs/core-mental-model.md](docs/core-mental-model.md) — **Limen Core in
+  seven concepts: the one mandatory model** (checked against
+  `architecture/core.json`)
+- [docs/core-admission.md](docs/core-admission.md) — how Core may grow, and
+  the decision order to try first
 - [docs/mental-model.md](docs/mental-model.md) — who owns state, the DOM,
   routing, decisions
 - [docs/where-code-goes.md](docs/where-code-goes.md) — which layer a change

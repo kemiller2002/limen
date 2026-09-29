@@ -1,5 +1,7 @@
 # Offline, service workers and application updates
 
+> **Optional — not Limen Core.** This is offline and updates, a capability pack and engine library. It composes with the Core concepts `typed-capabilities` and `engine-owns-meaning`: service-worker mechanism is a pack; what to keep and reconcile is engine state. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 An application that starts with no network, keeps the user's work while
 offline, reconciles it when the network returns, and takes a new version only
 when it decides to (kemiller2002/limen#40, LCP-034).

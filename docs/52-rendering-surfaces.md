@@ -1,5 +1,7 @@
 # Rendering surfaces behind governed adapters
 
+> **Optional — not Limen Core.** This is rendering surfaces, a governed adapters. It composes with the Core concepts `typed-capabilities` and `projection-output`: canvas and similar surfaces sit behind governed adapters. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Canvas, WebGL, WebGPU, maps, diagram editors and code editors fit behind the
 governed adapter boundary ([docs/42](42-adapters.md)) without Limen
 learning a single graphics primitive (kemiller2002/limen#45, LCP-039).

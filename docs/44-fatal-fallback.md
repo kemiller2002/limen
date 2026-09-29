@@ -1,5 +1,7 @@
 # Fatal fallback and restart
 
+> **Optional — not Limen Core.** This is the fatal-fallback host, an optional host. It composes with the Core concept `correlation-compatibility`: it handles an engine that has stopped answering. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 What the user sees when the engine itself breaks, and how they get back
 (kemiller2002/limen#50, LCP-032).
 

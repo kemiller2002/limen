@@ -33,6 +33,21 @@ definite answer nearly every time.
 | A browser API Limen does not expose | an **optional capability pack** (`src/capabilities/<name>/`), never the kernel | Core's four built-in families are frozen; a pack has its own contract unit and reaches the engine through the generic `Capability` seam ([docs/24](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md)) |
 | Application logic in JavaScript outside the engine | **nowhere** | this is the mistake the whole architecture exists to prevent |
 
+## The decision order
+
+Ask in this order and stop at the first that can hold the change. The
+last step is rare by design.
+
+1. **Engine** — state, meaning, rules, decisions.
+2. **HTML** — structure and native elements.
+3. **CSS** — presentation.
+4. **Engine library** — reusable engine-side logic (routing, forms, resources), no host authority.
+5. **Optional capability pack** — a browser capability behind the generic `Capability` seam.
+6. **Governed adapter** — a third-party widget or rendering surface, with no application authority.
+7. **Optional host or renderer** — where the engine runs, or how a page is rendered.
+8. **Tooling or conformance** — tests, traces, checks, the CLI.
+9. **Core Admission** — only then, and never from feature work: [docs/core-admission.md](https://github.com/kemiller2002/limen/blob/main/docs/core-admission.md).
+
 ## The decision tree
 
 ```text

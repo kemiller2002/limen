@@ -1,5 +1,7 @@
 # Performance baseline
 
+> **Optional — not Limen Core.** This is performance measurement, a tooling. It composes with the Core concept `projection-output`: it measures what applying projections and loading Limen cost. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 What Limen costs today, measured rather than assumed, so optimization is
 chosen from evidence and parity work cannot silently inflate the default
 footprint (kemiller2002/limen#19, LCP-004 and LCP-033).

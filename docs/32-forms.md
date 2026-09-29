@@ -1,5 +1,7 @@
 # Forms
 
+> **Optional — not Limen Core.** This is the forms library, an engine library. It composes with the Core concept `engine-owns-meaning`: form state and validation are engine state. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 How a Limen application owns form state (kemiller2002/limen#21, LCP-006).
 
 A form's values, what the user has touched, what is invalid, what is waiting

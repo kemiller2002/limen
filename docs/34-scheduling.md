@@ -1,5 +1,7 @@
 # Scheduling
 
+> **Optional — not Limen Core.** This is the scheduling pack, a capability pack. It composes with the Core concept `typed-capabilities`: timers are requested through the generic Capability seam. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 Browser timing as explicit, cancellable mechanism
 (kemiller2002/limen#24, LCP-010). An engine that needs to wait asks for a
 wake-up, and is told **exactly once** whether it fired or was cancelled.

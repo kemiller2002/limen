@@ -1,5 +1,7 @@
 # Conversion report: the Echelon lifecycle interface
 
+> **Optional — not Limen Core.** This is a point-in-time tooling report, a tooling. It composes with the Core concept `engine-owns-meaning`: it records how the lifecycle CLI was added. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 A point-in-time record of adding the standard Echelon Foundry lifecycle CLI
 (`init`, `status`, `verify`, `upgrade`, `doctor`) to this repository. Work item
 **WI-0006**.
