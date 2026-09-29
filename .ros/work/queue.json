@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 70,
+  "nextSeq": 71,
   "items": [
     {
       "id": "WI-0001",
@@ -1094,6 +1094,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T08:11:01Z",
       "updatedAt": "2026-09-29T08:18:55Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0070",
+      "title": "Accessible interaction reference patterns (Forma proofs): tabs, menu, listbox, combobox, tree, grid, dialog over generic focus and event mechanics (GH-31)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T08:21:31Z",
+      "updatedAt": "2026-09-29T08:21:32Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

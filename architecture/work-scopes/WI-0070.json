@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0070",
+  "reference": "kemiller2002/limen#31 (LCP-008)",
+  "placement": "Forma (reference proofs, owned by the Forma project) — pure pattern state machines in an example engine, driven by the generic events and focus packs; ARIA state is projection. The events pack gains one explicit environment fact (direction) for RTL. No Core change.",
+  "guardrail": false,
+  "paths": ["examples/09-accessible-patterns/**", "examples/README.md", "contract/events.contract.json", "src/capabilities/events/**", "guests/fsharp/Limen.Contract/Generated/Events.fs", "guests/csharp/Limen.Contract/Generated/Events.cs", "guests/rust/limen-contract/src/limen_events.rs", "test/**", "docs/**", "bench/budgets.json", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
