@@ -117,3 +117,4 @@
 | WI-0110 | Permission-sensitive capability pattern and geolocation pack: shared permission/availability/gesture conventions, denied vs unavailable, revocation facts (GH-42) | complete |  | medium |
 | WI-0111 | Browser credentials (WebAuthn passkeys) pack under the permission pattern: create/get, gesture-required, verification left to the engine and server (GH-42) | complete |  | medium |
 | WI-0112 | Guardrail: register the limen.geolocation and limen.credentials contract units and bindings (GH-42) | complete |  | medium |
+| WI-0113 | Opaque high-performance rendering adapter pattern: a Canvas scatter-plot adapter behind the governed adapter contract, pointer/focus/resize integration, fault isolation, and a trace proving bounded cross-boundary chatter (GH-45) | ready |  | medium |
