@@ -1,0 +1,57 @@
+{
+  "unit": "limen.measure",
+  "role": "capability",
+  "version": 1,
+  "doc": "Layout and visibility facts without DOM nodes (LCP-014). Targets are named in HTML with data-measure-target (and, inside a data-each row, data-measure-key projected by the engine). Subscriptions are opaque ids; their updates arrive as capability facts. What a size or a visibility means stays the engine's decision.",
+  "types": [
+    { "name": "MeasureTarget", "kind": "record", "fields": [ { "name": "name", "type": "string" }, { "name": "key", "type": "string", "optional": true } ] },
+    { "name": "SubscriptionId", "kind": "brand", "of": "string", "doc": "Opaque; issued by this page's pack and meaningless anywhere else." },
+    { "name": "SubscriptionStaleReason", "kind": "enum", "values": ["unknown", "disposed", "other-session"] },
+    { "name": "Rect", "kind": "record", "doc": "CSS pixels, relative to the viewport.", "fields": [ { "name": "x", "type": "number" }, { "name": "y", "type": "number" }, { "name": "width", "type": "number" }, { "name": "height", "type": "number" } ] },
+    { "name": "Viewport", "kind": "record", "fields": [
+      { "name": "width", "type": "number" }, { "name": "height", "type": "number" },
+      { "name": "scrollX", "type": "number" }, { "name": "scrollY", "type": "number" },
+      { "name": "scrollWidth", "type": "number" }, { "name": "scrollHeight", "type": "number" },
+      { "name": "devicePixelRatio", "type": "number" } ] },
+    {
+      "name": "MeasureRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "measure", "doc": "The target's bounding rectangle now.", "fields": [ { "name": "target", "type": "MeasureTarget" } ] },
+        { "name": "viewport", "doc": "The viewport's size and the document's scroll position and extent now.", "fields": [] },
+        { "name": "observeSize", "doc": "Resized facts whenever the target's content box changes size.", "fields": [ { "name": "target", "type": "MeasureTarget" } ] },
+        { "name": "observeVisibility", "doc": "Visibility facts whenever the target crosses the threshold (0 to 1) of intersection with the viewport.", "fields": [ { "name": "target", "type": "MeasureTarget" }, { "name": "threshold", "type": "number" } ] },
+        { "name": "unsubscribe", "fields": [ { "name": "subscription", "type": "SubscriptionId" } ] }
+      ]
+    },
+    {
+      "name": "MeasureResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Measured", "fields": [ { "name": "rect", "type": "Rect" } ] },
+        { "name": "ViewportMeasured", "fields": [ { "name": "viewport", "type": "Viewport" } ] },
+        { "name": "Subscribed", "doc": "Facts for this subscription follow until it is unsubscribed or its target is removed.", "fields": [ { "name": "subscription", "type": "SubscriptionId" } ] },
+        { "name": "Unsubscribed", "fields": [] },
+        { "name": "Stale", "doc": "No such live subscription: never issued here, already ended, or from before a reload.", "fields": [ { "name": "reason", "type": "SubscriptionStaleReason" } ] },
+        { "name": "NotFound", "fields": [] },
+        { "name": "Ambiguous", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "InvalidThreshold", "fields": [] },
+        { "name": "Unsupported", "doc": "This browser lacks the observer.", "fields": [] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "MeasureFact",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "Subscription updates. The browser already coalesces observer callbacks to at most one per frame; the pack forwards the latest entry per subscription per callback.",
+      "variants": [
+        { "name": "Resized", "fields": [ { "name": "subscription", "type": "SubscriptionId" }, { "name": "width", "type": "number" }, { "name": "height", "type": "number" } ] },
+        { "name": "Visibility", "fields": [ { "name": "subscription", "type": "SubscriptionId" }, { "name": "intersecting", "type": "bool" }, { "name": "ratio", "type": "number" } ] },
+        { "name": "TargetRemoved", "doc": "The target left the document; the subscription has ended and nothing more will be sent for it.", "fields": [ { "name": "subscription", "type": "SubscriptionId" } ] }
+      ]
+    }
+  ]
+}

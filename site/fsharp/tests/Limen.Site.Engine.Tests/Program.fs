@@ -1,7 +1,7 @@
 open System
 open System.Text.Json.Nodes
 open Limen.Site.Engine
-open Limen.Site.Engine.Protocol
+open Limen.Contract.Core
 open Limen.Site.Engine.Engine
 
 let mutable failures = 0
@@ -34,11 +34,14 @@ let deployment = transition approved (BeginDeploy(DeploySuccess, "deploy-1"))
 equal "approved release can enter deployment" true (match deployment.State.Release.Deployment with | InFlight("deploy-1", DeploySuccess) -> true | _ -> false)
 equal "deployment emits one browser effect" 1 deployment.Effects.Length
 
-let staleDeploy = transition deployment.State (RecordDeploy("deploy-old", HttpSuccess 200))
+let staleDeploy = transition deployment.State (RecordDeploy("deploy-old", EffectOutcome.Success(200L, Limen.Contract.RawJson "null", None)))
 equal "stale deploy evidence is discarded" deployment.State.Release.Deployment staleDeploy.State.Release.Deployment
 
-let unknown = transition deployment.State (RecordDeploy("deploy-1", HttpOutcomeUnknown))
+let unknown = transition deployment.State (RecordDeploy("deploy-1", EffectOutcome.OutcomeUnknown OutcomeUnknownReason.TimeoutAfterDispatch))
 equal "timeout after dispatch becomes reconciliation" ReconciliationRequired unknown.State.Release.Deployment
+
+let lost = transition deployment.State (RecordDeploy("deploy-1", EffectOutcome.OutcomeUnknown OutcomeUnknownReason.ConnectionLost))
+equal "a lost connection after dispatch becomes reconciliation too" ReconciliationRequired lost.State.Release.Deployment
 
 let blindRetry = transitionState unknown.State (BeginDeploy(DeploySuccess, "deploy-2"))
 equal "blind retry is illegal while outcome is unknown" ReconciliationRequired blindRetry.Release.Deployment
@@ -64,11 +67,11 @@ ok "placement explanations are substantive" (placementTasks |> Array.forall (fun
 
 // Projection carries capabilities and obligations rather than making the DOM infer them.
 let initialView = project initialState
-equal "initial approval capability is false" (Some(VBool false)) (Map.tryFind "canApproveRelease" initialView)
-equal "initial obligations exist" (Some(VBool true)) (Map.tryFind "releaseHasObligations" initialView)
+equal "initial approval capability is false" (Some(ViewValue.Flag false)) (Map.tryFind "canApproveRelease" initialView)
+equal "initial obligations exist" (Some(ViewValue.Flag true)) (Map.tryFind "releaseHasObligations" initialView)
 
 let readyView = project securityCleared
-equal "approval capability becomes true" (Some(VBool true)) (Map.tryFind "canApproveRelease" readyView)
+equal "approval capability becomes true" (Some(ViewValue.Flag true)) (Map.tryFind "canApproveRelease" readyView)
 
 // Serialized dispatch is the exact boundary used by the WebAssembly host.
 Dispatch.resetForTests()
@@ -76,7 +79,32 @@ Dispatch.resetForTests()
 let initialize =
     """{"kind":"Initialize","protocolVersion":1,"capabilities":["Http","Storage","Clipboard","Navigation"],"location":{"origin":"https://example.test","path":"/","query":"","hash":""}}"""
 
-let initialized = JsonNode.Parse(Dispatch.handle initialize).AsObject()
+// A kernel older than protocol 1.1 sends no handshake: the engine refuses it,
+// typed, and the (new) kernel would apply nothing from this response.
+let legacy = JsonNode.Parse(Dispatch.handle initialize).AsObject()
+equal "a pre-1.1 kernel is refused as HandshakeMissing" "HandshakeMissing" (legacy.["handshake"].["reason"].["kind"].GetValue<string>())
+
+// The host offers the protocol revision the generated bindings define.
+let hostMinor = Contract.ProtocolMinor
+
+let offered =
+    initialize.Replace(
+        "\"location\":",
+        $"\"handshake\":{{\"protocol\":{{\"major\":1,\"minor\":{hostMinor}}},\"contract\":{{\"unit\":\"limen.core\",\"version\":1,\"fingerprint\":\"{Contract.Fingerprint}\"}},\"capabilities\":[]}},\"location\":")
+
+let initialized = JsonNode.Parse(Dispatch.handle offered).AsObject()
+equal "a host offering the generated core contract is accepted" "Accepted" (initialized.["handshake"].["kind"].GetValue<string>())
+
+let mismatched = JsonNode.Parse(Dispatch.handle (offered.Replace(Contract.Fingerprint, "sha256:stale"))).AsObject()
+equal "a host on another contract is refused as ContractMismatch" "ContractMismatch" (mismatched.["handshake"].["reason"].["kind"].GetValue<string>())
+
+let outsideContract =
+    try
+        Dispatch.handle """{"kind":"Teleport"}""" |> ignore
+        false
+    with _ -> true
+
+equal "a message outside the contract is refused, not interpreted" true outsideContract
 let initialJsonView = initialized.["view"].AsObject()
 equal "initialize projects tests state" "Unverified" (initialJsonView.["testsStatus"].GetValue<string>())
 
@@ -101,6 +129,61 @@ let deployResponse = JsonNode.Parse(Dispatch.handle deployMessage).AsObject()
 let effects = deployResponse.["effects"].AsArray()
 equal "serialized deploy emits one effect" 1 effects.Count
 equal "serialized deploy effect is HTTP" "Http" (effects.[0].AsObject().["kind"].GetValue<string>())
+
+// View contracts (kemiller2002/limen#48): the same language-neutral
+// site/pages/*.view.json that the static checker holds the HTML to also holds
+// this engine's serialized projections. One engine serves several pages, so
+// each page's contract must be present in the view with the declared kinds;
+// keys other pages bind are allowed.
+let kindOf (node: JsonNode) =
+    match node.GetValueKind() with
+    | System.Text.Json.JsonValueKind.String -> "string"
+    | System.Text.Json.JsonValueKind.Number -> "number"
+    | System.Text.Json.JsonValueKind.True
+    | System.Text.Json.JsonValueKind.False -> "boolean"
+    | System.Text.Json.JsonValueKind.Array -> "list"
+    | other -> string other
+
+let kindMatches (expected: string) (actual: string) =
+    expected = actual || (expected = "scalar" && List.contains actual [ "string"; "number"; "boolean" ])
+
+let checkAgainst (page: string) (contract: JsonObject) (label: string) (view: JsonObject) =
+    for entry in contract.["view"].AsObject() do
+        let where = $"{page} contract, {label}: view.{entry.Key}"
+        match view.[entry.Key] with
+        | null -> fail where "present" "absent"
+        | value ->
+            match entry.Value.GetValueKind() with
+            | System.Text.Json.JsonValueKind.String ->
+                let expected = entry.Value.GetValue<string>()
+                if not (kindMatches expected (kindOf value)) then fail where expected (kindOf value)
+            | _ ->
+                if kindOf value <> "list" then fail where "list" (kindOf value)
+                else
+                    for item in value.AsArray() do
+                        for field in entry.Value.AsObject().["list"].AsObject() do
+                            match item.AsObject().[field.Key] with
+                            | null -> fail $"{where}[].{field.Key}" "present" "absent"
+                            | fieldValue ->
+                                let expected = field.Value.GetValue<string>()
+                                if not (kindMatches expected (kindOf fieldValue)) then fail $"{where}[].{field.Key}" expected (kindOf fieldValue)
+
+let pagesDirectory = IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "..", "..", "pages")
+let viewContracts =
+    IO.Directory.GetFiles(pagesDirectory, "*.view.json")
+    |> Array.sort
+    |> Array.map (fun path -> IO.Path.GetFileName path, JsonNode.Parse(IO.File.ReadAllText path).AsObject())
+
+ok "site pages publish view contracts" (viewContracts.Length > 0)
+
+let projectedViews =
+    [ "initialize", initialJsonView
+      "approved", approvedResponse.["view"].AsObject()
+      "deploying", deployResponse.["view"].AsObject() ]
+
+for (page, contract) in viewContracts do
+    for (label, view) in projectedViews do
+        checkAgainst page contract label view
 
 if failures = 0 then
     printfn "Limen F# site engine tests passed."

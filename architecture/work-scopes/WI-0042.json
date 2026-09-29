@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0042",
+  "reference": "kemiller2002/limen#19 (LCP-004, LCP-033)",
+  "placement": "Tooling / Conformance — a benchmark harness outside src/ and a size-budget test; no Core change",
+  "guardrail": false,
+  "paths": ["bench/**", "scripts/bench*.ts", "tsconfig.bench.json", ".gitignore", "package.json", ".github/workflows/ci.yml", "test/**", "docs/**", "research/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

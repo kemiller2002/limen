@@ -1,0 +1,97 @@
+{
+  "doc": "Language-neutral semantics for engine-side HTTP policy (kemiller2002/limen#47, LCP-041). conformance/http/README.md states the rules; these cases are the rules as data, compared exactly. The F# reference library runs them in conformance/http/fsharp/.",
+  "interceptors": [
+    {
+      "name": "interceptors apply in order; a later header wins; names are lower-cased",
+      "request": { "method": "GET", "url": "/orders", "headers": {}, "timeoutMs": 5000, "responseHeaders": [] },
+      "interceptors": [
+        { "base": { "prefix": "https://api.example.test/" } },
+        { "bearer": { "token": "t-1" } },
+        { "header": { "name": "X-Trace", "value": "a" } },
+        { "header": { "name": "x-trace", "value": "b" } },
+        { "timeout": { "ms": 2000 } },
+        { "expose": { "names": ["ETag", "Retry-After"] } },
+        { "expose": { "names": ["etag"] } }
+      ],
+      "expect": { "method": "GET", "url": "https://api.example.test/orders", "headers": { "authorization": "Bearer t-1", "x-trace": "b" }, "timeoutMs": 2000, "responseHeaders": ["etag", "retry-after"] }
+    },
+    {
+      "name": "a base prefix leaves an absolute URL alone",
+      "request": { "method": "GET", "url": "https://other.example.test/x", "headers": {}, "timeoutMs": 5000, "responseHeaders": [] },
+      "interceptors": [ { "base": { "prefix": "https://api.example.test" } } ],
+      "expect": { "method": "GET", "url": "https://other.example.test/x", "headers": {}, "timeoutMs": 5000, "responseHeaders": [] }
+    },
+    {
+      "name": "a later bearer replaces an earlier authorization header",
+      "request": { "method": "POST", "url": "/pay", "headers": { "authorization": "Basic old" }, "body": "{}", "timeoutMs": 5000, "responseHeaders": [] },
+      "interceptors": [ { "bearer": { "token": "fresh" } } ],
+      "expect": { "method": "POST", "url": "/pay", "headers": { "authorization": "Bearer fresh" }, "body": "{}", "timeoutMs": 5000, "responseHeaders": [] }
+    }
+  ],
+  "retry": {
+    "policy": { "maxAttempts": 3, "baseDelayMs": 100, "maxDelayMs": 1000, "retryStatuses": [429, 502, 503] },
+    "cases": [
+      { "name": "an idempotent read that timed out after dispatch is retried with backoff", "method": "GET", "headers": {}, "attempt": 1, "outcome": { "kind": "unknown" }, "expect": { "retry": 100 } },
+      { "name": "the second retry doubles the delay", "method": "GET", "headers": {}, "attempt": 2, "outcome": { "kind": "unknown" }, "expect": { "retry": 200 } },
+      { "name": "attempts run out", "method": "GET", "headers": {}, "attempt": 3, "outcome": { "kind": "unknown" }, "expect": { "giveUp": "attempts" } },
+      { "name": "a POST whose outcome is unknown is never retried blindly: reconcile", "method": "POST", "headers": {}, "attempt": 1, "outcome": { "kind": "unknown" }, "expect": "reconcile" },
+      { "name": "a PATCH whose outcome is unknown: reconcile, even with attempts left", "method": "PATCH", "headers": {}, "attempt": 1, "outcome": { "kind": "unknown" }, "expect": "reconcile" },
+      { "name": "an idempotency key makes a POST safe to retry", "method": "POST", "headers": { "idempotency-key": "k-9" }, "attempt": 1, "outcome": { "kind": "unknown" }, "expect": { "retry": 100 } },
+      { "name": "a network failure on a PUT is retried", "method": "PUT", "headers": {}, "attempt": 1, "outcome": { "kind": "failure", "reason": "network" }, "expect": { "retry": 100 } },
+      { "name": "a network failure on a POST is not retried by policy", "method": "POST", "headers": {}, "attempt": 1, "outcome": { "kind": "failure", "reason": "network" }, "expect": { "giveUp": "not-idempotent" } },
+      { "name": "a 503 error page (invalid JSON) on a GET is retried", "method": "GET", "headers": {}, "attempt": 1, "outcome": { "kind": "failure", "reason": "invalid-response", "status": 503 }, "expect": { "retry": 100 } },
+      { "name": "a 404 error page is the answer", "method": "GET", "headers": {}, "attempt": 1, "outcome": { "kind": "failure", "reason": "invalid-response", "status": 404 }, "expect": "done" },
+      { "name": "a 503 to a POST is the answer, not a retry", "method": "POST", "headers": {}, "attempt": 1, "outcome": { "kind": "failure", "reason": "invalid-response", "status": 503 }, "expect": "done" },
+      { "name": "a JSON 429 with Retry-After waits as long as the server says", "method": "GET", "headers": {}, "attempt": 1, "outcome": { "kind": "success", "status": 429, "body": "{}", "headers": { "retry-after": "0" } }, "expect": { "retry": 0 } },
+      { "name": "Retry-After is capped at maxDelayMs", "method": "DELETE", "headers": {}, "attempt": 1, "outcome": { "kind": "success", "status": 503, "body": "{}", "headers": { "retry-after": "120" } }, "expect": { "retry": 1000 } },
+      { "name": "an unparseable Retry-After falls back to backoff", "method": "GET", "headers": {}, "attempt": 2, "outcome": { "kind": "success", "status": 503, "body": "{}", "headers": { "retry-after": "Wed, 21 Oct 2026 07:28:00 GMT" } }, "expect": { "retry": 200 } },
+      { "name": "a success is done", "method": "GET", "headers": {}, "attempt": 1, "outcome": { "kind": "success", "status": 200, "body": "{}", "headers": {} }, "expect": "done" },
+      { "name": "a 422 is the server's answer, not a transport problem", "method": "POST", "headers": {}, "attempt": 1, "outcome": { "kind": "success", "status": 422, "body": "{}", "headers": {} }, "expect": "done" },
+      { "name": "the engine cancelled: done, never retried", "method": "GET", "headers": {}, "attempt": 1, "outcome": { "kind": "cancelled" }, "expect": "done" },
+      { "name": "a too-large body is the answer", "method": "GET", "headers": {}, "attempt": 1, "outcome": { "kind": "failure", "reason": "too-large", "status": 200 }, "expect": "done" }
+    ]
+  },
+  "cache": [
+    {
+      "name": "revalidation: store with its ETag, send If-None-Match, a 304 becomes the cached body",
+      "steps": [
+        { "prepare": { "method": "GET", "url": "/items", "headers": {}, "timeoutMs": 5000, "responseHeaders": [] }, "expect": { "method": "GET", "url": "/items", "headers": {}, "timeoutMs": 5000, "responseHeaders": ["etag"] } },
+        { "absorb": { "method": "GET", "url": "/items" }, "outcome": { "kind": "success", "status": 200, "body": "[1,2]", "headers": { "etag": "\"a\"" } }, "expect": { "outcome": { "kind": "success", "status": 200, "body": "[1,2]", "headers": { "etag": "\"a\"" } }, "cached": ["/items"] } },
+        { "prepare": { "method": "GET", "url": "/items", "headers": {}, "timeoutMs": 5000, "responseHeaders": ["etag"] }, "expect": { "method": "GET", "url": "/items", "headers": { "if-none-match": "\"a\"" }, "timeoutMs": 5000, "responseHeaders": ["etag"] } },
+        { "absorb": { "method": "GET", "url": "/items" }, "outcome": { "kind": "failure", "reason": "invalid-response", "status": 304 }, "expect": { "outcome": { "kind": "success", "status": 200, "body": "[1,2]", "headers": {} }, "cached": ["/items"] } },
+        { "absorb": { "method": "GET", "url": "/items" }, "outcome": { "kind": "success", "status": 304, "body": "", "headers": {} }, "expect": { "outcome": { "kind": "success", "status": 200, "body": "[1,2]", "headers": {} }, "cached": ["/items"] } }
+      ]
+    },
+    {
+      "name": "a write invalidates; a 304 for an uncached URL is left as it came; a response without an ETag is not stored",
+      "steps": [
+        { "absorb": { "method": "GET", "url": "/a" }, "outcome": { "kind": "success", "status": 200, "body": "1", "headers": { "etag": "\"x\"" } }, "expect": { "outcome": { "kind": "success", "status": 200, "body": "1", "headers": { "etag": "\"x\"" } }, "cached": ["/a"] } },
+        { "absorb": { "method": "GET", "url": "/b" }, "outcome": { "kind": "success", "status": 200, "body": "2", "headers": {} }, "expect": { "outcome": { "kind": "success", "status": 200, "body": "2", "headers": {} }, "cached": ["/a"] } },
+        { "prepare": { "method": "POST", "url": "/a", "headers": {}, "body": "{}", "timeoutMs": 5000, "responseHeaders": [] }, "expect": { "method": "POST", "url": "/a", "headers": {}, "body": "{}", "timeoutMs": 5000, "responseHeaders": [] } },
+        { "absorb": { "method": "PUT", "url": "/a" }, "outcome": { "kind": "success", "status": 204, "body": "", "headers": {} }, "expect": { "outcome": { "kind": "success", "status": 204, "body": "", "headers": {} }, "cached": [] } },
+        { "absorb": { "method": "GET", "url": "/a" }, "outcome": { "kind": "failure", "reason": "invalid-response", "status": 304 }, "expect": { "outcome": { "kind": "failure", "reason": "invalid-response", "status": 304 }, "cached": [] } }
+      ]
+    },
+    {
+      "name": "a failed write keeps the entry; an unknown write keeps it too (nothing is known to have changed)",
+      "steps": [
+        { "absorb": { "method": "GET", "url": "/c" }, "outcome": { "kind": "success", "status": 200, "body": "c", "headers": { "etag": "\"1\"" } }, "expect": { "outcome": { "kind": "success", "status": 200, "body": "c", "headers": { "etag": "\"1\"" } }, "cached": ["/c"] } },
+        { "absorb": { "method": "PATCH", "url": "/c" }, "outcome": { "kind": "success", "status": 409, "body": "{}", "headers": {} }, "expect": { "outcome": { "kind": "success", "status": 409, "body": "{}", "headers": {} }, "cached": ["/c"] } },
+        { "absorb": { "method": "PATCH", "url": "/c" }, "outcome": { "kind": "unknown" }, "expect": { "outcome": { "kind": "unknown" }, "cached": ["/c"] } }
+      ]
+    }
+  ],
+  "polling": {
+    "policy": { "intervalMs": 1000, "maxIntervalMs": 8000, "factor": 2 },
+    "steps": [
+      { "outcome": { "kind": "success", "status": 200, "body": "{}", "headers": {} }, "stop": false, "expect": { "after": 1000, "failures": 0 } },
+      { "outcome": { "kind": "failure", "reason": "network" }, "stop": false, "expect": { "after": 2000, "failures": 1 } },
+      { "outcome": { "kind": "unknown" }, "stop": false, "expect": { "after": 4000, "failures": 2 } },
+      { "outcome": { "kind": "failure", "reason": "invalid-response", "status": 500 }, "stop": false, "expect": { "after": 8000, "failures": 3 } },
+      { "outcome": { "kind": "unknown" }, "stop": false, "expect": { "after": 8000, "failures": 4 } },
+      { "outcome": { "kind": "success", "status": 200, "body": "{}", "headers": {} }, "stop": false, "expect": { "after": 1000, "failures": 0 } },
+      { "outcome": { "kind": "success", "status": 200, "body": "{\"done\":true}", "headers": {} }, "stop": true, "expect": { "stop": true, "failures": 0 } },
+      { "outcome": { "kind": "cancelled" }, "stop": false, "expect": { "stop": true, "failures": 0 } }
+    ]
+  }
+}

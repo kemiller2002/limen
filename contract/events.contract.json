@@ -1,0 +1,42 @@
+{
+  "unit": "limen.events",
+  "role": "capability",
+  "version": 1,
+  "doc": "Rich browser event facts without DOM Event objects (LCP-020). A listener is declared in HTML with data-rich-event and data-rich-on, and opts into exactly the fact groups it needs with data-rich-facts; everything the browser must decide synchronously (preventDefault, stopPropagation, capture, passive, once, pointer capture) is declared there too, so the engine is never asked for a synchronous DOM decision. The simple data-event path is untouched. The pack interprets no shortcut or gesture: it reports facts.",
+  "types": [
+    { "name": "Modifiers", "kind": "record", "fields": [ { "name": "alt", "type": "bool" }, { "name": "ctrl", "type": "bool" }, { "name": "meta", "type": "bool" }, { "name": "shift", "type": "bool" } ] },
+    { "name": "KeyboardFacts", "kind": "record", "fields": [ { "name": "key", "type": "string" }, { "name": "code", "type": "string" }, { "name": "repeat", "type": "bool" }, { "name": "composing", "type": "bool" } ] },
+    { "name": "PointerFacts", "kind": "record", "doc": "x and y (client CSS pixels) only when the listener asked for coordinates.", "fields": [
+      { "name": "pointerType", "type": "string" }, { "name": "pointerId", "type": "int" }, { "name": "button", "type": "int" }, { "name": "buttons", "type": "int" }, { "name": "isPrimary", "type": "bool" },
+      { "name": "x", "type": "number", "optional": true }, { "name": "y", "type": "number", "optional": true } ] },
+    { "name": "DragPhase", "kind": "enum", "values": ["start", "enter", "over", "leave", "drop", "end"] },
+    { "name": "DragFacts", "kind": "record", "doc": "What is being dragged, by type only: contents are not read. fileCount counts dropped files; reading one is a file capability's job.", "fields": [ { "name": "phase", "type": "DragPhase" }, { "name": "types", "type": { "list": "string" } }, { "name": "fileCount", "type": "int" } ] },
+    { "name": "CompositionPhase", "kind": "enum", "values": ["start", "update", "end"] },
+    { "name": "CompositionFacts", "kind": "record", "doc": "committed is present only at end: text during composition is not the user's yet.", "fields": [ { "name": "phase", "type": "CompositionPhase" }, { "name": "committed", "type": "string", "optional": true } ] },
+    { "name": "SelectionFacts", "kind": "record", "doc": "A text control's selection, in UTF-16 code units as the browser reports it.", "fields": [ { "name": "start", "type": "int" }, { "name": "end", "type": "int" }, { "name": "direction", "type": "string" } ] },
+    { "name": "TextDirection", "kind": "enum", "values": ["ltr", "rtl"] },
+    { "name": "InputFacts", "kind": "record", "doc": "beforeinput / input: the kind of edit, and its data when not composing.", "fields": [ { "name": "inputType", "type": "string" }, { "name": "data", "type": "string", "optional": true } ] },
+    {
+      "name": "RichEvent",
+      "kind": "record",
+      "doc": "One declared listener fired. Only the groups the listener asked for are present.",
+      "fields": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string", "doc": "The DOM event type (keydown, pointermove, …)." },
+        { "name": "key", "type": "string", "optional": true, "doc": "The row key from the nearest data-rich-key ancestor, projected by the engine." },
+        { "name": "value", "type": "string", "optional": true },
+        { "name": "modifiers", "type": "Modifiers", "optional": true },
+        { "name": "keyboard", "type": "KeyboardFacts", "optional": true },
+        { "name": "pointer", "type": "PointerFacts", "optional": true },
+        { "name": "drag", "type": "DragFacts", "optional": true },
+        { "name": "composition", "type": "CompositionFacts", "optional": true },
+        { "name": "selection", "type": "SelectionFacts", "optional": true },
+        { "name": "input", "type": "InputFacts", "optional": true },
+        { "name": "direction", "type": "TextDirection", "optional": true, "doc": "The element's computed text direction: the explicit environment fact an RTL-aware interaction needs (which arrow means next)." }
+      ]
+    },
+    { "name": "Listener", "kind": "record", "fields": [ { "name": "name", "type": "string" }, { "name": "type", "type": "string" }, { "name": "refused", "type": "string", "optional": true, "doc": "Why the declaration was not bound, e.g. passive with preventDefault." } ] },
+    { "name": "EventsRequest", "kind": "union", "tag": "operation", "variants": [ { "name": "describe", "doc": "The listeners currently declared and bound.", "fields": [] } ] },
+    { "name": "EventsResult", "kind": "union", "tag": "kind", "variants": [ { "name": "Listening", "fields": [ { "name": "listeners", "type": { "list": "Listener" } } ] }, { "name": "Cancelled", "fields": [] } ] }
+  ]
+}

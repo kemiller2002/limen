@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0114",
+  "reference": "kemiller2002/limen#46 (LCP-040)",
+  "placement": "Capability Pack — src/capabilities/coordination/ with its own contract unit, plus hub.ts, the optional SharedWorker relay the host serves. Messages are JSON, size-bounded and validated by the pack before an engine sees them; each engine decodes its own schema. Web Locks are coordination mechanics only: the pack never decides what holding a lock means, and leadership is the engine's. Frame messaging names an exact origin, never a wildcard, and accepts only messages from that frame at that origin. No shared mutable state: each context's engine keeps its own. Core unchanged; absent unless registered. The smoke runner gains second-page actions and per-page frame policies.",
+  "guardrail": false,
+  "paths": ["contract/coordination.contract.json", "src/capabilities/coordination/**", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

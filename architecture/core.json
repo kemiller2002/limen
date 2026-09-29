@@ -1,0 +1,128 @@
+{
+  "doc": "The Limen Core manifest (kemiller2002/limen#59, #60): what Core is, as data the checks read. Core is the universal boundary mechanism every ordinary Limen application shares, and nothing else. tools/guardrails/core.ts checks the repository against this file (scripts/check-architecture.ts, npm test); it is guardrail-owned (architecture/guardrails.json), so feature work cannot widen it. Enlarging Core — a file, a root export family, a binding primitive, a capability family, a runtime dependency, a concept — needs a Core Admission record (docs/core-admission.md).",
+  "architectureVersion": "1.0.0",
+  "referenceCommit": "9a835cccaa57ef44899b27dba5d31a22bf23bb49",
+  "concepts": [
+    { "id": "engine-owns-meaning", "statement": "The engine owns meaning and authoritative state." },
+    { "id": "html-owns-structure", "statement": "HTML owns document structure." },
+    { "id": "css-owns-presentation", "statement": "CSS owns presentation." },
+    { "id": "semantic-input", "statement": "Semantic events and facts travel into the engine." },
+    { "id": "projection-output", "statement": "Projection travels out to the browser." },
+    { "id": "typed-capabilities", "statement": "Browser authority is requested through typed capabilities and returned as typed outcomes." },
+    { "id": "correlation-compatibility", "statement": "Correlation and compatibility make asynchronous and cross-runtime behavior explicit." }
+  ],
+  "runtimeRoots": {
+    "doc": "Every file under these directories is runtime source and must belong to exactly one layer of architecture/layers.json.",
+    "paths": ["src"]
+  },
+  "layers": {
+    "doc": "Every layer in architecture/layers.json is Core or belongs to exactly one optional group. Core may import only Core; an optional layer may import only Core's public files.",
+    "core": ["core-contract", "core-kernel"],
+    "optional": {
+      "package-facade": ["package-facade"],
+      "reference-demo": ["reference-engine", "reference-demo"],
+      "federation": ["federation-host"],
+      "capability-packs": ["capability-pack", "capability-support"],
+      "hosts-renderers": ["host-adapter", "renderer"],
+      "tooling-conformance": ["tooling"]
+    }
+  },
+  "files": {
+    "doc": "The exact Core files. A new file in a Core layer that is not listed here fails the check: Core does not grow by adding a path. public: an extension point optional layers may import. private: Core-internal. generated: emitted by tools/contract-gen, measured separately from handwritten Core.",
+    "list": [
+      { "path": "src/protocol.ts", "visibility": "public", "generated": false },
+      { "path": "src/generated/core.ts", "visibility": "public", "generated": true },
+      { "path": "src/generated/core.codec.ts", "visibility": "public", "generated": true },
+      { "path": "src/guest/handshake.ts", "visibility": "public", "generated": false },
+      { "path": "src/kernel/browser-kernel.ts", "visibility": "public", "generated": false },
+      { "path": "src/kernel/binding-policy.ts", "visibility": "public", "generated": false },
+      { "path": "src/kernel/capabilities.ts", "visibility": "public", "generated": false },
+      { "path": "src/kernel/diagnostics.ts", "visibility": "public", "generated": false },
+      { "path": "src/kernel/handshake.ts", "visibility": "public", "generated": false }
+    ]
+  },
+  "entrypoints": {
+    "doc": "Package subpaths. core: subpaths whose whole transitive graph is Core (the root adds only its facade). optional: subpaths that must keep existing so optional surfaces stay reachable by explicit import. Every other subpath in package.json exports (./capabilities/<name>, hosts, tooling) is optional too.",
+    "core": {
+      ".": "src/index.ts",
+      "./protocol": "src/protocol.ts",
+      "./contract": "src/generated/core.codec.ts",
+      "./capabilities": "src/kernel/capabilities.ts",
+      "./kernel": "src/kernel/browser-kernel.ts"
+    },
+    "optional": {
+      "./federation": "src/federation.ts",
+      "./reference-engine": "src/engine/index.ts"
+    }
+  },
+  "rootExports": {
+    "doc": "Every name the root entrypoint (src/index.ts) exports belongs to exactly one approved family, and every family to one canonical concept. A new family, or a name in no family, fails. legacy is empty since kemiller2002/limen#61 moved federation to ./federation and the reference engine to ./reference-engine; it may not be refilled.",
+    "families": [
+      {
+        "id": "browser-kernel",
+        "concepts": ["semantic-input", "projection-output"],
+        "names": ["BrowserKernel", "KernelOptions", "KernelStatus", "DiagnosticEvent", "DiagnosticsSink"]
+      },
+      {
+        "id": "boundary-messages",
+        "concepts": ["semantic-input", "projection-output"],
+        "names": ["BrowserLocation", "BrowserToEngineMessage", "EngineToBrowserMessage", "EngineTransport", "SemanticEvent", "ViewItem", "ViewPrimitive", "ViewState", "ViewValue"]
+      },
+      {
+        "id": "built-in-effects",
+        "concepts": ["typed-capabilities"],
+        "names": ["Capability", "EffectOutcome", "EffectRequest", "EffectResult", "HttpEffectRequest", "HttpFailureReason", "HttpMethod", "OutcomeUnknownReason", "StorageEffectRequest", "StorageFailureReason", "StorageOutcome", "ClipboardEffectRequest", "ClipboardFailureReason", "ClipboardOutcome", "NavigationEffectRequest", "NavigationFailureReason", "NavigationOutcome"]
+      },
+      {
+        "id": "optional-capability-seam",
+        "concepts": ["typed-capabilities"],
+        "names": ["defineCapability", "CapabilityDefinition", "CapabilityDescriptor", "CapabilityHost", "CapabilityProvider", "CapabilityRequestContext", "ProviderResult", "CapabilityEffectRequest", "CapabilityId", "CapabilityOffer", "CapabilityOutcome", "CapabilityRejectedReason", "CapabilityUnsupportedReason"]
+      },
+      {
+        "id": "compatibility",
+        "concepts": ["correlation-compatibility"],
+        "names": ["verifyHandshake", "HandshakeVerdict", "Incompatibility", "Negotiation", "answerHandshake", "EngineRequirements", "CORE_CONTRACT_IDENTITY", "PROTOCOL_MINOR", "PROTOCOL_VERSION", "ContractIdentity", "EngineHandshake", "HandshakeRejection", "HostHandshake", "ProtocolRevision"]
+      },
+      {
+        "id": "correlation",
+        "concepts": ["correlation-compatibility"],
+        "names": ["CorrelationId"]
+      }
+    ],
+    "legacy": []
+  },
+  "bindingPrimitives": {
+    "doc": "The DOM binding primitives the kernel reads. data-key is a required modifier of data-each, not a primitive. Any other data-* attribute a Core file reads is an undeclared primitive.",
+    "primitives": ["data-event", "data-on", "data-text", "data-bind-*", "data-if", "data-each"],
+    "modifiers": ["data-key"]
+  },
+  "capabilityFamilies": {
+    "doc": "The built-in browser capability families, grandfathered at v1. They are the EffectRequest variants of contract/core.contract.json other than the generic optional-capability seam, and the values of its Capability enum. A new browser capability is an optional pack (docs/24-contract-and-capabilities.md).",
+    "families": ["Http", "Storage", "Clipboard", "Navigation"],
+    "seam": "Capability",
+    "contract": "contract/core.contract.json"
+  },
+  "learning": {
+    "doc": "The minimal-agent learning contract (kemiller2002/limen#63). canonical is the one Core mental-model document; its concept list must be exactly concepts, in order. path is the required reading, in order; AGENTS.md's block between the requiredReading markers must link exactly these. optionalDocs each open with an Optional banner naming the Core concept(s) they compose with, and none may be in path. quickStarts import Core entrypoints only. Checked by scripts/check-docs.ts through tools/guardrails/learning.ts.",
+    "canonical": "docs/core-mental-model.md",
+    "path": ["docs/core-mental-model.md", "docs/where-code-goes.md", "src/protocol.ts", "examples/minimal/README.md"],
+    "requiredReading": { "file": "AGENTS.md", "start": "<!-- core-learning-path:start -->", "end": "<!-- core-learning-path:end -->" },
+    "quickStarts": ["docs/quick-start.md", "docs/02-getting-started.md"],
+    "optionalDocs": [
+      "docs/20-lifecycle-cli.md", "docs/21-installation-and-upgrade.md", "docs/22-lifecycle-conversion-report.md", "docs/23-wasm-federation.md",
+      "docs/26-fake-host-trace-replay.md", "docs/27-performance-baseline.md", "docs/28-view-contracts.md",
+      "docs/30-focus-selection-scroll.md", "docs/31-routing.md", "docs/32-forms.md", "docs/33-resources-and-optimistic-state.md", "docs/34-scheduling.md",
+      "docs/35-measurement.md", "docs/36-rich-events.md", "docs/37-accessible-patterns.md", "docs/38-overlays.md", "docs/39-realtime.md", "docs/40-files.md",
+      "docs/41-indexeddb.md", "docs/42-adapters.md", "docs/43-http-profiles.md", "docs/44-fatal-fallback.md", "docs/45-hints-and-transitions.md",
+      "docs/46-environment-and-formatting.md", "docs/47-hot-reload.md", "docs/48-page-lifecycle.md", "docs/49-offline-and-updates.md", "docs/50-worker-hosting.md",
+      "docs/51-permission-sensitive-capabilities.md", "docs/52-rendering-surfaces.md", "docs/53-cross-context-coordination.md"
+    ]
+  },
+  "limits": {
+    "doc": "Frozen at architectureVersion 1.0.0. Raising one needs an approved Core Admission and a new architecture version.",
+    "runtimeDependencies": 0,
+    "bindingPrimitives": 6,
+    "capabilityFamilies": 4,
+    "concepts": 7
+  }
+}

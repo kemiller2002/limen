@@ -1,7 +1,7 @@
 # Limen documentation
 
-> **Reading this inside `node_modules`?** Six documents ship in the npm package
-> and are right beside this one: [quick start](quick-start.md),
+> **Reading this inside `node_modules`?** Seven documents ship in the npm package
+> and are right beside this one: [Core in seven concepts](core-mental-model.md), [quick start](quick-start.md),
 > [mental model](mental-model.md),
 > [where does code go?](where-code-goes.md),
 > [API reference](11-api-reference.md),
@@ -19,6 +19,14 @@ is unbuilt, deferred, or ambiguous, it says so rather than implying otherwise.
 > see [naming and compatibility](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md).
 > Throughout these documents, **"the kernel"** means the browser-side bridge
 > and **"the engine"** means the application side.
+
+## Limen Core: the mandatory model
+
+[**Limen Core, in seven concepts**](core-mental-model.md) is the one canonical
+document of what every Limen application shares. Everything else below is
+either an elaboration of it or an optional subsystem, and each optional
+document opens by saying which of the seven concepts it composes with. How
+Core itself may grow: [Core Admission](https://github.com/kemiller2002/limen/blob/main/docs/core-admission.md).
 
 ## Start here
 
@@ -64,6 +72,36 @@ Then, for depth:
 | 20 | [Lifecycle CLI](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md) | `init`, `status`, `verify`, `upgrade`, `doctor` — commands, flags, exit codes, JSON |
 | 21 | [Installation and upgrade](https://github.com/kemiller2002/limen/blob/main/docs/21-installation-and-upgrade.md) | What `init` does, who owns which file, what an upgrade may change |
 | 23 | [WASM federation](23-wasm-federation.md) | How do multiple independently loaded engines exchange typed transitions without sharing state? |
+| 26 | [Fake host, traces and replay](https://github.com/kemiller2002/limen/blob/main/docs/26-fake-host-trace-replay.md) | How do I test an engine deterministically without a browser, and see or replay what crossed the boundary? |
+| 27 | [Performance baseline](https://github.com/kemiller2002/limen/blob/main/docs/27-performance-baseline.md) | What does Limen cost today — round trips, lists, forms, guest engines, payload — and where is the evidence for any optimization? |
+| 28 | [View contracts](https://github.com/kemiller2002/limen/blob/main/docs/28-view-contracts.md) | How do I check a page's bindings and events against what the engine projects and accepts, before anything runs? |
+| 29 | [Binding security](https://github.com/kemiller2002/limen/blob/main/docs/29-binding-security.md) | What may a projection write, and where? How are unsafe URLs, event-handler attributes and strict CSP / Trusted Types handled? |
+| 30 | [Focus, selection and scroll](https://github.com/kemiller2002/limen/blob/main/docs/30-focus-selection-scroll.md) | How does an engine move focus, select text or scroll — and learn exactly what happened — without the kernel holding focus state? |
+| 31 | [Routing](https://github.com/kemiller2002/limen/blob/main/docs/31-routing.md) | Where do routes live, what exactly do they mean in any language, and how do deep links and Back/Forward avoid redundant pushes? |
+| 32 | [Forms](https://github.com/kemiller2002/limen/blob/main/docs/32-forms.md) | Who owns form state, what exactly do touched, dirty, async validation and submission mean, and how are they tested in any language? |
+| 33 | [Async resources and optimistic state](https://github.com/kemiller2002/limen/blob/main/docs/33-resources-and-optimistic-state.md) | How does an engine model loading, refreshing, stale answers and optimistic updates — including unknown outcomes — with no hidden cache? |
+| 34 | [Scheduling](https://github.com/kemiller2002/limen/blob/main/docs/34-scheduling.md) | How does an engine wait — a timeout, the next frame, an idle moment — and cancel it, without timers hidden in application JavaScript? |
+| 35 | [Measurement and observers](https://github.com/kemiller2002/limen/blob/main/docs/35-measurement.md) | How does an engine learn sizes, scroll position and visibility — and when a target disappears — without DOM nodes? |
+| 36 | [Rich event facts](https://github.com/kemiller2002/limen/blob/main/docs/36-rich-events.md) | How does an engine get keyboard, pointer, drag, IME and selection facts — opt-in, JSON, with no synchronous DOM decision? |
+| 37 | [Accessible interaction patterns](https://github.com/kemiller2002/limen/blob/main/docs/37-accessible-patterns.md) | Can tabs, menus, listboxes, comboboxes, trees, grids and dialogs be built accessibly with no widget logic in the kernel — and who owns such patterns? |
+| 38 | [Overlays and the top layer](https://github.com/kemiller2002/limen/blob/main/docs/38-overlays.md) | How does an engine open modal dialogs, popovers and anchored popups — top layer, inert background, focus return — and learn when the user dismissed one? |
+| 39 | [Realtime and streaming](https://github.com/kemiller2002/limen/blob/main/docs/39-realtime.md) | How does an engine hold WebSocket and Server-Sent Events connections — lifecycle, identity, stale messages — with every reconnect its own decision? |
+| 40 | [User-mediated files](https://github.com/kemiller2002/limen/blob/main/docs/40-files.md) | How does an engine learn what files the user chose and read them in bounded chunks — with no File object, no path, and no picker without a gesture? |
+| 41 | [Structured storage (IndexedDB)](https://github.com/kemiller2002/limen/blob/main/docs/41-indexeddb.md) | How does an engine keep versioned, indexed data in the browser — with atomic transactions, stale-write protection and typed schema, version and quota outcomes? |
+| 42 | [Governed adapters](https://github.com/kemiller2002/limen/blob/main/docs/42-adapters.md) | How do maps, charts, editors and Web Components join an application without owning its state — with versioned identity, a JSON-only boundary and fault isolation? |
+| 43 | [HTTP profiles](https://github.com/kemiller2002/limen/blob/main/docs/43-http-profiles.md) | How does an engine get text, bytes, headers, credentials and XSRF protection from Http — with JSON still the default, OutcomeUnknown intact, and retry and caching kept out of the kernel? |
+| 44 | [Fatal fallback and restart](https://github.com/kemiller2002/limen/blob/main/docs/44-fatal-fallback.md) | What does the user see when the engine itself fails, how do they get back, and how is that kept apart from ordinary application errors? |
+| 45 | [Resource hints and view transitions](https://github.com/kemiller2002/limen/blob/main/docs/45-hints-and-transitions.md) | How does an engine ask for a preload or a labelled view transition — idempotent, CSS-styled, and harmless where unsupported? |
+| 46 | [Environment evidence and formatting](https://github.com/kemiller2002/limen/blob/main/docs/46-environment-and-formatting.md) | How does an engine learn the user's locale, time zone and direction, and format numbers and dates correctly in any language, without reading browser globals? |
+| 47 | [State-safe hot reload](https://github.com/kemiller2002/limen/blob/main/docs/47-hot-reload.md) | How does the edit loop swap CSS, remount HTML and replace an engine — keeping state only when a versioned snapshot proves it safe? |
+| 48 | [Page, connectivity and lifecycle evidence](https://github.com/kemiller2002/limen/blob/main/docs/48-page-lifecycle.md) | How does an engine learn that the network went away, the page was hidden, frozen or restored from the back/forward cache — and decide what that means itself? |
+| 49 | [Offline, service workers and application updates](https://github.com/kemiller2002/limen/blob/main/docs/49-offline-and-updates.md) | How does an application start with no network, keep and reconcile the user's work, and take a new version only when it decides to? |
+| 50 | [Worker-hosted engines](https://github.com/kemiller2002/limen/blob/main/docs/50-worker-hosting.md) | How does an engine in any language run off the main thread behind the same boundary, what happens when its worker fails, and when is that worth doing? |
+| 51 | [Permission-sensitive capabilities](https://github.com/kemiller2002/limen/blob/main/docs/51-permission-sensitive-capabilities.md) | How do location, passkeys and every other permission-sensitive feature report availability, permission and gestures the same way, without a permission ever becoming authorization? |
+| 52 | [Rendering surfaces behind governed adapters](https://github.com/kemiller2002/limen/blob/main/docs/52-rendering-surfaces.md) | How do canvases, maps and editors draw at frame rate behind the adapter boundary while the engine hears only semantic facts? |
+| 53 | [Cross-context coordination](https://github.com/kemiller2002/limen/blob/main/docs/53-cross-context-coordination.md) | How do tabs, frames and workers of one application exchange validated messages, elect a leader and trust only an exact origin, with no shared state? |
+| 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
+| 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 
 ## Rules and reasoning
 
@@ -110,7 +148,7 @@ so they cannot silently stop working.
 | [06-time-entries](https://github.com/kemiller2002/limen/tree/main/examples/06-time-entries) | A realistic feature: load, validate, add, mutate, refresh |
 | [07-clipboard](https://github.com/kemiller2002/limen/tree/main/examples/07-clipboard) | The Clipboard capability: three failure reasons, only one worth retrying |
 | [08-routing](https://github.com/kemiller2002/limen/tree/main/examples/08-routing) | The Navigation capability: typed routes, deep links, Back and Forward |
-| [minimal](../examples/minimal/) | The copy shipped inside the npm package: four files, no build step |
+| [minimal](../examples/minimal/) | The copy shipped inside the npm package: four files, no build step, plus an optional view contract |
 | [kitchen-sink](https://github.com/kemiller2002/limen/blob/main/examples/kitchen-sink.html) | Every bridge primitive and every effect outcome, interactively |
 
 Every example has its own README covering its state model, event and effect
@@ -126,6 +164,7 @@ the kernel. They describe process, not architecture.
 - [Work adapter contract](https://github.com/kemiller2002/limen/blob/main/docs/work-adapter-contract.md)
 - [Pilot measurement plan](https://github.com/kemiller2002/limen/blob/main/docs/PILOT-MEASUREMENT-PLAN.md)
 - [Architecture records](https://github.com/kemiller2002/limen/blob/main/docs/architecture/README.md)
+- [Core boundary v1: verification record](https://github.com/kemiller2002/limen/blob/main/docs/architecture/core-boundary-v1.md) — where each #59 criterion is enforced
 - [Decision navigation](https://github.com/kemiller2002/limen/blob/main/docs/decisions/README.md)
 
 ## Upstream specifications

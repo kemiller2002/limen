@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0099",
+  "reference": "kemiller2002/limen#37 (LCP-015, evidence-gated)",
+  "placement": "Evidence and decision record only — research/decisions and docs. The issue forbids building virtualization before its evidence gate is met and asks for the conclusion to be recorded with no runtime change when it is not. No source, protocol or renderer change.",
+  "guardrail": false,
+  "paths": ["research/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -1,0 +1,59 @@
+{
+  "unit": "limen.lifecycle",
+  "role": "capability",
+  "version": 1,
+  "doc": "Page, connectivity and browser-lifecycle evidence (LCP-037). The engine never reads navigator.onLine, document.visibilityState or the Network Information API: it asks for the page's state and subscribes to the topics it needs, and every change arrives as a typed fact tagged with its subscription. Each fact says only what the browser can prove: offline means the browser has no network; online does not mean the engine's backend is reachable (only an effect outcome proves that). Connection quality is advisory and may be absent. The pack never pauses, retries or resumes anything: the engine decides what a hidden, frozen or restored page does.",
+  "types": [
+    { "name": "Visibility", "kind": "enum", "values": ["visible", "hidden"] },
+    { "name": "Topic", "kind": "enum", "values": ["connectivity", "visibility", "pageLifecycle", "freezing", "prerendering", "connection"] },
+    { "name": "ConnectionQuality", "kind": "record", "doc": "Advisory estimates from the Network Information API; each field is absent when the browser does not report it.", "fields": [
+      { "name": "effectiveType", "type": "string", "optional": true, "doc": "slow-2g, 2g, 3g or 4g." },
+      { "name": "downlinkMbps", "type": "number", "optional": true },
+      { "name": "rttMs", "type": "number", "optional": true },
+      { "name": "saveData", "type": "bool", "optional": true } ] },
+    { "name": "PageState", "kind": "record", "fields": [
+      { "name": "online", "type": "bool", "doc": "false proves the browser is offline; true proves only that it has some network." },
+      { "name": "visibility", "type": "Visibility" },
+      { "name": "prerendering", "type": "bool", "doc": "The page is being prerendered and the user has not navigated to it yet." },
+      { "name": "wasDiscarded", "type": "bool", "doc": "The browser discarded this page while hidden and reloaded it; in-memory state was lost." },
+      { "name": "connection", "type": "ConnectionQuality", "optional": true, "doc": "Absent where the Network Information API is unavailable." } ] },
+    {
+      "name": "LifecycleRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "describe", "fields": [] },
+        { "name": "subscribe", "doc": "Facts for the named topics follow, tagged with the returned subscription, until unsubscribe.", "fields": [ { "name": "topics", "type": { "list": "Topic" } } ] },
+        { "name": "unsubscribe", "fields": [ { "name": "subscription", "type": "string" } ] }
+      ]
+    },
+    {
+      "name": "LifecycleResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Described", "fields": [ { "name": "state", "type": "PageState" } ] },
+        { "name": "Subscribed", "fields": [ { "name": "subscription", "type": "string" }, { "name": "state", "type": "PageState" } ] },
+        { "name": "Unsubscribed", "fields": [] },
+        { "name": "UnknownSubscription", "doc": "Never issued, or already ended.", "fields": [] },
+        { "name": "InvalidRequest", "doc": "A subscription with no topics.", "fields": [ { "name": "problem", "type": "string" } ] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "LifecycleFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "ConnectivityChanged", "fields": [ { "name": "subscription", "type": "string" }, { "name": "online", "type": "bool" } ] },
+        { "name": "VisibilityChanged", "fields": [ { "name": "subscription", "type": "string" }, { "name": "visibility", "type": "Visibility" } ] },
+        { "name": "PageHidden", "doc": "pagehide: the user is leaving. persisted true means the page may be kept in the back/forward cache and shown again; false means it is being unloaded. The last moment to save anything.", "fields": [ { "name": "subscription", "type": "string" }, { "name": "persisted", "type": "bool" } ] },
+        { "name": "PageShown", "doc": "pageshow. persisted true means the page was restored from the back/forward cache: timers and connections may be stale, and the engine decides what to refresh.", "fields": [ { "name": "subscription", "type": "string" }, { "name": "persisted", "type": "bool" } ] },
+        { "name": "Frozen", "doc": "The browser suspended the page's task queues; nothing runs until Resumed.", "fields": [ { "name": "subscription", "type": "string" } ] },
+        { "name": "Resumed", "fields": [ { "name": "subscription", "type": "string" } ] },
+        { "name": "PrerenderActivated", "doc": "The user navigated to the prerendered page; it is now the visible page.", "fields": [ { "name": "subscription", "type": "string" } ] },
+        { "name": "ConnectionChanged", "fields": [ { "name": "subscription", "type": "string" }, { "name": "connection", "type": "ConnectionQuality" } ] }
+      ]
+    }
+  ]
+}

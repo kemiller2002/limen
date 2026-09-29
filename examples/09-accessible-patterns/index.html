@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen — accessible interaction patterns</title>
+  <link rel="stylesheet" href="../examples.css">
+  <link rel="stylesheet" href="./patterns.css">
+</head>
+<body>
+  <!-- Every ARIA state below is projected by the engine (engine.ts). Keys arrive
+       through the events capability (data-rich-*), focus moves through the
+       focus capability (data-focus-*). The kernel knows no widget. -->
+  <main data-bind-inert="backgroundInert">
+    <h1>Accessible interaction patterns</h1>
+
+    <section aria-labelledby="tabs-title">
+      <h2 id="tabs-title">Tabs</h2>
+      <div role="tablist" aria-label="Account">
+        <template data-each="tabs" data-key="id">
+          <button type="button" role="tab" data-event="selectTab" data-bind-aria-selected="selected" data-bind-aria-disabled="disabled" data-bind-tabindex="tabindex"
+                  data-focus-target="tab" data-bind-data-focus-key="id" data-bind-id="id"
+                  data-rich-event="tabsKey" data-rich-on="keydown" data-rich-facts="keyboard direction" data-rich-keys="ArrowLeft ArrowRight Home End" data-rich-prevent><span data-text="label"></span></button>
+        </template>
+      </div>
+      <div role="tabpanel" id="tab-panel" data-text="tabPanel"></div>
+    </section>
+
+    <section aria-labelledby="menu-title">
+      <h2 id="menu-title">Menu button</h2>
+      <button type="button" id="menu-button" aria-haspopup="menu" aria-controls="actions" data-bind-aria-expanded="menuOpen" data-event="toggleMenu" data-focus-target="menuButton"
+              data-rich-event="menuButtonKey" data-rich-on="keydown" data-rich-facts="keyboard" data-rich-keys="ArrowDown ArrowUp" data-rich-prevent>Actions</button>
+      <template data-if="menuOpen">
+        <ul role="menu" id="actions" aria-labelledby="menu-button">
+          <template data-each="menuItems" data-key="id">
+            <li role="menuitem" tabindex="-1" data-event="activateItem" data-bind-aria-disabled="disabled" data-focus-target="menuitem" data-bind-data-focus-key="id" data-bind-id="id"
+                data-rich-event="menuKey" data-rich-on="keydown" data-rich-facts="keyboard" data-rich-keys="ArrowDown ArrowUp Home End Escape Enter Space" data-rich-prevent><span data-text="label"></span></li>
+          </template>
+        </ul>
+      </template>
+      <p id="menu-result" data-text="menuResult"></p>
+    </section>
+
+    <section aria-labelledby="listbox-title">
+      <h2 id="listbox-title">Listbox</h2>
+      <ul role="listbox" id="colours" tabindex="0" aria-labelledby="listbox-title" data-bind-aria-activedescendant="listboxActive"
+          data-rich-event="listboxKey" data-rich-on="keydown" data-rich-facts="keyboard" data-rich-keys="ArrowDown ArrowUp Home End Enter Space" data-rich-prevent>
+        <template data-each="options" data-key="id">
+          <li role="option" data-event="pickOption" data-bind-id="domId" data-bind-aria-selected="selected" data-bind-aria-disabled="disabled" data-bind-data-active="active"><span data-text="label"></span></li>
+        </template>
+      </ul>
+      <p id="listbox-result" data-text="listboxResult"></p>
+    </section>
+
+    <section aria-labelledby="combo-title">
+      <h2 id="combo-title">Combobox</h2>
+      <label for="country">Country</label>
+      <input id="country" role="combobox" aria-autocomplete="list" aria-controls="countries" autocomplete="off"
+             data-event="comboText" data-on="input" data-bind-value="comboText" data-bind-aria-expanded="comboOpen" data-bind-aria-activedescendant="comboActive"
+             data-rich-event="comboKey" data-rich-on="keydown" data-rich-facts="keyboard" data-rich-keys="ArrowDown ArrowUp Enter Escape" data-rich-prevent>
+      <template data-if="comboOpen">
+        <ul role="listbox" id="countries" aria-label="Countries">
+          <template data-each="comboOptions" data-key="id">
+            <li role="option" data-bind-id="domId" data-bind-data-active="active"><span data-text="label"></span></li>
+          </template>
+        </ul>
+      </template>
+      <p id="combo-result" data-text="comboResult"></p>
+    </section>
+
+    <section aria-labelledby="tree-title">
+      <h2 id="tree-title">Tree</h2>
+      <div role="tree" aria-labelledby="tree-title" id="tree">
+        <template data-each="treeItems" data-key="id">
+          <div role="none">
+            <template data-if="isParent">
+              <div role="treeitem" data-bind-aria-level="level" data-bind-aria-expanded="expanded" data-bind-tabindex="tabindex" data-focus-target="treeitem" data-bind-data-focus-key="id" data-bind-id="id"
+                   data-rich-event="treeKey" data-rich-on="keydown" data-rich-facts="keyboard direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent><span data-text="label"></span></div>
+            </template>
+            <template data-if="isLeaf">
+              <div role="treeitem" data-bind-aria-level="level" data-bind-tabindex="tabindex" data-focus-target="treeitem" data-bind-data-focus-key="id" data-bind-id="id"
+                   data-rich-event="treeKey" data-rich-on="keydown" data-rich-facts="keyboard direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent><span data-text="label"></span></div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <section aria-labelledby="grid-title" dir="rtl">
+      <h2 id="grid-title">Grid (right-to-left)</h2>
+      <div role="grid" aria-labelledby="grid-title" id="grid">
+        <div role="row">
+          <div role="gridcell" id="cell-0-0" data-focus-target="cell" data-focus-key="0-0" data-bind-tabindex="cell_0_0" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>A1</div>
+          <div role="gridcell" id="cell-0-1" data-focus-target="cell" data-focus-key="0-1" data-bind-tabindex="cell_0_1" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>A2</div>
+          <div role="gridcell" id="cell-0-2" data-focus-target="cell" data-focus-key="0-2" data-bind-tabindex="cell_0_2" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>A3</div>
+        </div>
+        <div role="row">
+          <div role="gridcell" id="cell-1-0" data-focus-target="cell" data-focus-key="1-0" data-bind-tabindex="cell_1_0" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>B1</div>
+          <div role="gridcell" id="cell-1-1" data-focus-target="cell" data-focus-key="1-1" data-bind-tabindex="cell_1_1" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>B2</div>
+          <div role="gridcell" id="cell-1-2" data-focus-target="cell" data-focus-key="1-2" data-bind-tabindex="cell_1_2" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>B3</div>
+        </div>
+        <div role="row">
+          <div role="gridcell" id="cell-2-0" data-focus-target="cell" data-focus-key="2-0" data-bind-tabindex="cell_2_0" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>C1</div>
+          <div role="gridcell" id="cell-2-1" data-focus-target="cell" data-focus-key="2-1" data-bind-tabindex="cell_2_1" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>C2</div>
+          <div role="gridcell" id="cell-2-2" data-focus-target="cell" data-focus-key="2-2" data-bind-tabindex="cell_2_2" data-rich-event="gridKey" data-rich-on="keydown" data-rich-facts="keyboard modifiers direction" data-rich-keys="ArrowDown ArrowUp ArrowLeft ArrowRight Home End" data-rich-prevent>C3</div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="dialog-title">
+      <h2 id="dialog-title">Dialog</h2>
+      <button type="button" id="dialog-opener" data-event="openDialog" data-focus-target="dialogOpener">Rename…</button>
+      <p id="dialog-result" data-text="dialogResult"></p>
+    </section>
+  </main>
+
+  <template data-if="dialogOpen">
+    <section role="dialog" aria-modal="true" aria-labelledby="rename-title" id="rename" data-focus-target="dialog"
+             data-rich-event="dialogKey" data-rich-on="keydown" data-rich-facts="keyboard" data-rich-keys="Escape" data-rich-prevent>
+      <h2 id="rename-title">Rename</h2>
+      <label for="new-name">New name</label>
+      <input id="new-name" value="report.csv">
+      <button type="button" id="dialog-confirm" data-event="confirmDialog">Rename</button>
+      <button type="button" id="dialog-cancel" data-event="cancelDialog">Cancel</button>
+    </section>
+  </template>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -387,6 +387,11 @@ export function createTimeEntriesTransport(): EngineTransport {
     async start(): Promise<void> {},
     async dispatch(message: BrowserToEngineMessage): Promise<EngineToBrowserMessage> {
       switch (message.kind) {
+        // This engine sends no handshake, so the kernel negotiates no optional
+        // capability with it and never routes a fact here. One arriving anyway
+        // is a contract violation, not evidence.
+        case "CapabilityFact":
+          throw new Error(`Unexpected CapabilityFact from ${message.capability}: this engine negotiated no capabilities.`);
         case "Initialize":
           // Load immediately on startup: the initial projection and the first
           // effect go back in the same response.

@@ -1,14 +1,17 @@
 import { BrowserKernel } from "../../dist/kernel/browser-kernel.js";
+import type { DiagnosticEvent, DiagnosticsSink } from "../../dist/kernel/diagnostics.js";
 import { WasmSiteTransport } from "./wasm-engine-transport.js";
 
-const diagnostics = {
-  report(event: { kind: string; phase?: string; detail?: string; correlationId?: string; durationMs?: number }): void {
-    if (event.kind === "BridgeError") {
-      console.error(`[limen:${event.phase}]`, event.detail);
-    } else {
-      console.debug(`[limen:effect] ${event.correlationId} ${event.durationMs?.toFixed(1)}ms`);
+const diagnostics: DiagnosticsSink = {
+  report(event: DiagnosticEvent): void {
+    switch (event.kind) {
+      case "BridgeError": console.error(`[limen:${event.phase}]`, event.detail); return;
+      case "EffectTiming": console.debug(`[limen:effect] ${event.correlationId} ${event.durationMs.toFixed(1)}ms`); return;
+      case "Handshake": console.debug("[limen:handshake]", event.verdict); return;
     }
   },
 };
 
-await new BrowserKernel(new WasmSiteTransport(), document, diagnostics).start();
+// The F# engine answers the contract-fingerprint handshake, so an engine built
+// from a different contract is refused before anything reaches the page.
+await new BrowserKernel(new WasmSiteTransport(), document, diagnostics, { requireHandshake: true }).start();

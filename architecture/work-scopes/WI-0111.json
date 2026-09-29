@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0111",
+  "reference": "kemiller2002/limen#42 (LCP-036)",
+  "placement": "Capability Pack — src/capabilities/credentials, the identity/security reference for the permission pattern: WebAuthn passkey creation and assertion. The pack carries challenges and results as base64url and verifies nothing: attestation, signatures, counters and what a credential authorizes are the engine's and its server's. Gesture-required operations are refused without transient user activation, on every browser, because the most restrictive browsers require it. Core unchanged.",
+  "guardrail": false,
+  "paths": ["contract/credentials.contract.json", "src/capabilities/credentials/**", "src/capability-support/permissions.ts", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

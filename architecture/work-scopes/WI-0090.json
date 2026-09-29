@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0090",
+  "reference": "kemiller2002/limen#50 (LCP-032: restart where technically safe)",
+  "placement": "Core (kernel lifecycle mechanism) — only the kernel knows which listeners it registered and which effects are in flight, so only it can release them. status exposes the phase the kernel already tracks (no new state); dispose() ends a kernel so a host can replace it without two kernels answering the same page. No policy: the kernel does not decide when to dispose or what to show; that is the optional fallback host (separate item). No protocol change.",
+  "guardrail": false,
+  "paths": ["src/kernel/**", "src/index.ts", "test/**", "docs/**", "CHANGELOG.md", "bench/budgets.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0088",
+  "reference": "kemiller2002/limen#47 (LCP-041, engine-side interception and composition)",
+  "placement": "Engine Library — whether to retry, what to cache, which headers to inject and when to poll are application policy, so they are pure engine-side functions over requests and outcomes, never kernel behaviour. Language-neutral semantics (conformance/http/) and a pure F# reference library (libraries/fsharp/Limen.Http); no protocol change.",
+  "guardrail": false,
+  "paths": ["conformance/http/**", "libraries/**", "package.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -1,0 +1,29 @@
+{
+  "workItem": "WI-0120",
+  "reference": "kemiller2002/limen#60",
+  "placement": "Architecture / Governance (guardrail) \u2014 architecture/core.json is the machine-readable Core manifest: architecture version, the exact Core files and which are public extension points, package entrypoints, approved root export families mapped to the seven canonical concept ids, runtime-dependency, binding-primitive and capability-family limits, and which layers are Core versus optional. tools/guardrails/core.ts checks the repository against it (pure; fixtures in test/core-boundary.test.ts) and scripts/check-architecture.ts runs it. architecture/layers.json gains a reference-demo layer so every runtime file under src/ maps to exactly one layer. No runtime source file changes.",
+  "guardrail": true,
+  "paths": [
+    "architecture/core.json",
+    "architecture/layers.json",
+    "architecture/guardrails.json",
+    "tools/guardrails/core.ts",
+    "scripts/check-architecture.ts",
+    "test/core-boundary.test.ts",
+    "test/fixtures/negative/core/**",
+    "architecture.yaml",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [
+    {
+      "paths": [
+        ".github/CODEOWNERS"
+      ],
+      "reason": "The new guardrail test test/core-boundary.test.ts must be code-owned like the other guardrail tests; CODEOWNERS mirrors architecture/guardrails.json."
+    }
+  ],
+  "recordedAfterCompletion": false
+}

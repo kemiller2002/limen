@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0072",
+  "reference": "kemiller2002/limen#49 (LCP-013)",
+  "placement": "Capability Pack — src/capabilities/overlay/ with its own contract unit, native HTML first: it only calls dialog/popover methods on named targets and reports native dismissal as facts, so open/closed state stays in the engine. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/overlay.contract.json", "src/capabilities/overlay/**", "src/capability-support/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

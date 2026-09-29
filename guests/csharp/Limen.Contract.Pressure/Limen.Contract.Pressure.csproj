@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A reference consumer (Consumer.cs), plus analyzer negative fixtures:
+       `dotnet build -p:Fixture=Name` compiles Fixtures/Name.cs instead, and
+       scripts/guest-pressure.ts requires each fixture to fail with its rule. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Fixture)' == ''">
+    <Compile Include="Consumer.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Fixture)' != ''">
+    <Compile Include="Fixtures/$(Fixture).cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Limen.Contract/Limen.Contract.csproj" />
+    <ProjectReference Include="../Limen.Contract.Analyzers/Limen.Contract.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,66 @@
+{
+  "unit": "limen.environment",
+  "role": "capability",
+  "version": 1,
+  "doc": "Explicit environment evidence and browser-native formatting (LCP-028). The engine never reads navigator or window: it asks for the user's locale, language preferences, time zone and text direction, and hears when they change. Presentation preferences (reduced motion, colour scheme, contrast, forced colours) stay CSS and are reported only when the engine asks for them by name, because its behaviour depends on them. Formatting uses the browser's Intl for a locale and time zone the request states, so the output is deterministic for the facts the engine supplied.",
+  "types": [
+    { "name": "Direction", "kind": "enum", "values": ["ltr", "rtl"] },
+    { "name": "Preference", "kind": "enum", "values": ["reducedMotion", "colorScheme", "contrast", "forcedColors"] },
+    { "name": "PreferenceValue", "kind": "record", "doc": "value is the matched media feature value: for reducedMotion reduce or no-preference; colorScheme dark or light; contrast more, less or no-preference; forcedColors active or none.", "fields": [ { "name": "preference", "type": "Preference" }, { "name": "value", "type": "string" } ] },
+    { "name": "Environment", "kind": "record", "fields": [
+      { "name": "locale", "type": "string", "doc": "The user's first language preference, as a BCP 47 tag." },
+      { "name": "languages", "type": { "list": "string" } },
+      { "name": "timeZone", "type": "string", "doc": "An IANA time zone name." },
+      { "name": "direction", "type": "Direction", "doc": "The document's direction (the root element's dir, else its computed direction)." },
+      { "name": "preferences", "type": { "list": "PreferenceValue" }, "doc": "Only those the request named." } ] },
+    { "name": "NumberStyle", "kind": "enum", "values": ["decimal", "percent", "currency"] },
+    { "name": "DateStyle", "kind": "enum", "values": ["full", "long", "medium", "short"] },
+    { "name": "RelativeUnit", "kind": "enum", "values": ["second", "minute", "hour", "day", "week", "month", "year"] },
+    { "name": "ListType", "kind": "enum", "values": ["conjunction", "disjunction", "unit"] },
+    {
+      "name": "FormatItem",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "number", "fields": [ { "name": "value", "type": "number" }, { "name": "style", "type": "NumberStyle" }, { "name": "currency", "type": "string", "optional": true }, { "name": "maximumFractionDigits", "type": "int", "optional": true } ] },
+        { "name": "date", "doc": "An instant, as milliseconds since the Unix epoch.", "fields": [ { "name": "epochMs", "type": "number" }, { "name": "dateStyle", "type": "DateStyle", "optional": true }, { "name": "timeStyle", "type": "DateStyle", "optional": true } ] },
+        { "name": "relative", "fields": [ { "name": "value", "type": "number" }, { "name": "unit", "type": "RelativeUnit" } ] },
+        { "name": "list", "fields": [ { "name": "items", "type": { "list": "string" } }, { "name": "type", "type": "ListType" } ] },
+        { "name": "plural", "doc": "The CLDR plural category (zero, one, two, few, many, other) the engine's message catalogue selects on.", "fields": [ { "name": "value", "type": "number" }, { "name": "ordinal", "type": "bool" } ] }
+      ]
+    },
+    {
+      "name": "EnvironmentRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "describe", "fields": [ { "name": "preferences", "type": { "list": "Preference" } } ] },
+        { "name": "watch", "doc": "EnvironmentChanged facts follow whenever a language preference, or one of the named preferences, changes; until unwatch.", "fields": [ { "name": "preferences", "type": { "list": "Preference" } } ] },
+        { "name": "unwatch", "fields": [] },
+        { "name": "format", "doc": "Format every item for locale in timeZone, both stated by the engine.", "fields": [ { "name": "locale", "type": "string" }, { "name": "timeZone", "type": "string" }, { "name": "items", "type": { "list": "FormatItem" } } ] }
+      ]
+    },
+    {
+      "name": "EnvironmentResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Described", "fields": [ { "name": "environment", "type": "Environment" } ] },
+        { "name": "Watching", "fields": [ { "name": "environment", "type": "Environment" } ] },
+        { "name": "Unwatched", "fields": [] },
+        { "name": "Formatted", "fields": [ { "name": "texts", "type": { "list": "string" } } ] },
+        { "name": "InvalidRequest", "doc": "An unknown locale, time zone or currency, or an item the browser cannot format; the index says which item, absent for the locale or time zone.", "fields": [ { "name": "problem", "type": "string" }, { "name": "item", "type": "int", "optional": true } ] },
+        { "name": "Unsupported", "fields": [] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "EnvironmentFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "EnvironmentChanged", "fields": [ { "name": "environment", "type": "Environment" } ] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+/* Appearance only. */
+.clip { position: relative; height: 0; overflow: hidden; z-index: -1; }
+.low { position: fixed; bottom: 8px; left: 40px; }
+#menu { width: 160px; height: 90px; }
+#submenu { width: 120px; height: 40px; }

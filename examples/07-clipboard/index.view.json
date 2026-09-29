@@ -1,0 +1,23 @@
+{
+  "doc": "What examples/07-clipboard/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "shares": {
+      "list": {
+        "id": "string",
+        "label": "string",
+        "url": "string",
+        "copyDisabled": "boolean"
+      }
+    },
+    "showStatus": "boolean",
+    "statusText": "string",
+    "canRetry": "boolean",
+    "copyDisabled": "boolean"
+  },
+  "events": {
+    "copy": {
+      "item": "shares"
+    },
+    "dismiss": {}
+  }
+}

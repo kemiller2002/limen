@@ -13,10 +13,16 @@
 // Run by `npm test`. Uses `npm pack --dry-run --ignore-scripts`: without
 // --ignore-scripts, prepack would run `npm run check`, which runs this script,
 // which packs again.
+//
+//   4. The minimal root consumer (kemiller2002/limen#61): every Core subpath's
+//      transitive graph in the packed dist/ holds emitted Core files only, the
+//      root's declarations export only approved Core names, and federation and
+//      the reference engine stay reachable through their explicit subpaths.
 import { execFile } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import { dirname, join, normalize, posix, resolve } from "node:path";
 import { promisify } from "node:util";
+import { emittedPath, exportedNames, exportTargets, moduleClosure, parseCoreManifest } from "../tools/guardrails/core.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const REPO = "https://github.com/kemiller2002/limen/";
@@ -37,9 +43,11 @@ const REQUIRED = [
   "dist/federation.js", "dist/federation.d.ts",
   "dist/kernel/browser-kernel.js", "dist/kernel/browser-kernel.d.ts",
   "dist/kernel/diagnostics.js", "dist/kernel/diagnostics.d.ts",
+  "dist/engine/index.js", "dist/engine/index.d.ts",
   "dist/engine/transport.js", "dist/engine/transport.d.ts",
   // The documentation set. README.md alone leaves a consumer with links they
   // cannot follow offline; these six are the ones worth carrying.
+  "docs/core-mental-model.md",
   "docs/quick-start.md",
   "docs/mental-model.md",
   "docs/where-code-goes.md",
@@ -166,6 +174,37 @@ for (const file of files.filter((candidate) => candidate.endsWith(".md"))) {
       violations.push(`${file}: names a path that does not exist -> ${mention}`);
     }
   }
+}
+
+// --- 4. the minimal root consumer ------------------------------------------
+
+const manifest = parseCoreManifest(JSON.parse(await readFile(join(ROOT, "architecture/core.json"), "utf8")) as unknown);
+const packageJson = JSON.parse(await readFile(join(ROOT, "package.json"), "utf8")) as unknown;
+const targets = exportTargets(packageJson);
+const coreEmitted = new Set([...manifest.files.map((file) => emittedPath(file.path)), emittedPath(manifest.coreEntrypoints["."] ?? "src/index.ts")]);
+const packedSources = new Map(await Promise.all(files.filter((file) => file.endsWith(".js")).map(async (file) => [file, await readFile(join(ROOT, file), "utf8")] as const)));
+const resolveEmitted = (from: string, specifier: string): string | undefined =>
+  specifier.startsWith(".") ? posix.normalize(posix.join(posix.dirname(from), specifier)) : undefined;
+
+for (const subpath of Object.keys(manifest.coreEntrypoints)) {
+  const entry = targets[subpath];
+  if (entry === undefined || !packed.has(entry)) {
+    violations.push(`the Core subpath "${subpath}" does not resolve to a packed file (exports: ${entry ?? "missing"})`);
+    continue;
+  }
+  for (const module of moduleClosure([entry], (path) => packedSources.get(path), resolveEmitted)) {
+    if (!packed.has(module)) violations.push(`the Core subpath "${subpath}" imports ${module}, which is not in the tarball`);
+    else if (!coreEmitted.has(module)) violations.push(`the minimal consumer of "${subpath}" loads ${module}, which is not Core — export it from its own optional subpath`);
+  }
+}
+for (const subpath of Object.keys(manifest.optionalEntrypoints)) {
+  const entry = targets[subpath];
+  if (entry === undefined || !packed.has(entry)) violations.push(`the optional subpath "${subpath}" does not resolve to a packed file (exports: ${entry ?? "missing"}); optional surfaces must stay reachable by explicit import`);
+}
+const approvedRoot = new Set(manifest.families.flatMap((family) => family.names));
+const rootDeclarations = await readFile(join(ROOT, "dist/index.d.ts"), "utf8").catch(() => "");
+for (const name of exportedNames(rootDeclarations).filter((exported) => !approvedRoot.has(exported))) {
+  violations.push(`dist/index.d.ts exports ${name}, which is in no approved Core export family (architecture/core.json) — an optional export may not return to the root without Core Admission`);
 }
 
 // --- report ----------------------------------------------------------------

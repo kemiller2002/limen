@@ -1,0 +1,958 @@
+{
+  "doc": "Payload budgets per consumer profile (kemiller2002/limen#19). Each budget is the measured baseline plus 10%, rounded up to a whole KiB; test/bench-size.test.ts fails when a profile exceeds its budget or loads a forbidden module. Raising a budget needs its own work item saying what grew and why; lowering one after an optimization is encouraged.",
+  "history": [
+    {
+      "workItem": "WI-0042",
+      "change": "Initial baselines and budgets (kemiller2002/limen#19)."
+    },
+    {
+      "workItem": "WI-0053",
+      "change": "Re-baselined every profile after the binding security policy (src/kernel/binding-policy.ts, kemiller2002/limen#18): each profile that loads the kernel grew by about 2.1 KB gzip (6.8 KB raw). kernel-only and kernel-with-handles exceeded their budgets; the rest had not, but are re-baselined by the same rule so every budget keeps 10% headroom over what ships."
+    },
+    {
+      "workItem": "WI-0056",
+      "change": "Added kernel-with-focus (kemiller2002/limen#23): the focus pack adds 3876 bytes gzip over kernel-only, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0063",
+      "change": "Added kernel-with-schedule (kemiller2002/limen#24): the scheduling pack adds 2689 bytes gzip over the kernel, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0065",
+      "change": "Added kernel-with-measure (kemiller2002/limen#25): the measurement pack adds 5605 bytes gzip over the kernel, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0068",
+      "change": "Added kernel-with-events (kemiller2002/limen#29): the events pack adds 6208 bytes gzip over the kernel, and only to applications that register it."
+    },
+    {
+      "workItem": "WI-0072",
+      "change": "Added kernel-with-overlay (kemiller2002/limen#49): the overlay pack, with the shared named-target resolver, adds 5614 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/overlay/."
+    },
+    {
+      "workItem": "WI-0075",
+      "change": "Added kernel-with-realtime (kemiller2002/limen#26): the realtime pack, with the shared handle table, adds 5841 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/realtime/."
+    },
+    {
+      "workItem": "WI-0077",
+      "change": "Added kernel-with-files (kemiller2002/limen#27): the files pack, with the shared handle table and target resolver, adds 6348 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/files/."
+    },
+    {
+      "workItem": "WI-0079",
+      "change": "Added kernel-with-store (kemiller2002/limen#28): the IndexedDB store pack adds 9456 bytes gzip over the kernel (its generated codec is the largest part: the transaction and schema contract is the widest yet), and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/store/."
+    },
+    {
+      "workItem": "WI-0081",
+      "change": "Added kernel-with-adapters (kemiller2002/limen#30): the adapter host pack, with the shared handle table and target resolver, adds 7419 bytes gzip over the kernel, and only to applications that register it; the reference Web Component adapter is a separate module and is not in this profile. Earlier kernel-with-* profiles now also forbid dist/capabilities/adapters/."
+    },
+    {
+      "workItem": "WI-0085",
+      "change": "Re-baselined every profile after the Core HTTP profile, protocol 1.3 (kemiller2002/limen#47): Core's generated codec gained the new request and outcome types, and the kernel's Http path gained the response representations, header selection and the XSRF binding. Measured on kernel-with-overlay before and after: +1729 bytes gzip (+6640 raw), on every profile that loads the kernel. kernel-only, minimal-consumer, kernel-with-handles, the two host profiles and kernel-with-focus exceeded their budgets; the rest are re-baselined by the same rule so every budget keeps 10% headroom over what ships. The remaining growth since WI-0053 on the older profiles (about 0.9 KB gzip on kernel-only) is protocol 1.2 form-control state, IME handling and boolean attributes, which had stayed within budget."
+    },
+    {
+      "workItem": "WI-0086",
+      "change": "Added kernel-with-transfer (kemiller2002/limen#47): the transfer profile pack adds 5340 bytes gzip over the kernel, and only to applications that register it. The files pack gained its explicit fileFor accessor (+157 raw bytes, within its budget). Earlier kernel-with-* profiles now also forbid dist/capabilities/transfer/."
+    },
+    {
+      "workItem": "WI-0091",
+      "change": "Added kernel-with-fallback-host (kemiller2002/limen#50): the optional fatal-fallback host adds 2340 bytes gzip over the kernel, and only to applications that use it."
+    },
+    {
+      "workItem": "WI-0093",
+      "change": "Added kernel-with-presentation (kemiller2002/limen#34): the resource-hint and view-transition pack adds 4060 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/presentation/."
+    },
+    {
+      "workItem": "WI-0095",
+      "change": "Added kernel-with-environment (kemiller2002/limen#35): the environment evidence and formatting pack adds 4979 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/environment/."
+    },
+    {
+      "workItem": "WI-0100",
+      "change": "Added kernel-with-lifecycle (kemiller2002/limen#43): the page, connectivity and lifecycle evidence pack adds 5735 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/lifecycle/."
+    },
+    {
+      "workItem": "WI-0105",
+      "change": "Re-baselined minimal-consumer after protocol 1.4 (kemiller2002/limen#40): OutcomeUnknownReason in the generated Core codec and the kernel classifying a thrown fetch by method and connectivity. Measured on minimal-consumer against the commit before WI-0103: +497 bytes gzip (+1686 raw), which put it 80 bytes over its budget. Most of its growth since WI-0085 (29279 against a 26764 baseline, +2515 bytes gzip) came earlier and stayed within headroom: chiefly WI-0089 projection atomicity, WI-0090 kernel status and dispose, and WI-0092 lazy federation in the package root. Only that profile is re-baselined; every other profile stays within its existing budget and keeps its baseline."
+    },
+    {
+      "workItem": "WI-0106",
+      "change": "Added kernel-with-offline (kemiller2002/limen#40): the service-worker registration and update pack adds 4451 bytes gzip over the kernel (measured against kernel-only as it ships now), and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/offline/."
+    },
+    {
+      "workItem": "WI-0108",
+      "change": "Added kernel-with-worker-host (kemiller2002/limen#41): the page side of the worker host adds 2136 bytes gzip over the kernel as it ships now; the engine and the worker-side module load in the worker, never the page."
+    },
+    {
+      "workItem": "WI-0110",
+      "change": "Added kernel-with-geolocation and kernel-with-credentials (kemiller2002/limen#42): the two permission-sensitive packs add 5128 and 6842 bytes gzip over the kernel as it ships now, including the shared capability-support/permissions module, and only to applications that register them. Earlier kernel-with-* capability profiles now also forbid both."
+    },
+    {
+      "workItem": "WI-0114",
+      "change": "Added kernel-with-coordination (kemiller2002/limen#46): the cross-context coordination pack adds 6841 bytes gzip over the kernel as it ships now, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/coordination/."
+    },
+    {
+      "workItem": "WI-0117",
+      "change": "Re-baselined kernel-with-handles after WI-0116 (kemiller2002/limen#38): binding <head> and allowing the inert page-metadata forms add about 450 bytes gzip to every profile that loads the kernel, which put this profile 9 bytes over. Also corrected the baselines recorded for minimal-consumer (WI-0105) and the profiles added in WI-0100, WI-0106, WI-0108, WI-0110 and WI-0114: they were measured with a relative root, which orders the bundled modules differently from test/bench-size.test.ts and changes the bundled gzip size by a few hundred bytes (raw bytes are identical). They are now measured exactly as the test measures them, and their budgets follow from the same 10% rule; the new baselines also include the kernel growth since each was recorded (protocol 1.4, WI-0103, where it came after them, and WI-0116), so none of the differences is the capability packs themselves growing."
+    },
+    {
+      "workItem": "WI-0121",
+      "change": "Lowered minimal-consumer (kemiller2002/limen#61): the package root no longer exports federation or the reference engine, so the minimal consumer loads Core only. Measured with an absolute root: 144579 -> 114362 raw bytes, 30286 -> 23819 gzip bundled. It now also forbids dist/federation.js, dist/engine/ and dist/renderer/."
+    }
+  ],
+  "profiles": [
+    {
+      "name": "minimal-consumer",
+      "doc": "What examples/minimal (the copy shipped in the package, and the minimal root consumer of kemiller2002/limen#61) loads: the package root, which is Limen Core only. Federation, the reference engine and every optional layer are forbidden here.",
+      "entries": [
+        "dist/index.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/capabilities/",
+        "dist/federation.js",
+        "dist/engine/",
+        "dist/renderer/"
+      ],
+      "baseline": {
+        "rawBytes": 114362,
+        "gzipBytesBundled": 23819
+      },
+      "budget": {
+        "rawBytes": 125952,
+        "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "name": "kernel-only",
+      "doc": "The ./kernel subpath: BrowserKernel and what it needs, nothing else.",
+      "entries": [
+        "dist/kernel/browser-kernel.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js"
+      ],
+      "baseline": {
+        "rawBytes": 100260,
+        "gzipBytesBundled": 20149
+      },
+      "budget": {
+        "rawBytes": 110592,
+        "gzipBytesBundled": 22528
+      }
+    },
+    {
+      "name": "kernel-with-handles",
+      "doc": "A representative optional set: the kernel plus capability-support's handle table, the library every handle-returning pack imports.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capability-support/handles.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 112498,
+        "gzipBytesBundled": 23561
+      },
+      "budget": {
+        "rawBytes": 123904,
+        "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "name": "kernel-with-dotnet-host",
+      "doc": "The kernel plus the .NET WebAssembly host adapter (F# and C# guests), excluding the .NET runtime itself.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/dotnet-wasm-transport.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 102812,
+        "gzipBytesBundled": 20967
+      },
+      "budget": {
+        "rawBytes": 113664,
+        "gzipBytesBundled": 23552
+      }
+    },
+    {
+      "name": "kernel-with-raw-host",
+      "doc": "The kernel plus the raw WebAssembly host adapter (Rust guest), excluding the .wasm module.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/raw-wasm-transport.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 105920,
+        "gzipBytesBundled": 21780
+      },
+      "budget": {
+        "rawBytes": 116736,
+        "gzipBytesBundled": 24576
+      }
+    },
+    {
+      "name": "kernel-with-worker-host",
+      "doc": "The kernel plus the worker host adapter's page side (./hosts/worker), as a page whose engine runs in a dedicated worker loads them. The worker's own modules and the engine load in the worker, not the page.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/worker-transport.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/hosts/worker-engine.js",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 117456,
+        "gzipBytesBundled": 24619
+      },
+      "budget": {
+        "rawBytes": 130048,
+        "gzipBytesBundled": 27648
+      }
+    },
+    {
+      "name": "kernel-with-focus",
+      "doc": "The kernel plus the focus, selection and scroll capability pack (./capabilities/focus), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/focus/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 122768,
+        "gzipBytesBundled": 24028
+      },
+      "budget": {
+        "rawBytes": 135168,
+        "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "name": "kernel-with-schedule",
+      "doc": "The kernel plus the scheduling capability pack (./capabilities/schedule), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/schedule/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 115285,
+        "gzipBytesBundled": 22850
+      },
+      "budget": {
+        "rawBytes": 126976,
+        "gzipBytesBundled": 25600
+      }
+    },
+    {
+      "name": "kernel-with-measure",
+      "doc": "The kernel plus the measurement and observer capability pack (./capabilities/measure), with the capability-support libraries it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/measure/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 132137,
+        "gzipBytesBundled": 25765
+      },
+      "budget": {
+        "rawBytes": 145408,
+        "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "name": "kernel-with-events",
+      "doc": "The kernel plus the rich browser event facts capability pack (./capabilities/events), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/events/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 132375,
+        "gzipBytesBundled": 26679
+      },
+      "budget": {
+        "rawBytes": 146432,
+        "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "name": "kernel-with-overlay",
+      "doc": "The kernel plus the overlay and top-layer capability pack (./capabilities/overlay), with the capability-support target resolver it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/overlay/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 131934,
+        "gzipBytesBundled": 25769
+      },
+      "budget": {
+        "rawBytes": 145408,
+        "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "name": "kernel-with-realtime",
+      "doc": "The kernel plus the realtime and streaming capability pack (./capabilities/realtime), with the capability-support handle table it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/realtime/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 133014,
+        "gzipBytesBundled": 25994
+      },
+      "budget": {
+        "rawBytes": 146432,
+        "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "name": "kernel-with-files",
+      "doc": "The kernel plus the user-mediated file capability pack (./capabilities/files), with the capability-support libraries it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/files/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 134030,
+        "gzipBytesBundled": 26528
+      },
+      "budget": {
+        "rawBytes": 147456,
+        "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "name": "kernel-with-store",
+      "doc": "The kernel plus the IndexedDB structured-storage capability pack (./capabilities/store), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/store/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 151216,
+        "gzipBytesBundled": 29607
+      },
+      "budget": {
+        "rawBytes": 166912,
+        "gzipBytesBundled": 32768
+      }
+    },
+    {
+      "name": "kernel-with-adapters",
+      "doc": "The kernel plus the governed adapter host pack (./capabilities/adapters), with the capability-support libraries it imports, as an application that registers it loads them. Adapters themselves, including the reference Web Component adapter, load separately.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/adapters/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/adapters/web-component.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 137357,
+        "gzipBytesBundled": 27612
+      },
+      "budget": {
+        "rawBytes": 151552,
+        "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "name": "kernel-with-transfer",
+      "doc": "The kernel plus the HTTP transfer profile pack (./capabilities/transfer), as an application that registers it loads them. Uploading picked files also loads the files pack, which has its own profile.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/transfer/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 130595,
+        "gzipBytesBundled": 25489
+      },
+      "budget": {
+        "rawBytes": 144384,
+        "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "name": "kernel-with-fallback-host",
+      "doc": "The kernel plus the optional fatal-fallback host (./hosts/fallback), as a composition root that uses it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/fallback.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/",
+        "dist/hosts/dotnet-wasm-transport.js",
+        "dist/hosts/raw-wasm-transport.js"
+      ],
+      "baseline": {
+        "rawBytes": 114331,
+        "gzipBytesBundled": 23831
+      },
+      "budget": {
+        "rawBytes": 125952,
+        "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "name": "kernel-with-presentation",
+      "doc": "The kernel plus the resource-hint and view-transition capability pack (./capabilities/presentation), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/presentation/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 127635,
+        "gzipBytesBundled": 25551
+      },
+      "budget": {
+        "rawBytes": 141312,
+        "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "name": "kernel-with-environment",
+      "doc": "The kernel plus the environment evidence and formatting capability pack (./capabilities/environment), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/environment/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/"
+      ],
+      "baseline": {
+        "rawBytes": 137009,
+        "gzipBytesBundled": 26470
+      },
+      "budget": {
+        "rawBytes": 151552,
+        "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "name": "kernel-with-lifecycle",
+      "doc": "The kernel plus the page, connectivity and lifecycle evidence capability pack (./capabilities/lifecycle), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/lifecycle/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/"
+      ],
+      "baseline": {
+        "rawBytes": 138815,
+        "gzipBytesBundled": 26916
+      },
+      "budget": {
+        "rawBytes": 153600,
+        "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "name": "kernel-with-offline",
+      "doc": "The kernel plus the service-worker registration and update capability pack (./capabilities/offline), as an application that registers it loads them. The worker module itself runs in the service worker, not the page.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/offline/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/"
+      ],
+      "baseline": {
+        "rawBytes": 138103,
+        "gzipBytesBundled": 26831
+      },
+      "budget": {
+        "rawBytes": 152576,
+        "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "name": "kernel-with-geolocation",
+      "doc": "The kernel plus the device-location pack under the permission pattern (./capabilities/geolocation) and the shared permission support it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/geolocation/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/credentials/",
+        "dist/capability-support/handles.js",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 136850,
+        "gzipBytesBundled": 27434
+      },
+      "budget": {
+        "rawBytes": 151552,
+        "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "name": "kernel-with-credentials",
+      "doc": "The kernel plus the WebAuthn passkey pack under the permission pattern (./capabilities/credentials) and the shared permission support it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/credentials/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/geolocation/",
+        "dist/capability-support/handles.js",
+        "dist/capabilities/coordination/"
+      ],
+      "baseline": {
+        "rawBytes": 145686,
+        "gzipBytesBundled": 29804
+      },
+      "budget": {
+        "rawBytes": 160768,
+        "gzipBytesBundled": 33792
+      }
+    },
+    {
+      "name": "kernel-with-coordination",
+      "doc": "The kernel plus the cross-context coordination pack (./capabilities/coordination), as an application that registers it loads them. The hub module runs in the SharedWorker, not the page.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/coordination/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
+      ],
+      "baseline": {
+        "rawBytes": 153406,
+        "gzipBytesBundled": 29992
+      },
+      "budget": {
+        "rawBytes": 168960,
+        "gzipBytesBundled": 33792
+      }
+    }
+  ]
+}

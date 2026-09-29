@@ -67,6 +67,126 @@ jobs:
       - name: Clean-room install of the packed tarball
         run: npm run check:clean-room
 
+  # Architectural placement is checked per commit: each commit names one work
+  # item and stays inside that item's declared scope; guardrail-owned paths
+  # change only under a guardrail-scoped item (architecture/guardrails.json).
+  work-item-scope:
+    name: Work-item scope
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Every commit stays inside its work item's declared scope
+        run: npm run check:scope
+        env:
+          LIMEN_SCOPE_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+
+      # The Core complexity reference (kemiller2002/limen#62) is measured from
+      # Git at the #59 commit; this job has the full history to re-measure it,
+      # so architecture/core-baseline.json's reference cannot drift from what
+      # the commit actually contained.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: The recorded Core reference reproduces from Git
+        run: npm run check:core-budget -- --verify-reference
+
+  # One language-neutral contract, four generated bindings. Each guest
+  # language compiles its binding under strict settings, independently
+  # recomputes the contract fingerprint, and runs the same shared vectors as
+  # the TypeScript host (test/conformance-vectors.test.ts).
+  guest-bindings:
+    name: Guest bindings (F#, C#, Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generated bindings are current (no stale or hand-edited output)
+        run: npm run contract:check
+
+      - name: F#, C# and Rust bindings compile strictly and agree on the shared vectors
+        run: npm run test:guests
+
+  # LCP-001: the F#, C# and Rust minimal engines compiled to WebAssembly, each
+  # driving every built-in capability through the same kernel in real Chromium.
+  guest-engines-browser:
+    name: Guest engines in a real browser (F#, C#, Rust WASM)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up Rust for wasm32
+        run: rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown && rustup default stable
+
+      - name: Install dependencies and the .NET WebAssembly workload
+        run: |
+          npm ci
+          dotnet workload restore guests/minimal/fsharp/Limen.Minimal.Wasm/Limen.Minimal.Wasm.csproj
+          dotnet workload restore guests/minimal/csharp/Limen.Minimal.Wasm/Limen.Minimal.Wasm.csproj
+
+      - name: Install Playwright's Chromium (not a package dependency)
+        run: npm install --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+
+      - name: Build the three WebAssembly engines
+        run: npm run build:guests
+
+      - name: Every engine drives every built-in capability in Chromium
+        run: npm run smoke:guests
+        env:
+          LIMEN_REQUIRE_BROWSER: "1"
+
+      # LCP-027: the kernel and all three guests under a strict CSP with
+      # Trusted Types enforced and no policy — zero violations, no payload runs.
+      - name: Binding security under strict CSP and Trusted Types
+        run: npm run smoke:security
+        env:
+          LIMEN_REQUIRE_BROWSER: "1"
+
+      # Every capability pack's page (test/browser/packs/) in Chromium under
+      # the same strict policy: real focus, selection, scrolling, and so on.
+      - name: Capability packs in a real browser
+        run: npm run smoke:packs
+        env:
+          LIMEN_REQUIRE_BROWSER: "1"
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.

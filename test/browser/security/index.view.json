@@ -1,0 +1,13 @@
+{
+  "doc": "The binding security smoke page (scripts/smoke-security.ts): every value its engine projects is hostile.",
+  "view": {
+    "payload": "string",
+    "unsafeUrl": "string",
+    "safeUrl": "string",
+    "round": "number",
+    "rows": { "list": { "id": "string", "label": "string", "link": "string" } }
+  },
+  "events": {
+    "next": {}
+  }
+}

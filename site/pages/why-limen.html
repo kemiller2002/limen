@@ -116,9 +116,9 @@
           <figcaption>The four HTTP outcomes in Limen&rsquo;s protocol today (<code>src/protocol.ts</code>)</figcaption>
           <pre><code><span class="k">type</span> EffectOutcome =
   | { kind: <span class="s">"Success"</span>; status; body }
-  | { kind: <span class="s">"Failure"</span>; reason: <span class="s">"network"</span> | <span class="s">"aborted"</span> | <span class="s">"invalid-response"</span> }
+  | { kind: <span class="s">"Failure"</span>; reason: <span class="s">"network"</span> | <span class="s">"aborted"</span> | <span class="s">"invalid-response"</span> | <span class="s">"too-large"</span> }
   | { kind: <span class="s">"Cancelled"</span> }
-  | { kind: <span class="s">"OutcomeUnknown"</span>; reason: <span class="s">"timeout-after-dispatch"</span> };
+  | { kind: <span class="s">"OutcomeUnknown"</span>; reason: <span class="s">"timeout-after-dispatch"</span> | <span class="s">"connection-lost"</span> };
 
 <span class="c">// OutcomeUnknown is not Failure: a timed-out</span>
 <span class="c">// write may already have been applied.</span></code></pre>

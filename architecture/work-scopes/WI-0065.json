@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0065",
+  "reference": "kemiller2002/limen#25 (LCP-014)",
+  "placement": "Capability Pack — src/capabilities/measure/ with its own contract unit; layout and visibility are browser facts the engine asks for, without DOM nodes. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/measure.contract.json", "src/capabilities/measure/**", "src/capability-support/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

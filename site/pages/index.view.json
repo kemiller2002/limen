@@ -1,0 +1,39 @@
+{
+  "doc": "A page of the product site, whose engine is F# (site/fsharp/). Checked against the HTML statically by npm run check:views.",
+  "view": {
+    "deploymentStatus": "string",
+    "deploymentTone": "string",
+    "testsStatus": "string",
+    "testsTone": "string",
+    "securityStatus": "string",
+    "securityTone": "string",
+    "approvalStatus": "string",
+    "approvalTone": "string",
+    "releaseDecision": "string",
+    "evidenceDisabled": "boolean",
+    "approveDisabled": "boolean",
+    "deployDisabled": "boolean",
+    "releaseHasObligations": "boolean",
+    "releaseObligations": {
+      "list": {
+        "id": "string",
+        "text": "string",
+        "tone": "string"
+      }
+    },
+    "needsReleaseReconciliation": "boolean"
+  },
+  "events": {
+    "testsPass": {},
+    "testsFail": {},
+    "securityClear": {},
+    "securityBlock": {},
+    "approveRelease": {},
+    "deploySuccess": {},
+    "injectOutcomeUnknown": {},
+    "deployNetworkFailure": {},
+    "resetRelease": {},
+    "reconcileApplied": {},
+    "reconcileNotApplied": {}
+  }
+}

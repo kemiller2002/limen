@@ -1,5 +1,8 @@
 # The Limen mental model
 
+> The short, canonical version is [Limen Core, in seven concepts](core-mental-model.md);
+> this document is the longer explanation of the same model.
+
 *If you read one document before writing Limen code, read this one.* It answers
 the ownership questions — who decides what — because almost every mistake people
 make with Limen is an ownership mistake, not a syntax mistake.
@@ -61,8 +64,13 @@ Browser → Engine        Engine → Browser
 Initialize              view          (a ViewState: plain named values and lists)
 Event                   effects       (what to do in the browser)
 EffectResult            cancellations (which in-flight effects are no longer wanted)
-LocationChanged
+LocationChanged         handshake     (on Initialize only: do we speak the same contract?)
+CapabilityFact
 ```
+
+The wire types are generated from one language-neutral contract,
+[`contract/core.contract.json`](https://github.com/kemiller2002/limen/blob/main/contract/core.contract.json);
+see [contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md).
 
 Everything is plain, JSON-serializable data. No functions, no DOM nodes, no
 class instances. That constraint is what makes the engine portable. The
@@ -132,7 +140,7 @@ Full detail: [rendering](https://github.com/kemiller2002/limen/blob/main/docs/06
 Every effect outcome is a closed set, and "we don't know" is one of the members:
 
 ```text
-Http     Success | Failure(network|aborted|invalid-response) | Cancelled | OutcomeUnknown(timeout-after-dispatch)
+Http     Success | Failure(network|aborted|invalid-response) | Cancelled | OutcomeUnknown(timeout-after-dispatch|connection-lost)
 Storage  Success | Failure(unavailable|quota-exceeded)
 Clipboard Success | Failure(denied|unavailable|unknown)
 Navigation Success(location) | Dispatched | Failure(unavailable|not-same-origin)
@@ -152,10 +160,11 @@ Stated plainly, because guessing is expensive:
 - No virtual DOM, no diffing of HTML you did not write, no components.
 - No expression language in attributes.
 - No routing *policy* — the kernel pushes and pops; what a URL means is yours.
-- No capabilities beyond Http, Storage, Clipboard and Navigation. Files,
-  timers, focus management, geolocation, IndexedDB, WebSocket: not implemented.
-  Adding one is a deliberate protocol change, documented in
-  [recipes](https://github.com/kemiller2002/limen/blob/main/docs/15-recipes.md).
+- No built-in capabilities beyond Http, Storage, Clipboard and Navigation.
+  Files, timers, focus management, geolocation, IndexedDB, WebSocket: not
+  implemented yet. The generic mechanism for adding one *without changing
+  Core* — an optional capability pack with its own contract unit — exists; see
+  [contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md).
 - No list virtualization, no animation, no focus restoration.
 - No state persistence of its own. Nothing is remembered across a reload unless
   your engine asked for a `Storage` effect.

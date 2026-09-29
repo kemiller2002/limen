@@ -1,0 +1,12 @@
+{
+  "workItem": "WI-0117",
+  "reference": "kemiller2002/limen#38",
+  "placement": "Performance budget (bench/budgets.json). WI-0116 made <head> bound and allowed the inert page-metadata forms in the binding policy, adding about 450 bytes gzip to every profile that loads the kernel; kernel-with-handles, already near its limit, went over. Only that profile is re-baselined, with the measured growth recorded; every other profile stays within its existing budget.",
+  "guardrail": false,
+  "paths": [
+    "bench/budgets.json",
+    "docs/27-performance-baseline.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

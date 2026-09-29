@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0085",
+  "reference": "kemiller2002/limen#47, kemiller2002/limen#19",
+  "placement": "Performance evidence — bench/budgets.json. Raising a budget needs its own work item saying what grew and why (the file's own rule). Protocol 1.3 grew Core's generated codec and the kernel's Http path; six profiles exceeded their budgets. Every profile that loads the kernel is re-baselined to what ships, with the same 10% headroom rule.",
+  "guardrail": false,
+  "paths": ["bench/budgets.json", "docs/27-performance-baseline.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

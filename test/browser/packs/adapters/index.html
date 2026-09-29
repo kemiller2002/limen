@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen adapters pack in a real browser</title>
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types.
+       main.js defines a real custom element and a chart widget stub, drives
+       them through the adapters pack, and reports window.__limenPackResult. -->
+  <section id="rating-slot" data-adapter-slot="rating"></section>
+  <section id="chart-slot" data-adapter-slot="chart"></section>
+  <section id="faulty-slot" data-adapter-slot="faulty"></section>
+  <template data-if="panelOpen"><section id="panel-slot" data-adapter-slot="panel"></section></template>
+  <p id="clicks" data-text="clicks"></p>
+  <button id="poke" data-event="poke">Ask</button>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

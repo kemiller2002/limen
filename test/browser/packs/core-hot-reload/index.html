@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen hot reload in a real browser</title>
+  <link rel="stylesheet" href="./blue.css">
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types.
+       main.js drives src/tooling/hot-reload.ts: a real stylesheet swap and
+       engine restore/reset, and reports window.__limenPackResult. -->
+  <h1 id="title">Counter</h1>
+  <p id="count" data-text="count"></p>
+  <p id="label" data-text="label"></p>
+  <button id="add" data-event="add">Add</button>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

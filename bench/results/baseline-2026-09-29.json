@@ -1,0 +1,2091 @@
+{
+  "environment": {
+    "recordedAt": "2026-09-29T06:27:54.103Z",
+    "commit": "b3d3b05f50d5644396626f65ec9b29fe1e6e74f5",
+    "dirty": true,
+    "os": "linux 6.18.44-fc-v37",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+    "cores": 4,
+    "memoryGiB": 15.7,
+    "node": "v22.22.2",
+    "playwright": "1.56.1",
+    "runsPerScenario": 3,
+    "browser": "chromium 141.0.7390.37"
+  },
+  "sizes": [
+    {
+      "profile": "minimal-consumer",
+      "modules": [
+        "dist/engine/domain.js",
+        "dist/engine/engine.js",
+        "dist/engine/transport.js",
+        "dist/federation.js",
+        "dist/generated/core.codec.js",
+        "dist/generated/core.js",
+        "dist/guest/handshake.js",
+        "dist/index.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 112707,
+      "gzipBytesPerModule": 24532,
+      "gzipBytesBundled": 21893,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 124928,
+        "gzipBytesBundled": 24576
+      }
+    },
+    {
+      "profile": "kernel-only",
+      "modules": [
+        "dist/generated/core.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 83090,
+      "gzipBytesPerModule": 16388,
+      "gzipBytesBundled": 15358,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 92160,
+        "gzipBytesBundled": 17408
+      }
+    },
+    {
+      "profile": "kernel-with-handles",
+      "modules": [
+        "dist/capability-support/handles.js",
+        "dist/generated/core.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 85774,
+      "gzipBytesPerModule": 17521,
+      "gzipBytesBundled": 16387,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 95232,
+        "gzipBytesBundled": 18432
+      }
+    },
+    {
+      "profile": "kernel-with-dotnet-host",
+      "modules": [
+        "dist/generated/core.codec.js",
+        "dist/generated/core.js",
+        "dist/hosts/dotnet-wasm-transport.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 85642,
+      "gzipBytesPerModule": 17457,
+      "gzipBytesBundled": 16115,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 94208,
+        "gzipBytesBundled": 18432
+      }
+    },
+    {
+      "profile": "kernel-with-raw-host",
+      "modules": [
+        "dist/generated/core.codec.js",
+        "dist/generated/core.js",
+        "dist/hosts/dotnet-wasm-transport.js",
+        "dist/hosts/raw-wasm-transport.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 88750,
+      "gzipBytesPerModule": 18676,
+      "gzipBytesBundled": 16981,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 98304,
+        "gzipBytesBundled": 19456
+      }
+    }
+  ],
+  "scenarios": {
+    "startup@direct": {
+      "summary": {
+        "cold.kernelStartMs": 1.495,
+        "cold.sinceNavigationMs": 67.125,
+        "cold.crossOriginIsolated": "true",
+        "warm.kernelStartMs": 0.425,
+        "warm.sinceNavigationMs": 11.8,
+        "warm.crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "cold.kernelStartMs": 1.495,
+          "cold.sinceNavigationMs": 95.31,
+          "cold.crossOriginIsolated": "true",
+          "warm.kernelStartMs": 0.425,
+          "warm.sinceNavigationMs": 12.6,
+          "warm.crossOriginIsolated": "true"
+        },
+        {
+          "cold.kernelStartMs": 1.475,
+          "cold.sinceNavigationMs": 67.125,
+          "cold.crossOriginIsolated": "true",
+          "warm.kernelStartMs": 0.53,
+          "warm.sinceNavigationMs": 11.13,
+          "warm.crossOriginIsolated": "true"
+        },
+        {
+          "cold.kernelStartMs": 1.515,
+          "cold.sinceNavigationMs": 61.415,
+          "cold.crossOriginIsolated": "true",
+          "warm.kernelStartMs": 0.37,
+          "warm.sinceNavigationMs": 11.8,
+          "warm.crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "startup@json": {
+      "summary": {
+        "cold.kernelStartMs": 2.735,
+        "cold.sinceNavigationMs": 73.825,
+        "cold.crossOriginIsolated": "true",
+        "warm.kernelStartMs": 0.47,
+        "warm.sinceNavigationMs": 14.045,
+        "warm.crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "cold.kernelStartMs": 2.735,
+          "cold.sinceNavigationMs": 73.825,
+          "cold.crossOriginIsolated": "true",
+          "warm.kernelStartMs": 0.455,
+          "warm.sinceNavigationMs": 13.82,
+          "warm.crossOriginIsolated": "true"
+        },
+        {
+          "cold.kernelStartMs": 1.795,
+          "cold.sinceNavigationMs": 61.635,
+          "cold.crossOriginIsolated": "true",
+          "warm.kernelStartMs": 0.495,
+          "warm.sinceNavigationMs": 16.175,
+          "warm.crossOriginIsolated": "true"
+        },
+        {
+          "cold.kernelStartMs": 3.22,
+          "cold.sinceNavigationMs": 73.955,
+          "cold.crossOriginIsolated": "true",
+          "warm.kernelStartMs": 0.47,
+          "warm.sinceNavigationMs": 14.045,
+          "warm.crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "event@direct": {
+      "summary": {
+        "eventRoundTripMs": {
+          "n": 900,
+          "median": 0.01,
+          "p95": 0.03,
+          "min": 0.005,
+          "max": 0.12
+        },
+        "mutationsPerEvent": 1,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "eventRoundTripMs": {
+            "n": 300,
+            "median": 0.01,
+            "p95": 0.025,
+            "min": 0.005,
+            "max": 0.095
+          },
+          "mutationsPerEvent": 1,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "eventRoundTripMs": {
+            "n": 300,
+            "median": 0.015,
+            "p95": 0.03,
+            "min": 0.005,
+            "max": 0.095
+          },
+          "mutationsPerEvent": 1,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "eventRoundTripMs": {
+            "n": 300,
+            "median": 0.01,
+            "p95": 0.03,
+            "min": 0.005,
+            "max": 0.12
+          },
+          "mutationsPerEvent": 1,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "event@json": {
+      "summary": {
+        "eventRoundTripMs": {
+          "n": 900,
+          "median": 0.025,
+          "p95": 0.09,
+          "min": 0.01,
+          "max": 1.195
+        },
+        "mutationsPerEvent": 1,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "eventRoundTripMs": {
+            "n": 300,
+            "median": 0.025,
+            "p95": 0.055,
+            "min": 0.01,
+            "max": 0.87
+          },
+          "mutationsPerEvent": 1,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "eventRoundTripMs": {
+            "n": 300,
+            "median": 0.035,
+            "p95": 0.09,
+            "min": 0.02,
+            "max": 1.195
+          },
+          "mutationsPerEvent": 1,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "eventRoundTripMs": {
+            "n": 300,
+            "median": 0.02,
+            "p95": 0.06,
+            "min": 0.01,
+            "max": 0.725
+          },
+          "mutationsPerEvent": 1,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "forms-100@direct": {
+      "summary": {
+        "oneFieldChangeMs": {
+          "n": 300,
+          "median": 0.255,
+          "p95": 0.63,
+          "min": 0.19,
+          "max": 1.6
+        },
+        "mutationsPerOneFieldChange": 100,
+        "allFieldsChangeMs": {
+          "n": 90,
+          "median": 0.485,
+          "p95": 1.295,
+          "min": 0.375,
+          "max": 2.02
+        },
+        "mutationsPerAllFieldsChange": 100,
+        "unchangedProjectionMs": {
+          "n": 90,
+          "median": 0.25,
+          "p95": 2.19,
+          "min": 0.16,
+          "max": 4.175
+        },
+        "mutationsPerUnchangedProjection": 100,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "oneFieldChangeMs": {
+            "n": 100,
+            "median": 0.33,
+            "p95": 0.63,
+            "min": 0.195,
+            "max": 1.6
+          },
+          "mutationsPerOneFieldChange": 100,
+          "allFieldsChangeMs": {
+            "n": 30,
+            "median": 0.485,
+            "p95": 1.005,
+            "min": 0.385,
+            "max": 1.525
+          },
+          "mutationsPerAllFieldsChange": 100,
+          "unchangedProjectionMs": {
+            "n": 30,
+            "median": 0.255,
+            "p95": 1.36,
+            "min": 0.165,
+            "max": 3.14
+          },
+          "mutationsPerUnchangedProjection": 100,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "oneFieldChangeMs": {
+            "n": 100,
+            "median": 0.25,
+            "p95": 0.41,
+            "min": 0.195,
+            "max": 1.375
+          },
+          "mutationsPerOneFieldChange": 100,
+          "allFieldsChangeMs": {
+            "n": 30,
+            "median": 0.5,
+            "p95": 1.295,
+            "min": 0.385,
+            "max": 2.02
+          },
+          "mutationsPerAllFieldsChange": 100,
+          "unchangedProjectionMs": {
+            "n": 30,
+            "median": 0.25,
+            "p95": 1.525,
+            "min": 0.16,
+            "max": 4.175
+          },
+          "mutationsPerUnchangedProjection": 100,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "oneFieldChangeMs": {
+            "n": 100,
+            "median": 0.255,
+            "p95": 0.59,
+            "min": 0.19,
+            "max": 0.87
+          },
+          "mutationsPerOneFieldChange": 100,
+          "allFieldsChangeMs": {
+            "n": 30,
+            "median": 0.46,
+            "p95": 0.885,
+            "min": 0.375,
+            "max": 0.9
+          },
+          "mutationsPerAllFieldsChange": 100,
+          "unchangedProjectionMs": {
+            "n": 30,
+            "median": 0.225,
+            "p95": 2.19,
+            "min": 0.16,
+            "max": 3.235
+          },
+          "mutationsPerUnchangedProjection": 100,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "forms-100@json": {
+      "summary": {
+        "oneFieldChangeMs": {
+          "n": 300,
+          "median": 0.39,
+          "p95": 1.045,
+          "min": 0.305,
+          "max": 1.37
+        },
+        "mutationsPerOneFieldChange": 100,
+        "allFieldsChangeMs": {
+          "n": 90,
+          "median": 0.635,
+          "p95": 2.42,
+          "min": 0.43,
+          "max": 3.73
+        },
+        "mutationsPerAllFieldsChange": 100,
+        "unchangedProjectionMs": {
+          "n": 90,
+          "median": 0.37,
+          "p95": 0.705,
+          "min": 0.24,
+          "max": 0.865
+        },
+        "mutationsPerUnchangedProjection": 100,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "oneFieldChangeMs": {
+            "n": 100,
+            "median": 0.385,
+            "p95": 0.67,
+            "min": 0.305,
+            "max": 0.85
+          },
+          "mutationsPerOneFieldChange": 100,
+          "allFieldsChangeMs": {
+            "n": 30,
+            "median": 0.55,
+            "p95": 1.745,
+            "min": 0.43,
+            "max": 2.69
+          },
+          "mutationsPerAllFieldsChange": 100,
+          "unchangedProjectionMs": {
+            "n": 30,
+            "median": 0.36,
+            "p95": 0.705,
+            "min": 0.255,
+            "max": 0.755
+          },
+          "mutationsPerUnchangedProjection": 100,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "oneFieldChangeMs": {
+            "n": 100,
+            "median": 0.39,
+            "p95": 0.7,
+            "min": 0.31,
+            "max": 0.855
+          },
+          "mutationsPerOneFieldChange": 100,
+          "allFieldsChangeMs": {
+            "n": 30,
+            "median": 0.635,
+            "p95": 1.405,
+            "min": 0.445,
+            "max": 2.615
+          },
+          "mutationsPerAllFieldsChange": 100,
+          "unchangedProjectionMs": {
+            "n": 30,
+            "median": 0.37,
+            "p95": 0.695,
+            "min": 0.265,
+            "max": 0.74
+          },
+          "mutationsPerUnchangedProjection": 100,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "oneFieldChangeMs": {
+            "n": 100,
+            "median": 0.645,
+            "p95": 1.045,
+            "min": 0.335,
+            "max": 1.37
+          },
+          "mutationsPerOneFieldChange": 100,
+          "allFieldsChangeMs": {
+            "n": 30,
+            "median": 0.98,
+            "p95": 2.42,
+            "min": 0.475,
+            "max": 3.73
+          },
+          "mutationsPerAllFieldsChange": 100,
+          "unchangedProjectionMs": {
+            "n": 30,
+            "median": 0.395,
+            "p95": 0.705,
+            "min": 0.24,
+            "max": 0.865
+          },
+          "mutationsPerUnchangedProjection": 100,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "list-1k@direct": {
+      "summary": {
+        "initialRenderMs": 19.4,
+        "initialRenderMutations": 2000,
+        "noopMs": {
+          "n": 30,
+          "median": 1.54,
+          "p95": 6.775,
+          "min": 1.06,
+          "max": 6.775
+        },
+        "noopMutations": 1000,
+        "updateMs": {
+          "n": 30,
+          "median": 1.52,
+          "p95": 5.03,
+          "min": 1.045,
+          "max": 5.03
+        },
+        "updateMutations": 1000,
+        "insertMs": {
+          "n": 30,
+          "median": 1.44,
+          "p95": 2.585,
+          "min": 1.115,
+          "max": 2.585
+        },
+        "insertMutations": 1002,
+        "removeMs": {
+          "n": 30,
+          "median": 2.305,
+          "p95": 7.995,
+          "min": 1.855,
+          "max": 7.995
+        },
+        "removeMutations": 2001,
+        "appendMs": {
+          "n": 30,
+          "median": 1.705,
+          "p95": 2.785,
+          "min": 1.215,
+          "max": 2.785
+        },
+        "appendMutations": 1002,
+        "trimMs": {
+          "n": 30,
+          "median": 1.46,
+          "p95": 7.055,
+          "min": 1.11,
+          "max": 7.055
+        },
+        "trimMutations": 1001,
+        "reverseMs": {
+          "n": 30,
+          "median": 3.42,
+          "p95": 8.105,
+          "min": 2.665,
+          "max": 8.105
+        },
+        "reverseMutations": 2998,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "initialRenderMs": 16.25,
+          "initialRenderMutations": 2000,
+          "noopMs": {
+            "n": 10,
+            "median": 1.39,
+            "p95": 5.905,
+            "min": 1.06,
+            "max": 5.905
+          },
+          "noopMutations": 1000,
+          "updateMs": {
+            "n": 10,
+            "median": 1.39,
+            "p95": 4.46,
+            "min": 1.045,
+            "max": 4.46
+          },
+          "updateMutations": 1000,
+          "insertMs": {
+            "n": 10,
+            "median": 1.38,
+            "p95": 1.93,
+            "min": 1.18,
+            "max": 1.93
+          },
+          "insertMutations": 1002,
+          "removeMs": {
+            "n": 10,
+            "median": 2.225,
+            "p95": 6.72,
+            "min": 1.855,
+            "max": 6.72
+          },
+          "removeMutations": 2001,
+          "appendMs": {
+            "n": 10,
+            "median": 1.37,
+            "p95": 2.62,
+            "min": 1.215,
+            "max": 2.62
+          },
+          "appendMutations": 1002,
+          "trimMs": {
+            "n": 10,
+            "median": 1.43,
+            "p95": 4.33,
+            "min": 1.11,
+            "max": 4.33
+          },
+          "trimMutations": 1001,
+          "reverseMs": {
+            "n": 10,
+            "median": 3.015,
+            "p95": 6.595,
+            "min": 2.72,
+            "max": 6.595
+          },
+          "reverseMutations": 2998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 20.28,
+          "initialRenderMutations": 2000,
+          "noopMs": {
+            "n": 10,
+            "median": 1.54,
+            "p95": 6.305,
+            "min": 1.075,
+            "max": 6.305
+          },
+          "noopMutations": 1000,
+          "updateMs": {
+            "n": 10,
+            "median": 1.52,
+            "p95": 4.35,
+            "min": 1.105,
+            "max": 4.35
+          },
+          "updateMutations": 1000,
+          "insertMs": {
+            "n": 10,
+            "median": 1.51,
+            "p95": 2.29,
+            "min": 1.195,
+            "max": 2.29
+          },
+          "insertMutations": 1002,
+          "removeMs": {
+            "n": 10,
+            "median": 2.305,
+            "p95": 7.645,
+            "min": 1.9,
+            "max": 7.645
+          },
+          "removeMutations": 2001,
+          "appendMs": {
+            "n": 10,
+            "median": 1.745,
+            "p95": 2.785,
+            "min": 1.36,
+            "max": 2.785
+          },
+          "appendMutations": 1002,
+          "trimMs": {
+            "n": 10,
+            "median": 1.46,
+            "p95": 4.145,
+            "min": 1.18,
+            "max": 4.145
+          },
+          "trimMutations": 1001,
+          "reverseMs": {
+            "n": 10,
+            "median": 3.42,
+            "p95": 8.105,
+            "min": 2.765,
+            "max": 8.105
+          },
+          "reverseMutations": 2998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 19.4,
+          "initialRenderMutations": 2000,
+          "noopMs": {
+            "n": 10,
+            "median": 1.615,
+            "p95": 6.775,
+            "min": 1.075,
+            "max": 6.775
+          },
+          "noopMutations": 1000,
+          "updateMs": {
+            "n": 10,
+            "median": 1.585,
+            "p95": 5.03,
+            "min": 1.065,
+            "max": 5.03
+          },
+          "updateMutations": 1000,
+          "insertMs": {
+            "n": 10,
+            "median": 1.44,
+            "p95": 2.585,
+            "min": 1.115,
+            "max": 2.585
+          },
+          "insertMutations": 1002,
+          "removeMs": {
+            "n": 10,
+            "median": 2.375,
+            "p95": 7.995,
+            "min": 2.09,
+            "max": 7.995
+          },
+          "removeMutations": 2001,
+          "appendMs": {
+            "n": 10,
+            "median": 1.705,
+            "p95": 2.575,
+            "min": 1.265,
+            "max": 2.575
+          },
+          "appendMutations": 1002,
+          "trimMs": {
+            "n": 10,
+            "median": 1.465,
+            "p95": 7.055,
+            "min": 1.165,
+            "max": 7.055
+          },
+          "trimMutations": 1001,
+          "reverseMs": {
+            "n": 10,
+            "median": 3.445,
+            "p95": 5.95,
+            "min": 2.665,
+            "max": 5.95
+          },
+          "reverseMutations": 2998,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "list-1k@json": {
+      "summary": {
+        "initialRenderMs": 18.93,
+        "initialRenderMutations": 2000,
+        "noopMs": {
+          "n": 30,
+          "median": 3.59,
+          "p95": 5.885,
+          "min": 2.535,
+          "max": 5.885
+        },
+        "noopMutations": 1000,
+        "updateMs": {
+          "n": 30,
+          "median": 3.43,
+          "p95": 6.45,
+          "min": 2.3,
+          "max": 6.45
+        },
+        "updateMutations": 1000,
+        "insertMs": {
+          "n": 30,
+          "median": 3.45,
+          "p95": 9.78,
+          "min": 2.475,
+          "max": 9.78
+        },
+        "insertMutations": 1002,
+        "removeMs": {
+          "n": 30,
+          "median": 4.675,
+          "p95": 9.06,
+          "min": 3.185,
+          "max": 9.06
+        },
+        "removeMutations": 2001,
+        "appendMs": {
+          "n": 30,
+          "median": 3.615,
+          "p95": 7.9,
+          "min": 2.45,
+          "max": 7.9
+        },
+        "appendMutations": 1002,
+        "trimMs": {
+          "n": 30,
+          "median": 3.59,
+          "p95": 9.305,
+          "min": 2.22,
+          "max": 9.305
+        },
+        "trimMutations": 1001,
+        "reverseMs": {
+          "n": 30,
+          "median": 5.525,
+          "p95": 16.495,
+          "min": 4.135,
+          "max": 16.495
+        },
+        "reverseMutations": 2998,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "initialRenderMs": 22.605,
+          "initialRenderMutations": 2000,
+          "noopMs": {
+            "n": 10,
+            "median": 3.59,
+            "p95": 5.77,
+            "min": 2.92,
+            "max": 5.77
+          },
+          "noopMutations": 1000,
+          "updateMs": {
+            "n": 10,
+            "median": 3.35,
+            "p95": 6.41,
+            "min": 2.3,
+            "max": 6.41
+          },
+          "updateMutations": 1000,
+          "insertMs": {
+            "n": 10,
+            "median": 3.795,
+            "p95": 9.78,
+            "min": 2.475,
+            "max": 9.78
+          },
+          "insertMutations": 1002,
+          "removeMs": {
+            "n": 10,
+            "median": 4.35,
+            "p95": 6.555,
+            "min": 3.185,
+            "max": 6.555
+          },
+          "removeMutations": 2001,
+          "appendMs": {
+            "n": 10,
+            "median": 3.615,
+            "p95": 6.34,
+            "min": 2.735,
+            "max": 6.34
+          },
+          "appendMutations": 1002,
+          "trimMs": {
+            "n": 10,
+            "median": 3.59,
+            "p95": 4.975,
+            "min": 2.22,
+            "max": 4.975
+          },
+          "trimMutations": 1001,
+          "reverseMs": {
+            "n": 10,
+            "median": 5.525,
+            "p95": 11.5,
+            "min": 4.135,
+            "max": 11.5
+          },
+          "reverseMutations": 2998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 17.9,
+          "initialRenderMutations": 2000,
+          "noopMs": {
+            "n": 10,
+            "median": 4.115,
+            "p95": 5.535,
+            "min": 2.79,
+            "max": 5.535
+          },
+          "noopMutations": 1000,
+          "updateMs": {
+            "n": 10,
+            "median": 3.43,
+            "p95": 5.785,
+            "min": 2.85,
+            "max": 5.785
+          },
+          "updateMutations": 1000,
+          "insertMs": {
+            "n": 10,
+            "median": 3.45,
+            "p95": 5.64,
+            "min": 2.69,
+            "max": 5.64
+          },
+          "insertMutations": 1002,
+          "removeMs": {
+            "n": 10,
+            "median": 5.205,
+            "p95": 9.06,
+            "min": 3.49,
+            "max": 9.06
+          },
+          "removeMutations": 2001,
+          "appendMs": {
+            "n": 10,
+            "median": 3.73,
+            "p95": 7.53,
+            "min": 3.1,
+            "max": 7.53
+          },
+          "appendMutations": 1002,
+          "trimMs": {
+            "n": 10,
+            "median": 3.71,
+            "p95": 4.935,
+            "min": 2.6,
+            "max": 4.935
+          },
+          "trimMutations": 1001,
+          "reverseMs": {
+            "n": 10,
+            "median": 6.25,
+            "p95": 16.495,
+            "min": 4.48,
+            "max": 16.495
+          },
+          "reverseMutations": 2998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 18.93,
+          "initialRenderMutations": 2000,
+          "noopMs": {
+            "n": 10,
+            "median": 3.475,
+            "p95": 5.885,
+            "min": 2.535,
+            "max": 5.885
+          },
+          "noopMutations": 1000,
+          "updateMs": {
+            "n": 10,
+            "median": 3.65,
+            "p95": 6.45,
+            "min": 2.53,
+            "max": 6.45
+          },
+          "updateMutations": 1000,
+          "insertMs": {
+            "n": 10,
+            "median": 3.165,
+            "p95": 4.96,
+            "min": 2.605,
+            "max": 4.96
+          },
+          "insertMutations": 1002,
+          "removeMs": {
+            "n": 10,
+            "median": 4.675,
+            "p95": 5.48,
+            "min": 3.495,
+            "max": 5.48
+          },
+          "removeMutations": 2001,
+          "appendMs": {
+            "n": 10,
+            "median": 3.55,
+            "p95": 7.9,
+            "min": 2.45,
+            "max": 7.9
+          },
+          "appendMutations": 1002,
+          "trimMs": {
+            "n": 10,
+            "median": 2.97,
+            "p95": 9.305,
+            "min": 2.685,
+            "max": 9.305
+          },
+          "trimMutations": 1001,
+          "reverseMs": {
+            "n": 10,
+            "median": 5.11,
+            "p95": 10.05,
+            "min": 4.135,
+            "max": 10.05
+          },
+          "reverseMutations": 2998,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "list-10k@direct": {
+      "summary": {
+        "initialRenderMs": 132.84,
+        "initialRenderMutations": 20000,
+        "noopMs": {
+          "n": 15,
+          "median": 22.78,
+          "p95": 54.26,
+          "min": 19.72,
+          "max": 54.26
+        },
+        "noopMutations": 10000,
+        "updateMs": {
+          "n": 15,
+          "median": 28.705,
+          "p95": 48.525,
+          "min": 19.295,
+          "max": 48.525
+        },
+        "updateMutations": 10000,
+        "insertMs": {
+          "n": 15,
+          "median": 27.67,
+          "p95": 47.9,
+          "min": 21,
+          "max": 47.9
+        },
+        "insertMutations": 10002,
+        "removeMs": {
+          "n": 15,
+          "median": 40.375,
+          "p95": 63.1,
+          "min": 32.845,
+          "max": 63.1
+        },
+        "removeMutations": 20001,
+        "appendMs": {
+          "n": 15,
+          "median": 26.405,
+          "p95": 47.22,
+          "min": 22.055,
+          "max": 47.22
+        },
+        "appendMutations": 10002,
+        "trimMs": {
+          "n": 15,
+          "median": 24.735,
+          "p95": 36.71,
+          "min": 19.465,
+          "max": 36.71
+        },
+        "trimMutations": 10001,
+        "reverseMs": {
+          "n": 15,
+          "median": 55.915,
+          "p95": 79.445,
+          "min": 40.995,
+          "max": 79.445
+        },
+        "reverseMutations": 29998,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "initialRenderMs": 132.84,
+          "initialRenderMutations": 20000,
+          "noopMs": {
+            "n": 5,
+            "median": 22.78,
+            "p95": 42.22,
+            "min": 20.2,
+            "max": 42.22
+          },
+          "noopMutations": 10000,
+          "updateMs": {
+            "n": 5,
+            "median": 27.155,
+            "p95": 48.525,
+            "min": 22.115,
+            "max": 48.525
+          },
+          "updateMutations": 10000,
+          "insertMs": {
+            "n": 5,
+            "median": 33.335,
+            "p95": 44.19,
+            "min": 21.59,
+            "max": 44.19
+          },
+          "insertMutations": 10002,
+          "removeMs": {
+            "n": 5,
+            "median": 40.375,
+            "p95": 47.55,
+            "min": 34.69,
+            "max": 47.55
+          },
+          "removeMutations": 20001,
+          "appendMs": {
+            "n": 5,
+            "median": 26.405,
+            "p95": 47.22,
+            "min": 24.185,
+            "max": 47.22
+          },
+          "appendMutations": 10002,
+          "trimMs": {
+            "n": 5,
+            "median": 25.57,
+            "p95": 32.215,
+            "min": 19.465,
+            "max": 32.215
+          },
+          "trimMutations": 10001,
+          "reverseMs": {
+            "n": 5,
+            "median": 55.915,
+            "p95": 71.14,
+            "min": 42.01,
+            "max": 71.14
+          },
+          "reverseMutations": 29998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 135.305,
+          "initialRenderMutations": 20000,
+          "noopMs": {
+            "n": 5,
+            "median": 26.415,
+            "p95": 54.26,
+            "min": 20.75,
+            "max": 54.26
+          },
+          "noopMutations": 10000,
+          "updateMs": {
+            "n": 5,
+            "median": 32.79,
+            "p95": 37.745,
+            "min": 19.295,
+            "max": 37.745
+          },
+          "updateMutations": 10000,
+          "insertMs": {
+            "n": 5,
+            "median": 27.67,
+            "p95": 47.9,
+            "min": 22.625,
+            "max": 47.9
+          },
+          "insertMutations": 10002,
+          "removeMs": {
+            "n": 5,
+            "median": 40.97,
+            "p95": 63.1,
+            "min": 35.455,
+            "max": 63.1
+          },
+          "removeMutations": 20001,
+          "appendMs": {
+            "n": 5,
+            "median": 26.27,
+            "p95": 32.615,
+            "min": 23.39,
+            "max": 32.615
+          },
+          "appendMutations": 10002,
+          "trimMs": {
+            "n": 5,
+            "median": 21.475,
+            "p95": 31.715,
+            "min": 19.92,
+            "max": 31.715
+          },
+          "trimMutations": 10001,
+          "reverseMs": {
+            "n": 5,
+            "median": 48.285,
+            "p95": 79.445,
+            "min": 40.995,
+            "max": 79.445
+          },
+          "reverseMutations": 29998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 127.92,
+          "initialRenderMutations": 20000,
+          "noopMs": {
+            "n": 5,
+            "median": 22.43,
+            "p95": 37.375,
+            "min": 19.72,
+            "max": 37.375
+          },
+          "noopMutations": 10000,
+          "updateMs": {
+            "n": 5,
+            "median": 28.705,
+            "p95": 37.07,
+            "min": 19.325,
+            "max": 37.07
+          },
+          "updateMutations": 10000,
+          "insertMs": {
+            "n": 5,
+            "median": 26.08,
+            "p95": 34.21,
+            "min": 21,
+            "max": 34.21
+          },
+          "insertMutations": 10002,
+          "removeMs": {
+            "n": 5,
+            "median": 38.86,
+            "p95": 61.59,
+            "min": 32.845,
+            "max": 61.59
+          },
+          "removeMutations": 20001,
+          "appendMs": {
+            "n": 5,
+            "median": 27.595,
+            "p95": 46.245,
+            "min": 22.055,
+            "max": 46.245
+          },
+          "appendMutations": 10002,
+          "trimMs": {
+            "n": 5,
+            "median": 24.735,
+            "p95": 36.71,
+            "min": 20.86,
+            "max": 36.71
+          },
+          "trimMutations": 10001,
+          "reverseMs": {
+            "n": 5,
+            "median": 59.71,
+            "p95": 74.165,
+            "min": 42.89,
+            "max": 74.165
+          },
+          "reverseMutations": 29998,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "list-10k@json": {
+      "summary": {
+        "initialRenderMs": 175.355,
+        "initialRenderMutations": 20000,
+        "noopMs": {
+          "n": 15,
+          "median": 48.55,
+          "p95": 94.365,
+          "min": 37.84,
+          "max": 94.365
+        },
+        "noopMutations": 10000,
+        "updateMs": {
+          "n": 15,
+          "median": 43.45,
+          "p95": 69.505,
+          "min": 37.285,
+          "max": 69.505
+        },
+        "updateMutations": 10000,
+        "insertMs": {
+          "n": 15,
+          "median": 43.34,
+          "p95": 66.735,
+          "min": 34.375,
+          "max": 66.735
+        },
+        "insertMutations": 10002,
+        "removeMs": {
+          "n": 15,
+          "median": 52.655,
+          "p95": 71.815,
+          "min": 44.185,
+          "max": 71.815
+        },
+        "removeMutations": 20001,
+        "appendMs": {
+          "n": 15,
+          "median": 39.725,
+          "p95": 78.965,
+          "min": 34.675,
+          "max": 78.965
+        },
+        "appendMutations": 10002,
+        "trimMs": {
+          "n": 15,
+          "median": 46.615,
+          "p95": 72.54,
+          "min": 35.86,
+          "max": 72.54
+        },
+        "trimMutations": 10001,
+        "reverseMs": {
+          "n": 15,
+          "median": 70.7,
+          "p95": 130.65,
+          "min": 61.32,
+          "max": 130.65
+        },
+        "reverseMutations": 29998,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "initialRenderMs": 185.74,
+          "initialRenderMutations": 20000,
+          "noopMs": {
+            "n": 5,
+            "median": 46.755,
+            "p95": 94.365,
+            "min": 44.57,
+            "max": 94.365
+          },
+          "noopMutations": 10000,
+          "updateMs": {
+            "n": 5,
+            "median": 40.525,
+            "p95": 44.035,
+            "min": 39.88,
+            "max": 44.035
+          },
+          "updateMutations": 10000,
+          "insertMs": {
+            "n": 5,
+            "median": 43.13,
+            "p95": 66.735,
+            "min": 34.375,
+            "max": 66.735
+          },
+          "insertMutations": 10002,
+          "removeMs": {
+            "n": 5,
+            "median": 49.345,
+            "p95": 57.69,
+            "min": 45.595,
+            "max": 57.69
+          },
+          "removeMutations": 20001,
+          "appendMs": {
+            "n": 5,
+            "median": 40.105,
+            "p95": 51.83,
+            "min": 35.385,
+            "max": 51.83
+          },
+          "appendMutations": 10002,
+          "trimMs": {
+            "n": 5,
+            "median": 47.17,
+            "p95": 66.575,
+            "min": 35.86,
+            "max": 66.575
+          },
+          "trimMutations": 10001,
+          "reverseMs": {
+            "n": 5,
+            "median": 85.09,
+            "p95": 110.845,
+            "min": 69.345,
+            "max": 110.845
+          },
+          "reverseMutations": 29998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 175.355,
+          "initialRenderMutations": 20000,
+          "noopMs": {
+            "n": 5,
+            "median": 49.455,
+            "p95": 79.44,
+            "min": 41.785,
+            "max": 79.44
+          },
+          "noopMutations": 10000,
+          "updateMs": {
+            "n": 5,
+            "median": 43.45,
+            "p95": 69.505,
+            "min": 38.62,
+            "max": 69.505
+          },
+          "updateMutations": 10000,
+          "insertMs": {
+            "n": 5,
+            "median": 45.195,
+            "p95": 61.05,
+            "min": 38.935,
+            "max": 61.05
+          },
+          "insertMutations": 10002,
+          "removeMs": {
+            "n": 5,
+            "median": 52.655,
+            "p95": 71.815,
+            "min": 44.185,
+            "max": 71.815
+          },
+          "removeMutations": 20001,
+          "appendMs": {
+            "n": 5,
+            "median": 38.72,
+            "p95": 64.26,
+            "min": 34.675,
+            "max": 64.26
+          },
+          "appendMutations": 10002,
+          "trimMs": {
+            "n": 5,
+            "median": 46.615,
+            "p95": 72.54,
+            "min": 37.69,
+            "max": 72.54
+          },
+          "trimMutations": 10001,
+          "reverseMs": {
+            "n": 5,
+            "median": 70.635,
+            "p95": 94.96,
+            "min": 61.32,
+            "max": 94.96
+          },
+          "reverseMutations": 29998,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "initialRenderMs": 170.22,
+          "initialRenderMutations": 20000,
+          "noopMs": {
+            "n": 5,
+            "median": 48.55,
+            "p95": 63.635,
+            "min": 37.84,
+            "max": 63.635
+          },
+          "noopMutations": 10000,
+          "updateMs": {
+            "n": 5,
+            "median": 43.95,
+            "p95": 51.875,
+            "min": 37.285,
+            "max": 51.875
+          },
+          "updateMutations": 10000,
+          "insertMs": {
+            "n": 5,
+            "median": 43.34,
+            "p95": 64.125,
+            "min": 37.565,
+            "max": 64.125
+          },
+          "insertMutations": 10002,
+          "removeMs": {
+            "n": 5,
+            "median": 58.68,
+            "p95": 66.83,
+            "min": 49.97,
+            "max": 66.83
+          },
+          "removeMutations": 20001,
+          "appendMs": {
+            "n": 5,
+            "median": 39.725,
+            "p95": 78.965,
+            "min": 35.55,
+            "max": 78.965
+          },
+          "appendMutations": 10002,
+          "trimMs": {
+            "n": 5,
+            "median": 44.915,
+            "p95": 56.4,
+            "min": 38.845,
+            "max": 56.4
+          },
+          "trimMutations": 10001,
+          "reverseMs": {
+            "n": 5,
+            "median": 70.7,
+            "p95": 130.65,
+            "min": 65.04,
+            "max": 130.65
+          },
+          "reverseMutations": 29998,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "routes@direct": {
+      "summary": {
+        "routes": 100,
+        "hundredRouteChangesMs": {
+          "n": 15,
+          "median": 13.195,
+          "p95": 25.81,
+          "min": 11.01,
+          "max": 25.81
+        },
+        "perRouteChangeMs": 0.132,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "routes": 100,
+          "hundredRouteChangesMs": {
+            "n": 5,
+            "median": 12.86,
+            "p95": 20.735,
+            "min": 11.01,
+            "max": 20.735
+          },
+          "perRouteChangeMs": 0.129,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "routes": 100,
+          "hundredRouteChangesMs": {
+            "n": 5,
+            "median": 13.195,
+            "p95": 17.6,
+            "min": 11.345,
+            "max": 17.6
+          },
+          "perRouteChangeMs": 0.132,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "routes": 100,
+          "hundredRouteChangesMs": {
+            "n": 5,
+            "median": 16.99,
+            "p95": 25.81,
+            "min": 11.955,
+            "max": 25.81
+          },
+          "perRouteChangeMs": 0.17,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "routes@json": {
+      "summary": {
+        "routes": 100,
+        "hundredRouteChangesMs": {
+          "n": 15,
+          "median": 17.17,
+          "p95": 20.025,
+          "min": 14.185,
+          "max": 20.025
+        },
+        "perRouteChangeMs": 0.172,
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "routes": 100,
+          "hundredRouteChangesMs": {
+            "n": 5,
+            "median": 16.245,
+            "p95": 16.605,
+            "min": 15.205,
+            "max": 16.605
+          },
+          "perRouteChangeMs": 0.162,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "routes": 100,
+          "hundredRouteChangesMs": {
+            "n": 5,
+            "median": 17.17,
+            "p95": 20.025,
+            "min": 14.185,
+            "max": 20.025
+          },
+          "perRouteChangeMs": 0.172,
+          "crossOriginIsolated": "true"
+        },
+        {
+          "routes": 100,
+          "hundredRouteChangesMs": {
+            "n": 5,
+            "median": 17.51,
+            "p95": 18.52,
+            "min": 15.005,
+            "max": 18.52
+          },
+          "perRouteChangeMs": 0.175,
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "serialization@direct": {
+      "summary": {
+        "view1000Bytes": 41339,
+        "view1000StringifyMs": {
+          "n": 75,
+          "median": 0.08,
+          "p95": 0.15,
+          "min": 0.075,
+          "max": 0.82
+        },
+        "view1000ParseMs": {
+          "n": 75,
+          "median": 0.155,
+          "p95": 0.63,
+          "min": 0.13,
+          "max": 0.775
+        },
+        "view1000DecodeMs": {
+          "n": 75,
+          "median": 1.905,
+          "p95": 2.98,
+          "min": 1.23,
+          "max": 4.745
+        },
+        "view10000Bytes": 432839,
+        "view10000StringifyMs": {
+          "n": 75,
+          "median": 0.94,
+          "p95": 3.67,
+          "min": 0.815,
+          "max": 3.765
+        },
+        "view10000ParseMs": {
+          "n": 75,
+          "median": 1.66,
+          "p95": 4.605,
+          "min": 1.425,
+          "max": 5.71
+        },
+        "view10000DecodeMs": {
+          "n": 75,
+          "median": 17.13,
+          "p95": 23.885,
+          "min": 13.145,
+          "max": 25.75
+        },
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "view1000Bytes": 41339,
+          "view1000StringifyMs": {
+            "n": 25,
+            "median": 0.08,
+            "p95": 0.15,
+            "min": 0.075,
+            "max": 0.8
+          },
+          "view1000ParseMs": {
+            "n": 25,
+            "median": 0.155,
+            "p95": 0.375,
+            "min": 0.13,
+            "max": 0.775
+          },
+          "view1000DecodeMs": {
+            "n": 25,
+            "median": 1.695,
+            "p95": 2.385,
+            "min": 1.23,
+            "max": 4.3
+          },
+          "view10000Bytes": 432839,
+          "view10000StringifyMs": {
+            "n": 25,
+            "median": 0.94,
+            "p95": 2.295,
+            "min": 0.835,
+            "max": 2.8
+          },
+          "view10000ParseMs": {
+            "n": 25,
+            "median": 1.66,
+            "p95": 2.39,
+            "min": 1.425,
+            "max": 2.785
+          },
+          "view10000DecodeMs": {
+            "n": 25,
+            "median": 15.255,
+            "p95": 18.005,
+            "min": 13.145,
+            "max": 19.25
+          },
+          "crossOriginIsolated": "true"
+        },
+        {
+          "view1000Bytes": 41339,
+          "view1000StringifyMs": {
+            "n": 25,
+            "median": 0.085,
+            "p95": 0.115,
+            "min": 0.075,
+            "max": 0.76
+          },
+          "view1000ParseMs": {
+            "n": 25,
+            "median": 0.15,
+            "p95": 0.63,
+            "min": 0.135,
+            "max": 0.645
+          },
+          "view1000DecodeMs": {
+            "n": 25,
+            "median": 2.045,
+            "p95": 2.51,
+            "min": 1.485,
+            "max": 4.745
+          },
+          "view10000Bytes": 432839,
+          "view10000StringifyMs": {
+            "n": 25,
+            "median": 0.89,
+            "p95": 1.965,
+            "min": 0.815,
+            "max": 2.51
+          },
+          "view10000ParseMs": {
+            "n": 25,
+            "median": 1.625,
+            "p95": 2.07,
+            "min": 1.43,
+            "max": 3.725
+          },
+          "view10000DecodeMs": {
+            "n": 25,
+            "median": 17.13,
+            "p95": 22.49,
+            "min": 13.37,
+            "max": 22.575
+          },
+          "crossOriginIsolated": "true"
+        },
+        {
+          "view1000Bytes": 41339,
+          "view1000StringifyMs": {
+            "n": 25,
+            "median": 0.08,
+            "p95": 0.125,
+            "min": 0.075,
+            "max": 0.82
+          },
+          "view1000ParseMs": {
+            "n": 25,
+            "median": 0.155,
+            "p95": 0.245,
+            "min": 0.13,
+            "max": 0.725
+          },
+          "view1000DecodeMs": {
+            "n": 25,
+            "median": 1.905,
+            "p95": 2.98,
+            "min": 1.28,
+            "max": 4.71
+          },
+          "view10000Bytes": 432839,
+          "view10000StringifyMs": {
+            "n": 25,
+            "median": 1.59,
+            "p95": 3.67,
+            "min": 1.315,
+            "max": 3.765
+          },
+          "view10000ParseMs": {
+            "n": 25,
+            "median": 1.82,
+            "p95": 4.605,
+            "min": 1.45,
+            "max": 5.71
+          },
+          "view10000DecodeMs": {
+            "n": 25,
+            "median": 17.385,
+            "p95": 23.885,
+            "min": 13.445,
+            "max": 25.75
+          },
+          "crossOriginIsolated": "true"
+        }
+      ]
+    },
+    "federation@direct": {
+      "summary": {
+        "requestReplyExchangeMs": {
+          "n": 1500,
+          "median": 0.005,
+          "p95": 0.03,
+          "min": 0,
+          "max": 3.43
+        },
+        "crossOriginIsolated": "true"
+      },
+      "runs": [
+        {
+          "requestReplyExchangeMs": {
+            "n": 500,
+            "median": 0.005,
+            "p95": 0.03,
+            "min": 0,
+            "max": 3.43
+          },
+          "crossOriginIsolated": "true"
+        },
+        {
+          "requestReplyExchangeMs": {
+            "n": 500,
+            "median": 0.005,
+            "p95": 0.015,
+            "min": 0,
+            "max": 0.475
+          },
+          "crossOriginIsolated": "true"
+        },
+        {
+          "requestReplyExchangeMs": {
+            "n": 500,
+            "median": 0.005,
+            "p95": 0.02,
+            "min": 0,
+            "max": 0.31
+          },
+          "crossOriginIsolated": "true"
+        }
+      ]
+    }
+  },
+  "guests": {
+    "fsharp": {
+      "summary": {
+        "cold.handshakeMs": 1580.575,
+        "cold.requests": 188,
+        "cold.encodedBytes": 25956849,
+        "cold.transferredBytes": 26013249,
+        "cold.wasmBytes": 24877952,
+        "warm.handshakeMs": 349.205,
+        "warm.requests": 13,
+        "warm.encodedBytes": 528065,
+        "warm.transferredBytes": 19031,
+        "warm.wasmBytes": 0,
+        "eventEffectRoundTripMs": {
+          "n": 150,
+          "median": 1.525,
+          "p95": 4.835,
+          "min": 0.96,
+          "max": 5.01
+        }
+      },
+      "runs": [
+        {
+          "cold.handshakeMs": 1580.575,
+          "cold.requests": 188,
+          "cold.encodedBytes": 25956849,
+          "cold.transferredBytes": 26013249,
+          "cold.wasmBytes": 24877952,
+          "warm.handshakeMs": 386.335,
+          "warm.requests": 13,
+          "warm.encodedBytes": 528065,
+          "warm.transferredBytes": 19031,
+          "warm.wasmBytes": 0,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 1.525,
+            "p95": 4.62,
+            "min": 0.96,
+            "max": 4.915
+          }
+        },
+        {
+          "cold.handshakeMs": 1528.98,
+          "cold.requests": 188,
+          "cold.encodedBytes": 25956849,
+          "cold.transferredBytes": 26013249,
+          "cold.wasmBytes": 24877952,
+          "warm.handshakeMs": 349.205,
+          "warm.requests": 13,
+          "warm.encodedBytes": 528065,
+          "warm.transferredBytes": 19031,
+          "warm.wasmBytes": 0,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 1.535,
+            "p95": 4.835,
+            "min": 0.99,
+            "max": 5.01
+          }
+        },
+        {
+          "cold.handshakeMs": 1609.355,
+          "cold.requests": 188,
+          "cold.encodedBytes": 25956849,
+          "cold.transferredBytes": 26013249,
+          "cold.wasmBytes": 24877952,
+          "warm.handshakeMs": 335.965,
+          "warm.requests": 13,
+          "warm.encodedBytes": 528065,
+          "warm.transferredBytes": 19031,
+          "warm.wasmBytes": 0,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 1.44,
+            "p95": 3.59,
+            "min": 0.985,
+            "max": 4.67
+          }
+        }
+      ]
+    },
+    "csharp": {
+      "summary": {
+        "cold.handshakeMs": 534.39,
+        "cold.requests": 28,
+        "cold.encodedBytes": 5444512,
+        "cold.transferredBytes": 5452912,
+        "cold.wasmBytes": 4382292,
+        "warm.handshakeMs": 174.575,
+        "warm.requests": 13,
+        "warm.encodedBytes": 511388,
+        "warm.transferredBytes": 2354,
+        "warm.wasmBytes": 0,
+        "eventEffectRoundTripMs": {
+          "n": 150,
+          "median": 1.685,
+          "p95": 4.625,
+          "min": 1.01,
+          "max": 6.415
+        }
+      },
+      "runs": [
+        {
+          "cold.handshakeMs": 534.39,
+          "cold.requests": 28,
+          "cold.encodedBytes": 5444512,
+          "cold.transferredBytes": 5452912,
+          "cold.wasmBytes": 4382292,
+          "warm.handshakeMs": 174.26,
+          "warm.requests": 13,
+          "warm.encodedBytes": 511388,
+          "warm.transferredBytes": 2354,
+          "warm.wasmBytes": 0,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 1.635,
+            "p95": 4.625,
+            "min": 1.01,
+            "max": 5.485
+          }
+        },
+        {
+          "cold.handshakeMs": 517.745,
+          "cold.requests": 28,
+          "cold.encodedBytes": 5444512,
+          "cold.transferredBytes": 5452912,
+          "cold.wasmBytes": 4382292,
+          "warm.handshakeMs": 175.415,
+          "warm.requests": 13,
+          "warm.encodedBytes": 511388,
+          "warm.transferredBytes": 2354,
+          "warm.wasmBytes": 0,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 1.7,
+            "p95": 4.18,
+            "min": 1.04,
+            "max": 6.415
+          }
+        },
+        {
+          "cold.handshakeMs": 538.475,
+          "cold.requests": 28,
+          "cold.encodedBytes": 5444512,
+          "cold.transferredBytes": 5452912,
+          "cold.wasmBytes": 4382292,
+          "warm.handshakeMs": 174.575,
+          "warm.requests": 13,
+          "warm.encodedBytes": 511388,
+          "warm.transferredBytes": 2354,
+          "warm.wasmBytes": 0,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 1.685,
+            "p95": 4.09,
+            "min": 1.03,
+            "max": 6.01
+          }
+        }
+      ]
+    },
+    "rust": {
+      "summary": {
+        "cold.handshakeMs": 83.09,
+        "cold.requests": 10,
+        "cold.encodedBytes": 266468,
+        "cold.transferredBytes": 269468,
+        "cold.wasmBytes": 176296,
+        "warm.handshakeMs": 25.345,
+        "warm.requests": 10,
+        "warm.encodedBytes": 266468,
+        "warm.transferredBytes": 0,
+        "warm.wasmBytes": 176296,
+        "eventEffectRoundTripMs": {
+          "n": 150,
+          "median": 0.48,
+          "p95": 1.39,
+          "min": 0.34,
+          "max": 5.48
+        }
+      },
+      "runs": [
+        {
+          "cold.handshakeMs": 102.755,
+          "cold.requests": 10,
+          "cold.encodedBytes": 266468,
+          "cold.transferredBytes": 269468,
+          "cold.wasmBytes": 176296,
+          "warm.handshakeMs": 25.345,
+          "warm.requests": 10,
+          "warm.encodedBytes": 266468,
+          "warm.transferredBytes": 0,
+          "warm.wasmBytes": 176296,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 0.49,
+            "p95": 1.035,
+            "min": 0.34,
+            "max": 1.49
+          }
+        },
+        {
+          "cold.handshakeMs": 83.09,
+          "cold.requests": 10,
+          "cold.encodedBytes": 266468,
+          "cold.transferredBytes": 269468,
+          "cold.wasmBytes": 176296,
+          "warm.handshakeMs": 26.03,
+          "warm.requests": 10,
+          "warm.encodedBytes": 266468,
+          "warm.transferredBytes": 0,
+          "warm.wasmBytes": 176296,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 0.48,
+            "p95": 1.295,
+            "min": 0.34,
+            "max": 5.48
+          }
+        },
+        {
+          "cold.handshakeMs": 80.78,
+          "cold.requests": 10,
+          "cold.encodedBytes": 266468,
+          "cold.transferredBytes": 269468,
+          "cold.wasmBytes": 176296,
+          "warm.handshakeMs": 22.14,
+          "warm.requests": 10,
+          "warm.encodedBytes": 266468,
+          "warm.transferredBytes": 0,
+          "warm.wasmBytes": 176296,
+          "eventEffectRoundTripMs": {
+            "n": 50,
+            "median": 0.48,
+            "p95": 1.39,
+            "min": 0.34,
+            "max": 1.635
+          }
+        }
+      ]
+    }
+  }
+}

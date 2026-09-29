@@ -187,6 +187,11 @@ export function createFetchTransport(): EngineTransport {
     async start(): Promise<void> {},
     async dispatch(message: BrowserToEngineMessage): Promise<EngineToBrowserMessage> {
       switch (message.kind) {
+        // This engine sends no handshake, so the kernel negotiates no optional
+        // capability with it and never routes a fact here. One arriving anyway
+        // is a contract violation, not evidence.
+        case "CapabilityFact":
+          throw new Error(`Unexpected CapabilityFact from ${message.capability}: this engine negotiated no capabilities.`);
         case "Initialize":
           return { view: project(state), effects: [], cancellations: [] };
         case "Event":

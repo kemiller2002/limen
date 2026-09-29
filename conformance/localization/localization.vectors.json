@@ -1,0 +1,53 @@
+{
+  "doc": "Language-neutral semantics for engine-side localization (kemiller2002/limen#35, LCP-028). conformance/localization/README.md states the rules; these cases are the rules as data, compared exactly. The F# reference library runs them in conformance/localization/fsharp/.",
+  "negotiate": [
+    { "name": "an exact match wins", "available": ["en", "it-IT", "fr"], "preferred": ["it-IT", "en"], "fallback": "en", "expect": "it-IT" },
+    { "name": "a region falls back to its language", "available": ["en", "it"], "preferred": ["it-CH"], "fallback": "en", "expect": "it" },
+    { "name": "case-insensitive, returning the available casing", "available": ["pt-BR"], "preferred": ["PT-br"], "fallback": "en", "expect": "pt-BR" },
+    { "name": "scripts truncate step by step", "available": ["zh-Hant", "zh-Hans"], "preferred": ["zh-Hant-TW"], "fallback": "en", "expect": "zh-Hant" },
+    { "name": "a later preference is used when the first has no match", "available": ["de", "fr"], "preferred": ["ja-JP", "fr-CA"], "fallback": "de", "expect": "fr" },
+    { "name": "never more specific than asked: en does not choose en-GB", "available": ["en-GB", "fr"], "preferred": ["en"], "fallback": "fr", "expect": "fr" },
+    { "name": "a private-use singleton is dropped with its subtag", "available": ["de-DE"], "preferred": ["de-DE-x-berlin"], "fallback": "en", "expect": "de-DE" },
+    { "name": "nothing matches: the fallback", "available": ["en"], "preferred": [], "fallback": "en", "expect": "en" }
+  ],
+  "chain": [
+    { "locale": "zh-Hant-TW", "fallback": "en", "expect": ["zh-Hant-TW", "zh-Hant", "zh", "en"] },
+    { "locale": "en-US", "fallback": "en", "expect": ["en-US", "en"] },
+    { "locale": "it", "fallback": "IT", "expect": ["it"] },
+    { "locale": "de-DE-x-berlin", "fallback": "en", "expect": ["de-DE-x-berlin", "de-DE", "de", "en"] }
+  ],
+  "direction": [
+    { "tag": "ar", "expect": "rtl" }, { "tag": "ar-EG", "expect": "rtl" }, { "tag": "he-IL", "expect": "rtl" },
+    { "tag": "fa", "expect": "rtl" }, { "tag": "ur-PK", "expect": "rtl" }, { "tag": "ckb", "expect": "rtl" },
+    { "tag": "en-US", "expect": "ltr" }, { "tag": "it", "expect": "ltr" }, { "tag": "zh-Hant-TW", "expect": "ltr" },
+    { "tag": "az-Arab", "expect": "rtl" }, { "tag": "pa-Arab-PK", "expect": "rtl" }, { "tag": "ar-Latn", "expect": "ltr" }, { "tag": "uz-Arab-AF", "expect": "rtl" }
+  ],
+  "messages": {
+    "catalogues": {
+      "en": {
+        "greeting": { "text": "Hello, {name}!" },
+        "items": { "plural": { "one": "{count} item", "other": "{count} items" } },
+        "only-en": { "text": "English only" },
+        "braces": { "text": "Use {{name}} for {what}" }
+      },
+      "it": {
+        "greeting": { "text": "Ciao, {name}!" },
+        "items": { "plural": { "one": "{count} articolo", "other": "{count} articoli" } }
+      },
+      "ar": {
+        "items": { "plural": { "zero": "لا عناصر", "one": "عنصر واحد", "two": "عنصران", "few": "{count} عناصر", "many": "{count} عنصرًا", "other": "{count} عنصر" } }
+      }
+    },
+    "cases": [
+      { "name": "the first locale in the chain that has the message", "chain": ["it-IT", "it", "en"], "id": "greeting", "args": { "name": "Ada" }, "expect": { "found": { "locale": "it", "text": "Ciao, Ada!", "missing": [] } } },
+      { "name": "a message missing in the locale falls back along the chain", "chain": ["it", "en"], "id": "only-en", "args": {}, "expect": { "found": { "locale": "en", "text": "English only", "missing": [] } } },
+      { "name": "plural: the category the environment pack returned", "chain": ["it", "en"], "id": "items", "args": { "count": "1" }, "category": "one", "expect": { "found": { "locale": "it", "text": "1 articolo", "missing": [] } } },
+      { "name": "plural: a category the message lacks uses other", "chain": ["en"], "id": "items", "args": { "count": "3" }, "category": "few", "expect": { "found": { "locale": "en", "text": "3 items", "missing": [] } } },
+      { "name": "plural without a category uses other", "chain": ["en"], "id": "items", "args": { "count": "0" }, "expect": { "found": { "locale": "en", "text": "0 items", "missing": [] } } },
+      { "name": "Arabic has six categories", "chain": ["ar"], "id": "items", "args": { "count": "3" }, "category": "few", "expect": { "found": { "locale": "ar", "text": "3 عناصر", "missing": [] } } },
+      { "name": "doubled braces are literal; a placeholder without an argument stays and is reported", "chain": ["en"], "id": "braces", "args": {}, "expect": { "found": { "locale": "en", "text": "Use {name} for {what}", "missing": ["what"] } } },
+      { "name": "catalogue locales match case-insensitively", "chain": ["EN"], "id": "greeting", "args": { "name": "Grace" }, "expect": { "found": { "locale": "en", "text": "Hello, Grace!", "missing": [] } } },
+      { "name": "no locale in the chain has it: notFound, never invented text", "chain": ["it", "en"], "id": "nowhere", "args": {}, "expect": { "notFound": "nowhere" } }
+    ]
+  }
+}

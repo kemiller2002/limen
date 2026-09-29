@@ -17,8 +17,9 @@ Know what you are allowed to depend on.
 
 | Tier | What | Examples |
 | --- | --- | --- |
-| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, `ModuleFederation`, `ModuleManifest`, `FederationEnvelope`, `FEDERATION_PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
+| **Stable public interface** | The contract consumers build on. Changes are breaking. | `BrowserKernel`, `EngineTransport`, `SemanticEvent`, `ViewState`, `EffectRequest`, `EffectResult`, `EffectOutcome`, `StorageOutcome`, `ClipboardOutcome`, `NavigationOutcome`, `BrowserLocation`, `Capability`, `PROTOCOL_VERSION`, the six `data-*` attributes (`data-key` is a modifier of `data-each`, not a seventh) |
 | **Supported extension point** | Designed to be implemented or supplied by you. | `EngineTransport`, `DiagnosticsSink`, `FederatedModuleTransport`, `FederationDiagnosticsSink` |
+| **Optional, stable** | Supported, but not Core: never exported from the root, never needed to use Limen. | from `…/federation`: `ModuleFederation`, `ModuleManifest`, `FederationEnvelope`, `FEDERATION_PROTOCOL_VERSION`; from `…/capabilities/<name>`: each pack's provider |
 | **Reference implementation** | Ships, but is this repo's demo. Do **not** build on it. | `DirectTypeScriptTransport`, `ReferenceEngine`, `project`, `State`, `Command`, `TransitionResult`, `EmailAddress` |
 | **Internal** | Private; may change without notice. | every `#`-prefixed member of `BrowserKernel`, `Scope`/binding types, `TRIGGER_BY_TAG`, `BOOLEAN_PROPS` |
 | **Experimental** | None currently. | — |
@@ -62,11 +63,19 @@ import type { ViewState } from "@echelon-foundry/typescript-wasm-kernel/protocol
 
 | Specifier | Contents |
 | --- | --- |
-| `@echelon-foundry/typescript-wasm-kernel` | everything in [`src/index.ts`](https://github.com/kemiller2002/limen/blob/main/src/index.ts) |
+| `@echelon-foundry/typescript-wasm-kernel` | **Limen Core only** ([`src/index.ts`](https://github.com/kemiller2002/limen/blob/main/src/index.ts)): the kernel, the boundary messages, the four built-in effect families, the optional-capability seam, compatibility. Every name belongs to an approved export family of [`architecture/core.json`](https://github.com/kemiller2002/limen/blob/main/architecture/core.json); nothing it loads is optional code |
 | `…/protocol` | the protocol types |
+| `…/contract` | the generated Core codec (decoders and encoders) |
+| `…/capabilities` | the optional-capability seam (`defineCapability`) |
 | `…/kernel` | `BrowserKernel` alone |
-| `…/reference-engine` | `DirectTypeScriptTransport` — reference only |
-| `…/federation` | multi-engine manifests, envelopes, lifecycle and `ModuleFederation` |
+| `…/capabilities/<name>` | an optional capability pack — see [24](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) |
+| `…/reference-engine` | *optional, reference only:* `ReferenceEngine`, `project`, `DirectTypeScriptTransport` and the demo domain types |
+| `…/federation` | *optional:* multi-engine manifests, envelopes, lifecycle and `ModuleFederation` |
+
+Federation and the reference engine were exported from the root until
+kemiller2002/limen#61; import them from their
+subpaths (migration table in
+[18](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md#root-entrypoint-core-only)).
 
 `moduleResolution` must be `"bundler"`, `"node16"`, or `"nodenext"`; older modes
 do not read `exports`.
@@ -82,7 +91,9 @@ class BrowserKernel {
   constructor(transport: EngineTransport, document: Document, diagnostics?: DiagnosticsSink);
   readonly transport: EngineTransport;
   readonly document: Document;
+  readonly status: KernelStatus; // "unstarted" | "starting" | "running" | "incompatible" | "faulted" | "disposed"
   start(): Promise<void>;
+  dispose(): void;
 }
 ```
 
@@ -130,8 +141,11 @@ real event instead); expecting a throw on failure (install a sink); binding
 elements added to the DOM afterwards (only `data-if`/`data-each` add bindable
 content later).
 
-**There is no `stop()`, `destroy()`, or `unbind()`.** Listeners live as long as
-the page.
+**`dispose()`** ends a kernel for a host that replaces it: it removes every
+listener, aborts in-flight effects without delivering their results, and makes
+the kernel silent. It does not touch the DOM. For a normal page load you never
+call it. See
+[03-kernel-lifecycle.md](https://github.com/kemiller2002/limen/blob/main/docs/03-kernel-lifecycle.md#status-and-shutdown).
 
 ---
 
@@ -327,10 +341,11 @@ Full semantics and design rules:
 type Capability = "Http" | "Storage" | "Clipboard" | "Navigation";
 
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation }
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation; handshake?: HostHandshake }
   | { kind: "Event";           event:    SemanticEvent }
   | { kind: "EffectResult";    result:   EffectResult }
-  | { kind: "LocationChanged"; location: BrowserLocation };
+  | { kind: "LocationChanged"; location: BrowserLocation }
+  | { kind: "CapabilityFact";  capability: CapabilityId; version: number; fact: unknown };
 ```
 
 `capabilities` lists what the **kernel implements** — not what this browser will
@@ -368,11 +383,16 @@ type SemanticEvent = {
   readonly name:   string;   // the data-event value, verbatim
   readonly key?:   string;   // enclosing data-each item's key
   readonly value?: string;   // .value of an input/select/textarea
+  readonly checked?: boolean;           // 1.2: checkbox / radio checked state
+  readonly values?: readonly string[];  // 1.2: multi-select selected; checkbox group checked
+  readonly submitter?: string;          // 1.2: name of the submitting button
 };
 ```
 
 `value` is always a string, even for `type="number"`. No element id, no DOM
-node, no event object.
+node, no event object. The three 1.2 fields are sent only to an engine whose
+handshake answered protocol 1.2 or later; a 1.1 or legacy engine receives
+exactly the 1.1 shape.
 
 ---
 
@@ -416,16 +436,22 @@ so an arbitrary string cannot be passed by accident.
 type HttpEffectRequest = {
   readonly kind: "Http";
   readonly correlationId: CorrelationId;
-  readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE";
+  readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   readonly url: string;
   readonly headers?: Readonly<Record<string, string>>;
   readonly body?: string;      // pre-serialized; never interpreted
   readonly timeoutMs: number;  // required
+  readonly response?: "json" | "text" | "base64" | "none";      // 1.3; absent = json
+  readonly responseHeaders?: readonly string[];                 // 1.3
+  readonly credentials?: "omit" | "same-origin" | "include";    // 1.3; absent = browser default
+  readonly xsrf?: { readonly cookie: string; readonly header: string }; // 1.3; same-origin only
 };
 ```
 
-Headers merge over the kernel's `accept: application/json`; yours win.
-Headers and body are **never** included in diagnostics.
+Headers merge over the kernel's `accept: application/json` (sent only for the
+`json` representation); yours win. Headers, body, cookies and returned header
+values are **never** included in diagnostics. The 1.3 options are in
+[43-http-profiles.md](https://github.com/kemiller2002/limen/blob/main/docs/43-http-profiles.md).
 
 ### `StorageEffectRequest`
 
@@ -442,16 +468,18 @@ type StorageEffectRequest =
 
 ```ts
 type EffectOutcome =
-  | { kind: "Success";        status: number; body: unknown }
-  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response"; status?: number }
+  | { kind: "Success";        status: number; body: unknown; headers?: Readonly<Record<string, string>> }
+  | { kind: "Failure";        reason: "network" | "aborted" | "invalid-response" | "too-large"; status?: number }
   | { kind: "Cancelled" }
-  | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" };
+  | { kind: "OutcomeUnknown"; reason: "timeout-after-dispatch" | "connection-lost" };
 ```
 
 | Outcome | Produced when |
 | --- | --- |
-| `Success` | a response arrived **and `.json()` parsed** — any status, including 500 |
-| `Failure { network }` | `fetch` threw and was not aborted. **No `status`** — nothing came back |
+| `Success` | a response arrived **and its body was read as the request asked** (`.json()` parsed, by default) — any status, including 500 |
+| `Failure { too-large, status }` | a `text` or `base64` body passed `MAX_HTTP_TEXT_BYTES` (8 MiB) |
+| `Failure { network }` | `fetch` threw and was not aborted, and nothing can have changed: the method is `GET`, `HEAD` or `OPTIONS`, or the browser was offline when the request was made. **No `status`** — nothing came back |
+| `OutcomeUnknown { connection-lost }` | protocol 1.4: `fetch` threw for `POST`, `PUT`, `PATCH` or `DELETE` while the browser was online. The server may have it, possibly twice. A 1.3 engine hears `timeout-after-dispatch` instead |
 | `Failure { invalid-response, status }` | a response arrived but would not decode. **Carries the status** |
 
 > **`status` is present exactly when a response was received.** Its absence
@@ -562,7 +590,8 @@ type EffectResult =
   | { kind: "HttpResult";       correlationId: CorrelationId; outcome: EffectOutcome }
   | { kind: "StorageResult";    correlationId: CorrelationId; outcome: StorageOutcome }
   | { kind: "ClipboardResult";  correlationId: CorrelationId; outcome: ClipboardOutcome }
-  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome };
+  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome }
+  | { kind: "CapabilityResult"; correlationId: CorrelationId; capability: CapabilityId; version: number; outcome: CapabilityOutcome };
 ```
 
 An effect kind the kernel does not implement produces **no result at all** — it
@@ -577,8 +606,9 @@ correlation id waits forever, which is why it is reported loudly.
 interface DiagnosticsSink { report(event: DiagnosticEvent): void; }
 
 type DiagnosticEvent =
-  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect"; detail: string }
-  | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number };
+  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect" | "protocol"; detail: string }
+  | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number }
+  | { kind: "Handshake";    verdict: HandshakeVerdict };   // reported once, after Initialize
 
 const noopDiagnostics: DiagnosticsSink;   // the default
 ```
@@ -626,7 +656,16 @@ Default triggers: `<form>` → `submit` (with `preventDefault`);
 
 `data-bind-` targets: `disabled`, `checked`, `selected`, `hidden`, `open` are
 set as **boolean properties**; `value` is set as a property and skipped if
-unchanged; everything else uses `setAttribute`.
+unchanged; URL attributes (`href`, `src`, `action`, `formaction`, …) are written
+only for `http:`, `https:`, `mailto:`, `tel:` or relative URLs, and otherwise
+removed with a `projection` BridgeError that omits the value; `on*`, `style`,
+`srcdoc`, `srcset`, `ping` and `is` are refused at `start()` with a `binding`
+BridgeError, as is any `data-text`/`data-bind-*` on `<script>`, `<style>`,
+`<iframe>`, `<object>`, `<embed>`, `<base>`, `<meta>`, `<link>` or SVG
+animation elements (except page metadata: `content` on a descriptive
+`<meta name>`, and `href` on `<link rel="canonical"|"alternate">`);
+everything else uses `setAttribute`. `<head>` is bound like `<body>`. See
+[29-binding-security.md](https://github.com/kemiller2002/limen/blob/main/docs/29-binding-security.md).
 
 ---
 

@@ -30,6 +30,24 @@ mainstream front-end conventions is often wrong here.
 
 # Part 1 — Limen
 
+## Start with Core: four documents
+
+This is the required reading, and all of it. `npm run check:docs` keeps this
+list identical to the learning path in
+[`architecture/core.json`](architecture/core.json).
+
+<!-- core-learning-path:start -->
+1. [docs/core-mental-model.md](docs/core-mental-model.md) — the seven Core concepts: the whole mandatory model
+2. [docs/where-code-goes.md](docs/where-code-goes.md) — placement: the decision order, the table, the layers by name
+3. [`src/protocol.ts`](src/protocol.ts) — the contract every engine speaks
+4. [`examples/minimal/`](examples/minimal/README.md) — one complete application that imports Core only
+<!-- core-learning-path:end -->
+
+Then open a work item (below) before changing anything. Optional systems —
+federation, capability packs, routing and forms libraries, SSR, workers,
+DevTools — are not prerequisites; read their documents when a task needs
+them. Growing Core itself is a [Core Admission](docs/core-admission.md).
+
 ## Two things to know before anything else
 
 **1. This repository is Limen.** Limen is the product name for the
@@ -71,6 +89,13 @@ Do this **first**, before editing:
 ./ros work start WI-####
 ```
 
+then, **before your first edit**, commit the work item's scope manifest —
+`architecture/work-scopes/WI-####.json` (placement + allowed paths) — and name
+the item in every commit subject, e.g. `feat(x): … (GH-23, WI-####)`. CI's
+`Work-item scope` job rejects commits outside the declared scope, and any
+change to a guardrail-owned path unless the item is declared
+`"guardrail": true`. See [docs/25-guardrails.md](docs/25-guardrails.md).
+
 and when the work is done and committed:
 
 ```sh
@@ -94,20 +119,39 @@ src/protocol.ts the threshold itself: plain, JSON-serializable data only
 src/engine/     TypeScript reference-engine meaning ONLY — state, transitions, validation
 ```
 
-Four message types cross the boundary, and nothing else does:
+These message types cross the boundary, and nothing else does. They are
+**generated** from the language-neutral contract `contract/core.contract.json`
+— never edit `src/generated/**` by hand; change the contract and run
+`npm run contract:generate` (see [docs/24](docs/24-contract-and-capabilities.md)):
 
 ```ts
 // Browser → Engine
-{ kind: "Initialize";      protocolVersion; capabilities; location }
+{ kind: "Initialize";      protocolVersion; capabilities; location; handshake? }
 { kind: "Event";           event:    SemanticEvent }   // { name, key?, value? }
 { kind: "EffectResult";    result:   EffectResult }
 { kind: "LocationChanged"; location: BrowserLocation } // the browser moved on its own
+{ kind: "CapabilityFact";  capability; version; fact } // from a negotiated optional capability
 
 // Engine → Browser
-{ view: ViewState; effects: EffectRequest[]; cancellations: CorrelationId[] }
+{ view: ViewState; effects: EffectRequest[]; cancellations: CorrelationId[]; handshake? }
 ```
 
-The kernel implements four capabilities, announced in `Initialize`:
+The kernel verifies the engine's `handshake` (contract fingerprint, protocol
+revision, selected optional capabilities) before applying anything from it.
+Optional capabilities are packs registered with the kernel and reached through
+one generic `Capability` effect; Core never learns what a pack means.
+
+**Core is a fixed list of files.** [`architecture/core.json`](architecture/core.json)
+is the machine-readable Core manifest: the layers `core-contract` and
+`core-kernel`, the exact files in them, the six binding primitives, the four
+built-in capability families, zero runtime dependencies, the approved root
+export families and the seven canonical concepts. `npm run check:architecture`
+enforces it; every other layer ([where code goes](docs/where-code-goes.md#the-layers-by-name))
+is optional and may import only Core's public files. Growing Core is a Core
+Admission decision, never a side effect of feature work.
+
+The kernel implements four capabilities — frozen at v1; a new browser
+capability is an optional pack — announced in `Initialize`:
 
 | Capability | Operations | Outcomes |
 | --- | --- | --- |
@@ -225,28 +269,22 @@ JavaScript outside the engine?                 → STOP. That is rule 1.
 | What "Limen" renamed, and what it did not | [`docs/18-naming-and-compatibility.md`](docs/18-naming-and-compatibility.md) |
 | The SDE method this repo follows | [`.sde/README.md`](.sde/README.md) |
 
-## Required reading order
+## Going further — optional, when the task needs it
 
-Read these in order. Do not go source-diving first — every one of these exists
-because an agent needed it and had to reconstruct it from the implementation.
+None of this is required to change a Limen application correctly; the four
+documents above are. Read these when your task touches them.
 
-1. This file, Part 1 — **including the work-item step above**
-2. [docs/mental-model.md](docs/mental-model.md) — who owns what, and why
-3. [docs/where-code-goes.md](docs/where-code-goes.md) — the placement table and decision tree
-4. [`src/protocol.ts`](src/protocol.ts) — the actual contract, ~160 lines
-5. [`examples/01-counter/`](examples/01-counter/) — the smallest whole app
-6. [docs/traces.md](docs/traces.md) — three interactions, file by file
-7. [docs/04-state-model.md](docs/04-state-model.md)
-8. [docs/05-events-and-dispatch.md](docs/05-events-and-dispatch.md)
-9. [docs/07-effects-and-browser-interop.md](docs/07-effects-and-browser-interop.md)
-10. [`examples/03-fetch-data/`](examples/03-fetch-data/) — the first effect
-11. [docs/routing.md](docs/routing.md) + [`examples/08-routing/`](examples/08-routing/)
-12. [docs/clipboard.md](docs/clipboard.md) + [`examples/07-clipboard/`](examples/07-clipboard/)
-13. [`examples/06-time-entries/`](examples/06-time-entries/) — realistic
-14. [docs/11-api-reference.md](docs/11-api-reference.md)
-
-**Short on context?** Items 2, 3 and 4 alone are enough to place almost any
-change correctly.
+- [docs/mental-model.md](docs/mental-model.md) — the longer explanation of who owns what
+- [`examples/01-counter/`](examples/01-counter/) and [docs/traces.md](docs/traces.md) — three interactions, file by file
+- [docs/04-state-model.md](docs/04-state-model.md), [docs/05-events-and-dispatch.md](docs/05-events-and-dispatch.md), [docs/07-effects-and-browser-interop.md](docs/07-effects-and-browser-interop.md)
+- [`examples/03-fetch-data/`](examples/03-fetch-data/) — the first effect; [`examples/06-time-entries/`](examples/06-time-entries/) — realistic
+- [docs/routing.md](docs/routing.md) + [`examples/08-routing/`](examples/08-routing/), [docs/clipboard.md](docs/clipboard.md) + [`examples/07-clipboard/`](examples/07-clipboard/)
+- [docs/11-api-reference.md](docs/11-api-reference.md)
+- Optional subsystems — federation, capability packs, engine libraries,
+  adapters, hosts, tooling — are documented where they live
+  ([docs/README.md](docs/README.md)); each opens by naming the Core concept it
+  composes with. Adding one never adds to the required reading above
+  (`npm run check:docs` enforces it).
 
 Deeper agent-specific guidance, including worked task-placement examples:
 [docs/14-agent-guide.md](docs/14-agent-guide.md). What *not* to do, with

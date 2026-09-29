@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0113",
+  "reference": "kemiller2002/limen#45 (LCP-039)",
+  "placement": "Governed Adapter — an application-owned adapter behind the existing limen.adapters contract (#30), shown as example 10: examples/10-canvas-surface. The surface owns pixels, animation frames, hit testing, device-pixel sizing, hover and its keyboard cursor; the engine owns the data, the selection and the viewport it adopts. Only a small declarative scene crosses as props, and only semantic facts come back (a selection request, a settled viewport), so rendering at frame rate sends nothing across the boundary. Focus through the focus pack; sizing is the surface's own. No new contract, no Core change, no graphics primitive anywhere in Limen.",
+  "guardrail": false,
+  "paths": ["examples/10-canvas-surface/**", "examples/README.md", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

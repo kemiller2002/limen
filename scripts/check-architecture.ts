@@ -1,5 +1,11 @@
+// Architecture checks. The Core boundary (kemiller2002/limen#60) is read from
+// architecture/core.json, the machine-readable Core manifest, and checked by
+// tools/guardrails/core.ts; the older substring rules below predate it.
+
 import { readFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative } from "node:path";
+import { checkCore, parseCoreManifest } from "../tools/guardrails/core.ts";
+import { describeViolation, parseLayerMap } from "../tools/guardrails/layers.ts";
 
 async function files(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -61,9 +67,18 @@ for (const forbidden of [
 ]) {
   if (wasmHost.includes(forbidden)) violations.push(`site/fsharp/Limen.Site.Wasm/Program.cs: marshalling shim contains application/browser concept ${forbidden}`);
 }
+// The Core boundary, from the manifest.
+const json = async (path: string): Promise<unknown> => JSON.parse(await readFile(path, "utf8")) as unknown;
+const manifest = parseCoreManifest(await json("architecture/core.json"));
+const layerMap = parseLayerMap(await json("architecture/layers.json"));
+const runtimeFiles = await Promise.all((await Promise.all(manifest.runtimeRoots.map((root) => files(root)))).flat()
+  .map(async (path) => ({ path: relative(".", path).replace(/\\/g, "/"), source: await readFile(path, "utf8") })));
+const coreViolations = checkCore(manifest, layerMap, { files: runtimeFiles, packageJson: await json("package.json"), contract: await json(manifest.capabilityContract) });
+violations.push(...coreViolations.map(describeViolation));
+
 if (violations.length > 0) {
   console.error(violations.join("\n"));
   process.exitCode = 1;
 } else {
-  console.log("Architecture checks passed.");
+  console.log(`Architecture checks passed (Core ${manifest.architectureVersion}: ${manifest.files.length} Core files, ${runtimeFiles.length} runtime files classified).`);
 }

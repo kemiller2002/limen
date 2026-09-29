@@ -102,10 +102,10 @@ order/membership. An event fired from inside an instantiated item (e.g. the
 ## 3. Wire the kernel in your entry script
 
 ```ts
-import {
-  BrowserKernel,
-  DirectTypeScriptTransport,
-} from "@echelon-foundry/typescript-wasm-kernel";
+import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+// The reference engine is a demonstration, reached only by its explicit
+// subpath; your application supplies its own EngineTransport instead.
+import { DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel/reference-engine";
 
 const kernel = new BrowserKernel(
   new DirectTypeScriptTransport(),

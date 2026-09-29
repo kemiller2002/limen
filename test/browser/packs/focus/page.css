@@ -1,0 +1,2 @@
+/* Appearance only: puts #far well below the fold so scrollIntoView is observable. */
+.spacer { height: 4000px; }

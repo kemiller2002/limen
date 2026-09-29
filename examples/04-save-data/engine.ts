@@ -224,6 +224,11 @@ export function createSaveTransport(): EngineTransport {
     async start(): Promise<void> {},
     async dispatch(message: BrowserToEngineMessage): Promise<EngineToBrowserMessage> {
       switch (message.kind) {
+        // This engine sends no handshake, so the kernel negotiates no optional
+        // capability with it and never routes a fact here. One arriving anyway
+        // is a contract violation, not evidence.
+        case "CapabilityFact":
+          throw new Error(`Unexpected CapabilityFact from ${message.capability}: this engine negotiated no capabilities.`);
         case "Initialize":
           // The very first thing this app does is ask the kernel to read
           // localStorage. Even startup I/O is an explicit effect request.

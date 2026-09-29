@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0086",
+  "reference": "kemiller2002/limen#47 (LCP-041, optional transfer profile)",
+  "placement": "Capability Pack — src/capabilities/transfer/ with its own contract unit. Progress needs XHR upload events and costs listeners, so it is an optional profile, not Core: an application that does not register it pays nothing, and a request that does not ask for progress registers no progress listener. Uploads of picked files go by the files pack's opaque id through an accessor the application wires explicitly (filesCapability exposes it); multipart is built inside the pack, so no File or FormData crosses. Outcomes keep Core Http's four-way semantics, including OutcomeUnknown after dispatch. Retry, caching and auth stay in the engine.",
+  "guardrail": false,
+  "paths": ["contract/transfer.contract.json", "src/capabilities/transfer/**", "src/capabilities/files/index.ts", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

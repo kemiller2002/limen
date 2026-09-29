@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0038",
+  "reference": "kemiller2002/limen#17 (no handwritten duplicate wire types)",
+  "placement": "Application (the product site's F# engine) — adopting the generated contract; no Core change",
+  "guardrail": false,
+  "paths": ["site/fsharp/Limen.Site.Engine/**", "site/fsharp/tests/**", "site/app/main.ts", "test/site.test.ts", "scripts/check-architecture.ts", "docs/**", "CHANGELOG.md", "site/fsharp/README.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

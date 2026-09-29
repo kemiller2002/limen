@@ -1,0 +1,9 @@
+{
+  "doc": "The offline reference page (scripts/smoke-packs.ts). Its engine is main.js; it projects one status line.",
+  "view": {
+    "status": "string"
+  },
+  "events": {
+    "poke": {}
+  }
+}

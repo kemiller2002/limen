@@ -1,0 +1,17 @@
+{
+  "workItem": "WI-0033",
+  "reference": "kemiller2002/limen#52",
+  "placement": "Tooling / Contract Build — guardrail-class (creates generated-binding integrity checks and strict guest build settings)",
+  "guardrail": true,
+  "paths": [
+    "tools/contract-gen/**", "contract/**", "guests/**", "conformance/vectors/**", "test/**", "package.json",
+    ".github/workflows/ci.yml", "docs/**", "research/decisions/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", ".gitignore"
+  ],
+  "expansions": [
+    {
+      "paths": ["src/generated/**"],
+      "reason": "Regenerated output: the TypeScript codec runtime now reports unexpected fields and map entries in ordinal key order so all four languages name the same first error."
+    }
+  ],
+  "recordedAfterCompletion": true
+}

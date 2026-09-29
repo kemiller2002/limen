@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0093",
+  "reference": "kemiller2002/limen#34 (LCP-025, LCP-026)",
+  "placement": "Capability Pack — src/capabilities/presentation/ with its own contract unit. The engine decides what to hint and which transition to run; the pack only inserts an idempotent <link> (never duplicating one the static HTML already has) and wraps the engine's next projection in document.startViewTransition with the engine's label as the transition type. Animation stays CSS, reduced motion stays CSS, and an unsupported browser simply renders. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/presentation.contract.json", "src/capabilities/presentation/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

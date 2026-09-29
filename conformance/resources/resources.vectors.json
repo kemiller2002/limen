@@ -1,0 +1,100 @@
+{
+  "doc": "Language-neutral semantics for asynchronous reads and optimistic mutations (kemiller2002/limen#22, LCP-009/LCP-011). conformance/resources/README.md states the rules; these scenarios are the rules as data. Each step applies one command and states the resulting snapshot (compared as a subset), plus exactly what it emitted and, if it changed nothing, why. The F# reference library runs them in conformance/resources/fsharp/.",
+  "resources": [
+    {
+      "name": "refreshing keeps the previous value visible; a failed refresh keeps it too",
+      "steps": [
+        { "request": {}, "expect": { "state": "loading", "value": null, "inFlight": "r1", "emitted": [ { "fetch": "r1" } ] } },
+        { "result": { "request": "r1", "outcome": { "kind": "success", "value": "v1" } }, "expect": { "state": "ready", "value": "v1", "inFlight": null } },
+        { "request": {}, "expect": { "state": "refreshing", "value": "v1", "inFlight": "r2", "emitted": [ { "fetch": "r2" } ] } },
+        { "result": { "request": "r2", "outcome": { "kind": "failure", "reason": "network" } }, "expect": { "state": "failed", "value": "v1", "error": "network", "inFlight": null } },
+        { "request": {}, "expect": { "state": "refreshing", "value": "v1", "error": null, "inFlight": "r3", "emitted": [ { "fetch": "r3" } ] } },
+        { "result": { "request": "r3", "outcome": { "kind": "success", "value": "v2" } }, "expect": { "state": "ready", "value": "v2" } }
+      ]
+    },
+    {
+      "name": "a slow old response after a fast new one is rejected",
+      "steps": [
+        { "request": {}, "expect": { "state": "loading", "inFlight": "r1", "emitted": [ { "fetch": "r1" } ] } },
+        { "request": {}, "expect": { "state": "loading", "inFlight": "r2", "emitted": [ { "cancel": "r1" }, { "fetch": "r2" } ] } },
+        { "result": { "request": "r2", "outcome": { "kind": "success", "value": "new" } }, "expect": { "state": "ready", "value": "new" } },
+        { "result": { "request": "r1", "outcome": { "kind": "success", "value": "old" } }, "expect": { "ignored": "stale", "state": "ready", "value": "new" } }
+      ]
+    },
+    {
+      "name": "cancelled reads return to what was there before",
+      "steps": [
+        { "request": {}, "expect": { "state": "loading", "inFlight": "r1", "emitted": [ { "fetch": "r1" } ] } },
+        { "cancel": {}, "expect": { "state": "notRequested", "value": null, "inFlight": null, "emitted": [ { "cancel": "r1" } ] } },
+        { "result": { "request": "r1", "outcome": { "kind": "cancelled" } }, "expect": { "ignored": "stale", "state": "notRequested" } },
+        { "request": {}, "expect": { "inFlight": "r2", "emitted": [ { "fetch": "r2" } ] } },
+        { "result": { "request": "r2", "outcome": { "kind": "success", "value": "a" } }, "expect": { "state": "ready", "value": "a" } },
+        { "request": {}, "expect": { "state": "refreshing", "inFlight": "r3", "emitted": [ { "fetch": "r3" } ] } },
+        { "cancel": {}, "expect": { "state": "ready", "value": "a", "inFlight": null, "emitted": [ { "cancel": "r3" } ] } },
+        { "cancel": {}, "expect": { "ignored": "nothing-in-flight", "state": "ready" } },
+        { "request": {}, "expect": { "state": "refreshing", "inFlight": "r4", "emitted": [ { "fetch": "r4" } ] } },
+        { "result": { "request": "r4", "outcome": { "kind": "cancelled" } }, "expect": { "state": "ready", "value": "a", "inFlight": null } }
+      ]
+    },
+    {
+      "name": "an unknown read outcome is uncertainty, not failure",
+      "steps": [
+        { "request": {}, "expect": { "inFlight": "r1", "emitted": [ { "fetch": "r1" } ] } },
+        { "result": { "request": "r1", "outcome": { "kind": "unknown" } }, "expect": { "state": "uncertain", "value": null, "error": null, "inFlight": null } },
+        { "request": {}, "expect": { "state": "loading", "inFlight": "r2", "emitted": [ { "fetch": "r2" } ] } },
+        { "result": { "request": "r2", "outcome": { "kind": "success", "value": "x" } }, "expect": { "state": "ready", "value": "x" } },
+        { "request": {}, "expect": { "state": "refreshing", "inFlight": "r3", "emitted": [ { "fetch": "r3" } ] } },
+        { "result": { "request": "r3", "outcome": { "kind": "unknown" } }, "expect": { "state": "uncertain", "value": "x", "inFlight": null } },
+        { "result": { "request": "r9", "outcome": { "kind": "success", "value": "?" } }, "expect": { "ignored": "stale", "state": "uncertain" } }
+      ]
+    }
+  ],
+  "optimistic": [
+    {
+      "name": "optimistic confirm and reject",
+      "steps": [
+        { "load": { "values": { "title": "A", "done": "false" } }, "expect": { "confirmed": { "title": "A", "done": "false" }, "displayed": { "title": "A", "done": "false" }, "pending": [], "notices": [] } },
+        { "propose": { "key": "title", "value": "B" }, "expect": { "displayed": { "title": "B", "done": "false" }, "confirmed": { "title": "A", "done": "false" }, "pending": [ { "id": "m1", "key": "title", "value": "B", "status": "pending" } ], "emitted": [ { "send": { "id": "m1", "key": "title", "value": "B" } } ] } },
+        { "result": { "mutation": "m1", "outcome": { "kind": "confirmed", "value": "B" } }, "expect": { "confirmed": { "title": "B", "done": "false" }, "displayed": { "title": "B", "done": "false" }, "pending": [] } },
+        { "propose": { "key": "done", "value": "true" }, "expect": { "displayed": { "title": "B", "done": "true" }, "emitted": [ { "send": { "id": "m2", "key": "done", "value": "true" } } ] } },
+        { "result": { "mutation": "m2", "outcome": { "kind": "rejected", "reason": "locked" } }, "expect": { "displayed": { "title": "B", "done": "false" }, "pending": [], "notices": [ { "id": "m2", "key": "done", "reason": "locked" } ] } },
+        { "dismiss": { "id": "m2" }, "expect": { "notices": [] } },
+        { "result": { "mutation": "m2", "outcome": { "kind": "confirmed", "value": "true" } }, "expect": { "ignored": "unknown-mutation", "displayed": { "title": "B", "done": "false" } } },
+        { "propose": { "key": "title", "value": " C " }, "expect": { "displayed": { "title": " C " }, "emitted": [ { "send": { "id": "m3", "key": "title", "value": " C " } } ] } },
+        { "result": { "mutation": "m3", "outcome": { "kind": "confirmed", "value": "C" } }, "expect": { "confirmed": { "title": "C" }, "displayed": { "title": "C" }, "pending": [] } }
+      ]
+    },
+    {
+      "name": "superseding optimistic intent is explicit, and confirmations never regress",
+      "steps": [
+        { "load": { "values": { "title": "A" } }, "expect": { "displayed": { "title": "A" } } },
+        { "propose": { "key": "title", "value": "B" }, "expect": { "emitted": [ { "send": { "id": "m1", "key": "title", "value": "B" } } ] } },
+        { "propose": { "key": "title", "value": "C" }, "expect": { "displayed": { "title": "C" }, "pending": [ { "id": "m1", "key": "title", "value": "B", "status": "superseded" }, { "id": "m2", "key": "title", "value": "C", "status": "pending" } ], "emitted": [ { "send": { "id": "m2", "key": "title", "value": "C" } } ] } },
+        { "result": { "mutation": "m2", "outcome": { "kind": "confirmed", "value": "C" } }, "expect": { "confirmed": { "title": "C" }, "displayed": { "title": "C" }, "pending": [ { "id": "m1", "key": "title", "value": "B", "status": "superseded" } ] } },
+        { "result": { "mutation": "m1", "outcome": { "kind": "confirmed", "value": "B" } }, "expect": { "confirmed": { "title": "C" }, "displayed": { "title": "C" }, "pending": [] } },
+        { "propose": { "key": "title", "value": "D" }, "expect": { "emitted": [ { "send": { "id": "m3", "key": "title", "value": "D" } } ] } },
+        { "propose": { "key": "title", "value": "E" }, "expect": { "displayed": { "title": "E" }, "emitted": [ { "send": { "id": "m4", "key": "title", "value": "E" } } ] } },
+        { "result": { "mutation": "m3", "outcome": { "kind": "rejected", "reason": "conflict" } }, "expect": { "displayed": { "title": "E" }, "notices": [], "pending": [ { "id": "m4", "key": "title", "value": "E", "status": "pending" } ] } },
+        { "result": { "mutation": "m4", "outcome": { "kind": "failed" } }, "expect": { "displayed": { "title": "C" }, "pending": [], "notices": [ { "id": "m4", "key": "title", "reason": "failed" } ] } }
+      ]
+    },
+    {
+      "name": "timeout after dispatch creates reconciliation state, never a silent rollback",
+      "steps": [
+        { "load": { "values": { "title": "A" } }, "expect": { "displayed": { "title": "A" } } },
+        { "propose": { "key": "title", "value": "B" }, "expect": { "emitted": [ { "send": { "id": "m1", "key": "title", "value": "B" } } ] } },
+        { "result": { "mutation": "m1", "outcome": { "kind": "unknown" } }, "expect": { "confirmed": { "title": "A" }, "displayed": { "title": "B" }, "pending": [ { "id": "m1", "key": "title", "value": "B", "status": "unresolved" } ], "notices": [] } },
+        { "reconcile": { "id": "m1", "applied": false }, "expect": { "displayed": { "title": "A" }, "pending": [], "notices": [ { "id": "m1", "key": "title", "reason": "not-applied" } ] } },
+        { "propose": { "key": "title", "value": "C" }, "expect": { "emitted": [ { "send": { "id": "m2", "key": "title", "value": "C" } } ] } },
+        { "result": { "mutation": "m2", "outcome": { "kind": "unknown" } }, "expect": { "pending": [ { "id": "m2", "key": "title", "value": "C", "status": "unresolved" } ] } },
+        { "refresh": { "values": { "title": "C" } }, "expect": { "confirmed": { "title": "C" }, "displayed": { "title": "C" }, "pending": [ { "id": "m2", "key": "title", "value": "C", "status": "unresolved" } ] } },
+        { "reconcile": { "id": "m2", "applied": true, "value": "C" }, "expect": { "confirmed": { "title": "C" }, "pending": [] } },
+        { "reconcile": { "id": "m2", "applied": true, "value": "C" }, "expect": { "ignored": "not-unresolved" } },
+        { "propose": { "key": "title", "value": "D" }, "expect": { "emitted": [ { "send": { "id": "m3", "key": "title", "value": "D" } } ] } },
+        { "result": { "mutation": "m3", "outcome": { "kind": "unknown" } }, "expect": { "pending": [ { "id": "m3", "key": "title", "value": "D", "status": "unresolved" } ] } },
+        { "propose": { "key": "title", "value": "E" }, "expect": { "displayed": { "title": "E" }, "pending": [ { "id": "m3", "key": "title", "value": "D", "status": "superseded-unresolved" }, { "id": "m4", "key": "title", "value": "E", "status": "pending" } ], "emitted": [ { "send": { "id": "m4", "key": "title", "value": "E" } } ] } },
+        { "reconcile": { "id": "m3", "applied": false }, "expect": { "displayed": { "title": "E" }, "notices": [ { "id": "m1", "key": "title", "reason": "not-applied" } ], "pending": [ { "id": "m4", "key": "title", "value": "E", "status": "pending" } ] } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,543 @@
+{
+  "units": [
+    "contract/core.contract.json",
+    "test/fixtures/capabilities/echo.contract.json",
+    "test/fixtures/capabilities/handle.contract.json",
+    "contract/focus.contract.json",
+    "contract/schedule.contract.json",
+    "contract/measure.contract.json",
+    "contract/events.contract.json",
+    "contract/overlay.contract.json",
+    "contract/realtime.contract.json",
+    "contract/files.contract.json",
+    "contract/store.contract.json",
+    "contract/adapters.contract.json",
+    "contract/transfer.contract.json",
+    "contract/presentation.contract.json",
+    "contract/environment.contract.json",
+    "contract/lifecycle.contract.json",
+    "contract/offline.contract.json",
+    "contract/geolocation.contract.json",
+    "contract/credentials.contract.json",
+    "contract/coordination.contract.json"
+  ],
+  "outputs": [
+    {
+      "unit": "limen.core",
+      "kind": "typescript-types",
+      "path": "src/generated/core.ts"
+    },
+    {
+      "unit": "limen.core",
+      "kind": "typescript-codec",
+      "path": "src/generated/core.codec.ts",
+      "typesModule": "./core.js"
+    },
+    {
+      "unit": "limen.fixture.echo",
+      "kind": "typescript-types",
+      "path": "test/fixtures/capabilities/generated/echo.ts"
+    },
+    {
+      "unit": "limen.fixture.echo",
+      "kind": "typescript-codec",
+      "path": "test/fixtures/capabilities/generated/echo.codec.ts",
+      "typesModule": "./echo.ts"
+    },
+    {
+      "kind": "fsharp-runtime",
+      "path": "guests/fsharp/Limen.Contract/Generated/Runtime.fs"
+    },
+    {
+      "unit": "limen.core",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Core.fs"
+    },
+    {
+      "unit": "limen.fixture.echo",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract.Conformance/Generated/FixtureEcho.fs"
+    },
+    {
+      "kind": "csharp-runtime",
+      "path": "guests/csharp/Limen.Contract/Generated/Runtime.cs"
+    },
+    {
+      "unit": "limen.core",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Core.cs"
+    },
+    {
+      "unit": "limen.fixture.echo",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract.Conformance/Generated/FixtureEcho.cs"
+    },
+    {
+      "kind": "rust-runtime",
+      "path": "guests/rust/limen-contract/src/runtime.rs"
+    },
+    {
+      "unit": "limen.core",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_core.rs"
+    },
+    {
+      "unit": "limen.fixture.echo",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_fixture_echo.rs"
+    },
+    {
+      "unit": "limen.fixture.handle",
+      "kind": "typescript-types",
+      "path": "test/fixtures/capabilities/generated/handle.ts"
+    },
+    {
+      "unit": "limen.fixture.handle",
+      "kind": "typescript-codec",
+      "path": "test/fixtures/capabilities/generated/handle.codec.ts",
+      "typesModule": "./handle.ts"
+    },
+    {
+      "unit": "limen.focus",
+      "kind": "typescript-types",
+      "path": "src/capabilities/focus/generated/focus.ts"
+    },
+    {
+      "unit": "limen.focus",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/focus/generated/focus.codec.ts",
+      "typesModule": "./focus.js"
+    },
+    {
+      "unit": "limen.focus",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Focus.fs"
+    },
+    {
+      "unit": "limen.focus",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Focus.cs"
+    },
+    {
+      "unit": "limen.focus",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_focus.rs"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "typescript-types",
+      "path": "src/capabilities/schedule/generated/schedule.ts"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/schedule/generated/schedule.codec.ts",
+      "typesModule": "./schedule.js"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Schedule.fs"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Schedule.cs"
+    },
+    {
+      "unit": "limen.schedule",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_schedule.rs"
+    },
+    {
+      "unit": "limen.measure",
+      "kind": "typescript-types",
+      "path": "src/capabilities/measure/generated/measure.ts"
+    },
+    {
+      "unit": "limen.measure",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/measure/generated/measure.codec.ts",
+      "typesModule": "./measure.js"
+    },
+    {
+      "unit": "limen.measure",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Measure.fs"
+    },
+    {
+      "unit": "limen.measure",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Measure.cs"
+    },
+    {
+      "unit": "limen.measure",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_measure.rs"
+    },
+    {
+      "unit": "limen.events",
+      "kind": "typescript-types",
+      "path": "src/capabilities/events/generated/events.ts"
+    },
+    {
+      "unit": "limen.events",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/events/generated/events.codec.ts",
+      "typesModule": "./events.js"
+    },
+    {
+      "unit": "limen.events",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Events.fs"
+    },
+    {
+      "unit": "limen.events",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Events.cs"
+    },
+    {
+      "unit": "limen.events",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_events.rs"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "typescript-types",
+      "path": "src/capabilities/overlay/generated/overlay.ts"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/overlay/generated/overlay.codec.ts",
+      "typesModule": "./overlay.js"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Overlay.fs"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Overlay.cs"
+    },
+    {
+      "unit": "limen.overlay",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_overlay.rs"
+    },
+    {
+      "unit": "limen.realtime",
+      "kind": "typescript-types",
+      "path": "src/capabilities/realtime/generated/realtime.ts"
+    },
+    {
+      "unit": "limen.realtime",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/realtime/generated/realtime.codec.ts",
+      "typesModule": "./realtime.js"
+    },
+    {
+      "unit": "limen.realtime",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Realtime.fs"
+    },
+    {
+      "unit": "limen.realtime",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Realtime.cs"
+    },
+    {
+      "unit": "limen.realtime",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_realtime.rs"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "typescript-types",
+      "path": "src/capabilities/files/generated/files.ts"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/files/generated/files.codec.ts",
+      "typesModule": "./files.js"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Files.fs"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Files.cs"
+    },
+    {
+      "unit": "limen.files",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_files.rs"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "typescript-types",
+      "path": "src/capabilities/store/generated/store.ts"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/store/generated/store.codec.ts",
+      "typesModule": "./store.js"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Store.fs"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Store.cs"
+    },
+    {
+      "unit": "limen.store",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_store.rs"
+    },
+    {
+      "unit": "limen.adapters",
+      "kind": "typescript-types",
+      "path": "src/capabilities/adapters/generated/adapters.ts"
+    },
+    {
+      "unit": "limen.adapters",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/adapters/generated/adapters.codec.ts",
+      "typesModule": "./adapters.js"
+    },
+    {
+      "unit": "limen.adapters",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Adapters.fs"
+    },
+    {
+      "unit": "limen.adapters",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Adapters.cs"
+    },
+    {
+      "unit": "limen.adapters",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_adapters.rs"
+    },
+    {
+      "unit": "limen.transfer",
+      "kind": "typescript-types",
+      "path": "src/capabilities/transfer/generated/transfer.ts"
+    },
+    {
+      "unit": "limen.transfer",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/transfer/generated/transfer.codec.ts",
+      "typesModule": "./transfer.js"
+    },
+    {
+      "unit": "limen.transfer",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Transfer.fs"
+    },
+    {
+      "unit": "limen.transfer",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Transfer.cs"
+    },
+    {
+      "unit": "limen.transfer",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_transfer.rs"
+    },
+    {
+      "unit": "limen.presentation",
+      "kind": "typescript-types",
+      "path": "src/capabilities/presentation/generated/presentation.ts"
+    },
+    {
+      "unit": "limen.presentation",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/presentation/generated/presentation.codec.ts",
+      "typesModule": "./presentation.js"
+    },
+    {
+      "unit": "limen.presentation",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Presentation.fs"
+    },
+    {
+      "unit": "limen.presentation",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Presentation.cs"
+    },
+    {
+      "unit": "limen.presentation",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_presentation.rs"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "typescript-types",
+      "path": "src/capabilities/environment/generated/environment.ts"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/environment/generated/environment.codec.ts",
+      "typesModule": "./environment.js"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Environment.fs"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Environment.cs"
+    },
+    {
+      "unit": "limen.environment",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_environment.rs"
+    },
+    {
+      "unit": "limen.lifecycle",
+      "kind": "typescript-types",
+      "path": "src/capabilities/lifecycle/generated/lifecycle.ts"
+    },
+    {
+      "unit": "limen.lifecycle",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/lifecycle/generated/lifecycle.codec.ts",
+      "typesModule": "./lifecycle.js"
+    },
+    {
+      "unit": "limen.lifecycle",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Lifecycle.fs"
+    },
+    {
+      "unit": "limen.lifecycle",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Lifecycle.cs"
+    },
+    {
+      "unit": "limen.lifecycle",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_lifecycle.rs"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "typescript-types",
+      "path": "src/capabilities/offline/generated/offline.ts"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/offline/generated/offline.codec.ts",
+      "typesModule": "./offline.js"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Offline.fs"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Offline.cs"
+    },
+    {
+      "unit": "limen.offline",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_offline.rs"
+    },
+    {
+      "unit": "limen.geolocation",
+      "kind": "typescript-types",
+      "path": "src/capabilities/geolocation/generated/geolocation.ts"
+    },
+    {
+      "unit": "limen.geolocation",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/geolocation/generated/geolocation.codec.ts",
+      "typesModule": "./geolocation.js"
+    },
+    {
+      "unit": "limen.geolocation",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Geolocation.fs"
+    },
+    {
+      "unit": "limen.geolocation",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Geolocation.cs"
+    },
+    {
+      "unit": "limen.geolocation",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_geolocation.rs"
+    },
+    {
+      "unit": "limen.credentials",
+      "kind": "typescript-types",
+      "path": "src/capabilities/credentials/generated/credentials.ts"
+    },
+    {
+      "unit": "limen.credentials",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/credentials/generated/credentials.codec.ts",
+      "typesModule": "./credentials.js"
+    },
+    {
+      "unit": "limen.credentials",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Credentials.fs"
+    },
+    {
+      "unit": "limen.credentials",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Credentials.cs"
+    },
+    {
+      "unit": "limen.credentials",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_credentials.rs"
+    },
+    {
+      "unit": "limen.coordination",
+      "kind": "typescript-types",
+      "path": "src/capabilities/coordination/generated/coordination.ts"
+    },
+    {
+      "unit": "limen.coordination",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/coordination/generated/coordination.codec.ts",
+      "typesModule": "./coordination.js"
+    },
+    {
+      "unit": "limen.coordination",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Coordination.fs"
+    },
+    {
+      "unit": "limen.coordination",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Coordination.cs"
+    },
+    {
+      "unit": "limen.coordination",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_coordination.rs"
+    }
+  ]
+}

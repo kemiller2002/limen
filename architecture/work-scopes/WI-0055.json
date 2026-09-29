@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0055",
+  "reference": "kemiller2002/limen#18 (LCP-027)",
+  "placement": "Guardrail — .github/workflows/ci.yml and architecture/guardrails.json are guardrail-owned. Adds the strict CSP / Trusted Types smoke to the guest-engines-browser job and registers it as a required CI step; in CI the guest part may not be skipped. Adds a gate; weakens none.",
+  "guardrail": true,
+  "paths": [".github/workflows/ci.yml", "architecture/guardrails.json", "scripts/smoke-security.ts"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

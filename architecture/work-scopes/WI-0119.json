@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0119",
+  "reference": "kemiller2002/limen#38 (LCP-022)",
+  "placement": "Optional Renderer — src/renderer/: a small template-HTML reader and writer, the kernel's binding rules applied to a tree instead of a live DOM, and a server loop that initializes the engine with the request's location, offers only Http, answers every browser-only request explicitly, and renders the settled projection. The same engine drives CSR and SSR/SSG; there is no second state authority and no BrowserKernel dependency. Streaming is not built: no measured use case yet. Core unchanged.",
+  "guardrail": false,
+  "paths": ["src/renderer/**", "package.json", "test/**", "docs/**", "CHANGELOG.md", "bench/budgets.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

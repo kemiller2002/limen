@@ -12,6 +12,10 @@ Four files. Nothing elided, nothing abstracted.
 | [`main.js`](main.js) | constructs the kernel and starts it | yes — the entry point |
 | [`package.json`](package.json) | the one dependency | — |
 
+One optional file sits beside them: [`index.view.json`](index.view.json), the
+page's view contract. The application runs without it; see
+[Checking the page before it runs](#checking-the-page-before-it-runs).
+
 ## Run it
 
 From an empty directory:
@@ -58,6 +62,26 @@ TypeScript consumers get complete types for everything here;
 [`types.check.ts`](types.check.ts) is the same application written in
 TypeScript, and the repository type-checks it against the published package on
 every release.
+
+## Checking the page before it runs
+
+[`index.view.json`](index.view.json) states what the engine projects
+(`count`, `resetDisabled`) and which events it accepts (`increment`, `reset`),
+as plain JSON that an engine in any language can publish. The package checks
+the HTML against it with no browser:
+
+```js
+import { checkPage, formatDiagnostic, parseViewContract } from "@echelon-foundry/typescript-wasm-kernel/testing/views";
+
+const parsed = parseViewContract(JSON.parse(await readFile("index.view.json", "utf8")));
+if (!parsed.ok) throw new Error(parsed.errors.join("\n"));
+const problems = checkPage("index.html", await readFile("index.html", "utf8"), parsed.contract);
+console.log(problems.map(formatDiagnostic).join("\n") || "index.html matches its contract");
+```
+
+Rename `data-text="count"` to `data-text="cuont"` and it reports the file,
+the line, the element and the keys the contract does have — before anything
+runs. `checkProjection` and `checkEvent` hold the engine to the same file.
 
 ## Where to go next
 

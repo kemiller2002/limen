@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen form-control state in a real browser</title>
+</head>
+<body>
+  <!-- Core, not a pack: protocol 1.2 form-control state (checked, values,
+       submitter) as Chromium reports it. Run by scripts/smoke-packs.ts. -->
+  <form id="prefs" data-event="save">
+    <label><input id="terms" type="checkbox" data-event="terms"> Terms</label>
+    <label><input id="news" type="checkbox" name="topics" value="news" data-event="topics" checked> News</label>
+    <label><input id="tips" type="checkbox" name="topics" value="tips" data-event="topics"> Tips</label>
+    <label><input id="free" type="radio" name="plan" value="free" data-event="plan" checked> Free</label>
+    <label><input id="pro" type="radio" name="plan" value="pro" data-event="plan"> Pro</label>
+    <select id="colours" multiple data-event="colours">
+      <option value="red" selected>Red</option><option value="green">Green</option><option value="blue">Blue</option>
+    </select>
+    <button id="draft" type="submit" name="draft">Save draft</button>
+    <button id="publish" type="submit" name="publish">Publish</button>
+  </form>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

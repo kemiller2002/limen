@@ -1,0 +1,102 @@
+{
+  "doc": "Guardrail-owned paths and required gates. A commit that changes a guardrail path must belong to a work item whose scope manifest (architecture/work-scopes/WI-####.json) declares \"guardrail\": true. Feature work is not authority to change its supervisor (kemiller2002/limen#51 \u00a711). Checked by scripts/check-scope.ts; required gates are checked by test/guardrails.test.ts.",
+  "paths": [
+    "architecture/layers.json",
+    "architecture/guardrails.json",
+    "architecture/core.json",
+    "architecture/core-baseline.json",
+    "architecture/core-admissions/**",
+    "test/core-boundary.test.ts",
+    "test/core-budget.test.ts",
+    "test/core-admission.test.ts",
+    "test/learning-contract.test.ts",
+    "tools/guardrails/**",
+    "tools/contract-gen/**",
+    "scripts/check-*.ts",
+    ".github/workflows/**",
+    ".github/CODEOWNERS",
+    "tsconfig.json",
+    "tsconfig.*.json",
+    "contract/targets.json",
+    "guests/**/*.fsproj",
+    "guests/**/*.csproj",
+    "guests/**/Cargo.toml",
+    "guests/rust/*/src/lib.rs",
+    "test/guardrails.test.ts",
+    "test/layers.test.ts",
+    "test/scope.test.ts",
+    "architecture/typescript-boundary.json",
+    "test/typescript-boundary.test.ts",
+    "test/fixtures/negative/**",
+    "scripts/guest-pressure.ts",
+    "guests/csharp/Limen.Contract.Analyzers/**",
+    "guests/csharp/Limen.Contract.Pressure/**",
+    "guests/fsharp/Limen.Contract.Pressure/**",
+    "guests/rust/limen-contract/examples/consumer.rs",
+    "guests/minimal/rust/limen-minimal-wasm/**",
+    "guests/**/Limen.Minimal.Wasm/*.csproj",
+    "tsconfig.guests.json",
+    "scripts/build-guests-site.ts",
+    "scripts/smoke-guests.ts"
+  ],
+  "exemptPaths": [
+    ".ros/**",
+    "registries/**"
+  ],
+  "workScopes": "architecture/work-scopes",
+  "legacyWorkItems": {
+    "doc": "Work items completed on this branch before scope manifests existed. Their manifests were recorded after the fact from the scope each declared in its ROS work-item description; no later work item may use this exemption.",
+    "ids": [
+      "WI-0027",
+      "WI-0028",
+      "WI-0029",
+      "WI-0033"
+    ]
+  },
+  "requiredGates": {
+    "testScript": [
+      "contract:check",
+      "check:architecture",
+      "check:core-budget",
+      "check:layers",
+      "check:docs",
+      "check:site",
+      "check:package",
+      "check:typescript",
+      "check:views"
+    ],
+    "ciSteps": [
+      "npm run check",
+      "npm run contract:check",
+      "npm run test:guests",
+      "npm run check:scope",
+      "npm run check:core-budget -- --verify-reference",
+      "npm run smoke:guests",
+      "npm run smoke:security",
+      "npm run smoke:packs"
+    ],
+    "tsconfigCompilerOptions": {
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "exactOptionalPropertyTypes": true,
+      "noEmitOnError": true
+    },
+    "fsprojProperties": {
+      "TreatWarningsAsErrors": "true"
+    },
+    "csprojProperties": {
+      "TreatWarningsAsErrors": "true",
+      "Nullable": "enable"
+    },
+    "rustLibAttributes": [
+      "#![forbid(unsafe_code)]",
+      "#![deny(warnings)]"
+    ],
+    "unsafeAbiCrates": {
+      "doc": "The only Rust guest crates allowed to use unsafe code: WebAssembly ABI shims with no decision, state or decoding of their own. Each must carry the JUSTIFIED UNSAFE BOUNDARY comment and still deny warnings.",
+      "paths": [
+        "guests/minimal/rust/limen-minimal-wasm/src/lib.rs"
+      ]
+    }
+  }
+}

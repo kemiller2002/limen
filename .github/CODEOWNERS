@@ -1,0 +1,34 @@
+# Guardrail-owned paths (architecture/guardrails.json). A change here changes
+# what the repository enforces, so it needs the repository owner's review even
+# when every automated check passes. Feature work is not authority to change
+# its supervisor (kemiller2002/limen#51 §11).
+/architecture/                @kemiller2002
+/tools/guardrails/            @kemiller2002
+/tools/contract-gen/          @kemiller2002
+/contract/targets.json        @kemiller2002
+/scripts/check-*.ts           @kemiller2002
+/.github/workflows/           @kemiller2002
+/.github/CODEOWNERS           @kemiller2002
+/tsconfig*.json               @kemiller2002
+/guests/**/*.fsproj           @kemiller2002
+/guests/**/*.csproj           @kemiller2002
+/guests/**/Cargo.toml         @kemiller2002
+/guests/rust/*/src/lib.rs     @kemiller2002
+/test/fixtures/negative/      @kemiller2002
+/scripts/guest-pressure.ts    @kemiller2002
+/guests/csharp/Limen.Contract.Analyzers/ @kemiller2002
+/guests/csharp/Limen.Contract.Pressure/  @kemiller2002
+/guests/fsharp/Limen.Contract.Pressure/  @kemiller2002
+/guests/rust/limen-contract/examples/consumer.rs @kemiller2002
+/test/guardrails.test.ts      @kemiller2002
+/test/layers.test.ts          @kemiller2002
+/test/core-boundary.test.ts   @kemiller2002
+/test/core-budget.test.ts     @kemiller2002
+/test/core-admission.test.ts  @kemiller2002
+/test/learning-contract.test.ts @kemiller2002
+/test/scope.test.ts           @kemiller2002
+/test/typescript-boundary.test.ts @kemiller2002
+/guests/minimal/rust/limen-minimal-wasm/ @kemiller2002
+/tsconfig.guests.json         @kemiller2002
+/scripts/build-guests-site.ts @kemiller2002
+/scripts/smoke-guests.ts      @kemiller2002

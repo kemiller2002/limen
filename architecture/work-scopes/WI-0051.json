@@ -1,0 +1,31 @@
+{
+  "workItem": "WI-0051",
+  "reference": "kemiller2002/limen#18 (LCP-027)",
+  "placement": "Core (kernel binding mechanism) \u2014 the data-bind/data-text primitives are Core, so their safety cannot live in a pack; plus the same policy in the static view checker (Tooling) and a real-browser strict CSP / Trusted Types smoke",
+  "guardrail": false,
+  "paths": [
+    "src/kernel/**",
+    "src/tooling/**",
+    "src/index.ts",
+    "test/**",
+    "scripts/smoke-security.ts",
+    "package.json",
+    "bench/budgets.json",
+    "docs/**",
+    "examples/**/README.md",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "research/**"
+  ],
+  "expansions": [
+    {
+      "paths": [
+        "guests/minimal/host/index.html",
+        "guests/minimal/host/host.css"
+      ],
+      "reason": "The strict-CSP smoke found the guest host page's inline <style> violating style-src 'self'. Moved to an external stylesheet (appearance only, unchanged). Copying it into dist-guests/ is a guardrail-owned build script change, made under WI-0054."
+    }
+  ],
+  "recordedAfterCompletion": false
+}

@@ -397,10 +397,11 @@ project(state) {
 
 ### Why it's harmful
 
-A mounted `data-bind-disabled="submitDisabled"` binding throws
-`View value for "submitDisabled" is missing or not scalar`. The error boundary
-reports it and **aborts the rest of the round trip, including its effects** —
-so the page looks frozen and the network call never happens.
+A mounted `data-bind-disabled="submitDisabled"` binding makes the projection
+malformed: `View value for "submitDisabled" is missing or not scalar`. The
+kernel checks the whole projection before writing any of it, so **none of it is
+applied and its effects do not run**. The page looks frozen, and the network
+call never happens.
 
 ### Right
 
@@ -482,7 +483,8 @@ report(event) {
 ### Wrong
 
 ```ts
-import { BrowserKernel, DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel";
+import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel/reference-engine";
 await new BrowserKernel(new DirectTypeScriptTransport(), document).start();
 // then wondering why data-event="save" throws "Unrecognized event"
 ```

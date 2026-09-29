@@ -1,0 +1,13 @@
+{
+  "doc": "The reference email-availability feature: what ReferenceEngine (src/engine/) projects and accepts. Checked against index.html by npm run check:views and against the engine by test/view-contracts.test.ts.",
+  "view": {
+    "submitDisabled": "boolean",
+    "statusText": "string"
+  },
+  "events": {
+    "checkAvailability": {},
+    "emailChanged": {
+      "value": true
+    }
+  }
+}

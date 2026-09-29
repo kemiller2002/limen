@@ -1,0 +1,15 @@
+/* Appearance only. The slot's size is the surface's size: a narrower slot is
+   a smaller canvas on the next frame, with no message to the engine. */
+.chart {
+  display: block;
+  inline-size: 640px;
+  max-inline-size: 100%;
+  block-size: 360px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+}
+.chart[data-width="narrow"] { inline-size: 320px; }
+.chart canvas { display: block; inline-size: 100%; block-size: 100%; touch-action: none; }
+.chart canvas:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+.controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block: 0.5rem; }

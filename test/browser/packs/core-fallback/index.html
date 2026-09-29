@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen fatal fallback host in a real browser</title>
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types.
+       main.js starts an engine that crashes on "crash", lets the fallback
+       host cover the page, restarts it with a real click, and reports
+       window.__limenPackResult. -->
+  <main id="app">
+    <h1 id="title" data-text="title">Loading…</h1>
+    <p id="count" data-text="count"></p>
+    <button id="add" data-event="add">Add</button>
+    <button id="crash" data-event="crash">Crash</button>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

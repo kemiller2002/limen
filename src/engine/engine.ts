@@ -35,6 +35,12 @@ export class ReferenceEngine {
     if (message.kind === "LocationChanged") {
       return { view: project(this.#state), effects: [], cancellations: [] };
     }
+    // This engine negotiates no optional capability (it sends no handshake, so
+    // the kernel treats it as a legacy engine and routes no facts to it). A
+    // fact arriving anyway is a contract violation, not evidence.
+    if (message.kind === "CapabilityFact") {
+      throw new Error(`Unexpected CapabilityFact from ${message.capability}: this domain negotiated no capabilities`);
+    }
     let command: Command;
     if (message.kind === "Event") {
       command = eventToCommand(message.event, this.#nextCorrelationId());

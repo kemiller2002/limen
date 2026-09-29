@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0098",
+  "reference": "kemiller2002/limen#36 (LCP-030)",
+  "placement": "Tooling — src/tooling/hot-reload.ts (dev-only browser side, tooling layer) and scripts/dev-server.ts (npm run dev: static files and a change stream). The replacement policy is a pure function: CSS swaps in place, HTML remounts, an engine is restored only from a snapshot whose version equals the new engine's exactly (never guessed), otherwise it resets, and anything else reloads the page. The browser side holds no copy of application state: the engine produces and consumes its own versioned snapshot. Nothing ships in the kernel or the default package path.",
+  "guardrail": false,
+  "paths": ["src/tooling/hot-reload.ts", "scripts/dev-server.ts", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

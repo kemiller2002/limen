@@ -1,0 +1,84 @@
+{
+  "doc": "A page of the product site, whose engine is F# (site/fsharp/). Checked against the HTML statically by npm run check:views.",
+  "view": {
+    "deploymentStatus": "string",
+    "deploymentTone": "string",
+    "testsStatus": "string",
+    "testsTone": "string",
+    "securityStatus": "string",
+    "securityTone": "string",
+    "approvalStatus": "string",
+    "approvalTone": "string",
+    "releaseDecision": "string",
+    "evidenceDisabled": "boolean",
+    "approveDisabled": "boolean",
+    "deployDisabled": "boolean",
+    "releaseHasObligations": "boolean",
+    "releaseObligations": {
+      "list": {
+        "id": "string",
+        "text": "string",
+        "tone": "string"
+      }
+    },
+    "needsReleaseReconciliation": "boolean",
+    "policyDiscarded": "number",
+    "policyStateText": "string",
+    "policyExplanation": "string",
+    "startPolicyADisabled": "boolean",
+    "startPolicyBDisabled": "boolean",
+    "deliverPolicyADisabled": "boolean",
+    "deliverPolicyBDisabled": "boolean",
+    "policyLatest": "string",
+    "policyAccepted": "string",
+    "taskNumber": "number",
+    "taskTotal": "number",
+    "scoreText": "string",
+    "taskPrompt": "string",
+    "choices": {
+      "list": {
+        "id": "string",
+        "label": "string",
+        "pressed": "boolean"
+      }
+    },
+    "revealed": "boolean",
+    "verdictText": "string",
+    "verdictTone": "string",
+    "nextDisabled": "boolean",
+    "traceCount": "number",
+    "traceEmpty": "boolean",
+    "hasTrace": "boolean",
+    "trace": {
+      "list": {
+        "id": "string",
+        "event": "string",
+        "command": "string",
+        "effect": "string"
+      }
+    }
+  },
+  "events": {
+    "testsPass": {},
+    "testsFail": {},
+    "securityClear": {},
+    "securityBlock": {},
+    "approveRelease": {},
+    "deploySuccess": {},
+    "injectOutcomeUnknown": {},
+    "deployNetworkFailure": {},
+    "resetRelease": {},
+    "reconcileApplied": {},
+    "reconcileNotApplied": {},
+    "startPolicyA": {},
+    "startPolicyB": {},
+    "deliverPolicyA": {},
+    "deliverPolicyB": {},
+    "resetPolicy": {},
+    "pick": {
+      "item": "choices"
+    },
+    "nextTask": {},
+    "clearTrace": {}
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0039",
+  "reference": "kemiller2002/limen#32",
+  "placement": "Tooling / Conformance — guardrail-class only because it declares the tooling layer in architecture/layers.json",
+  "guardrail": true,
+  "paths": ["src/tooling/**", "src/index.ts", "architecture/layers.json", "architecture/typescript-boundary.json", "package.json", "test/**", "docs/**", "research/decisions/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

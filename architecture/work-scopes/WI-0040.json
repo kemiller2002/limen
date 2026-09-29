@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0040",
+  "reference": "build defect found while running the #32 gate",
+  "placement": "Build (site federation WASM project files)",
+  "guardrail": false,
+  "paths": ["site/fsharp/federation/*/Limen.Federation.*.Wasm.csproj"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

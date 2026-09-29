@@ -1,0 +1,5 @@
+{
+  "doc": "The rich event facts page (scripts/smoke-packs.ts). Its engine is main.js; one simple data-event input checks the IME rule on the Core path.",
+  "view": {},
+  "events": { "typed": { "value": true } }
+}

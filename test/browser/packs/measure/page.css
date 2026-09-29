@@ -1,0 +1,3 @@
+/* Appearance only: a sized box to resize, and space so #far starts off-screen. */
+#box { width: 100px; height: 40px; }
+.spacer { height: 3000px; }

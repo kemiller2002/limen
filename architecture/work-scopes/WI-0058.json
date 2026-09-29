@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0058",
+  "reference": "kemiller2002/limen#23, kemiller2002/limen#15",
+  "placement": "Guardrail — .github/workflows/ci.yml and architecture/guardrails.json are guardrail-owned. Adds npm run smoke:packs to the browser job and registers it as a required CI step, so every present and future capability pack is proven in Chromium under a strict CSP. Adds a gate; weakens none.",
+  "guardrail": true,
+  "paths": [".github/workflows/ci.yml", "architecture/guardrails.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

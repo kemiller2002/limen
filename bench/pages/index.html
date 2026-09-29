@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen benchmarks</title>
+</head>
+<body>
+  <!-- Each scenario writes its own markup into #stage and drives the real
+       BrowserKernel against an in-page engine. scripts/bench.ts runs one
+       scenario per fresh page and collects window.limenBench's results. -->
+  <main id="stage"></main>
+  <script type="module" src="./bench.js"></script>
+</body>
+</html>

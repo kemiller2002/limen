@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0112",
+  "reference": "kemiller2002/limen#42",
+  "placement": "Guardrail — contract/targets.json and the guest projects are guardrail-owned. Registers the limen.geolocation and limen.credentials units and includes their generated bindings.",
+  "guardrail": true,
+  "paths": ["contract/targets.json", "src/capabilities/geolocation/generated/**", "src/capabilities/credentials/generated/**", "guests/fsharp/Limen.Contract/**", "guests/csharp/Limen.Contract/**", "guests/rust/limen-contract/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

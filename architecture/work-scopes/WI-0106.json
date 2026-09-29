@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0106",
+  "reference": "kemiller2002/limen#40 (LCP-034)",
+  "placement": "Capability Pack — src/capabilities/offline/ with its own contract unit, including the optional service-worker script (worker.ts) that the host serves. The host declares which workers exist and vouches for their URLs under Trusted Types; the engine names one, never supplies a URL. The worker caches a declared shell and serves it when the network fails; it never queues, retries or resolves anything. A new version waits until the engine asks to activate it. Online/offline facts come from the lifecycle pack; pending operations, conflicts and unknown outcomes are the engine's outbox (conformance/outbox). Push and background sync are reported as supported or not and otherwise not enabled. Core unchanged. The smoke runner lets a page name the Trusted Types policies its host creates.",
+  "guardrail": false,
+  "paths": ["contract/offline.contract.json", "src/capabilities/offline/**", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md", "conformance/outbox/README.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -1,5 +1,8 @@
-import { PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { CORE_CONTRACT_IDENTITY, MAX_HTTP_TEXT_BYTES, PROTOCOL_MINOR, PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type CapabilityEffectRequest, type CapabilityId, type CapabilityOutcome, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HostHandshake, type HttpEffectRequest, type HttpMethod, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import type { CapabilityProvider } from "./capabilities.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
+import { verifyHandshake, type Incompatibility, type Negotiation } from "./handshake.js";
+import { bindableElement, boundNames, checkUrl, classifyAttribute, type AttributeTarget } from "./binding-policy.js";
 
 // Exceptions to the "click" default: element types whose most natural
 // interaction isn't a click. Any other element (a row, a card, a div acting
@@ -13,9 +16,6 @@ const TRIGGER_BY_TAG: Readonly<Record<string, string>> = {
   TEXTAREA: "change",
 };
 
-// The only attributes the bridge reflects as DOM/IDL boolean properties
-// rather than string attributes, per section 11.3 of the spec.
-const BOOLEAN_PROPS = new Set(["disabled", "checked", "selected", "hidden", "open"]);
 
 // Announced once, in Initialize. This is the list of effect kinds the kernel
 // can execute — not a promise that any of them will succeed in this browser.
@@ -25,8 +25,44 @@ const BOOLEAN_PROPS = new Set(["disabled", "checked", "selected", "hidden", "ope
 // branch does not silently change between browsers.
 const CAPABILITIES: readonly Capability[] = ["Http", "Storage", "Clipboard", "Navigation"];
 
+// A method whose request changes nothing on the server, so sending it twice,
+// or not at all, is harmless.
+const safeMethod = (method: HttpMethod): boolean => {
+  switch (method) {
+    case "GET": case "HEAD": case "OPTIONS": return true;
+    case "POST": case "PUT": case "PATCH": case "DELETE": return false;
+  }
+};
+
+export type KernelOptions = {
+  // Optional capability packs this host implements. Each is offered in the
+  // handshake; only those the engine selects are activated. An application
+  // that registers none loads none.
+  readonly capabilities?: readonly CapabilityProvider[];
+  // Refuse engines that send no handshake (protocol 1.0) instead of running
+  // them in legacy mode. Generated WebAssembly guests always handshake.
+  readonly requireHandshake?: boolean;
+};
+
+// The kernel's own lifecycle. Normal traffic — events, effects, facts — flows
+// only in Running. Incompatible is terminal: nothing from that engine is ever
+// applied. See research/decisions/DF-LIMEN-2026-0001.
+type Phase =
+  | { readonly kind: "Unstarted" }
+  | { readonly kind: "Starting" }
+  | { readonly kind: "Running"; readonly negotiation: Negotiation }
+  | { readonly kind: "Incompatible"; readonly reason: Incompatibility }
+  | { readonly kind: "Faulted" }
+  // dispose() was called: every listener is removed, in-flight effects are
+  // aborted, and the kernel is silent. Terminal, like Incompatible.
+  | { readonly kind: "Disposed" };
+
+// The kernel's phase, for a host that must know whether it is running — never
+// the application's state. See docs/44 for what a host may do with it.
+export type KernelStatus = "unstarted" | "starting" | "running" | "incompatible" | "faulted" | "disposed";
+
 type TextBinding = { readonly element: HTMLElement; readonly key: string };
-type AttrBinding = { readonly element: HTMLElement; readonly attr: string; readonly key: string };
+type AttrBinding = { readonly element: HTMLElement; readonly attr: string; readonly key: string; readonly target: AttributeTarget };
 type IfBinding = {
   readonly anchor: Comment;
   readonly template: HTMLTemplateElement;
@@ -52,9 +88,124 @@ function emptyScope(): Scope {
   return { texts: [], attrs: [], ifs: [], eachs: [] };
 }
 
+// --- Projection validation --------------------------------------------------
+// A projection is checked completely before any of it is written, so a
+// malformed one cannot leave the page half updated. The rules are exactly the
+// ones application enforces; this only finds a violation first. Bound scopes
+// are checked against their bindings, and a section or row that would mount
+// is checked against its template's content, which is not yet bound.
+
+type ScalarValue = string | number | boolean;
+const isScalar = (raw: ViewValue | ViewItem[keyof ViewItem] | undefined): raw is ScalarValue =>
+  typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean";
+
+const firstProblem = (checks: readonly (() => string | undefined)[]): string | undefined =>
+  checks.reduce<string | undefined>((found, check) => found ?? check(), undefined);
+
+function listProblem(listKey: string, itemKey: string, raw: ViewValue | undefined, check: (item: ViewItem) => string | undefined): string | undefined {
+  if (!Array.isArray(raw)) return `data-each="${listKey}" requires an array view value`;
+  const items = raw as readonly ViewItem[];
+  const missing = items.find((item) => item[itemKey] === undefined);
+  if (missing !== undefined) return `data-each item missing key field "${itemKey}"`;
+  return firstProblem(items.map((item) => () => check(item)));
+}
+
+// Template content that would mount: exactly one root element, bound against `view`.
+function templateProblem(template: HTMLTemplateElement, label: string, view: ViewState): string | undefined {
+  const root = template.content.firstElementChild;
+  if (!(root instanceof HTMLElement)) return `${label} template must contain exactly one root element`;
+  return elementProblem(root, view);
+}
+
+function elementProblem(el: Element, view: ViewState): string | undefined {
+  if (el.localName === "template" && el.hasAttribute("data-if")) {
+    const key = el.getAttribute("data-if") ?? "";
+    return Boolean(view[key]) ? templateProblem(el as HTMLTemplateElement, `data-if="${key}"`, view) : undefined;
+  }
+  if (el.localName === "template" && el.hasAttribute("data-each")) {
+    const listKey = el.getAttribute("data-each") ?? "";
+    const itemKey = el.getAttribute("data-key");
+    if (itemKey === null || itemKey === "") return `data-each="${listKey}" requires data-key`;
+    return listProblem(listKey, itemKey, view[listKey], (item) => templateProblem(el as HTMLTemplateElement, `data-each="${listKey}"`, item));
+  }
+  const misplaced = ["data-if", "data-each"].find((name) => el.hasAttribute(name));
+  if (misplaced !== undefined) return `${misplaced}="${el.getAttribute(misplaced) ?? ""}" is only supported on a <template> element, but was found on <${el.localName}>`;
+  const text = el.getAttribute("data-text");
+  return firstProblem([
+    () => (text !== null && !isScalar(view[text]) ? `View value for "${text}" is missing or not scalar` : undefined),
+    ...el.getAttributeNames().filter((name) => name.startsWith("data-bind-")).map((name) => () => {
+      const attr = name.slice("data-bind-".length);
+      if (!isScalar(view[el.getAttribute(name) ?? ""])) return `Attribute binding "${attr}" requires a scalar view value`;
+      return attr === "value" && !("value" in el) ? `Element bound to "value" has no value property` : undefined;
+    }),
+    ...Array.from(el.children).map((child) => () => elementProblem(child, view)),
+  ]);
+}
+
+function scopeProblem(scope: Scope, view: ViewState): string | undefined {
+  return firstProblem([
+    ...scope.texts.map((text) => () => (isScalar(view[text.key]) ? undefined : `View value for "${text.key}" is missing or not scalar`)),
+    ...scope.attrs.map((bound) => () => (isScalar(view[bound.key]) ? undefined : `Attribute binding "${bound.attr}" requires a scalar view value`)),
+    ...scope.ifs.map((binding) => () => {
+      if (!Boolean(view[binding.key])) return undefined;
+      return binding.mounted !== null ? scopeProblem(binding.mounted.scope, view) : templateProblem(binding.template, `data-if="${binding.key}"`, view);
+    }),
+    ...scope.eachs.map((binding) => () => {
+      if (binding.anchor.parentNode === null) return `data-each anchor for "${binding.listKey}" is detached`;
+      return listProblem(binding.listKey, binding.itemKey, view[binding.listKey], (item) => {
+        const instance = binding.instances.get(String(item[binding.itemKey]));
+        return instance !== undefined ? scopeProblem(instance.scope, item) : templateProblem(binding.template, `data-each="${binding.listKey}"`, item);
+      });
+    }),
+  ]);
+}
+
 function readValue(el: HTMLElement): string | undefined {
   if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) return el.value;
   return undefined;
+}
+
+// Protocol 1.2: what `.value` alone cannot say. A checkbox or radio's checked
+// state; a multi-select's selected values, or the checked values of the
+// checkbox group (same name, same form) an event came from; the name of the
+// button that submitted a form. Mechanism only — what a value means is the
+// engine's.
+type ControlState = { readonly checked?: boolean; readonly values?: readonly string[]; readonly submitter?: string };
+
+function readControlState(el: HTMLElement, submitter: HTMLElement | null): ControlState {
+  if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
+    const group = el.type === "checkbox" && el.name !== ""
+      ? Array.from((el.form ?? el.ownerDocument).querySelectorAll("input[type=checkbox]"))
+        .filter((other): other is HTMLInputElement => other instanceof HTMLInputElement && other.name === el.name && other.form === el.form)
+      : [];
+    return { checked: el.checked, ...(group.length > 0 ? { values: group.filter((box) => box.checked).map((box) => box.value) } : {}) };
+  }
+  if (el instanceof HTMLSelectElement && el.multiple) return { values: Array.from(el.selectedOptions, (option) => option.value) };
+  if (el instanceof HTMLFormElement && submitter !== null) {
+    const name = submitter.getAttribute("name");
+    return name !== null && name !== "" ? { submitter: name } : {};
+  }
+  return {};
+}
+
+// Bindings inside <template> content are bound only when a row or a
+// conditional section mounts. Refuse a forbidden target there when the page
+// starts, not later in the middle of a projection.
+function auditTemplates(root: ParentNode): void {
+  for (const template of Array.from(root.querySelectorAll("template"))) {
+    for (const el of Array.from(template.content.querySelectorAll("*"))) {
+      const projected = el.getAttributeNames().filter((name) => name.startsWith("data-bind-"));
+      if (el.hasAttribute("data-text") || projected.length > 0) {
+        const unbindable = bindableElement(el.tagName, (name) => el.getAttribute(name), boundNames(el.getAttributeNames()));
+        if (unbindable !== undefined) throw new Error(unbindable);
+      }
+      for (const name of projected) {
+        const target = classifyAttribute(name.slice("data-bind-".length));
+        if (target.kind === "Forbidden") throw new Error(`${name}: ${target.reason}`);
+      }
+    }
+    auditTemplates(template.content);
+  }
 }
 
 function coerceScalar(raw: ViewValue | undefined, key: string): string {
@@ -62,22 +213,50 @@ function coerceScalar(raw: ViewValue | undefined, key: string): string {
   throw new Error(`View value for "${key}" is missing or not scalar`);
 }
 
-function applyBoundAttribute(el: HTMLElement, attr: string, raw: ViewValue | undefined): void {
+// Returns a refusal to report, or undefined when the value was applied. What
+// may be bound where is src/kernel/binding-policy.ts; a Forbidden target never
+// reaches here, because #bindElement refuses it when the page is bound.
+function applyBoundAttribute(bound: AttrBinding, raw: ViewValue | undefined): string | undefined {
+  const { element: el, attr, target } = bound;
   if (typeof raw !== "string" && typeof raw !== "number" && typeof raw !== "boolean") {
     throw new Error(`Attribute binding "${attr}" requires a scalar view value`);
   }
-  if (BOOLEAN_PROPS.has(attr)) {
-    (el as unknown as Record<string, boolean>)[attr] = Boolean(raw);
-    return;
+  switch (target.kind) {
+    // IDL properties are reflected through Reflect rather than a type
+    // assertion: the element's static type does not declare every boolean
+    // property (e.g. `open` on <details>), and asserting it away would hide
+    // exactly the kind of mistake the restricted TypeScript subset exists to stop.
+    case "BooleanProperty":
+      Reflect.set(el, attr, Boolean(raw));
+      return undefined;
+    case "BooleanAttribute":
+      el.toggleAttribute(attr, Boolean(raw));
+      return undefined;
+    case "ValueProperty": {
+      if (!("value" in el)) throw new Error(`Element bound to "value" has no value property`);
+      const next = String(raw);
+      if (Reflect.get(el, "value") !== next) Reflect.set(el, "value", next);
+      return undefined;
+    }
+    // The value is often user data, so it is checked on every projection. An
+    // unsafe URL is not written — the attribute is removed, so a stale safe
+    // URL cannot linger either — and the refusal names the scheme, never the
+    // value, which may carry a token.
+    case "Url": {
+      const verdict = checkUrl(String(raw), el.ownerDocument.baseURI);
+      if (verdict.kind === "Safe") {
+        el.setAttribute(attr, String(raw));
+        return undefined;
+      }
+      el.removeAttribute(attr);
+      return `refused a ${verdict.scheme} URL for <${el.tagName.toLowerCase()} ${attr}>; only http, https, mailto, tel and relative URLs are projected`;
+    }
+    case "Attribute":
+      el.setAttribute(attr, String(raw));
+      return undefined;
+    case "Forbidden":
+      throw new Error(`data-bind-${attr}: ${target.reason}`);
   }
-  if (attr === "value") {
-    if (!("value" in el)) throw new Error(`Element bound to "value" has no value property`);
-    const next = String(raw);
-    const valueEl = el as unknown as { value: string };
-    if (valueEl.value !== next) valueEl.value = next;
-    return;
-  }
-  el.setAttribute(attr, String(raw));
 }
 
 function makeEvent(name: string, key: string | undefined, value: string | undefined): SemanticEvent {
@@ -86,34 +265,66 @@ function makeEvent(name: string, key: string | undefined, value: string | undefi
 
 export class BrowserKernel {
   readonly #controllers = new Map<CorrelationId, AbortController>();
+  // Every effect from request until its result is handed back. A second
+  // request under an id that is still in flight would make the two answers
+  // indistinguishable to the engine — and would overwrite the first one's
+  // abort controller — so it is refused, never executed.
+  readonly #inFlight = new Set<CorrelationId>();
   // The element is kept alongside its callback so an unmounted binding (a
   // data-if that closed, a data-each row removed) can be pruned at flush time.
   readonly #flushable = new Map<HTMLFormElement, Array<{ readonly element: HTMLElement; readonly fire: () => Promise<void> }>>();
   readonly #root: Scope = emptyScope();
   readonly #diagnostics: DiagnosticsSink;
+  readonly #providers: ReadonlyMap<CapabilityId, CapabilityProvider>;
+  readonly #requireHandshake: boolean;
+  #phase: Phase = { kind: "Unstarted" };
+  // Every listener the kernel registers carries this signal, so dispose()
+  // removes them all at once. Made by the document's own window: a signal
+  // from another realm is not accepted by that realm's addEventListener.
+  readonly #lifetime: AbortController;
   readonly transport: EngineTransport;
   readonly document: Document;
 
-  constructor(transport: EngineTransport, document: Document, diagnostics: DiagnosticsSink = noopDiagnostics) {
+  constructor(transport: EngineTransport, document: Document, diagnostics: DiagnosticsSink = noopDiagnostics, options: KernelOptions = {}) {
     this.transport = transport;
     this.document = document;
+    this.#lifetime = new (document.defaultView?.AbortController ?? AbortController)();
     this.#diagnostics = diagnostics;
+    const providers = options.capabilities ?? [];
+    const duplicate = providers.find((provider, index) => providers.findIndex((other) => other.descriptor.id === provider.descriptor.id) !== index);
+    if (duplicate !== undefined) throw new Error(`Capability ${duplicate.descriptor.id} is registered more than once`);
+    this.#providers = new Map(providers.map((provider) => [provider.descriptor.id, provider] as const));
+    this.#requireHandshake = options.requireHandshake ?? false;
   }
 
   async start(): Promise<void> {
+    if (this.#phase.kind !== "Unstarted") {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: "start() called more than once" });
+      return;
+    }
+    this.#phase = { kind: "Starting" };
     try {
       await this.transport.start();
     } catch (error) {
+      if (this.#disposed) return;
+      this.#phase = { kind: "Faulted" };
       this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
       return;
     }
+    // Disposed while the transport was starting: this kernel never binds.
+    if (this.#disposed) return;
     try {
-      this.#bindElement(this.document.body, this.#root, undefined);
+      // <head> too: page metadata is a projection (#38).
+      for (const region of [this.document.head, this.document.body]) {
+        auditTemplates(region);
+        this.#bindElement(region, this.#root, undefined);
+      }
     } catch (error) {
       // A malformed binding is a bridge integration failure, not a domain
       // outcome — the same rule #send applies. Reporting rather than throwing
       // keeps start()'s "never rejects" contract true and routes the failure
       // through the one channel consumers already watch.
+      this.#phase = { kind: "Faulted" };
       this.#diagnostics.report({ kind: "BridgeError", phase: "binding", detail: String(error) });
       return;
     }
@@ -123,8 +334,82 @@ export class BrowserKernel {
     // EffectResult. An engine that does not route simply never reacts to it.
     window.addEventListener("popstate", () => {
       void this.#send({ kind: "LocationChanged", location: readLocation() });
-    });
-    await this.#send({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: CAPABILITIES, location: readLocation() });
+    }, { signal: this.#lifetime.signal });
+    await this.#initialize();
+  }
+
+  // Read through a method so TypeScript does not narrow it away across awaits.
+  get #disposed(): boolean {
+    return this.#lifetime.signal.aborted;
+  }
+
+  get status(): KernelStatus {
+    switch (this.#phase.kind) {
+      case "Unstarted": return "unstarted";
+      case "Starting": return "starting";
+      case "Running": return "running";
+      case "Incompatible": return "incompatible";
+      case "Faulted": return "faulted";
+      case "Disposed": return "disposed";
+    }
+  }
+
+  // Ends this kernel so another can take the page: every listener it
+  // registered is removed, every in-flight effect is aborted (its result is
+  // never delivered — the engine it belonged to is gone), and from now on it
+  // sends nothing. It does not touch the DOM or decide anything; restoring or
+  // replacing the page is the host's policy. Idempotent.
+  dispose(): void {
+    if (this.#phase.kind === "Disposed") return;
+    this.#phase = { kind: "Disposed" };
+    this.#lifetime.abort();
+    for (const controller of this.#controllers.values()) controller.abort("disposed");
+    this.#controllers.clear();
+  }
+
+  get #offer(): HostHandshake {
+    return {
+      protocol: { major: PROTOCOL_VERSION, minor: PROTOCOL_MINOR },
+      contract: { unit: CORE_CONTRACT_IDENTITY.unit, version: CORE_CONTRACT_IDENTITY.version, fingerprint: CORE_CONTRACT_IDENTITY.fingerprint },
+      capabilities: Array.from(this.#providers.values(), (provider) => provider.descriptor),
+    };
+  }
+
+  // Initialize is the one round trip that happens before normal traffic. Its
+  // response is applied only after the engine's handshake has been verified:
+  // an incompatible engine's view and effects never reach the page.
+  async #initialize(): Promise<void> {
+    const offer = this.#offer;
+    let response: EngineToBrowserMessage;
+    try {
+      response = await this.transport.dispatch({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: CAPABILITIES, location: readLocation(), handshake: offer });
+    } catch (error) {
+      if (this.#disposed) return;
+      this.#phase = { kind: "Faulted" };
+      this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
+      return;
+    }
+    if (this.#disposed) return;
+    const verdict = verifyHandshake(offer, response.handshake, this.#requireHandshake);
+    this.#diagnostics.report({ kind: "Handshake", verdict });
+    if (verdict.kind === "Incompatible") {
+      this.#phase = { kind: "Incompatible", reason: verdict.reason };
+      return;
+    }
+    this.#phase = { kind: "Running", negotiation: verdict.negotiation };
+    this.#activateNegotiated(verdict.negotiation);
+    await this.#apply(response);
+  }
+
+  #activateNegotiated(negotiation: Negotiation): void {
+    if (negotiation.kind === "Legacy") return;
+    for (const selected of negotiation.capabilities) {
+      const provider = this.#providers.get(selected.id);
+      provider?.activate({
+        document: this.document,
+        emitFact: (fact) => { void this.#send({ kind: "CapabilityFact", capability: selected.id, version: selected.version, fact }); },
+      });
+    }
   }
 
   // Binds only root's descendants, not root itself — the recursive step
@@ -164,9 +449,17 @@ export class BrowserKernel {
       }
     }
     if (el.hasAttribute("data-event")) this.#bindEvent(el, itemKey);
+    const projected = Array.from(el.attributes).filter((attr) => attr.name.startsWith("data-bind-"));
+    if (el.hasAttribute("data-text") || projected.length > 0) {
+      const unbindable = bindableElement(el.tagName, (name) => el.getAttribute(name), boundNames(el.getAttributeNames()));
+      if (unbindable !== undefined) throw new Error(unbindable);
+    }
     if (el.hasAttribute("data-text")) scope.texts.push({ element: el, key: el.getAttribute("data-text")! });
-    for (const attr of Array.from(el.attributes)) {
-      if (attr.name.startsWith("data-bind-")) scope.attrs.push({ element: el, attr: attr.name.slice("data-bind-".length), key: attr.value });
+    for (const attr of projected) {
+      const name = attr.name.slice("data-bind-".length);
+      const target = classifyAttribute(name);
+      if (target.kind === "Forbidden") throw new Error(`${attr.name}: ${target.reason}`);
+      scope.attrs.push({ element: el, attr: name, key: attr.value, target });
     }
     this.#bind(el, scope, itemKey);
   }
@@ -174,11 +467,17 @@ export class BrowserKernel {
   #bindEvent(el: HTMLElement, itemKey: string | undefined): void {
     const name = el.getAttribute("data-event")!;
     const trigger = el.getAttribute("data-on") ?? TRIGGER_BY_TAG[el.tagName] ?? "click";
-    const fire = (): Promise<void> => this.#fire(el, name, itemKey);
+    const fire = (): Promise<void> => this.#fire(el, name, itemKey, null);
     el.addEventListener(trigger, (domEvent) => {
       if (trigger === "submit") domEvent.preventDefault();
-      void fire();
-    });
+      // An input event during IME composition carries text the user has not
+      // committed; reporting it would hand the engine half a character. The
+      // committed value is reported once, at compositionend, below.
+      if ("isComposing" in domEvent && domEvent.isComposing === true) return;
+      const submitter = "submitter" in domEvent && domEvent.submitter instanceof HTMLElement ? domEvent.submitter : null;
+      void this.#fire(el, name, itemKey, submitter);
+    }, { signal: this.#lifetime.signal });
+    if (trigger === "input") el.addEventListener("compositionend", () => { void this.#fire(el, name, itemKey, null); }, { signal: this.#lifetime.signal });
     const form = "form" in el ? (el as HTMLInputElement).form : null;
     if (trigger !== "submit" && form !== null) {
       const pending = this.#flushable.get(form) ?? [];
@@ -187,7 +486,7 @@ export class BrowserKernel {
     }
   }
 
-  async #fire(el: HTMLElement, name: string, itemKey: string | undefined): Promise<void> {
+  async #fire(el: HTMLElement, name: string, itemKey: string | undefined, submitter: HTMLElement | null): Promise<void> {
     if (el instanceof HTMLFormElement) {
       if (!el.reportValidity()) return;
       // Prune bindings whose element has since been unmounted. Without this,
@@ -199,7 +498,15 @@ export class BrowserKernel {
       for (const entry of live) await entry.fire();
     }
     const value = readValue(el);
-    await this.#send({ kind: "Event", event: makeEvent(name, itemKey, value) });
+    // A 1.1 engine's strict decoder would refuse fields it has never heard of,
+    // so control state is sent only to an engine that negotiated 1.2.
+    const state = this.#speaks(2) ? readControlState(el, submitter) : {};
+    const event: SemanticEvent = { ...makeEvent(name, itemKey, value), ...state, ...(state.values !== undefined ? { values: [...state.values] } : {}) };
+    await this.#send({ kind: "Event", event });
+  }
+
+  #speaks(minor: number): boolean {
+    return this.#phase.kind === "Running" && this.#phase.negotiation.kind === "Negotiated" && this.#phase.negotiation.protocol.minor >= minor;
   }
 
   // The single chokepoint every engine round-trip passes through. A failure
@@ -208,6 +515,13 @@ export class BrowserKernel {
   // bad projection or a dead transport cannot crash the page or silently
   // corrupt already-applied view state.
   async #send(message: BrowserToEngineMessage): Promise<void> {
+    // A disposed kernel is silent: its page belongs to another kernel now.
+    if (this.#phase.kind === "Disposed") return;
+    // Nothing flows before the handshake is verified, or ever after it failed.
+    if (this.#phase.kind !== "Running") {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: `${message.kind} not dispatched: kernel is ${this.#phase.kind}` });
+      return;
+    }
     let response: EngineToBrowserMessage;
     try {
       response = await this.transport.dispatch(message);
@@ -215,8 +529,25 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
       return;
     }
+    // A handshake is an answer to Initialize only. Anywhere else it is a
+    // protocol violation, and the response carrying it is not applied.
+    if (response.handshake !== undefined) {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: `handshake in response to ${message.kind}` });
+      return;
+    }
+    await this.#apply(response);
+  }
+
+  async #apply(response: EngineToBrowserMessage): Promise<void> {
+    // All or nothing: a projection that would fail anywhere is not applied
+    // anywhere, and its effects are not run.
+    const problem = scopeProblem(this.#root, response.view);
+    if (problem !== undefined) {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "projection", detail: problem });
+      return;
+    }
     try {
-      this.#applyScope(this.#root, response.view);
+      for (const refusal of this.#applyScope(this.#root, response.view)) this.#diagnostics.report({ kind: "BridgeError", phase: "projection", detail: refusal });
     } catch (error) {
       this.#diagnostics.report({ kind: "BridgeError", phase: "projection", detail: String(error) });
       return;
@@ -225,21 +556,24 @@ export class BrowserKernel {
     await Promise.all(response.effects.map((effect) => this.#executeEffect(effect)));
   }
 
-  #applyScope(scope: Scope, view: ViewState): void {
+  // Returns the refusals the projection produced (an unsafe URL not written);
+  // a malformed projection still throws.
+  #applyScope(scope: Scope, view: ViewState): readonly string[] {
     for (const text of scope.texts) text.element.textContent = coerceScalar(view[text.key], text.key);
-    for (const bound of scope.attrs) applyBoundAttribute(bound.element, bound.attr, view[bound.key]);
-    for (const ifBinding of scope.ifs) this.#applyIf(ifBinding, view);
-    for (const eachBinding of scope.eachs) this.#applyEach(eachBinding, view);
+    return [
+      ...scope.attrs.flatMap((bound) => applyBoundAttribute(bound, view[bound.key]) ?? []),
+      ...scope.ifs.flatMap((ifBinding) => this.#applyIf(ifBinding, view)),
+      ...scope.eachs.flatMap((eachBinding) => this.#applyEach(eachBinding, view)),
+    ];
   }
 
-  #applyIf(binding: IfBinding, view: ViewState): void {
+  #applyIf(binding: IfBinding, view: ViewState): readonly string[] {
     const present = Boolean(view[binding.key]);
     if (binding.mounted) {
-      if (!present) { binding.mounted.root.remove(); binding.mounted = null; return; }
-      this.#applyScope(binding.mounted.scope, view);
-      return;
+      if (!present) { binding.mounted.root.remove(); binding.mounted = null; return []; }
+      return this.#applyScope(binding.mounted.scope, view);
     }
-    if (!present) return;
+    if (!present) return [];
     const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
     const root = fragment.firstElementChild;
     if (!(root instanceof HTMLElement)) throw new Error(`data-if="${binding.key}" template must contain exactly one root element`);
@@ -251,17 +585,18 @@ export class BrowserKernel {
     binding.anchor.after(root);
     const scope = emptyScope();
     this.#bindElement(root, scope, binding.itemKey);
-    this.#applyScope(scope, view);
     binding.mounted = { root, scope };
+    return this.#applyScope(scope, view);
   }
 
-  #applyEach(binding: EachBinding, view: ViewState): void {
+  #applyEach(binding: EachBinding, view: ViewState): readonly string[] {
     const raw = view[binding.listKey];
     if (!Array.isArray(raw)) throw new Error(`data-each="${binding.listKey}" requires an array view value`);
     const items = raw as readonly ViewItem[];
     const parent = binding.anchor.parentNode;
     if (!parent) throw new Error(`data-each anchor for "${binding.listKey}" is detached`);
     const seen = new Set<string>();
+    const refusals: string[] = [];
     let cursor: ChildNode = binding.anchor;
     for (const item of items) {
       const rawKey = item[binding.itemKey];
@@ -281,21 +616,28 @@ export class BrowserKernel {
         instance = { root, scope };
         binding.instances.set(key, instance);
       }
-      this.#applyScope(instance.scope, item);
+      refusals.push(...this.#applyScope(instance.scope, item));
       if (cursor.nextSibling !== instance.root) parent.insertBefore(instance.root, cursor.nextSibling);
       cursor = instance.root;
     }
     for (const [key, instance] of binding.instances) {
       if (!seen.has(key)) { instance.root.remove(); binding.instances.delete(key); }
     }
+    return refusals;
   }
 
   async #executeEffect(effect: EffectRequest): Promise<void> {
+    if (this.#inFlight.has(effect.correlationId)) {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: `${effect.kind} not executed: correlation id ${effect.correlationId} is already in flight` });
+      return;
+    }
+    this.#inFlight.add(effect.correlationId);
     const started = performance.now();
     let result: EffectResult;
     try {
       result = await this.#runEffect(effect);
     } catch (error) {
+      this.#inFlight.delete(effect.correlationId);
       // The kernel could not run the effect at all: an effect kind it does not
       // implement, or a browser API that threw where its own contract says it
       // cannot. There is no outcome it could report honestly, so it reports
@@ -305,6 +647,7 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "effect", detail: String(error) });
       return;
     }
+    this.#inFlight.delete(effect.correlationId);
     this.#diagnostics.report({ kind: "EffectTiming", correlationId: effect.correlationId, durationMs: performance.now() - started });
     await this.#send({ kind: "EffectResult", result });
   }
@@ -319,7 +662,31 @@ export class BrowserKernel {
       case "Storage": return this.#executeStorage(effect);
       case "Clipboard": return await this.#executeClipboard(effect);
       case "Navigation": return this.#executeNavigation(effect);
+      case "Capability": return await this.#executeCapability(effect);
       default: return assertNeverEffect(effect);
+    }
+  }
+
+  // Core routes by negotiated identity and never looks inside the request. A
+  // capability the engine did not negotiate — or a legacy engine asking for
+  // any — gets a typed Unsupported answer, never a silent drop.
+  async #executeCapability(effect: CapabilityEffectRequest): Promise<EffectResult> {
+    const answer = (outcome: CapabilityOutcome): EffectResult =>
+      ({ kind: "CapabilityResult", correlationId: effect.correlationId, capability: effect.capability, version: effect.version, outcome });
+    const negotiated = this.#phase.kind === "Running" && this.#phase.negotiation.kind === "Negotiated"
+      ? this.#phase.negotiation.capabilities.find((capability) => capability.id === effect.capability)
+      : undefined;
+    const provider = this.#providers.get(effect.capability);
+    if (negotiated === undefined || provider === undefined) return answer({ kind: "Unsupported", reason: "not-negotiated" });
+    if (negotiated.version !== effect.version) return answer({ kind: "Unsupported", reason: "version-unsupported" });
+    const controller = new AbortController();
+    this.#controllers.set(effect.correlationId, controller);
+    try {
+      const result = await provider.execute(effect.request, { correlationId: effect.correlationId, signal: controller.signal, document: this.document });
+      if (result.kind === "Rejected") this.#diagnostics.report({ kind: "BridgeError", phase: "effect", detail: `${effect.capability} rejected request ${effect.correlationId}: ${result.reason}` });
+      return answer(result);
+    } finally {
+      this.#controllers.delete(effect.correlationId);
     }
   }
 
@@ -338,32 +705,68 @@ export class BrowserKernel {
   // A timeout is always reported as OutcomeUnknown, never a confident
   // Failure: fetch() may already have sent the request before the abort
   // fires, so the kernel cannot claim the effect did not occur.
+  //
+  // Protocol 1.3 options (response representation, response headers,
+  // credentials, XSRF binding) are all explicit on the request; absent, the
+  // request is exactly the JSON request of 1.0.
   async #runHttp(effect: HttpEffectRequest, controller: AbortController): Promise<EffectOutcome> {
+    const representation = effect.response ?? "json";
+    // navigator.onLine false proves the browser has no network, so a request
+    // made now cannot have left it.
+    const offlineAtDispatch = this.document.defaultView?.navigator.onLine === false;
     try {
       const response = await fetch(effect.url, {
         method: effect.method,
         signal: controller.signal,
-        headers: { accept: "application/json", ...effect.headers },
+        headers: {
+          ...(representation === "json" ? { accept: "application/json" } : {}),
+          ...xsrfHeader(this.document, effect),
+          ...effect.headers,
+        },
+        ...(effect.credentials !== undefined ? { credentials: effect.credentials } : {}),
         ...(effect.body !== undefined ? { body: effect.body } : {}),
       });
+      const headers = returnedHeaders(response, effect.responseHeaders);
+      const success = (body: unknown): EffectOutcome => ({ kind: "Success", status: response.status, body, ...(headers !== undefined ? { headers } : {}) });
       try {
-        return { kind: "Success", status: response.status, body: await response.json() as unknown };
+        switch (representation) {
+          case "json": return success(await response.json() as unknown);
+          case "none":
+            await response.body?.cancel();
+            return success(null);
+          case "text":
+          case "base64": {
+            const bytes = await readBounded(response, MAX_HTTP_TEXT_BYTES);
+            if (bytes === undefined) return { kind: "Failure", reason: "too-large", status: response.status };
+            return success(representation === "text" ? new TextDecoder().decode(bytes) : toBase64(bytes));
+          }
+        }
       } catch {
         // A response did arrive — it simply would not decode. Carry the status
         // so the engine can tell a 500 error page apart from a malformed 200.
         return controller.signal.aborted
-          ? this.#classifyAbort(controller)
+          ? this.#classifyAbort(controller, effect.method, offlineAtDispatch)
           : { kind: "Failure", reason: "invalid-response", status: response.status };
       }
     } catch {
-      return this.#classifyAbort(controller);
+      return this.#classifyAbort(controller, effect.method, offlineAtDispatch);
     }
   }
 
-  #classifyAbort(controller: AbortController): EffectOutcome {
+  // fetch() throws the same TypeError whether the request never left (DNS,
+  // refused, offline, a failed CORS preflight) or the connection dropped after
+  // the server had it — and Chromium may already have resent it. A throw is a
+  // confident Failure only when nothing can have changed: the method is safe,
+  // or the browser was offline when the request was made. Otherwise the
+  // outcome is unknown (protocol 1.4). An engine that negotiated 1.3 or
+  // earlier cannot decode connection-lost, so it hears the one unknown reason
+  // it can: the outcome stays safe, and only the reason is approximated.
+  #classifyAbort(controller: AbortController, method: HttpMethod, offlineAtDispatch: boolean): EffectOutcome {
     if (controller.signal.reason === "cancelled") return { kind: "Cancelled" };
     if (controller.signal.reason === "timeout") return { kind: "OutcomeUnknown", reason: "timeout-after-dispatch" };
-    return { kind: "Failure", reason: controller.signal.aborted ? "aborted" : "network" };
+    if (controller.signal.aborted) return { kind: "Failure", reason: "aborted" };
+    if (offlineAtDispatch || safeMethod(method)) return { kind: "Failure", reason: "network" };
+    return { kind: "OutcomeUnknown", reason: this.#speaks(4) ? "connection-lost" : "timeout-after-dispatch" };
   }
 
   // Synchronous by nature (localStorage has no async API), so unlike Http
@@ -394,6 +797,59 @@ export class BrowserKernel {
 const assertNeverEffect = (effect: never): never => {
   throw new Error(`Unsupported effect kind: ${JSON.stringify(effect)}`);
 };
+
+// --- Http protocol 1.3 helpers ------------------------------------------------
+
+// The cookie-to-header XSRF binding: one named cookie's value into one named
+// header, and only for a same-origin URL, so a token never travels to another
+// origin. The value is never logged and never reaches the engine.
+function xsrfHeader(document: Document, effect: HttpEffectRequest): Readonly<Record<string, string>> {
+  if (effect.xsrf === undefined) return {};
+  const origin = document.defaultView?.location.origin;
+  const target = URL.canParse(effect.url, document.baseURI) ? new URL(effect.url, document.baseURI).origin : undefined;
+  if (origin === undefined || target !== origin) return {};
+  const wanted = `${effect.xsrf.cookie}=`;
+  const found = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(wanted));
+  return found === undefined ? {} : { [effect.xsrf.header]: decodeURIComponent(found.slice(wanted.length)) };
+}
+
+// Exactly the response headers the request named, if the response has them.
+function returnedHeaders(response: Response, names: readonly string[] | undefined): Readonly<Record<string, string>> | undefined {
+  if (names === undefined || names.length === 0) return undefined;
+  return Object.fromEntries(names.map((name) => name.toLowerCase()).flatMap((name) => {
+    const value = response.headers.get(name);
+    return value === null ? [] : [[name, value] as const];
+  }));
+}
+
+// The body's bytes, or undefined once it passes `limit` — read incrementally,
+// so an oversized body is abandoned without being held whole.
+async function readBounded(response: Response, limit: number): Promise<Uint8Array | undefined> {
+  const reader = response.body?.getReader();
+  if (reader === undefined) return new Uint8Array(0);
+  const chunks: Uint8Array[] = [];
+  const read = async (total: number): Promise<number | undefined> => {
+    const { done, value } = await reader.read();
+    if (done) return total;
+    const next = total + value.byteLength;
+    if (next > limit) {
+      await reader.cancel();
+      return undefined;
+    }
+    chunks.push(value);
+    return read(next);
+  };
+  const total = await read(0);
+  if (total === undefined) return undefined;
+  const bytes = new Uint8Array(total);
+  chunks.reduce((offset, chunk) => { bytes.set(chunk, offset); return offset + chunk.byteLength; }, 0);
+  return bytes;
+}
+
+function toBase64(bytes: Uint8Array): string {
+  const piece = 0x8000;
+  return btoa(Array.from({ length: Math.ceil(bytes.length / piece) }, (_, index) => String.fromCharCode(...bytes.subarray(index * piece, (index + 1) * piece))).join(""));
+}
 
 function runStorage(effect: StorageEffectRequest): StorageOutcome {
   try {

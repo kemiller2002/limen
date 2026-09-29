@@ -29,9 +29,32 @@ release/
 site/fsharp/**/bin/
 site/fsharp/**/obj/
 site/fsharp/publish/
+# Each federation WASM module publishes beside its project (see build:site:wasm).
+site/fsharp/federation/*/publish/
+
+# Guest-language contract bindings (guests/) build output. Cargo.lock stays
+# tracked so the Rust guest's dependency graph is reproducible.
+guests/**/bin/
+guests/**/obj/
+guests/rust/**/target/
+guests/minimal/**/target/
+guests/minimal/out/
+guests/minimal/host/*.js
+dist-guests/
+
+# The benchmark page compiles in place (npm run build:bench); an ad-hoc run
+# writes bench/results/latest.json. Committed baselines use other names.
+bench/pages/*.js
+bench/results/latest.json
 
 # BEGIN echelon:visual-engineering
 # Installed Visual Engineering context. Refresh it with:
 #   npx @echelon-foundry/visual-engineering init
 .visual-engineering/
 # END echelon:visual-engineering
+
+# Engine libraries and their conformance runners (.NET build output).
+libraries/**/bin/
+libraries/**/obj/
+conformance/**/bin/
+conformance/**/obj/

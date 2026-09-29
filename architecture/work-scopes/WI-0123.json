@@ -1,0 +1,28 @@
+{
+  "workItem": "WI-0123",
+  "reference": "kemiller2002/limen#63",
+  "placement": "Architecture / Documentation / Governance (guardrail) — the Core Admission process (docs/core-admission.md) and its records (architecture/core-admissions/, guardrail-owned: feature work can neither write nor approve one), validated by tools/guardrails/admission.ts from scripts/check-core-budget.ts, which also requires the approved baseline to name an existing admission. The minimal-agent learning contract: docs/core-mental-model.md is the one canonical Core document (the seven concept ids of architecture/core.json, in order); AGENTS.md's required reading is exactly the manifest's learning path; every optional subsystem doc opens by naming the Core concept it composes with; quick starts import Core entrypoints only; no doc or example imports an optional name from the root. Checked by tools/guardrails/learning.ts from scripts/check-docs.ts. Documentation and governance only; no runtime source change.",
+  "guardrail": true,
+  "paths": [
+    "architecture/core.json",
+    "architecture/core-admissions/**",
+    "architecture/guardrails.json",
+    "tools/guardrails/admission.ts",
+    "tools/guardrails/learning.ts",
+    "scripts/check-docs.ts",
+    "scripts/check-core-budget.ts",
+    "scripts/check-package.ts",
+    "test/core-admission.test.ts",
+    "test/learning-contract.test.ts",
+    ".github/CODEOWNERS",
+    "package.json",
+    "docs/**",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "CHANGELOG.md",
+    "examples/minimal/README.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

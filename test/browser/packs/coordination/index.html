@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen coordination pack in a real browser</title>
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP (one Trusted Types
+       policy for the hub worker; frames only from the origins page.json names).
+       main.js is this tab's engine; peer.html is a second tab of the same
+       application; the frames are a partner at another origin and an intruder
+       at this one. -->
+  <button id="poke" data-event="poke">Ask</button>
+  <iframe title="Partner" data-frame-target="partner" src="http://localhost:4194/test/browser/packs/coordination/frame.html?parent=http://127.0.0.1:4194"></iframe>
+  <iframe title="Intruder" data-frame-target="intruder" src="frame.html?parent=http://127.0.0.1:4194&amp;intruder"></iframe>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

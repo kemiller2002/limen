@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0052",
+  "reference": "kemiller2002/limen#18, kemiller2002/limen#48",
+  "placement": "Guardrail — scripts/check-views.ts is guardrail-owned. It now runs the built checker from dist/, because the checker shares the kernel's binding policy module (a value import that node's type stripping cannot resolve from src/). Same checks; npm test builds first.",
+  "guardrail": true,
+  "paths": ["scripts/check-views.ts"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

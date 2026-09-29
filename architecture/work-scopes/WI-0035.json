@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0035",
+  "reference": "kemiller2002/limen#54",
+  "placement": "Tooling / TypeScript Boundary — guardrail-class",
+  "guardrail": true,
+  "paths": [
+    "architecture/typescript-boundary.json", "architecture/guardrails.json", "tools/guardrails/**", "scripts/check-*.ts", "test/**",
+    "src/kernel/browser-kernel.ts", "site/app/wasm-engine-transport.ts", "package.json", ".github/CODEOWNERS",
+    "docs/**", "research/decisions/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

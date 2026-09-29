@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0027",
+  "reference": "baseline repair found during the GH-15 startup sequence",
+  "placement": "Build / repository hygiene",
+  "guardrail": false,
+  "paths": [".gitignore"],
+  "expansions": [],
+  "recordedAfterCompletion": true
+}

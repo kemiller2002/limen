@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0075",
+  "reference": "kemiller2002/limen#26 (LCP-016)",
+  "placement": "Capability Pack — src/capabilities/realtime/ with its own contract unit. It opens WebSocket and EventSource connections the engine asks for, identifies each by an opaque handle, reports lifecycle and message text as facts, and never reconnects on its own (EventSource's native retry is stopped). Payloads are uninterpreted text. Core unchanged; absent unless registered. The real-browser smoke gains same-origin echo and event-stream test endpoints.",
+  "guardrail": false,
+  "paths": ["contract/realtime.contract.json", "src/capabilities/realtime/**", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

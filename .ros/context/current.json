@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
   "repository": "limen",
-  "actor": "claude",
+  "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T06:20:11.000Z",
+  "updatedAt": "2026-09-29T17:11:17Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -530,6 +530,541 @@
       "completedAt": "2026-09-26T07:42:00.000Z"
     },
     {
+      "id": "WI-0027",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [],
+      "updatedAt": "2026-09-29T04:31:12Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T043103048Z-6fa34fc7"
+      ],
+      "completedAt": "2026-09-29T04:31:12Z"
+    },
+    {
+      "id": "WI-0028",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/handshake.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/main.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/handshake.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        },
+        {
+          "type": "decision",
+          "path": "research/decisions/DF-LIMEN-2026-0001--neutral-contract-and-capability-extension.md"
+        }
+      ],
+      "updatedAt": "2026-09-29T04:54:08Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T043254320Z-e858b3ca"
+      ],
+      "completedAt": "2026-09-29T04:54:08Z"
+    },
+    {
+      "id": "WI-0029",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [],
+      "updatedAt": "2026-09-29T04:55:08Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T045508726Z-d5fe65e9"
+      ],
+      "completedAt": "2026-09-29T04:55:08Z"
+    },
+    {
+      "id": "WI-0033",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-fsharp.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-csharp.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-rust.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/conformance-vectors.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/tests/conformance.rs"
+        },
+        {
+          "type": "tests",
+          "path": "guests/fsharp/Limen.Contract.Conformance/Program.fs"
+        },
+        {
+          "type": "tests",
+          "path": "guests/csharp/Limen.Contract.Conformance/Program.cs"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:11:38Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T045734687Z-f65a7df8"
+      ],
+      "completedAt": "2026-09-29T05:11:38Z"
+    },
+    {
+      "id": "WI-0034",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/layers.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/scope.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/layers.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/scope.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:20:06Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T051258045Z-5dbc75da"
+      ],
+      "completedAt": "2026-09-29T05:20:06Z"
+    },
+    {
+      "id": "WI-0035",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/typescript.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "scripts/check-typescript.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/typescript-boundary.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:29:53Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T052140958Z-e7ce3b41"
+      ],
+      "completedAt": "2026-09-29T05:29:53Z"
+    },
+    {
+      "id": "WI-0036",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/csharp/Limen.Contract.Analyzers/LimenAnalyzer.cs"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-csharp.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/guest-pressure.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:37:18Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T053035005Z-9eee5fe1"
+      ],
+      "completedAt": "2026-09-29T05:37:18Z"
+    },
+    {
+      "id": "WI-0037",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/minimal/fsharp/Limen.Minimal.Engine/Engine.fs"
+        },
+        {
+          "type": "implementation",
+          "path": "guests/minimal/csharp/Limen.Minimal.Engine/Engine.cs"
+        },
+        {
+          "type": "implementation",
+          "path": "guests/minimal/rust/limen-minimal/src/lib.rs"
+        },
+        {
+          "type": "implementation",
+          "path": "src/hosts/raw-wasm-transport.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-guests.ts"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/sessions/minimal.session.json"
+        },
+        {
+          "type": "decision",
+          "path": "research/decisions/DF-LIMEN-2026-0003--multi-language-wasm-guests.md"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:56:12Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T053811640Z-17cf6694"
+      ],
+      "completedAt": "2026-09-29T05:56:12Z"
+    },
+    {
+      "id": "WI-0038",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "site/fsharp/Limen.Site.Engine/Dispatch.fs"
+        },
+        {
+          "type": "tests",
+          "path": "site/fsharp/tests/Limen.Site.Engine.Tests/Program.fs"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:00:41Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T055641550Z-ccd6d510"
+      ],
+      "completedAt": "2026-09-29T06:00:41Z"
+    },
+    {
+      "id": "WI-0031",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:03:54Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T060135152Z-2c9b16f5"
+      ],
+      "completedAt": "2026-09-29T06:03:54Z"
+    },
+    {
+      "id": "WI-0039",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/tooling/fake-host.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "src/tooling/trace.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/tooling.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:09:25Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T060426875Z-61af5099"
+      ],
+      "completedAt": "2026-09-29T06:09:25Z"
+    },
+    {
+      "id": "WI-0040",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [],
+      "updatedAt": "2026-09-29T06:12:35Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T060939944Z-bea1d26b"
+      ],
+      "completedAt": "2026-09-29T06:12:35Z"
+    },
+    {
+      "id": "WI-0041",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capability-support/handles.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "src/tooling/provider-conformance.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/handles.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:19:08Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T061303404Z-d9fa1d1a"
+      ],
+      "completedAt": "2026-09-29T06:19:08Z"
+    },
+    {
+      "id": "WI-0042",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/bench.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "bench/pages/bench.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        },
+        {
+          "type": "measurement",
+          "path": "bench/results/baseline-2026-09-29.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:33:45Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T062033336Z-41f9501c"
+      ],
+      "completedAt": "2026-09-29T06:33:45Z"
+    },
+    {
+      "id": "WI-0048",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tsconfig.bench.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:33:45Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T063314469Z-bcae3d81"
+      ],
+      "completedAt": "2026-09-29T06:33:45Z"
+    },
+    {
+      "id": "WI-0049",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/tooling/view-contract.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/view-contracts.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:49:13Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T063526574Z-84ae9d30"
+      ],
+      "completedAt": "2026-09-29T06:49:13Z"
+    },
+    {
+      "id": "WI-0050",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/check-views.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T06:49:14Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T064657245Z-559644b8"
+      ],
+      "completedAt": "2026-09-29T06:49:14Z"
+    },
+    {
+      "id": "WI-0051",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/binding-policy.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/binding-security.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "scripts/smoke-security.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:25Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T065059025Z-8f3746e0"
+      ],
+      "completedAt": "2026-09-29T07:03:25Z"
+    },
+    {
+      "id": "WI-0052",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/check-views.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/view-contracts.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:24Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T065938835Z-1bd45397"
+      ],
+      "completedAt": "2026-09-29T07:03:24Z"
+    },
+    {
+      "id": "WI-0053",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/budgets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:25Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T065939942Z-2d1192e6"
+      ],
+      "completedAt": "2026-09-29T07:03:25Z"
+    },
+    {
+      "id": "WI-0054",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/build-guests-site.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-security.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:39Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T070247723Z-367326af"
+      ],
+      "completedAt": "2026-09-29T07:03:39Z"
+    },
+    {
+      "id": "WI-0055",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:26Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T070311911Z-57107020"
+      ],
+      "completedAt": "2026-09-29T07:03:26Z"
+    },
+    {
       "id": "GH-57",
       "type": "task",
       "state": "complete",
@@ -577,6 +1112,1631 @@
         "EXE-20260929T060905264Z-4b3b6748"
       ],
       "completedAt": "2026-09-29T06:20:11.000Z"
+    },
+    {
+      "id": "WI-0056",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/focus/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/focus.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/focus/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:16:41Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T070804138Z-7b90ee1d"
+      ],
+      "completedAt": "2026-09-29T07:16:41Z"
+    },
+    {
+      "id": "WI-0057",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:16:41Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T070805322Z-c1c32da1"
+      ],
+      "completedAt": "2026-09-29T07:16:41Z"
+    },
+    {
+      "id": "WI-0058",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:16:42Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T071622896Z-900761d6"
+      ],
+      "completedAt": "2026-09-29T07:16:42Z"
+    },
+    {
+      "id": "WI-0059",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Routing/Routing.fs"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/routing/routing.vectors.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:25:18Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T071758995Z-efe3fbc5"
+      ],
+      "completedAt": "2026-09-29T07:25:18Z"
+    },
+    {
+      "id": "WI-0060",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Forms/Forms.fs"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/forms/forms.vectors.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:34:51Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T072623113Z-1d2352ad"
+      ],
+      "completedAt": "2026-09-29T07:34:51Z"
+    },
+    {
+      "id": "WI-0061",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/form-controls.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/core-form-controls/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:47:14Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T073554288Z-a59c8ebe"
+      ],
+      "completedAt": "2026-09-29T07:47:14Z"
+    },
+    {
+      "id": "WI-0062",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Resources/Resources.fs"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/resources/resources.vectors.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:54:00Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T074838823Z-aa139dad"
+      ],
+      "completedAt": "2026-09-29T07:54:00Z"
+    },
+    {
+      "id": "WI-0063",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/schedule/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/schedule.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/schedule/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:59:32Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T075431409Z-cb0221df"
+      ],
+      "completedAt": "2026-09-29T07:59:32Z"
+    },
+    {
+      "id": "WI-0064",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:59:32Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T075432618Z-306f6767"
+      ],
+      "completedAt": "2026-09-29T07:59:32Z"
+    },
+    {
+      "id": "WI-0065",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/measure/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/measure.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/measure/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:06:59Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T080007820Z-2cc26f0f"
+      ],
+      "completedAt": "2026-09-29T08:06:59Z"
+    },
+    {
+      "id": "WI-0066",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:06:58Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T080009066Z-245b9706"
+      ],
+      "completedAt": "2026-09-29T08:06:58Z"
+    },
+    {
+      "id": "WI-0067",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/ime.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:10:29Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T080744948Z-bf057cea"
+      ],
+      "completedAt": "2026-09-29T08:10:29Z"
+    },
+    {
+      "id": "WI-0068",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/events/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/events.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/events/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:18:56Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T081101453Z-0c60d770"
+      ],
+      "completedAt": "2026-09-29T08:18:56Z"
+    },
+    {
+      "id": "WI-0069",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:18:55Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T081102626Z-f424c398"
+      ],
+      "completedAt": "2026-09-29T08:18:55Z"
+    },
+    {
+      "id": "WI-0070",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "examples/09-accessible-patterns/patterns.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/patterns.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "examples/09-accessible-patterns/checks.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:34:29Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T082132726Z-989a340b"
+      ],
+      "completedAt": "2026-09-29T08:34:29Z"
+    },
+    {
+      "id": "WI-0071",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/binding-policy.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/binding-security.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:25:12Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T082227385Z-3055d71f"
+      ],
+      "completedAt": "2026-09-29T08:25:12Z"
+    },
+    {
+      "id": "WI-0072",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/overlay/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/overlay.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/overlay/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:48:44Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T083458543Z-96738063"
+      ],
+      "completedAt": "2026-09-29T08:48:44Z"
+    },
+    {
+      "id": "WI-0073",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_overlay.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:48:43Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T083459679Z-7ff42d62"
+      ],
+      "completedAt": "2026-09-29T08:48:43Z"
+    },
+    {
+      "id": "WI-0074",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "package.json"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-packs.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T08:50:34Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T085008546Z-efaa9f4c"
+      ],
+      "completedAt": "2026-09-29T08:50:34Z"
+    },
+    {
+      "id": "WI-0075",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/realtime/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/realtime.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/realtime/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:01:09Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T085146444Z-e07e35a9"
+      ],
+      "completedAt": "2026-09-29T09:01:09Z"
+    },
+    {
+      "id": "WI-0076",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_realtime.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:01:08Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T085147774Z-ffd26064"
+      ],
+      "completedAt": "2026-09-29T09:01:08Z"
+    },
+    {
+      "id": "WI-0077",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/files/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/files.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/files/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:14:11Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T090206247Z-4a04d807"
+      ],
+      "completedAt": "2026-09-29T09:14:11Z"
+    },
+    {
+      "id": "WI-0078",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_files.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:14:10Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T090207346Z-f5919fa0"
+      ],
+      "completedAt": "2026-09-29T09:14:10Z"
+    },
+    {
+      "id": "WI-0079",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/store/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/store.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/store/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:27:55Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T091518878Z-cf6daf30"
+      ],
+      "completedAt": "2026-09-29T09:27:55Z"
+    },
+    {
+      "id": "WI-0080",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_store.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:27:54Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T091520074Z-3df2cfcf"
+      ],
+      "completedAt": "2026-09-29T09:27:54Z"
+    },
+    {
+      "id": "WI-0081",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/adapters/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/adapters.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/adapters/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:39:40Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T092835707Z-b2284c0e"
+      ],
+      "completedAt": "2026-09-29T09:39:40Z"
+    },
+    {
+      "id": "WI-0082",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_adapters.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T09:39:40Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T092836905Z-f42f8cec"
+      ],
+      "completedAt": "2026-09-29T09:39:40Z"
+    },
+    {
+      "id": "WI-0083",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/http-profile.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/core-http/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:00:21Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T094100408Z-cc0f5047"
+      ],
+      "completedAt": "2026-09-29T10:00:21Z"
+    },
+    {
+      "id": "WI-0084",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/fsharp/Limen.Contract.Pressure/Consumer.fs"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/guest-pressure.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:00:21Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T095715762Z-e9a3171f"
+      ],
+      "completedAt": "2026-09-29T10:00:21Z"
+    },
+    {
+      "id": "WI-0085",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/budgets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:00:22Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T095746055Z-83d233d9"
+      ],
+      "completedAt": "2026-09-29T10:00:22Z"
+    },
+    {
+      "id": "WI-0086",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/transfer/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/transfer.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/transfer/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:10:41Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T100058679Z-e7929898"
+      ],
+      "completedAt": "2026-09-29T10:10:41Z"
+    },
+    {
+      "id": "WI-0087",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_transfer.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:10:41Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T100059945Z-db114122"
+      ],
+      "completedAt": "2026-09-29T10:10:41Z"
+    },
+    {
+      "id": "WI-0088",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Http/Http.fs"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/http/http.vectors.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:18:02Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T101129091Z-01712bce"
+      ],
+      "completedAt": "2026-09-29T10:18:02Z"
+    },
+    {
+      "id": "WI-0089",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/projection-atomicity.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:24:55Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T101935648Z-6f6cdaaa"
+      ],
+      "completedAt": "2026-09-29T10:24:55Z"
+    },
+    {
+      "id": "WI-0090",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel-lifecycle.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:30:13Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T102520126Z-df677957"
+      ],
+      "completedAt": "2026-09-29T10:30:13Z"
+    },
+    {
+      "id": "WI-0091",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/hosts/fallback.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/fallback-host.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/core-fallback/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:39:00Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T103102247Z-23ccd1fa"
+      ],
+      "completedAt": "2026-09-29T10:39:00Z"
+    },
+    {
+      "id": "WI-0092",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/federation.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/federation-lazy.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:46:03Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T104125958Z-018f0a88"
+      ],
+      "completedAt": "2026-09-29T10:46:03Z"
+    },
+    {
+      "id": "WI-0093",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/presentation/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/presentation.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/presentation/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:56:07Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T104634284Z-a9d16cf0"
+      ],
+      "completedAt": "2026-09-29T10:56:07Z"
+    },
+    {
+      "id": "WI-0094",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_presentation.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:56:07Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T104635510Z-0a81feac"
+      ],
+      "completedAt": "2026-09-29T10:56:07Z"
+    },
+    {
+      "id": "WI-0095",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/environment/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/environment.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/environment/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:06:01Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T105639078Z-eea1d07c"
+      ],
+      "completedAt": "2026-09-29T11:06:01Z"
+    },
+    {
+      "id": "WI-0096",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/src/limen_environment.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:06:00Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T105640297Z-deeb4d6e"
+      ],
+      "completedAt": "2026-09-29T11:06:00Z"
+    },
+    {
+      "id": "WI-0097",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Localization/Localization.fs"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/localization/localization.vectors.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:11:56Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T110630937Z-8899a9ee"
+      ],
+      "completedAt": "2026-09-29T11:11:56Z"
+    },
+    {
+      "id": "WI-0098",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/tooling/hot-reload.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/hot-reload.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/core-hot-reload/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:18:26Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T111250708Z-d461ed96"
+      ],
+      "completedAt": "2026-09-29T11:18:26Z"
+    },
+    {
+      "id": "WI-0099",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "research/decisions/DF-LIMEN-2026-0004--virtualization-evidence-gate.md"
+        },
+        {
+          "type": "tests",
+          "path": "bench/results/baseline-2026-09-29.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:19:42Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T111928973Z-f735d3f4"
+      ],
+      "completedAt": "2026-09-29T11:19:42Z"
+    },
+    {
+      "id": "WI-0100",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/lifecycle/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/lifecycle.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/lifecycle/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:35:28Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T112013747Z-90176855"
+      ],
+      "completedAt": "2026-09-29T11:35:28Z"
+    },
+    {
+      "id": "WI-0101",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/lifecycle/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/lifecycle.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/lifecycle/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:35:27Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T112015077Z-c95b87a1"
+      ],
+      "completedAt": "2026-09-29T11:35:27Z"
+    },
+    {
+      "id": "WI-0102",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Outbox/Outbox.fs"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/outbox/outbox.vectors.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:40:52Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T113759644Z-ab1fdb3c"
+      ],
+      "completedAt": "2026-09-29T11:40:52Z"
+    },
+    {
+      "id": "WI-0103",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/http-unknown.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/core-http/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:56:18Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T114259446Z-1bbd45fe"
+      ],
+      "completedAt": "2026-09-29T11:56:18Z"
+    },
+    {
+      "id": "WI-0104",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/fsharp/Limen.Contract.Pressure/Consumer.fs"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/examples/consumer.rs"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:56:19Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T115237409Z-fa9a33fe"
+      ],
+      "completedAt": "2026-09-29T11:56:19Z"
+    },
+    {
+      "id": "WI-0105",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/budgets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T11:56:20Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T115555554Z-b9a66152"
+      ],
+      "completedAt": "2026-09-29T11:56:20Z"
+    },
+    {
+      "id": "WI-0106",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/offline/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/offline.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/offline/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:15:42Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T115943167Z-13d718f1"
+      ],
+      "completedAt": "2026-09-29T12:15:42Z"
+    },
+    {
+      "id": "WI-0107",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/offline/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/offline.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/offline/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:15:41Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T115944531Z-86f940e5"
+      ],
+      "completedAt": "2026-09-29T12:15:41Z"
+    },
+    {
+      "id": "WI-0108",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/hosts/worker-transport.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/worker-transport.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "scripts/smoke-guests.ts"
+        },
+        {
+          "type": "benchmark",
+          "path": "bench/results/worker-hosting.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:31:51Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T121714370Z-f3f42269"
+      ],
+      "completedAt": "2026-09-29T12:31:51Z"
+    },
+    {
+      "id": "WI-0109",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/hosts/worker-transport.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/worker-transport.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "scripts/smoke-guests.ts"
+        },
+        {
+          "type": "benchmark",
+          "path": "bench/results/worker-hosting.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:31:50Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T121715790Z-0973705f"
+      ],
+      "completedAt": "2026-09-29T12:31:50Z"
+    },
+    {
+      "id": "WI-0110",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capability-support/permissions.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/permissions.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/permissions/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:47:19Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T133001100Z-be82e7dd"
+      ],
+      "completedAt": "2026-09-29T13:47:19Z"
+    },
+    {
+      "id": "WI-0111",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capability-support/permissions.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/permissions.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/permissions/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:47:20Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T133002253Z-17ded246"
+      ],
+      "completedAt": "2026-09-29T13:47:20Z"
+    },
+    {
+      "id": "WI-0112",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capability-support/permissions.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/permissions.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/permissions/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:47:18Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T133002868Z-45e9cf59"
+      ],
+      "completedAt": "2026-09-29T13:47:18Z"
+    },
+    {
+      "id": "WI-0113",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "examples/10-canvas-surface/scatter-adapter.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/canvas-surface.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "examples/10-canvas-surface/checks.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:58:32Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T134856010Z-e8c3953e"
+      ],
+      "completedAt": "2026-09-29T13:58:32Z"
+    },
+    {
+      "id": "WI-0114",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/coordination/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/coordination.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/coordination/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T14:16:17Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T135941465Z-310af3b3"
+      ],
+      "completedAt": "2026-09-29T14:16:17Z"
+    },
+    {
+      "id": "WI-0115",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/coordination/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/coordination.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/coordination/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T14:16:16Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T135942127Z-db2607c0"
+      ],
+      "completedAt": "2026-09-29T14:16:16Z"
+    },
+    {
+      "id": "WI-0116",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/binding-policy.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/head-metadata.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T14:43:44Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T141813247Z-91aec097"
+      ],
+      "completedAt": "2026-09-29T14:43:44Z"
+    },
+    {
+      "id": "WI-0117",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/budgets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T14:43:45Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T144214676Z-8c08f0dd"
+      ],
+      "completedAt": "2026-09-29T14:43:45Z"
+    },
+    {
+      "id": "WI-0118",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "architecture/layers.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/renderer.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:28:00Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T145004999Z-889d87ca"
+      ],
+      "completedAt": "2026-09-29T16:28:00Z"
+    },
+    {
+      "id": "WI-0119",
+      "type": "task",
+      "state": "active",
+      "semanticState": "active",
+      "evidence": [],
+      "updatedAt": "2026-09-29T14:50:05Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T145005562Z-9fb7aebd"
+      ]
+    },
+    {
+      "id": "WI-0120",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/core.ts"
+        },
+        {
+          "type": "manifest",
+          "path": "architecture/core.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/core-boundary.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:28:00Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T162017034Z-73108c3f"
+      ],
+      "completedAt": "2026-09-29T16:28:00Z"
+    },
+    {
+      "id": "WI-0121",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/root-surface.test.ts"
+        },
+        {
+          "type": "boundary",
+          "path": "test/core-boundary.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:38:45Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T162838539Z-3c1a9c03"
+      ],
+      "completedAt": "2026-09-29T16:38:45Z"
+    },
+    {
+      "id": "WI-0122",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/core-metrics.ts"
+        },
+        {
+          "type": "baseline",
+          "path": "architecture/core-baseline.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/core-budget.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:47:29Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T163935320Z-19fdc1b7"
+      ],
+      "completedAt": "2026-09-29T16:47:29Z"
+    },
+    {
+      "id": "WI-0123",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/learning.ts"
+        },
+        {
+          "type": "admission",
+          "path": "tools/guardrails/admission.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/learning-contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:57:41Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T164900374Z-0b200ad2"
+      ],
+      "completedAt": "2026-09-29T16:57:41Z"
+    },
+    {
+      "id": "WI-0124",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/ROADMAP.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:59:09Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T165823968Z-dfc32798"
+      ],
+      "completedAt": "2026-09-29T16:59:09Z"
+    },
+    {
+      "id": "WI-0125",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "test/guest-minimal-core.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/guest-minimal-core.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T17:03:19Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T170237351Z-88813c47"
+      ],
+      "completedAt": "2026-09-29T17:03:19Z"
+    },
+    {
+      "id": "WI-0126",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/architecture/core-boundary-v1.md"
+        },
+        {
+          "type": "tests",
+          "path": "test/core-boundary.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T17:11:17Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T171034029Z-921daff9"
+      ],
+      "completedAt": "2026-09-29T17:11:17Z"
     }
   ]
 }

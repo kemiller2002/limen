@@ -1,0 +1,54 @@
+{
+  "doc": "The kitchen-sink demo (examples/kitchen-sink.js), whose engine is a page script no test imports. This contract therefore claims only what the HTML itself requires: booleans where data-if or a boolean property demands one, scalars elsewhere. Checked against the HTML statically.",
+  "view": {
+    "counter": "scalar",
+    "panelOpen": "boolean",
+    "query": "scalar",
+    "items": {
+      "list": {
+        "id": "scalar",
+        "selected": "scalar",
+        "label": "scalar"
+      }
+    },
+    "storedValue": "scalar",
+    "deliberatelyMissing": "scalar",
+    "log": {
+      "list": {
+        "id": "scalar",
+        "text": "scalar"
+      }
+    }
+  },
+  "events": {
+    "increment": {},
+    "toggle": {},
+    "search": {
+      "value": true
+    },
+    "addItem": {},
+    "shuffle": {},
+    "selectItem": {
+      "item": "items"
+    },
+    "removeItem": {
+      "item": "items"
+    },
+    "triggerSuccess": {},
+    "triggerNetworkFailure": {},
+    "triggerInvalidResponse": {},
+    "triggerTimeout": {},
+    "triggerCancellable": {},
+    "cancelEffect": {},
+    "triggerPut": {},
+    "storageDraft": {
+      "value": true
+    },
+    "storageSet": {},
+    "storageGet": {},
+    "storageRemove": {},
+    "storageQuotaDemo": {},
+    "triggerBrokenProjection": {},
+    "breakTransport": {}
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "unit": "limen.coordination",
+  "role": "capability",
+  "version": 1,
+  "doc": "Coordination among tabs, windows, frames and workers of one application (LCP-040), without shared mutable state: each context's engine keeps its own state, and only JSON messages cross. Channels are same-origin broadcast (BroadcastChannel, or a SharedWorker hub the host serves); frame messaging is point-to-point with one exact origin, never a wildcard, and accepts only messages from that frame at that origin. Every message is size-bounded and checked as JSON before an engine sees it; the engine decodes its own schema. Web Locks are coordination mechanics: holding one means only that no other context holds it; what that means (a leader, a writer) is the engine's. A context that disappears releases its locks, so the next contender acquires.",
+  "types": [
+    { "name": "ContextId", "kind": "brand", "of": "string", "doc": "This page instance, issued at random by the pack; how other contexts tell messages apart." },
+    { "name": "LockHandle", "kind": "brand", "of": "string", "doc": "Opaque; issued by this page's pack." },
+    { "name": "PeerId", "kind": "brand", "of": "string", "doc": "Opaque; a frame or parent this page listens to." },
+    { "name": "Via", "kind": "enum", "doc": "broadcast: BroadcastChannel. hub: a SharedWorker relay the host serves.", "values": ["broadcast", "hub"] },
+    { "name": "LockMode", "kind": "enum", "values": ["exclusive", "shared"] },
+    { "name": "UndeliverableReason", "kind": "enum", "values": ["not-json", "malformed", "too-large"] },
+    { "name": "RefusedReason", "kind": "enum", "doc": "wrong-origin: the sender's origin is not the declared one. wrong-source: right origin, but not the declared frame. not-json: the message was not bounded JSON.", "values": ["wrong-origin", "wrong-source", "not-json"] },
+    {
+      "name": "FrameTarget",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "frame", "doc": "An iframe named in HTML by data-frame-target.", "fields": [ { "name": "name", "type": "string" } ] },
+        { "name": "parent", "doc": "The page this document is framed in.", "fields": [] }
+      ]
+    },
+    {
+      "name": "CoordinationRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "identity", "fields": [] },
+        { "name": "open", "fields": [ { "name": "channel", "type": "string" }, { "name": "via", "type": "Via" } ] },
+        { "name": "close", "fields": [ { "name": "channel", "type": "string" } ] },
+        { "name": "broadcast", "doc": "To every other context with the channel open; never back to this one.", "fields": [ { "name": "channel", "type": "string" }, { "name": "message", "type": "json" } ] },
+        { "name": "acquire", "doc": "wait false answers Busy at once if another context holds it; steal takes it from the holder, which hears LockLost.", "fields": [ { "name": "name", "type": "string" }, { "name": "mode", "type": "LockMode" }, { "name": "wait", "type": "bool" }, { "name": "steal", "type": "bool" } ] },
+        { "name": "release", "fields": [ { "name": "lock", "type": "LockHandle" } ] },
+        { "name": "listen", "doc": "origin must be an exact origin (scheme, host, port); no wildcard, no opaque origin.", "fields": [ { "name": "target", "type": "FrameTarget" }, { "name": "origin", "type": "string" } ] },
+        { "name": "post", "fields": [ { "name": "peer", "type": "PeerId" }, { "name": "message", "type": "json" } ] },
+        { "name": "unlisten", "fields": [ { "name": "peer", "type": "PeerId" } ] }
+      ]
+    },
+    {
+      "name": "CoordinationResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Identity", "fields": [ { "name": "context", "type": "ContextId" } ] },
+        { "name": "Opened", "fields": [ { "name": "channel", "type": "string" }, { "name": "context", "type": "ContextId" } ] },
+        { "name": "AlreadyOpen", "fields": [] },
+        { "name": "Closed", "fields": [] },
+        { "name": "NotOpen", "fields": [] },
+        { "name": "Sent", "fields": [] },
+        { "name": "TooLarge", "doc": "The serialized message is longer than limit characters.", "fields": [ { "name": "limit", "type": "int" } ] },
+        { "name": "Acquired", "fields": [ { "name": "lock", "type": "LockHandle" } ] },
+        { "name": "Busy", "fields": [] },
+        { "name": "Released", "fields": [] },
+        { "name": "UnknownLock", "fields": [] },
+        { "name": "Listening", "fields": [ { "name": "peer", "type": "PeerId" } ] },
+        { "name": "InvalidOrigin", "fields": [ { "name": "problem", "type": "string" } ] },
+        { "name": "NotFound", "fields": [] },
+        { "name": "PeerGone", "doc": "The frame was removed, or navigated away from the declared origin.", "fields": [] },
+        { "name": "UnknownPeer", "fields": [] },
+        { "name": "Unlistened", "fields": [] },
+        { "name": "Unsupported", "fields": [] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "CoordinationFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Received", "fields": [ { "name": "channel", "type": "string" }, { "name": "from", "type": "ContextId" }, { "name": "message", "type": "json" } ] },
+        { "name": "Undeliverable", "doc": "Something arrived on the channel that the pack will not pass on.", "fields": [ { "name": "channel", "type": "string" }, { "name": "reason", "type": "UndeliverableReason" } ] },
+        { "name": "LockLost", "doc": "Another context stole the lock; this context no longer holds it.", "fields": [ { "name": "lock", "type": "LockHandle" } ] },
+        { "name": "PeerMessage", "fields": [ { "name": "peer", "type": "PeerId" }, { "name": "message", "type": "json" } ] },
+        { "name": "PeerRefused", "doc": "A message that was not delivered; origin is what the browser reported.", "fields": [ { "name": "peer", "type": "PeerId" }, { "name": "origin", "type": "string" }, { "name": "reason", "type": "RefusedReason" } ] }
+      ]
+    }
+  ]
+}

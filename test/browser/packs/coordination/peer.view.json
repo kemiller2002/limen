@@ -1,0 +1,7 @@
+{
+  "doc": "The coordination pack's second tab (scripts/smoke-packs.ts). Its engine is peer.js; nothing is bound.",
+  "view": {},
+  "events": {
+    "poke": {}
+  }
+}

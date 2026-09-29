@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0081",
+  "reference": "kemiller2002/limen#30 (LCP-021)",
+  "placement": "Capability Pack — src/capabilities/adapters/ with its own contract unit. The application explicitly registers adapters (id and version); the engine mounts one into a named slot and drives it by an opaque instance id; the adapter speaks only through JSON facts. Every adapter call is fault-isolated and a faulted instance is quarantined. A generic Web Component adapter ships as a separately loaded module; a complex widget stub lives with the tests. Adapters run with page authority: the trust boundary is documented, not hidden. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/adapters.contract.json", "src/capabilities/adapters/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -197,14 +197,18 @@ distinct failures are handled, and none of them throw:
 | What failed | Reported as | What happens to the DOM |
 | --- | --- | --- |
 | `transport.dispatch()` rejected | `BridgeError { phase: "dispatch" }` | unchanged — last good view stays |
-| Applying the view threw | `BridgeError { phase: "projection" }` | **possibly partially applied** |
+| The view is malformed | `BridgeError { phase: "projection" }` | unchanged — none of it is applied, and its effects do not run |
 | `transport.start()` rejected | `BridgeError { phase: "dispatch" }` | never bound at all |
 
-The middle row deserves care. `#applyScope` writes bindings in order, so a
-projection that is valid for the first three bindings and invalid for the fourth
-leaves the first three applied. The kernel stops and reports rather than
-continuing, but it does not roll back. Projections should be total — every key
-any binding names should be present in every projection.
+The middle row deserves care. A projection is applied **all or nothing**. The
+kernel checks it completely before writing anything: every bound key, every
+list, every row, and every section or row that would mount, against its
+template. If any part would fail, none of it is written and its effects are
+not run (kemiller2002/limen#50). Until that change, a projection that was
+valid for the first three bindings and invalid for the fourth left the first
+three applied. Projections should still be total — every key any binding names
+should be present in every projection — because a malformed one changes
+nothing at all.
 
 Nothing here crashes the page, and nothing is guessed. The kernel never
 substitutes a default for a missing view key.
@@ -229,7 +233,8 @@ Classification is transport-level only — never business meaning:
 | Situation | Outcome |
 | --- | --- |
 | Response received and `.json()` parsed | `Success { status, body }` — *any* status, including 500 |
-| `fetch` threw, not aborted | `Failure { reason: "network" }` |
+| `fetch` threw, not aborted, for `GET`/`HEAD`/`OPTIONS`, or while the browser was offline | `Failure { reason: "network" }` |
+| `fetch` threw, not aborted, for `POST`/`PUT`/`PATCH`/`DELETE` while online | `OutcomeUnknown { reason: "connection-lost" }` (protocol 1.4; a 1.3 engine hears `timeout-after-dispatch`) |
 | Body was not valid JSON | `Failure { reason: "invalid-response", status }` — the status rides along, since a response *did* arrive |
 | Aborted with reason `"cancelled"` | `Cancelled` |
 | Aborted with reason `"timeout"` | `OutcomeUnknown { reason: "timeout-after-dispatch" }` |
@@ -239,6 +244,13 @@ what a status code means. Your engine checks `outcome.status`.
 
 **A timeout is never a `Failure`.** `fetch` may already have sent the request,
 so the kernel cannot claim it did not happen.
+
+**Nor is a lost connection on a write.** `fetch` throws the same `TypeError`
+whether the request never left or the connection dropped after the server had
+it. Chromium may even have resent it: a POST whose connection was reset reached
+the test server twice before `fetch` rejected. A throw is a confident `Failure`
+only when nothing can have changed: the method is safe, or `navigator.onLine`
+was already `false`.
 
 ### Storage
 
@@ -264,12 +276,32 @@ receives request headers or body"). Preserve that invariant in your own sink.
 
 ---
 
-## Shutdown
+## Status and shutdown
 
-There isn't one. `BrowserKernel` has no `stop()`, `destroy()`, or `unbind()`.
-Listeners live as long as the page. For a normal page load this is correct; if
-you need to tear a kernel down inside a longer-lived host, that capability does
-not exist today.
+`kernel.status` reports the kernel's phase:
+
+- `unstarted`, `starting`, `running`;
+- `incompatible` (the handshake was refused);
+- `faulted` (the transport could not start, `Initialize` failed, or a binding
+  was refused at start);
+- `disposed`.
+
+It is the bridge's own state, never the application's. A host reads it after
+`start()` to know whether the engine is available.
+
+`kernel.dispose()` ends a kernel so another can take the page
+(kemiller2002/limen#50):
+
+- every listener the kernel registered is removed, because each carried one
+  signal from the document's own window;
+- every in-flight effect is aborted, and its result is never delivered, since
+  the engine it belonged to is gone;
+- the kernel sends nothing afterwards, including capability facts.
+
+A kernel disposed while its transport is still starting never binds.
+`dispose()` does not touch the DOM and decides nothing: restoring or replacing
+the page is the host's policy ([44](44-fatal-fallback.md)). For a normal page
+load you never call it; listeners live as long as the page.
 
 ### Never call `start()` twice
 

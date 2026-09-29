@@ -1,7 +1,7 @@
 {
   "name": "@echelon-foundry/typescript-wasm-kernel",
   "version": "0.6.2",
-  "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority. A dependency-free browser kernel — HTTP, storage, clipboard and history as typed effects, with application state, transitions and decisions kept out of the browser entirely — plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
+  "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority. A dependency-free browser kernel \u2014 HTTP, storage, clipboard and history as typed effects, with application state, transitions and decisions kept out of the browser entirely \u2014 plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -15,13 +15,145 @@
       "types": "./dist/protocol.d.ts",
       "import": "./dist/protocol.js"
     },
+    "./contract": {
+      "types": "./dist/generated/core.codec.d.ts",
+      "import": "./dist/generated/core.codec.js"
+    },
+    "./capabilities": {
+      "types": "./dist/kernel/capabilities.d.ts",
+      "import": "./dist/kernel/capabilities.js"
+    },
+    "./capabilities/focus": {
+      "types": "./dist/capabilities/focus/index.d.ts",
+      "import": "./dist/capabilities/focus/index.js"
+    },
+    "./capabilities/schedule": {
+      "types": "./dist/capabilities/schedule/index.d.ts",
+      "import": "./dist/capabilities/schedule/index.js"
+    },
+    "./capabilities/measure": {
+      "types": "./dist/capabilities/measure/index.d.ts",
+      "import": "./dist/capabilities/measure/index.js"
+    },
+    "./capabilities/events": {
+      "types": "./dist/capabilities/events/index.d.ts",
+      "import": "./dist/capabilities/events/index.js"
+    },
+    "./capabilities/overlay": {
+      "types": "./dist/capabilities/overlay/index.d.ts",
+      "import": "./dist/capabilities/overlay/index.js"
+    },
+    "./capabilities/realtime": {
+      "types": "./dist/capabilities/realtime/index.d.ts",
+      "import": "./dist/capabilities/realtime/index.js"
+    },
+    "./capabilities/files": {
+      "types": "./dist/capabilities/files/index.d.ts",
+      "import": "./dist/capabilities/files/index.js"
+    },
+    "./capabilities/store": {
+      "types": "./dist/capabilities/store/index.d.ts",
+      "import": "./dist/capabilities/store/index.js"
+    },
+    "./capabilities/adapters": {
+      "types": "./dist/capabilities/adapters/index.d.ts",
+      "import": "./dist/capabilities/adapters/index.js"
+    },
+    "./capabilities/adapters/web-component": {
+      "types": "./dist/capabilities/adapters/web-component.d.ts",
+      "import": "./dist/capabilities/adapters/web-component.js"
+    },
+    "./capabilities/transfer": {
+      "types": "./dist/capabilities/transfer/index.d.ts",
+      "import": "./dist/capabilities/transfer/index.js"
+    },
+    "./capabilities/presentation": {
+      "types": "./dist/capabilities/presentation/index.d.ts",
+      "import": "./dist/capabilities/presentation/index.js"
+    },
+    "./capabilities/environment": {
+      "types": "./dist/capabilities/environment/index.d.ts",
+      "import": "./dist/capabilities/environment/index.js"
+    },
+    "./capabilities/lifecycle": {
+      "types": "./dist/capabilities/lifecycle/index.d.ts",
+      "import": "./dist/capabilities/lifecycle/index.js"
+    },
+    "./capabilities/offline": {
+      "types": "./dist/capabilities/offline/index.d.ts",
+      "import": "./dist/capabilities/offline/index.js"
+    },
+    "./capabilities/offline/worker": {
+      "types": "./dist/capabilities/offline/worker.d.ts",
+      "import": "./dist/capabilities/offline/worker.js"
+    },
+    "./capabilities/geolocation": {
+      "types": "./dist/capabilities/geolocation/index.d.ts",
+      "import": "./dist/capabilities/geolocation/index.js"
+    },
+    "./capabilities/credentials": {
+      "types": "./dist/capabilities/credentials/index.d.ts",
+      "import": "./dist/capabilities/credentials/index.js"
+    },
+    "./capabilities/coordination": {
+      "types": "./dist/capabilities/coordination/index.d.ts",
+      "import": "./dist/capabilities/coordination/index.js"
+    },
+    "./capabilities/coordination/hub": {
+      "types": "./dist/capabilities/coordination/hub.d.ts",
+      "import": "./dist/capabilities/coordination/hub.js"
+    },
+    "./hosts/fallback": {
+      "types": "./dist/hosts/fallback.d.ts",
+      "import": "./dist/hosts/fallback.js"
+    },
+    "./capability-support/handles": {
+      "types": "./dist/capability-support/handles.d.ts",
+      "import": "./dist/capability-support/handles.js"
+    },
+    "./hosts/dotnet-wasm": {
+      "types": "./dist/hosts/dotnet-wasm-transport.d.ts",
+      "import": "./dist/hosts/dotnet-wasm-transport.js"
+    },
+    "./hosts/raw-wasm": {
+      "types": "./dist/hosts/raw-wasm-transport.d.ts",
+      "import": "./dist/hosts/raw-wasm-transport.js"
+    },
+    "./hosts/worker": {
+      "types": "./dist/hosts/worker-transport.d.ts",
+      "import": "./dist/hosts/worker-transport.js"
+    },
+    "./hosts/worker-engine": {
+      "types": "./dist/hosts/worker-engine.d.ts",
+      "import": "./dist/hosts/worker-engine.js"
+    },
+    "./testing": {
+      "types": "./dist/tooling/fake-host.d.ts",
+      "import": "./dist/tooling/fake-host.js"
+    },
+    "./testing/providers": {
+      "types": "./dist/tooling/provider-conformance.d.ts",
+      "import": "./dist/tooling/provider-conformance.js"
+    },
+    "./tooling/hot-reload": {
+      "types": "./dist/tooling/hot-reload.d.ts",
+      "import": "./dist/tooling/hot-reload.js"
+    },
+    "./testing/views": {
+      "types": "./dist/tooling/view-contract.d.ts",
+      "import": "./dist/tooling/view-contract.js"
+    },
+    "./trace": {
+      "types": "./dist/tooling/trace.d.ts",
+      "import": "./dist/tooling/trace.js"
+    },
     "./kernel": {
       "types": "./dist/kernel/browser-kernel.d.ts",
       "import": "./dist/kernel/browser-kernel.js"
     },
     "./reference-engine": {
-      "types": "./dist/engine/transport.d.ts",
-      "import": "./dist/engine/transport.js"
+      "types": "./dist/engine/index.d.ts",
+      "import": "./dist/engine/index.js"
     },
     "./federation": {
       "types": "./dist/federation.d.ts",
@@ -41,6 +173,7 @@
     "CHANGELOG.md",
     "LICENSE",
     "architecture.yaml",
+    "docs/core-mental-model.md",
     "docs/quick-start.md",
     "docs/mental-model.md",
     "docs/where-code-goes.md",
@@ -88,15 +221,17 @@
     "build": "tsc -p tsconfig.json",
     "build:examples": "tsc -p tsconfig.examples.json",
     "build:site": "npm run build:site:wasm && npm run test:site:fsharp && tsc -p tsconfig.site.json && node --experimental-strip-types scripts/build-site.ts",
+    "dev": "node --experimental-strip-types scripts/dev-server.ts",
     "serve:site": "npm run build:site && python3 -m http.server 4174 -d dist-site",
     "check:architecture": "node --experimental-strip-types scripts/check-architecture.ts",
     "check:docs": "node --experimental-strip-types scripts/check-docs.ts",
     "build:cli": "node --experimental-strip-types scripts/build-cli.ts --current",
     "build:cli:all": "node --experimental-strip-types scripts/build-cli.ts",
     "test:cli": "dotnet test cli/tests/Limen.Core.Tests/Limen.Core.Tests.fsproj --nologo -v q",
-    "pretest": "npm run build && npm run build:examples && npm run build:site",
-    "test": "npm run check:architecture && npm run check:docs && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
+    "pretest": "npm run build && npm run build:examples && npm run build:site && npm run build:bench",
+    "test": "npm run contract:check && npm run check:architecture && npm run check:core-budget && npm run check:layers && npm run check:typescript && npm run check:docs && npm run check:views && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
+    "check:core-budget": "node --experimental-strip-types scripts/check-core-budget.ts",
     "prepack": "npm run clean && npm run check && npm run build:cli:all",
     "check:site": "node --experimental-strip-types scripts/check-site.ts",
     "check:package": "node --experimental-strip-types scripts/check-package.ts",
@@ -104,7 +239,27 @@
     "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.ts",
     "build:site:wasm": "dotnet workload restore site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj && dotnet publish site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj -c Release -o site/fsharp/publish && dotnet publish site/fsharp/federation/Limen.Federation.Source.Wasm/Limen.Federation.Source.Wasm.csproj -c Release -o site/fsharp/federation/Limen.Federation.Source.Wasm/publish && dotnet publish site/fsharp/federation/Limen.Federation.Target.Wasm/Limen.Federation.Target.Wasm.csproj -c Release -o site/fsharp/federation/Limen.Federation.Target.Wasm/publish",
     "test:site:fsharp": "dotnet run --project site/fsharp/tests/Limen.Site.Engine.Tests/Limen.Site.Engine.Tests.fsproj -c Release && dotnet run --project site/fsharp/federation/tests/Limen.Federation.Proof.Tests/Limen.Federation.Proof.Tests.fsproj -c Release",
-    "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh"
+    "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh",
+    "contract:generate": "node --experimental-strip-types tools/contract-gen/main.ts generate",
+    "contract:check": "node --experimental-strip-types tools/contract-gen/main.ts check",
+    "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust && npm run test:guests:sessions && npm run test:libraries && npm run test:guests:pressure",
+    "test:libraries": "dotnet run --project conformance/routing/fsharp/Limen.Routing.Conformance/Limen.Routing.Conformance.fsproj -c Release --nologo && dotnet run --project conformance/forms/fsharp/Limen.Forms.Conformance/Limen.Forms.Conformance.fsproj -c Release --nologo && dotnet run --project conformance/resources/fsharp/Limen.Resources.Conformance/Limen.Resources.Conformance.fsproj -c Release --nologo && dotnet run --project conformance/http/fsharp/Limen.Http.Conformance/Limen.Http.Conformance.fsproj -c Release --nologo && dotnet run --project conformance/localization/fsharp/Limen.Localization.Conformance/Limen.Localization.Conformance.fsproj -c Release --nologo && dotnet run --project conformance/outbox/fsharp/Limen.Outbox.Conformance/Limen.Outbox.Conformance.fsproj -c Release --nologo",
+    "test:guests:fsharp": "dotnet run --project guests/fsharp/Limen.Contract.Conformance/Limen.Contract.Conformance.fsproj -c Release --nologo",
+    "test:guests:csharp": "dotnet run --project guests/csharp/Limen.Contract.Conformance/Limen.Contract.Conformance.csproj -c Release --nologo",
+    "test:guests:rust": "cargo test --manifest-path guests/rust/limen-contract/Cargo.toml --locked",
+    "check:layers": "node --experimental-strip-types scripts/check-layers.ts",
+    "check:scope": "node --experimental-strip-types scripts/check-scope.ts",
+    "check:typescript": "node --experimental-strip-types scripts/check-typescript.ts",
+    "test:guests:pressure": "node --experimental-strip-types scripts/guest-pressure.ts",
+    "build:guests": "node --experimental-strip-types scripts/build-guests-site.ts",
+    "smoke:guests": "node --experimental-strip-types scripts/smoke-guests.ts",
+    "smoke:packs": "npm run build && npm run build:examples && node --experimental-strip-types scripts/smoke-packs.ts",
+    "smoke:security": "npm run build && node --experimental-strip-types scripts/smoke-security.ts",
+    "check:views": "node --experimental-strip-types scripts/check-views.ts",
+    "build:bench": "tsc -p tsconfig.bench.json",
+    "bench": "npm run build && npm run build:bench && node --experimental-strip-types scripts/bench.ts",
+    "bench:worker": "npm run build && node --experimental-strip-types scripts/bench-worker.ts",
+    "test:guests:sessions": "dotnet run --project guests/minimal/fsharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.fsproj -c Release --nologo && dotnet run --project guests/minimal/csharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.csproj -c Release --nologo && cargo test --quiet --manifest-path guests/minimal/rust/limen-minimal/Cargo.toml"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",

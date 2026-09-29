@@ -21,7 +21,10 @@ or protocol type was renamed** — see
 
 CI's `validate` job rejects branches whose changes lack work-item attribution.
 Run `./ros add "…"` → `./ros work ready WI-####` → `./ros work start WI-####`
-**before** editing, and complete it with `ROS_BASE_REF=origin/main ./ros work
+**before** editing, commit its scope manifest
+(`architecture/work-scopes/WI-####.json`, see
+[docs/25-guardrails.md](docs/25-guardrails.md)) as the first change, and
+complete it with `ROS_BASE_REF=origin/main ./ros work
 complete WI-#### --evidence …` afterwards. See
 [AGENTS.md](AGENTS.md) Part 1 for the exact sequence.
 
@@ -64,9 +67,11 @@ Measured, not assumed — each of these cost real time to rediscover.
 | Capability | Reality |
 | --- | --- |
 | .NET SDK 8 | **Available.** `apt-get install dotnet-sdk-8.0` works. Microsoft's own CDN (`builds.dotnet.microsoft.com`) is proxy-blocked, but the Ubuntu archive is not — do not conclude from the CDN failure that F# is unavailable. |
+| .NET SDK version | **Not CI's.** The Ubuntu archive gives an older 8.0 feature band (8.0.1xx) than CI's `setup-dotnet 8.0.x`, and their F# compilers resolve some names differently: a record field named `Equals` compiled here and failed in CI as `Object.Equals`. Avoid member names that shadow `Object` members, and treat a green local F# build as necessary, not sufficient. |
 | Pushing a branch | **Allowed** — create and update both work. |
 | Pushing a tag | **Blocked.** Every form fails identically: annotated, lightweight, explicit refspec. The error is `send-pack: unexpected disconnect`, which looks transient and is not. |
 | Deleting any ref | **Blocked**, branches included. |
+| `npm run smoke:site:wasm` | **Fails here on unmodified `main`** (verified 2026-09-29 against `origin/main` in a clean worktree): Chrome `--dump-dom --virtual-time-budget` never reaches the F# marker. Playwright is available (`/opt/pw-browsers`; link the global `playwright` into `node_modules`) and loads both site pages to their markers — use it to verify, and let CI run the real script. `npm run smoke:browser` works. |
 
 Two consequences worth internalising before you act:
 
@@ -102,6 +107,11 @@ Read the proxy's own state instead — `curl -sS "$HTTPS_PROXY/__agentproxy/stat
   ambiguities, and open questions
 - [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md) —
   what Limen renamed and what it deliberately did not
+- [docs/core-mental-model.md](docs/core-mental-model.md) — **Limen Core in
+  seven concepts: the one mandatory model** (checked against
+  `architecture/core.json`)
+- [docs/core-admission.md](docs/core-admission.md) — how Core may grow, and
+  the decision order to try first
 - [docs/mental-model.md](docs/mental-model.md) — who owns state, the DOM,
   routing, decisions
 - [docs/where-code-goes.md](docs/where-code-goes.md) — which layer a change
@@ -174,6 +184,13 @@ code, not after.
 - `src/protocol.ts` — the stable engine↔kernel contract: `SemanticEvent`,
   `ViewState`, `EffectRequest`/`EffectResult`/`EffectOutcome`/`StorageOutcome`,
   `EngineTransport`. Read this file first; everything else is built on it.
+  Its wire types are **generated** from `contract/core.contract.json` into
+  `src/generated/` by `tools/contract-gen` — never edit generated files;
+  `npm run contract:check` (part of `npm test`) fails on stale or hand-edited
+  output. See `docs/24-contract-and-capabilities.md`.
+- `src/kernel/handshake.ts`, `src/kernel/capabilities.ts`,
+  `src/guest/handshake.ts` — the contract-fingerprint handshake (host and
+  engine halves) and the generic optional-capability seam.
 - `src/kernel/browser-kernel.ts` — the generic declarative bridge. Binds
   `data-event`/`data-text`/`data-bind-<attr>`/`data-if`/`data-each`, executes
   Http effects (any method, caller headers/body), Storage effects
@@ -197,7 +214,7 @@ code, not after.
   interactive reference for every bridge primitive and every
   `EffectOutcome`, driven by a throwaway demo engine (not part of the
   published package).
-- `examples/01-counter/` … `examples/08-routing/` — eight progressive example
+- `examples/01-counter/` … `examples/09-accessible-patterns/` — nine progressive example
   applications, each driven by `test/examples.test.ts` against its own real
   `index.html`, so none can silently rot, and each with its own README. Start
   at `01-counter`. `07-clipboard` and `08-routing` cover the two newest
@@ -237,6 +254,24 @@ npm test                   # pretest (build + build:examples) → architecture
                            #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)
 
+npm run check:core-budget  # Core size/exports/primitives/families vs architecture/core-baseline.json
+npm run check:layers       # dependency directions (architecture/layers.json)
+npm run check:scope        # commits vs. their work items' declared scopes
+npm run check:typescript   # restricted handwritten TypeScript (compiler API)
+npm run contract:generate  # regenerate every binding from contract/*.contract.json
+npm run contract:check     # fail on stale / hand-edited / missing / orphaned bindings
+npm run build:guests       # F#, C#, Rust minimal engines → WebAssembly → dist-guests/
+npm run smoke:guests       # each WASM engine drives every capability in Chromium,
+                           #   in the page and in a dedicated worker (docs/50)
+npm run bench:worker       # worker hosting: startup, latency, payload, responsiveness
+npm run dev                # dev server + change stream for hot reload (docs/47)
+npm run bench              # performance baseline → bench/results/latest.json (docs/27)
+npm run check:views        # every page against its *.view.json contract (docs/28)
+npm run smoke:security     # strict CSP + Trusted Types in Chromium: kernel and guests (docs/29)
+npm run smoke:packs        # every capability pack page in Chromium under strict CSP (test/browser/packs/)
+npm run test:guests        # F#, C#, Rust bindings: strict build + shared vectors
+npm run test:libraries     # engine libraries (F# routing) against their language-neutral vectors
+                           #   (needs .NET SDK 8 and cargo; crates.io is reachable)
 npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)
 npm run build:cli          # publish the CLI binary for this platform
 npm run build:cli:all      # publish all five platform binaries

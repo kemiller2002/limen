@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0110",
+  "reference": "kemiller2002/limen#42 (LCP-036)",
+  "placement": "Capability Packs + capability-support. The shared permission pattern (permission state, availability kept distinct from denial, user-gesture checks, permission-change watching) is mechanism every permission-sensitive pack needs, so it lives in src/capability-support/permissions.ts, which packs may import and Core never does. The geolocation pack (src/capabilities/geolocation) is the device-facing reference. Browser permission is evidence, never application authorization: the engine decides what a granted permission lets the user do. Nothing is requested at initialization. Core unchanged. The smoke runner gains permission, geolocation and host actions.",
+  "guardrail": false,
+  "paths": ["contract/geolocation.contract.json", "src/capability-support/permissions.ts", "src/capabilities/geolocation/**", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

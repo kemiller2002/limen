@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0079",
+  "reference": "kemiller2002/limen#28 (LCP-018)",
+  "placement": "Capability Pack — src/capabilities/store/ with its own contract unit. The engine declares database versions, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports mismatches, conflicts, blocked upgrades, quota and unavailability as typed outcomes. A transaction is one atomic batch of operations answered Committed or Aborted with the failing operation; putIf is a mechanical compare-and-put for stale writes. Migration meaning stays in the engine. Core and Storage (localStorage) unchanged; absent unless registered. The smoke runner gains reload and quota-override actions.",
+  "guardrail": false,
+  "paths": ["contract/store.contract.json", "src/capabilities/store/**", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

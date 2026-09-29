@@ -1,0 +1,1633 @@
+{
+  "doc": "Language-neutral form-state semantics (kemiller2002/limen#21, LCP-006). conformance/forms/README.md states the rules; these scenarios are the rules as data. Each step applies one command to the form and states the part of the resulting snapshot it cares about, plus exactly what the command emitted and why it was ignored, if it was. The F# reference library runs them in conformance/forms/fsharp/.",
+  "schemas": {
+    "signup": {
+      "fields": [
+        {
+          "name": "email",
+          "kind": "text",
+          "required": true,
+          "maxLength": 40,
+          "asyncValidator": "emailAvailable"
+        },
+        {
+          "name": "password",
+          "kind": "text",
+          "required": true,
+          "minLength": 8
+        },
+        {
+          "name": "age",
+          "kind": "integer",
+          "min": 13,
+          "max": 130
+        },
+        {
+          "name": "plan",
+          "kind": "choice",
+          "options": [
+            "free",
+            "pro"
+          ],
+          "required": true
+        },
+        {
+          "name": "company",
+          "kind": "text",
+          "requiredWhen": {
+            "field": "plan",
+            "equals": "pro"
+          },
+          "visibleWhen": {
+            "field": "plan",
+            "equals": "pro"
+          }
+        },
+        {
+          "name": "topics",
+          "kind": "choices",
+          "options": [
+            "news",
+            "tips",
+            "offers"
+          ],
+          "maxCount": 2
+        },
+        {
+          "name": "terms",
+          "kind": "flag",
+          "required": true
+        },
+        {
+          "name": "start",
+          "kind": "date",
+          "min": "2026-01-01"
+        },
+        {
+          "name": "at",
+          "kind": "time"
+        },
+        {
+          "name": "budget",
+          "kind": "number",
+          "min": 0
+        },
+        {
+          "name": "referral",
+          "kind": "text",
+          "readonly": true
+        },
+        {
+          "name": "legacyId",
+          "kind": "text",
+          "disabled": true
+        }
+      ],
+      "groups": []
+    },
+    "order": {
+      "fields": [
+        {
+          "name": "customer",
+          "kind": "text",
+          "required": true
+        }
+      ],
+      "groups": [
+        {
+          "name": "lines",
+          "fields": [
+            {
+              "name": "item",
+              "kind": "text",
+              "required": true
+            },
+            {
+              "name": "qty",
+              "kind": "integer",
+              "required": true,
+              "min": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "scenarios": [
+    {
+      "name": "invalid submit marks the intended fields touched, and only those",
+      "schema": "signup",
+      "steps": [
+        {
+          "load": {
+            "values": {
+              "referral": "friend-7",
+              "legacyId": "L-1",
+              "terms": "false"
+            },
+            "rows": {}
+          },
+          "expect": {
+            "status": "editing",
+            "valid": false,
+            "dirty": false,
+            "canSubmit": true,
+            "fields": {
+              "email": {
+                "value": "",
+                "touched": false,
+                "errors": [
+                  "required"
+                ],
+                "required": true
+              },
+              "company": {
+                "visible": false,
+                "required": false,
+                "errors": []
+              },
+              "referral": {
+                "value": "friend-7",
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "submit": {
+            "submitter": "create"
+          },
+          "expect": {
+            "status": "editing",
+            "valid": false,
+            "ignored": "invalid",
+            "fields": {
+              "email": {
+                "touched": true
+              },
+              "password": {
+                "touched": true
+              },
+              "plan": {
+                "touched": true
+              },
+              "terms": {
+                "touched": true,
+                "errors": [
+                  "required"
+                ]
+              },
+              "company": {
+                "touched": false
+              },
+              "legacyId": {
+                "touched": false,
+                "errors": []
+              },
+              "referral": {
+                "touched": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "sync validation: formats, bounds, conditional requirement and visibility",
+      "schema": "signup",
+      "steps": [
+        {
+          "load": {
+            "values": {},
+            "rows": {}
+          },
+          "expect": {
+            "status": "editing"
+          }
+        },
+        {
+          "input": {
+            "field": "age",
+            "value": "12"
+          },
+          "expect": {
+            "fields": {
+              "age": {
+                "value": "12",
+                "errors": [
+                  "below-min"
+                ],
+                "dirty": true,
+                "touched": false
+              }
+            },
+            "dirty": true
+          }
+        },
+        {
+          "input": {
+            "field": "age",
+            "value": "013"
+          },
+          "expect": {
+            "fields": {
+              "age": {
+                "errors": [
+                  "not-an-integer"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "age",
+            "value": ""
+          },
+          "expect": {
+            "fields": {
+              "age": {
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "password",
+            "value": "pässwörd"
+          },
+          "expect": {
+            "fields": {
+              "password": {
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "password",
+            "value": "short"
+          },
+          "expect": {
+            "fields": {
+              "password": {
+                "errors": [
+                  "too-short"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "a-very-long-address-that-goes-on@example.com"
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "errors": [
+                  "too-long"
+                ],
+                "pending": false
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "plan",
+            "value": "enterprise"
+          },
+          "expect": {
+            "fields": {
+              "plan": {
+                "errors": [
+                  "not-an-option"
+                ]
+              },
+              "company": {
+                "visible": false
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "plan",
+            "value": "pro"
+          },
+          "expect": {
+            "fields": {
+              "plan": {
+                "errors": []
+              },
+              "company": {
+                "visible": true,
+                "required": true,
+                "errors": [
+                  "required"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "topics",
+            "values": [
+              "news",
+              "tips",
+              "offers"
+            ]
+          },
+          "expect": {
+            "fields": {
+              "topics": {
+                "value": [
+                  "news",
+                  "tips",
+                  "offers"
+                ],
+                "errors": [
+                  "too-many"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "topics",
+            "values": [
+              "news",
+              "junk"
+            ]
+          },
+          "expect": {
+            "fields": {
+              "topics": {
+                "errors": [
+                  "not-an-option"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "topics",
+            "values": [
+              "tips",
+              "news"
+            ]
+          },
+          "expect": {
+            "fields": {
+              "topics": {
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "start",
+            "value": "2026-02-30"
+          },
+          "expect": {
+            "fields": {
+              "start": {
+                "errors": [
+                  "not-a-date"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "start",
+            "value": "2025-12-31"
+          },
+          "expect": {
+            "fields": {
+              "start": {
+                "errors": [
+                  "below-min"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "start",
+            "value": "2028-02-29"
+          },
+          "expect": {
+            "fields": {
+              "start": {
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "at",
+            "value": "24:00"
+          },
+          "expect": {
+            "fields": {
+              "at": {
+                "errors": [
+                  "not-a-time"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "at",
+            "value": "09:30:15"
+          },
+          "expect": {
+            "fields": {
+              "at": {
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "budget",
+            "value": "-0.5"
+          },
+          "expect": {
+            "fields": {
+              "budget": {
+                "errors": [
+                  "below-min"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "budget",
+            "value": "1e3"
+          },
+          "expect": {
+            "fields": {
+              "budget": {
+                "errors": [
+                  "not-a-number"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "budget",
+            "value": "1250.75"
+          },
+          "expect": {
+            "fields": {
+              "budget": {
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "terms",
+            "value": "yes"
+          },
+          "expect": {
+            "fields": {
+              "terms": {
+                "errors": [
+                  "not-a-flag"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "referral",
+            "value": "me"
+          },
+          "expect": {
+            "ignored": "not-editable",
+            "fields": {
+              "referral": {
+                "value": ""
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "legacyId",
+            "value": "x"
+          },
+          "expect": {
+            "ignored": "not-editable"
+          }
+        },
+        {
+          "input": {
+            "field": "nickname",
+            "value": "x"
+          },
+          "expect": {
+            "ignored": "unknown-field"
+          }
+        },
+        {
+          "blur": {
+            "field": "age"
+          },
+          "expect": {
+            "fields": {
+              "age": {
+                "touched": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "async validation is correlated and stale-safe",
+      "schema": "signup",
+      "steps": [
+        {
+          "load": {
+            "values": {},
+            "rows": {}
+          },
+          "expect": {
+            "status": "editing"
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "ada@example.com"
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "pending": true,
+                "errors": []
+              }
+            },
+            "valid": false,
+            "emitted": [
+              {
+                "validate": {
+                  "field": "email",
+                  "value": "ada@example.com",
+                  "token": "v1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "grace@example.com"
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "pending": true
+              }
+            },
+            "emitted": [
+              {
+                "validate": {
+                  "field": "email",
+                  "value": "grace@example.com",
+                  "token": "v2"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "asyncResult": {
+            "field": "email",
+            "token": "v1",
+            "error": "taken"
+          },
+          "expect": {
+            "ignored": "stale-async",
+            "fields": {
+              "email": {
+                "value": "grace@example.com",
+                "pending": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        {
+          "asyncResult": {
+            "field": "email",
+            "token": "v2",
+            "error": "taken"
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "pending": false,
+                "errors": [
+                  "taken"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "not an email that is way too long for the forty limit"
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "pending": false,
+                "errors": [
+                  "too-long"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "asyncResult": {
+            "field": "email",
+            "token": "v2",
+            "error": null
+          },
+          "expect": {
+            "ignored": "stale-async"
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "lin@example.com"
+          },
+          "expect": {
+            "emitted": [
+              {
+                "validate": {
+                  "field": "email",
+                  "value": "lin@example.com",
+                  "token": "v3"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "submit": {
+            "submitter": "create"
+          },
+          "expect": {
+            "ignored": "invalid",
+            "status": "editing",
+            "fields": {
+              "email": {
+                "touched": true
+              }
+            }
+          }
+        },
+        {
+          "asyncResult": {
+            "field": "email",
+            "token": "v3",
+            "error": null
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "pending": false,
+                "errors": []
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "autofill reconciles into engine state without touching or a second store",
+      "schema": "signup",
+      "steps": [
+        {
+          "load": {
+            "values": {},
+            "rows": {}
+          },
+          "expect": {
+            "status": "editing"
+          }
+        },
+        {
+          "fill": {
+            "values": {
+              "email": "ada@example.com",
+              "password": "correct horse",
+              "nickname": "ignored by design",
+              "legacyId": "also ignored"
+            }
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "value": "ada@example.com",
+                "touched": false,
+                "pending": true
+              },
+              "password": {
+                "value": "correct horse",
+                "touched": false,
+                "errors": []
+              },
+              "legacyId": {
+                "value": ""
+              }
+            },
+            "emitted": [
+              {
+                "validate": {
+                  "field": "email",
+                  "value": "ada@example.com",
+                  "token": "v1"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "submission lifecycle: success, server errors, failure and an unknown outcome",
+      "schema": "signup",
+      "steps": [
+        {
+          "load": {
+            "values": {
+              "referral": "friend-7",
+              "legacyId": "L-1",
+              "terms": "false",
+              "topics": [
+                "news"
+              ]
+            },
+            "rows": {}
+          },
+          "expect": {
+            "status": "editing"
+          }
+        },
+        {
+          "fill": {
+            "values": {
+              "password": "correct horse",
+              "plan": "free",
+              "terms": "true",
+              "age": "36",
+              "budget": "10.5"
+            }
+          },
+          "expect": {
+            "valid": false
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "ada@example.com"
+          },
+          "expect": {
+            "emitted": [
+              {
+                "validate": {
+                  "field": "email",
+                  "value": "ada@example.com",
+                  "token": "v1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "submit": {
+            "submitter": "create"
+          },
+          "expect": {
+            "ignored": "validation-pending",
+            "status": "editing",
+            "valid": false,
+            "fields": {
+              "email": {
+                "pending": true,
+                "touched": true
+              }
+            }
+          }
+        },
+        {
+          "asyncResult": {
+            "field": "email",
+            "token": "v1",
+            "error": null
+          },
+          "expect": {
+            "valid": true
+          }
+        },
+        {
+          "submit": {
+            "submitter": "create"
+          },
+          "expect": {
+            "status": "submitting",
+            "canSubmit": false,
+            "emitted": [
+              {
+                "submit": {
+                  "token": "s1",
+                  "submitter": "create",
+                  "values": {
+                    "email": "ada@example.com",
+                    "password": "correct horse",
+                    "age": 36,
+                    "plan": "free",
+                    "topics": [
+                      "news"
+                    ],
+                    "terms": true,
+                    "budget": 10.5,
+                    "referral": "friend-7"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "submit": {
+            "submitter": "create"
+          },
+          "expect": {
+            "ignored": "in-flight",
+            "status": "submitting"
+          }
+        },
+        {
+          "submitResult": {
+            "token": "s0",
+            "outcome": {
+              "kind": "success"
+            }
+          },
+          "expect": {
+            "ignored": "stale-submit",
+            "status": "submitting"
+          }
+        },
+        {
+          "submitResult": {
+            "token": "s1",
+            "outcome": {
+              "kind": "rejected",
+              "fields": {
+                "email": [
+                  "already registered"
+                ],
+                "shoeSize": [
+                  "unknown to this form"
+                ]
+              },
+              "global": [
+                "Try again later"
+              ]
+            }
+          },
+          "expect": {
+            "status": "rejected",
+            "canSubmit": true,
+            "valid": false,
+            "global": [
+              "Try again later",
+              "shoeSize: unknown to this form"
+            ],
+            "fields": {
+              "email": {
+                "errors": [
+                  "already registered"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "ada2@example.com"
+          },
+          "expect": {
+            "status": "editing",
+            "global": [
+              "Try again later",
+              "shoeSize: unknown to this form"
+            ],
+            "fields": {
+              "email": {
+                "errors": [],
+                "pending": true
+              }
+            },
+            "emitted": [
+              {
+                "validate": {
+                  "field": "email",
+                  "value": "ada2@example.com",
+                  "token": "v2"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "asyncResult": {
+            "field": "email",
+            "token": "v2",
+            "error": null
+          },
+          "expect": {
+            "valid": true
+          }
+        },
+        {
+          "submit": {
+            "submitter": "create"
+          },
+          "expect": {
+            "status": "submitting",
+            "global": [],
+            "emitted": [
+              {
+                "submit": {
+                  "token": "s2",
+                  "submitter": "create",
+                  "values": {
+                    "email": "ada2@example.com",
+                    "password": "correct horse",
+                    "age": 36,
+                    "plan": "free",
+                    "topics": [
+                      "news"
+                    ],
+                    "terms": true,
+                    "budget": 10.5,
+                    "referral": "friend-7"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "submitResult": {
+            "token": "s2",
+            "outcome": {
+              "kind": "failed"
+            }
+          },
+          "expect": {
+            "status": "failed",
+            "canSubmit": true,
+            "dirty": true
+          }
+        },
+        {
+          "submit": {
+            "submitter": "retry"
+          },
+          "expect": {
+            "status": "submitting",
+            "emitted": [
+              {
+                "submit": {
+                  "token": "s3",
+                  "submitter": "retry",
+                  "values": {
+                    "email": "ada2@example.com",
+                    "password": "correct horse",
+                    "age": 36,
+                    "plan": "free",
+                    "topics": [
+                      "news"
+                    ],
+                    "terms": true,
+                    "budget": 10.5,
+                    "referral": "friend-7"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "submitResult": {
+            "token": "s3",
+            "outcome": {
+              "kind": "unknown"
+            }
+          },
+          "expect": {
+            "status": "unknown",
+            "canSubmit": false
+          }
+        },
+        {
+          "submit": {
+            "submitter": "retry"
+          },
+          "expect": {
+            "ignored": "outcome-unknown",
+            "status": "unknown"
+          }
+        },
+        {
+          "reset": {},
+          "expect": {
+            "ignored": "outcome-unknown",
+            "status": "unknown"
+          }
+        },
+        {
+          "resolveUnknown": {
+            "applied": true
+          },
+          "expect": {
+            "status": "submitted",
+            "canSubmit": true,
+            "dirty": false,
+            "fields": {
+              "email": {
+                "dirty": false,
+                "touched": false
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "age",
+            "value": "37"
+          },
+          "expect": {
+            "status": "editing",
+            "dirty": true,
+            "fields": {
+              "age": {
+                "dirty": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "edits during submission stay dirty after success; a not-applied unknown returns to editing",
+      "schema": "order",
+      "steps": [
+        {
+          "load": {
+            "values": {
+              "customer": "ACME"
+            },
+            "rows": {
+              "lines": [
+                {
+                  "key": "a",
+                  "values": {
+                    "item": "Pen",
+                    "qty": "2"
+                  }
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "editing",
+            "valid": true,
+            "dirty": false
+          }
+        },
+        {
+          "input": {
+            "field": "customer",
+            "value": "ACME Corp"
+          },
+          "expect": {
+            "dirty": true
+          }
+        },
+        {
+          "submit": {
+            "submitter": "save"
+          },
+          "expect": {
+            "status": "submitting",
+            "emitted": [
+              {
+                "submit": {
+                  "token": "s1",
+                  "submitter": "save",
+                  "values": {
+                    "customer": "ACME Corp",
+                    "lines": [
+                      {
+                        "key": "a",
+                        "values": {
+                          "item": "Pen",
+                          "qty": 2
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "input": {
+            "field": "customer",
+            "value": "ACME Corporation"
+          },
+          "expect": {
+            "status": "submitting"
+          }
+        },
+        {
+          "submitResult": {
+            "token": "s1",
+            "outcome": {
+              "kind": "success"
+            }
+          },
+          "expect": {
+            "status": "submitted",
+            "dirty": true,
+            "fields": {
+              "customer": {
+                "value": "ACME Corporation",
+                "dirty": true
+              }
+            }
+          }
+        },
+        {
+          "submit": {
+            "submitter": "save"
+          },
+          "expect": {
+            "status": "submitting",
+            "emitted": [
+              {
+                "submit": {
+                  "token": "s2",
+                  "submitter": "save",
+                  "values": {
+                    "customer": "ACME Corporation",
+                    "lines": [
+                      {
+                        "key": "a",
+                        "values": {
+                          "item": "Pen",
+                          "qty": 2
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "submitResult": {
+            "token": "s2",
+            "outcome": {
+              "kind": "unknown"
+            }
+          },
+          "expect": {
+            "status": "unknown"
+          }
+        },
+        {
+          "resolveUnknown": {
+            "applied": false
+          },
+          "expect": {
+            "status": "editing",
+            "dirty": true,
+            "canSubmit": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "repeated keyed fields preserve identity",
+      "schema": "order",
+      "steps": [
+        {
+          "load": {
+            "values": {
+              "customer": "ACME"
+            },
+            "rows": {
+              "lines": [
+                {
+                  "key": "a",
+                  "values": {
+                    "item": "Pen",
+                    "qty": "2"
+                  }
+                },
+                {
+                  "key": "b",
+                  "values": {
+                    "item": "Ink",
+                    "qty": "1"
+                  }
+                }
+              ]
+            }
+          },
+          "expect": {
+            "rows": {
+              "lines": [
+                "a",
+                "b"
+              ]
+            },
+            "dirty": false
+          }
+        },
+        {
+          "input": {
+            "field": "lines[b].qty",
+            "value": "0"
+          },
+          "expect": {
+            "fields": {
+              "lines[b].qty": {
+                "value": "0",
+                "errors": [
+                  "below-min"
+                ],
+                "dirty": true
+              }
+            }
+          }
+        },
+        {
+          "blur": {
+            "field": "lines[b].qty"
+          },
+          "expect": {
+            "fields": {
+              "lines[b].qty": {
+                "touched": true
+              }
+            }
+          }
+        },
+        {
+          "addRow": {
+            "group": "lines",
+            "key": "c"
+          },
+          "expect": {
+            "rows": {
+              "lines": [
+                "a",
+                "b",
+                "c"
+              ]
+            },
+            "dirty": true,
+            "fields": {
+              "lines[c].item": {
+                "value": "",
+                "errors": [
+                  "required"
+                ],
+                "touched": false
+              }
+            }
+          }
+        },
+        {
+          "addRow": {
+            "group": "lines",
+            "key": "b"
+          },
+          "expect": {
+            "ignored": "duplicate-row",
+            "rows": {
+              "lines": [
+                "a",
+                "b",
+                "c"
+              ]
+            }
+          }
+        },
+        {
+          "removeRow": {
+            "group": "lines",
+            "key": "a"
+          },
+          "expect": {
+            "rows": {
+              "lines": [
+                "b",
+                "c"
+              ]
+            },
+            "fields": {
+              "lines[b].qty": {
+                "value": "0",
+                "touched": true,
+                "errors": [
+                  "below-min"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "removeRow": {
+            "group": "lines",
+            "key": "a"
+          },
+          "expect": {
+            "ignored": "unknown-row"
+          }
+        },
+        {
+          "input": {
+            "field": "lines[a].qty",
+            "value": "5"
+          },
+          "expect": {
+            "ignored": "unknown-field"
+          }
+        },
+        {
+          "addRow": {
+            "group": "lines",
+            "key": "a"
+          },
+          "expect": {
+            "rows": {
+              "lines": [
+                "b",
+                "c",
+                "a"
+              ]
+            },
+            "fields": {
+              "lines[a].item": {
+                "value": "",
+                "dirty": false,
+                "touched": false
+              }
+            }
+          }
+        },
+        {
+          "submit": {
+            "submitter": "save"
+          },
+          "expect": {
+            "ignored": "invalid",
+            "fields": {
+              "lines[a].item": {
+                "touched": true
+              },
+              "lines[c].qty": {
+                "touched": true
+              },
+              "customer": {
+                "touched": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reset restores the original model",
+      "schema": "order",
+      "steps": [
+        {
+          "load": {
+            "values": {
+              "customer": "ACME"
+            },
+            "rows": {
+              "lines": [
+                {
+                  "key": "a",
+                  "values": {
+                    "item": "Pen",
+                    "qty": "2"
+                  }
+                }
+              ]
+            }
+          },
+          "expect": {
+            "dirty": false
+          }
+        },
+        {
+          "input": {
+            "field": "customer",
+            "value": ""
+          },
+          "expect": {
+            "fields": {
+              "customer": {
+                "errors": [
+                  "required"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "blur": {
+            "field": "customer"
+          },
+          "expect": {
+            "fields": {
+              "customer": {
+                "touched": true
+              }
+            }
+          }
+        },
+        {
+          "removeRow": {
+            "group": "lines",
+            "key": "a"
+          },
+          "expect": {
+            "rows": {
+              "lines": []
+            }
+          }
+        },
+        {
+          "addRow": {
+            "group": "lines",
+            "key": "z"
+          },
+          "expect": {
+            "rows": {
+              "lines": [
+                "z"
+              ]
+            }
+          }
+        },
+        {
+          "submit": {
+            "submitter": "save"
+          },
+          "expect": {
+            "ignored": "invalid"
+          }
+        },
+        {
+          "reset": {},
+          "expect": {
+            "status": "editing",
+            "dirty": false,
+            "valid": true,
+            "rows": {
+              "lines": [
+                "a"
+              ]
+            },
+            "global": [],
+            "fields": {
+              "customer": {
+                "value": "ACME",
+                "touched": false,
+                "errors": [],
+                "dirty": false
+              },
+              "lines[a].item": {
+                "value": "Pen",
+                "touched": false
+              },
+              "lines[a].qty": {
+                "value": "2"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reset invalidates pending async validation",
+      "schema": "signup",
+      "steps": [
+        {
+          "load": {
+            "values": {
+              "email": "old@example.com"
+            },
+            "rows": {}
+          },
+          "expect": {
+            "fields": {
+              "email": {
+                "pending": false
+              }
+            }
+          }
+        },
+        {
+          "input": {
+            "field": "email",
+            "value": "new@example.com"
+          },
+          "expect": {
+            "emitted": [
+              {
+                "validate": {
+                  "field": "email",
+                  "value": "new@example.com",
+                  "token": "v1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "reset": {},
+          "expect": {
+            "fields": {
+              "email": {
+                "value": "old@example.com",
+                "pending": false
+              }
+            }
+          }
+        },
+        {
+          "asyncResult": {
+            "field": "email",
+            "token": "v1",
+            "error": "taken"
+          },
+          "expect": {
+            "ignored": "stale-async",
+            "fields": {
+              "email": {
+                "errors": []
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

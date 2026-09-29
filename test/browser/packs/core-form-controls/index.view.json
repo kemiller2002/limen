@@ -1,0 +1,11 @@
+{
+  "doc": "The core form-control page (scripts/smoke-packs.ts). Its engine (main.js) projects nothing; it records what arrives.",
+  "view": {},
+  "events": {
+    "save": {},
+    "terms": { "value": true },
+    "topics": { "value": true },
+    "plan": { "value": true },
+    "colours": { "value": true }
+  }
+}

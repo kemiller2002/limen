@@ -150,6 +150,12 @@ export type FederationDiagnosticEvent =
   | {
       readonly kind: "ModuleStartupBlocked";
       readonly block: FederationStartupBlock;
+    }
+  | {
+      // reset() took a faulted module back to Unloaded, at a caller's request.
+      readonly kind: "ModuleReset";
+      readonly moduleId: ModuleId;
+      readonly unloaded: boolean;
     };
 
 export interface FederationDiagnosticsSink {
@@ -554,6 +560,17 @@ export class ModuleFederation {
     entry.state = "Unloaded";
   }
 
+  // The only way out of Faulted, and only when a caller asks: the runtime never
+  // retries on its own. The module's own unload is attempted once, and a
+  // failure there is reported, not thrown — the module was already broken.
+  async reset(moduleId: ModuleId): Promise<void> {
+    const entry = this.#entry(moduleId);
+    this.#requireState(entry, moduleId, "Faulted");
+    const unloaded = await entry.transport.unload().then(() => true, () => false);
+    entry.state = "Unloaded";
+    this.#report({ kind: "ModuleReset", moduleId, unloaded });
+  }
+
   async stop(moduleId: ModuleId): Promise<JsonValue | null> {
     const activeDependent = [...this.#modules.entries()].find(
       ([candidateId, candidate]) =>
@@ -826,3 +843,134 @@ export class ModuleFederation {
     return result;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Lazy, route- or workflow-driven loading (kemiller2002/limen#33, LCP-024)
+// ---------------------------------------------------------------------------
+//
+// Drives the lifecycle above on demand instead of at startup. A route or a
+// workflow asks for a module; its dependencies start first, in order; a
+// failure stays with the module that failed (and blocks only its
+// dependents); a released module keeps its snapshot and is restored from it,
+// deterministically, the next time it is needed. Nothing is retried unless
+// the caller asks with retry(). What a route means, and when to load, stay
+// the caller's — typically an engine reacting to LocationChanged.
+
+export type LazyOutcome =
+  | { readonly kind: "Ready"; readonly moduleId: ModuleId }
+  | { readonly kind: "Faulted"; readonly moduleId: ModuleId }
+  | { readonly kind: "Blocked"; readonly moduleId: ModuleId; readonly dependency: ModuleId }
+  | { readonly kind: "Unknown"; readonly moduleId: ModuleId };
+
+export type LazyStatus = "idle" | "loading" | "ready" | "faulted" | "released" | "unavailable";
+
+export type LazyRelease =
+  | { readonly kind: "Released"; readonly moduleId: ModuleId }
+  | { readonly kind: "InUse"; readonly moduleId: ModuleId }
+  | { readonly kind: "NotReady"; readonly moduleId: ModuleId };
+
+export type LazyFederation = {
+  readonly status: (moduleId: ModuleId) => LazyStatus;
+  readonly ensure: (moduleId: ModuleId) => Promise<LazyOutcome>;
+  readonly forRoute: (path: string) => Promise<readonly LazyOutcome[]>;
+  readonly release: (moduleId: ModuleId) => Promise<LazyRelease>;
+  readonly retry: (moduleId: ModuleId) => Promise<LazyOutcome>;
+};
+
+// A manifest route matches a path exactly, or as a prefix when it ends in
+// "/*" ("/orders/*" matches "/orders" and "/orders/42").
+export const routeMatches = (route: string, path: string): boolean => {
+  if (!route.endsWith("/*")) return route === path;
+  const prefix = route.slice(0, -2);
+  return path === prefix || path.startsWith(prefix + "/");
+};
+
+export const createLazyFederation = (federation: ModuleFederation): LazyFederation => {
+  // The controller's own cells: loads in flight (so concurrent requests share
+  // one), and snapshots kept by release() for the next start.
+  const inFlight = new Map<ModuleId, Promise<LazyOutcome>>();
+  const snapshots = new Map<ModuleId, JsonValue | null>();
+  const manifestOf = (moduleId: ModuleId): ModuleManifest | undefined =>
+    federation.manifests().find((manifest) => manifest.id === moduleId);
+
+  const status = (moduleId: ModuleId): LazyStatus => {
+    if (manifestOf(moduleId) === undefined) return "unavailable";
+    if (inFlight.has(moduleId)) return "loading";
+    switch (federation.state(moduleId)) {
+      case "Active": return "ready";
+      case "Faulted": return "faulted";
+      case "Unloaded": return snapshots.has(moduleId) ? "released" : "idle";
+      // Mid-lifecycle (stopping, or started outside this controller).
+      case "Loaded":
+      case "Initialized":
+      case "Restored":
+      case "Suspended":
+      case "Snapshotted": return "unavailable";
+    }
+  };
+
+  const load = async (moduleId: ModuleId, manifest: ModuleManifest): Promise<LazyOutcome> => {
+    // Dependencies first, one after another, in manifest order.
+    const blocking = await manifest.dependencies.reduce<Promise<ModuleId | undefined>>(async (earlier, dependency) => {
+      const found = await earlier;
+      if (found !== undefined) return found;
+      const outcome = await ensure(dependency);
+      return outcome.kind === "Ready" ? undefined : dependency;
+    }, Promise.resolve(undefined));
+    if (blocking !== undefined) return { kind: "Blocked", moduleId, dependency: blocking };
+    try {
+      await federation.start(moduleId, snapshots.get(moduleId) ?? null);
+      snapshots.delete(moduleId);
+      return { kind: "Ready", moduleId };
+    } catch {
+      return federation.state(moduleId) === "Faulted" ? { kind: "Faulted", moduleId } : { kind: "Unknown", moduleId };
+    }
+  };
+
+  const ensure = (moduleId: ModuleId): Promise<LazyOutcome> => {
+    const manifest = manifestOf(moduleId);
+    if (manifest === undefined) return Promise.resolve({ kind: "Blocked", moduleId, dependency: moduleId });
+    const pending = inFlight.get(moduleId);
+    if (pending !== undefined) return pending;
+    switch (federation.state(moduleId)) {
+      case "Active": return Promise.resolve({ kind: "Ready", moduleId });
+      // Never retried here: only retry() does that.
+      case "Faulted": return Promise.resolve({ kind: "Faulted", moduleId });
+      case "Unloaded": {
+        const started = load(moduleId, manifest).finally(() => inFlight.delete(moduleId));
+        inFlight.set(moduleId, started);
+        return started;
+      }
+      // Mid-lifecycle outside this controller: not ours to drive.
+      case "Loaded":
+      case "Initialized":
+      case "Restored":
+      case "Suspended":
+      case "Snapshotted": return Promise.resolve({ kind: "Unknown", moduleId });
+    }
+  };
+
+  return {
+    status,
+    ensure,
+    forRoute: (path) => {
+      const wanted = federation.manifests().filter((manifest) => manifest.routes.some((route) => routeMatches(route, path)));
+      return wanted.reduce<Promise<readonly LazyOutcome[]>>(async (done, manifest) => [...(await done), await ensure(manifest.id)], Promise.resolve([]));
+    },
+    release: async (moduleId) => {
+      if (manifestOf(moduleId) === undefined || federation.state(moduleId) !== "Active") return { kind: "NotReady", moduleId };
+      try {
+        snapshots.set(moduleId, await federation.stop(moduleId));
+        return { kind: "Released", moduleId };
+      } catch (error) {
+        if (error instanceof FederationError && error.code === "DependencyInUse") return { kind: "InUse", moduleId };
+        throw error;
+      }
+    },
+    retry: async (moduleId) => {
+      if (manifestOf(moduleId) === undefined || federation.state(moduleId) !== "Faulted") return ensure(moduleId);
+      await federation.reset(moduleId);
+      return ensure(moduleId);
+    },
+  };
+};

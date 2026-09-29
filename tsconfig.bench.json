@@ -1,0 +1,20 @@
+{
+  // Type-checks and emits the benchmark page (bench/pages/bench.ts → bench.js,
+  // in place), importing the package from dist/ exactly as a consumer would.
+  // scripts/bench.ts serves the repository root so ../../dist resolves.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmitOnError": true,
+    "declaration": false,
+    "sourceMap": false,
+    "rootDir": "bench/pages",
+    "outDir": "bench/pages"
+  },
+  "files": ["bench/pages/bench.ts"]
+}

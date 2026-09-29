@@ -1,0 +1,60 @@
+{
+  "unit": "limen.files",
+  "role": "capability",
+  "version": 1,
+  "doc": "User-mediated files (LCP-017). Selection is the browser's: a real <input type=file data-files-input=\"name\"> that the user operates, reported as a Selected fact with opaque file ids and metadata — never a File object, never a path. The engine may ask to open that input's picker, which the browser permits only during user activation. Reads are bounded slices, so a large file is read in chunks and never loaded whole. There is no filesystem browsing and no hidden upload.",
+  "constants": [
+    { "name": "MAX_READ_BYTES", "type": "int", "value": 1048576, "doc": "The largest single read, in bytes." }
+  ],
+  "types": [
+    { "name": "FileInput", "kind": "record", "doc": "An <input type=file> named in HTML by data-files-input; key selects a row by the nearest data-files-key ancestor.", "fields": [ { "name": "name", "type": "string" }, { "name": "key", "type": "string", "optional": true } ] },
+    { "name": "FileId", "kind": "brand", "of": "string", "doc": "Opaque; issued by this page's pack and meaningless anywhere else." },
+    { "name": "FileStaleReason", "kind": "enum", "values": ["unknown", "disposed", "other-session"] },
+    { "name": "ReadFormat", "kind": "enum", "doc": "text decodes UTF-8 (a slice that splits a character decodes it as U+FFFD); base64 carries bytes exactly.", "values": ["text", "base64"] },
+    { "name": "FileInfo", "kind": "record", "doc": "What the browser says about a selected file. name is the file name only, never a path; type is the browser's guess and may be empty.", "fields": [
+      { "name": "file", "type": "FileId" }, { "name": "name", "type": "string" }, { "name": "size", "type": "int" }, { "name": "type", "type": "string" }, { "name": "lastModified", "type": "number" } ] },
+    {
+      "name": "FilesRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "pick", "doc": "Open the named input's picker. Browsers allow this only during user activation, which an engine round trip may outlast; NeedsGesture then says the user must operate the input itself. A selection arrives as a Selected fact, a dismissal as PickerCancelled.", "fields": [ { "name": "input", "type": "FileInput" } ] },
+        { "name": "read", "doc": "Read length bytes (1 to MAX_READ_BYTES) from offset. A read past the end returns what there is, with eof.", "fields": [ { "name": "file", "type": "FileId" }, { "name": "format", "type": "ReadFormat" }, { "name": "offset", "type": "int" }, { "name": "length", "type": "int" } ] },
+        { "name": "release", "doc": "Forget a file id. The pack keeps a selected file readable until the engine releases it or the page unloads.", "fields": [ { "name": "file", "type": "FileId" } ] },
+        { "name": "download", "doc": "Offer data to the user as a download named fileName. data is text or base64 per format, at most MAX_READ_BYTES once decoded.", "fields": [ { "name": "fileName", "type": "string" }, { "name": "mimeType", "type": "string" }, { "name": "format", "type": "ReadFormat" }, { "name": "data", "type": "string" } ] }
+      ]
+    },
+    {
+      "name": "FilesResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "PickerOpened", "fields": [] },
+        { "name": "Read", "fields": [ { "name": "data", "type": "string" }, { "name": "bytesRead", "type": "int" }, { "name": "eof", "type": "bool" } ] },
+        { "name": "Released", "fields": [] },
+        { "name": "Downloaded", "doc": "The browser was handed the download; whether the user kept it is not observable.", "fields": [] },
+        { "name": "NeedsGesture", "doc": "The browser refused to open a picker without user activation.", "fields": [] },
+        { "name": "NotFound", "fields": [] },
+        { "name": "Ambiguous", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "WrongElement", "doc": "The target is not an <input type=file>.", "fields": [] },
+        { "name": "Stale", "fields": [ { "name": "reason", "type": "FileStaleReason" } ] },
+        { "name": "InvalidRange", "doc": "offset is negative, or length is below 1.", "fields": [] },
+        { "name": "TooLarge", "fields": [ { "name": "limit", "type": "int" } ] },
+        { "name": "InvalidData", "doc": "download data is not valid base64.", "fields": [] },
+        { "name": "Unreadable", "doc": "The browser could not read the file (it changed, moved, or permission was lost). The exception's name only.", "fields": [ { "name": "reason", "type": "string" } ] },
+        { "name": "Refused", "doc": "The browser refused for another reason (for example a disabled input, or a picker in a cross-origin frame). The exception's name only.", "fields": [ { "name": "reason", "type": "string" } ] },
+        { "name": "Unsupported", "fields": [] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    },
+    {
+      "name": "FilesFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Selected", "doc": "The user chose files with the named input: one, or several if the input allows multiple. Earlier ids stay valid until released.", "fields": [ { "name": "input", "type": "FileInput" }, { "name": "files", "type": { "list": "FileInfo" } } ] },
+        { "name": "PickerCancelled", "doc": "The user dismissed the picker without changing the selection.", "fields": [ { "name": "input", "type": "FileInput" } ] }
+      ]
+    }
+  ]
+}

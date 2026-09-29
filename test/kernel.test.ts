@@ -6,7 +6,7 @@ import test from "node:test";
 // builds first, so this is always fresh.
 import { BrowserKernel } from "../dist/kernel/browser-kernel.js";
 import type { DiagnosticEvent, DiagnosticsSink } from "../dist/kernel/diagnostics.js";
-import type { BrowserToEngineMessage, CorrelationId, EffectOutcome, EffectRequest, EffectResult, EngineToBrowserMessage, EngineTransport } from "../dist/protocol.js";
+import { CORE_CONTRACT_IDENTITY, type BrowserToEngineMessage, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport } from "../dist/protocol.js";
 import { withClipboard, withDom, withFetch } from "./dom-helpers.ts";
 
 function respond(overrides: Partial<EngineToBrowserMessage> = {}): EngineToBrowserMessage {
@@ -79,6 +79,11 @@ test("start() dispatches Initialize with the protocol version and applies the in
       // `origin` rides along so an engine can compose an absolute, shareable
       // link to the current screen — Navigation and Clipboard used together.
       location: { origin: "http://localhost", path: "/", query: "", hash: "" },
+      // Protocol 1.1+: the host's side of the compatibility handshake, at the
+      // revision the kernel implements (1.2 adds form-control state, 1.3 the
+      // Http profile). With no optional capability registered, it offers only
+      // the core contract.
+      handshake: { protocol: { major: 1, minor: 4 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] },
     });
     assert.equal(document.querySelector("p")!.textContent, "ready");
   });
@@ -655,8 +660,10 @@ test("a malformed projection is reported via diagnostics instead of throwing, an
   );
   await withDom(`<p data-text="message"></p>`, async (document) => {
     await assert.doesNotReject(new BrowserKernel(transport, document, sink).start());
-    assert.equal(events.length, 1);
-    assert.equal(events[0]?.kind === "BridgeError" && events[0].phase, "projection");
+    // The handshake verdict (a legacy engine here) is reported first, then the failure.
+    assert.deepEqual(events[0], { kind: "Handshake", verdict: { kind: "Compatible", negotiation: { kind: "Legacy" } } });
+    assert.equal(events.length, 2);
+    assert.equal(events[1]?.kind === "BridgeError" && events[1].phase, "projection");
     // The malformed view must not be treated as a green light to run its effects.
     assert.equal(transport.calls.some((call) => call.kind === "EffectResult"), false);
   });
@@ -966,4 +973,57 @@ test("a radio reports its own value, so one event name covers the whole group", 
       assert.deepEqual(last?.kind === "Event" && last.event, { kind: "Event", name: "selectFrequency", value: "weekly" });
     },
   );
+});
+
+// ---------------------------------------------------------------------------
+// Duplicate in-flight correlation ids (conformance negative vector, #32)
+// ---------------------------------------------------------------------------
+
+test("a second effect under a correlation id still in flight is refused, and the first still completes and can still be cancelled", async () => {
+  const { sink, events } = collectDiagnostics();
+  const correlationId = withCorrelation("dup");
+  const gate = deferredValue<Response>();
+  const fetched: string[] = [];
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ effects: [
+        { kind: "Http", correlationId, method: "GET", url: "/first", timeoutMs: 10_000 },
+        { kind: "Http", correlationId, method: "POST", url: "/second", timeoutMs: 10_000 },
+      ] });
+    }
+    return respond();
+  });
+  await withFetch(async (url) => { fetched.push(String(url)); return gate.promise; }, async () => {
+    await withDom(`<p></p>`, async (document) => {
+      const started = new BrowserKernel(transport, document, sink).start();
+      await flush();
+      assert.deepEqual(fetched, ["/first"], "the duplicate never reached the network");
+      assert.ok(events.some((event) => event.kind === "BridgeError" && event.phase === "protocol" && event.detail.includes("already in flight")));
+      gate.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      await started;
+      await flush();
+      const results = transport.calls.filter((call) => call.kind === "EffectResult");
+      assert.equal(results.length, 1, "exactly one answer for the one request that ran");
+    });
+  });
+});
+
+test("a correlation id may be reused once its earlier effect has completed", async () => {
+  const correlationId = withCorrelation("again");
+  const fetched: string[] = [];
+  const transport = new ScriptedTransport((message, calls) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/one", timeoutMs: 1000 }] });
+    if (message.kind === "EffectResult" && calls.filter((call) => call.kind === "EffectResult").length === 1) {
+      return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/two", timeoutMs: 1000 }] });
+    }
+    return respond();
+  });
+  await withFetch(async (url) => { fetched.push(String(url)); return new Response("{}", { status: 200 }); }, async () => {
+    await withDom(`<p></p>`, async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await flush();
+      await flush();
+      assert.deepEqual(fetched, ["/one", "/two"]);
+    });
+  });
 });

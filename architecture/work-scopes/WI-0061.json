@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0061",
+  "reference": "kemiller2002/limen#21 (LCP-006, browser form-control coverage)",
+  "placement": "Core (kernel mechanism + contract, protocol 1.2 additive) — reading a form control's state is the kernel's job: a checkbox's checked state, a group's or multi-select's values and a form's submitter cannot be reported by any pack or library, because only the event binding sees them. Sent only to engines that negotiated 1.2, so strict 1.1 decoders never see an unknown field. Generated bindings and guest code follow the contract.",
+  "guardrail": false,
+  "paths": ["contract/core.contract.json", "src/**", "test/**", "conformance/**", "guests/fsharp/Limen.Contract/Generated/**", "guests/csharp/Limen.Contract/Generated/**", "guests/rust/limen-contract/src/limen_core.rs", "guests/**/*.fs", "guests/**/*.cs", "guests/**/*.rs", "site/fsharp/**/*.fs", "site/app/**", "site/pages/**", "examples/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "architecture.yaml", "bench/budgets.json", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

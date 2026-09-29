@@ -1,0 +1,39 @@
+{
+  "doc": "What examples/05-multi-screen/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "navItems": {
+      "list": {
+        "id": "string",
+        "label": "string",
+        "active": "boolean"
+      }
+    },
+    "onHome": "boolean",
+    "greeting": "string",
+    "onCustomers": "boolean",
+    "customerFilter": "string",
+    "customers": {
+      "list": {
+        "id": "string",
+        "name": "string"
+      }
+    },
+    "noMatches": "boolean",
+    "onSettings": "boolean",
+    "settingsDraft": "string",
+    "saveNameDisabled": "boolean",
+    "displayName": "string"
+  },
+  "events": {
+    "navigate": {
+      "item": "navItems"
+    },
+    "filterCustomers": {
+      "value": true
+    },
+    "editDisplayName": {
+      "value": true
+    },
+    "saveDisplayName": {}
+  }
+}

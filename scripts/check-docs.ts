@@ -8,9 +8,19 @@
 //   3. Every document under docs/ is reachable from the README, so nothing
 //      becomes an orphan nobody can find.
 //
+//   6. The minimal-agent learning contract (kemiller2002/limen#63): the
+//      canonical Core document teaches exactly the manifest's seven concepts,
+//      AGENTS.md's required reading is exactly the Core learning path, every
+//      optional subsystem document opens by naming the Core concept it composes
+//      with, quick starts import Core entrypoints only, and no document or
+//      example imports an optional name from the package root
+//      (tools/guardrails/learning.ts).
+//
 // It deliberately does not check prose quality or external URLs.
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, normalize, relative, resolve } from "node:path";
+import { parseCoreManifest } from "../tools/guardrails/core.ts";
+import { checkLearning, parseLearning } from "../tools/guardrails/learning.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 
@@ -158,14 +168,19 @@ for (const file of files) {
 // equal the set in the source. A document showing an abbreviated declaration
 // must mark it with an ellipsis (…) — then it is treated as an excerpt and
 // skipped, which is an honest label rather than a silent exception.
+//
+// Wire types are read from the generated TypeScript binding, the file every
+// consumer actually compiles against (src/protocol.ts only re-exports it; the
+// language-neutral source is contract/core.contract.json).
+const WIRE = "src/generated/core.ts";
 const CHECKED_TYPES: readonly { readonly name: string; readonly source: string }[] = [
-  { name: "Capability", source: "src/protocol.ts" },
-  { name: "ClipboardOutcome", source: "src/protocol.ts" },
-  { name: "NavigationOutcome", source: "src/protocol.ts" },
-  { name: "StorageOutcome", source: "src/protocol.ts" },
-  { name: "EffectOutcome", source: "src/protocol.ts" },
-  { name: "EffectResult", source: "src/protocol.ts" },
-  { name: "BrowserToEngineMessage", source: "src/protocol.ts" },
+  { name: "Capability", source: WIRE },
+  { name: "ClipboardOutcome", source: WIRE },
+  { name: "NavigationOutcome", source: WIRE },
+  { name: "StorageOutcome", source: WIRE },
+  { name: "EffectOutcome", source: WIRE },
+  { name: "EffectResult", source: WIRE },
+  { name: "BrowserToEngineMessage", source: WIRE },
   { name: "DiagnosticEvent", source: "src/kernel/diagnostics.ts" },
 ];
 
@@ -247,6 +262,24 @@ for (const page of await readdir(join(ROOT, "site/pages"))) {
       );
     }
   }
+}
+
+// --- 6: the minimal-agent learning contract -----------------------------------
+
+const rawManifest = JSON.parse(await readFile(join(ROOT, "architecture/core.json"), "utf8")) as unknown;
+const learning = parseLearning(rawManifest);
+const exampleSources = async (directory: string): Promise<readonly string[]> => {
+  const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+  return (await Promise.all(entries.map((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return entry.name === "node_modules" ? Promise.resolve([]) : exampleSources(path);
+    return Promise.resolve(/\.(ts|js|html)$/.test(entry.name) ? [path] : []);
+  }))).flat();
+};
+const learningDocuments = await Promise.all([...files, ...(await exampleSources(join(ROOT, "examples"))), ...learning.path.filter((path) => !path.endsWith(".md")).map((path) => join(ROOT, path))]
+  .map(async (path) => ({ path: relative(ROOT, path).split("\\").join("/"), text: await readFile(path, "utf8").catch(() => "") })));
+for (const found of checkLearning(parseCoreManifest(rawManifest), learning, learningDocuments)) {
+  violations.push(`[${found.rule}] ${found.path}: ${found.detail}\n    → ${found.remedy}`);
 }
 
 if (violations.length > 0) {

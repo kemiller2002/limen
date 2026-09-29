@@ -169,8 +169,8 @@ Two facts do most of the work:
 `README.md`, `LICENSE`, `CHANGELOG.md`, the five documents linked above, and
 the complete minimal application in `examples/minimal/`.
 
-Everything else — eight progressive examples covering forms, validation, fetch,
-storage, clipboard and routing; the anti-patterns catalogue; the agent guide;
+Everything else — nine progressive examples covering forms, validation, fetch,
+storage, clipboard, routing and accessible interaction patterns; the anti-patterns catalogue; the agent guide;
 the architecture notes — lives online:
 
 - Examples: <https://github.com/kemiller2002/limen/tree/main/examples>

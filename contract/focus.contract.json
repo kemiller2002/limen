@@ -1,0 +1,54 @@
+{
+  "unit": "limen.focus",
+  "role": "capability",
+  "version": 1,
+  "doc": "Focus, selection and scroll: imperative presentation mechanics a projection cannot express (LCP-007). The engine decides when and where focus moves; the pack only performs the move and reports what happened. Targets are named in HTML with data-focus-target, so no DOM node ever crosses the boundary.",
+  "types": [
+    {
+      "name": "FocusTarget",
+      "kind": "record",
+      "doc": "An element named in HTML by data-focus-target=\"name\". Inside a data-each row, key selects the row: the nearest ancestor carrying data-focus-key (projected by the engine with data-bind-data-focus-key) must equal it. generation, when given, must equal the nearest data-focus-generation ancestor attribute (also projected by the engine); a mismatch means the request was made for a screen that has since been replaced, and it is answered Stale rather than performed.",
+      "fields": [
+        { "name": "name", "type": "string" },
+        { "name": "key", "type": "string", "optional": true },
+        { "name": "generation", "type": "string", "optional": true }
+      ]
+    },
+    {
+      "name": "ScrollBlock",
+      "kind": "enum",
+      "values": ["start", "center", "end", "nearest"]
+    },
+    {
+      "name": "FocusRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "focus", "doc": "Move focus to the target.", "fields": [ { "name": "target", "type": "FocusTarget" }, { "name": "preventScroll", "type": "bool" } ] },
+        { "name": "blur", "doc": "Remove focus from the target if it has it.", "fields": [ { "name": "target", "type": "FocusTarget" } ] },
+        { "name": "focusFirst", "doc": "Focus the first focusable element inside the target, in document order.", "fields": [ { "name": "scope", "type": "FocusTarget" } ] },
+        { "name": "focusLast", "doc": "Focus the last focusable element inside the target, in document order.", "fields": [ { "name": "scope", "type": "FocusTarget" } ] },
+        { "name": "select", "doc": "Focus a text control and select characters [start, end).", "fields": [ { "name": "target", "type": "FocusTarget" }, { "name": "start", "type": "int" }, { "name": "end", "type": "int" } ] },
+        { "name": "selectAll", "doc": "Focus a text control and select all of its text.", "fields": [ { "name": "target", "type": "FocusTarget" } ] },
+        { "name": "scrollIntoView", "doc": "Scroll the target into view.", "fields": [ { "name": "target", "type": "FocusTarget" }, { "name": "block", "type": "ScrollBlock" }, { "name": "smooth", "type": "bool" } ] }
+      ]
+    },
+    {
+      "name": "FocusResult",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "Every outcome the engine must handle. None of them is retried or recovered by the pack.",
+      "variants": [
+        { "name": "Done", "fields": [] },
+        { "name": "NotFound", "doc": "No element in the current page has this target identity: a wrong name, or a row that no longer exists.", "fields": [] },
+        { "name": "Ambiguous", "doc": "More than one element has this target identity; the pack will not guess.", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "NotFocusable", "doc": "The element exists but the browser would not focus it (disabled, hidden, inert, or not focusable), or a scope contains nothing focusable.", "fields": [] },
+        { "name": "NotSelectable", "doc": "select or selectAll on an element without a text selection (a button, or an input type such as number or email).", "fields": [] },
+        { "name": "InvalidRange", "doc": "start or end is negative, or start is after end.", "fields": [] },
+        { "name": "Stale", "doc": "The target's generation no longer matches: the request was made for a screen that has been replaced.", "fields": [ { "name": "current", "type": "string" } ] },
+        { "name": "Unavailable", "doc": "This browser does not implement the operation.", "fields": [] },
+        { "name": "Cancelled", "fields": [] }
+      ]
+    }
+  ]
+}

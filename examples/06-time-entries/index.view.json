@@ -1,0 +1,54 @@
+{
+  "doc": "What examples/06-time-entries/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "notice": "string",
+    "loading": "boolean",
+    "loadFailed": "boolean",
+    "loadError": "string",
+    "date": "string",
+    "fieldsDisabled": "boolean",
+    "dateErrorVisible": "boolean",
+    "dateError": "string",
+    "hours": "string",
+    "hoursErrorVisible": "boolean",
+    "hoursError": "string",
+    "description": "string",
+    "descriptionErrorVisible": "boolean",
+    "descriptionError": "string",
+    "addDisabled": "boolean",
+    "summary": "string",
+    "refreshDisabled": "boolean",
+    "isEmpty": "boolean",
+    "hasEntries": "boolean",
+    "entries": {
+      "list": {
+        "id": "string",
+        "date": "string",
+        "hours": "number",
+        "description": "string",
+        "status": "string",
+        "processDisabled": "boolean",
+        "processed": "boolean"
+      }
+    },
+    "busy": "boolean",
+    "totalHours": "number"
+  },
+  "events": {
+    "retryLoad": {},
+    "addEntry": {},
+    "dateChanged": {
+      "value": true
+    },
+    "hoursChanged": {
+      "value": true
+    },
+    "descriptionChanged": {
+      "value": true
+    },
+    "refresh": {},
+    "markProcessed": {
+      "item": "entries"
+    }
+  }
+}

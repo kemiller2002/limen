@@ -1,5 +1,7 @@
 # Federated WebAssembly modules
 
+> **Optional — not Limen Core.** This is federation, an optional composition. It composes with the Core concepts `engine-owns-meaning` and `correlation-compatibility`: several engines each own their own meaning, and correlated, versioned envelopes connect them. Nothing here is required to use Limen; the mandatory model is the seven concepts in [the Core mental model](https://github.com/kemiller2002/limen/blob/main/docs/core-mental-model.md).
+
 **What this answers:** how to split a Limen application across multiple independently
 loaded engines without creating shared mutable state, browser-side application
 authority, or a distributed monolith inside one page.
@@ -298,6 +300,30 @@ fallback behavior.
 A module should treat its snapshot as its own versioned persistence format.
 Cross-module references should be stable identifiers, not object identity.
 
+### Lazy, route- or workflow-driven loading
+
+`createLazyFederation(federation)` drives that lifecycle on demand
+(kemiller2002/limen#33, LCP-024). Nothing loads at startup.
+
+| Call | What it does |
+| --- | --- |
+| `forRoute(path)` | ensures every module whose manifest `routes` match: exactly, or as a prefix for a route ending in `/*` |
+| `ensure(id)` | `Ready`. Dependencies start first, one after another. Concurrent requests share one load. |
+| | `Blocked { dependency }` when a dependency is not ready. The blocked module never loads. |
+| | `Faulted` when the module itself failed. Asking again **does not retry**. |
+| `release(id)` | stops the module and **keeps its snapshot**. The next `ensure` restores exactly that snapshot, so a restore is deterministic. `InUse` while an active dependent needs it. |
+| `retry(id)` | the only retry: `ModuleFederation.reset(id)` takes the faulted module back to `Unloaded` (reported as `ModuleReset`), then `ensure` starts it again |
+| `status(id)` | `idle`, `loading`, `ready`, `faulted`, `released` or `unavailable` |
+
+A failure stays with the module that failed. Independent modules load and
+stay active, and only dependents are blocked.
+
+Deciding **when** to load is the caller's job. Typically that is an engine
+reacting to `LocationChanged`, or a workflow step. `test/federation-lazy.test.ts`
+drives it through the real kernel with a real `popstate`. Retrying, falling
+back and recovering business state stay with the owning workflow. The runtime
+only performs the lifecycle.
+
 ---
 
 ## Cross-module workflows
@@ -574,7 +600,11 @@ import {
 } from "@echelon-foundry/typescript-wasm-kernel/federation";
 ```
 
-or from the package root.
+Federation is not exported from the package root: it is optional
+composition, not Limen Core, and a consumer that never federates loads none of
+it. The explicit `…/federation` subpath is the only way in (the root export was
+removed by kemiller2002/limen#61; see
+[naming and compatibility](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md#root-entrypoint-core-only)).
 
 The federation protocol version is independent of an individual module's
 semantic version and independent of the existing browser/engine

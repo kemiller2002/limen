@@ -49,7 +49,7 @@ function topLevelBindings(document: Document): {
 function fsharpProjectionKeys(engine: string): Set<string> {
   const projection = engine.slice(engine.indexOf("let project state"));
   return new Set(
-    Array.from(projection.matchAll(/"([^"]+)",\s+V(?:String|Number|Bool|Items)/g), (match) => match[1] ?? ""),
+    Array.from(projection.matchAll(/"([^"]+)",\s+ViewValue\.(?:Text|Number|Flag|Items)/g), (match) => match[1] ?? ""),
   );
 }
 
@@ -188,7 +188,9 @@ test("browser-side site code contains mechanics, not release or policy decisions
   assert.match(main, /BrowserKernel/);
   assert.match(main, /WasmSiteTransport/);
   assert.match(transport, /JSON\.stringify\(message\)/);
-  assert.match(transport, /JSON\.parse\(json\)/);
+  // Engine output is untrusted JSON until the generated contract decoder accepts it.
+  assert.match(transport, /decodeEngineToBrowserMessage\(JSON\.parse\(/);
+  assert.doesNotMatch(transport, /as EngineToBrowserMessage/);
 });
 
 test("every top-level binding is projected by the F# engine", { skip: built ? false : "not built" }, async () => {

@@ -1,0 +1,147 @@
+{
+  "doc": "Worker-hosting measurements (kemiller2002/limen#41): medians over the stated runs; startup and round trip for the F#, C# and Rust minimal engines, large messages and main-thread responsiveness for a synthetic engine behind the same boundary. docs/50-worker-hosting.md draws the recommendation from these numbers.",
+  "environment": {
+    "date": "2026-09-29T12:26:28.622Z",
+    "platform": "linux 6.18.44-fc-v37",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+    "cores": 4,
+    "memoryGb": 16,
+    "node": "v22.22.2",
+    "browser": "chromium 141.0.7390.37",
+    "runs": 5
+  },
+  "startup": [
+    {
+      "engine": "fsharp",
+      "host": "page",
+      "medianMs": 1818.4
+    },
+    {
+      "engine": "fsharp",
+      "host": "worker",
+      "medianMs": 1109.3
+    },
+    {
+      "engine": "csharp",
+      "host": "page",
+      "medianMs": 560.3
+    },
+    {
+      "engine": "csharp",
+      "host": "worker",
+      "medianMs": 566.2
+    },
+    {
+      "engine": "rust",
+      "host": "page",
+      "medianMs": 73.4
+    },
+    {
+      "engine": "rust",
+      "host": "worker",
+      "medianMs": 98.6
+    }
+  ],
+  "roundTrip": [
+    {
+      "engine": "fsharp",
+      "host": "page",
+      "medianMs": 1.6
+    },
+    {
+      "engine": "fsharp",
+      "host": "worker",
+      "medianMs": 1.8
+    },
+    {
+      "engine": "csharp",
+      "host": "page",
+      "medianMs": 1.4
+    },
+    {
+      "engine": "csharp",
+      "host": "worker",
+      "medianMs": 1.8
+    },
+    {
+      "engine": "rust",
+      "host": "page",
+      "medianMs": 0.1
+    },
+    {
+      "engine": "rust",
+      "host": "worker",
+      "medianMs": 0.4
+    }
+  ],
+  "largeMessages": [
+    {
+      "rows": 10,
+      "bytes": 781,
+      "host": "page",
+      "medianMs": 0.2,
+      "longestMainThreadGapMs": 5.2
+    },
+    {
+      "rows": 10,
+      "bytes": 781,
+      "host": "worker",
+      "medianMs": 0.6,
+      "longestMainThreadGapMs": 5.2
+    },
+    {
+      "rows": 1000,
+      "bytes": 76831,
+      "host": "page",
+      "medianMs": 3.1,
+      "longestMainThreadGapMs": 5.2
+    },
+    {
+      "rows": 1000,
+      "bytes": 76831,
+      "host": "worker",
+      "medianMs": 3.2,
+      "longestMainThreadGapMs": 5.2
+    },
+    {
+      "rows": 10000,
+      "bytes": 787831,
+      "host": "page",
+      "medianMs": 24.6,
+      "longestMainThreadGapMs": 24.7
+    },
+    {
+      "rows": 10000,
+      "bytes": 787831,
+      "host": "worker",
+      "medianMs": 28.8,
+      "longestMainThreadGapMs": 23.1
+    },
+    {
+      "rows": 50000,
+      "bytes": 4027831,
+      "host": "page",
+      "medianMs": 122.6,
+      "longestMainThreadGapMs": 122.9
+    },
+    {
+      "rows": 50000,
+      "bytes": 4027831,
+      "host": "worker",
+      "medianMs": 136.8,
+      "longestMainThreadGapMs": 95.5
+    }
+  ],
+  "responsiveness": [
+    {
+      "host": "page",
+      "longestMainThreadGapMs": 301.2,
+      "dispatchMs": 300.9
+    },
+    {
+      "host": "worker",
+      "longestMainThreadGapMs": 11,
+      "dispatchMs": 302.3
+    }
+  ]
+}

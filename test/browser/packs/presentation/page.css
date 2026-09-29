@@ -1,0 +1,3 @@
+/* Appearance only: the engine's label selects the animation. Reduced motion is CSS's decision. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 80ms; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*) { animation: none; } }

@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0118",
+  "reference": "kemiller2002/limen#38",
+  "placement": "Guardrail — architecture/layers.json is guardrail-owned. Adds the renderer layer (src/renderer/**), which may import core-contract, core-kernel (for the pure binding policy and handshake verification, so server and client apply one policy) and itself; a test holds its module closure free of the BrowserKernel. Core is unchanged; the renderer is optional and never imported by Core.",
+  "guardrail": true,
+  "paths": ["architecture/layers.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -1,0 +1,89 @@
+{
+  "doc": "The accessible interaction patterns example: what engine.ts projects and accepts. Keys arrive through the events capability, not as semantic events, so they are not listed here.",
+  "view": {
+    "tabs": {
+      "list": {
+        "id": "string",
+        "label": "string",
+        "selected": "boolean",
+        "tabindex": "number",
+        "disabled": "boolean"
+      }
+    },
+    "tabPanel": "string",
+    "menuOpen": "boolean",
+    "menuItems": {
+      "list": {
+        "id": "string",
+        "label": "string",
+        "disabled": "boolean"
+      }
+    },
+    "menuResult": "string",
+    "options": {
+      "list": {
+        "id": "string",
+        "domId": "string",
+        "label": "string",
+        "selected": "boolean",
+        "disabled": "boolean",
+        "active": "boolean"
+      }
+    },
+    "listboxActive": "string",
+    "listboxResult": "string",
+    "comboText": "string",
+    "comboOpen": "boolean",
+    "comboOptions": {
+      "list": {
+        "id": "string",
+        "domId": "string",
+        "label": "string",
+        "active": "boolean"
+      }
+    },
+    "comboActive": "string",
+    "comboResult": "string",
+    "treeItems": {
+      "list": {
+        "id": "string",
+        "label": "string",
+        "level": "number",
+        "tabindex": "number",
+        "isParent": "boolean",
+        "isLeaf": "boolean",
+        "expanded": "boolean"
+      }
+    },
+    "cell_0_0": "number",
+    "cell_0_1": "number",
+    "cell_0_2": "number",
+    "cell_1_0": "number",
+    "cell_1_1": "number",
+    "cell_1_2": "number",
+    "cell_2_0": "number",
+    "cell_2_1": "number",
+    "cell_2_2": "number",
+    "dialogOpen": "boolean",
+    "backgroundInert": "boolean",
+    "dialogResult": "string"
+  },
+  "events": {
+    "selectTab": {
+      "item": "tabs"
+    },
+    "toggleMenu": {},
+    "activateItem": {
+      "item": "menuItems"
+    },
+    "pickOption": {
+      "item": "options"
+    },
+    "comboText": {
+      "value": true
+    },
+    "openDialog": {},
+    "confirmDialog": {},
+    "cancelDialog": {}
+  }
+}
