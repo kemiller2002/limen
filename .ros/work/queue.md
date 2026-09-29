@@ -112,3 +112,5 @@
 | WI-0105 | Re-baseline the minimal-consumer payload budget after protocol 1.4 (GH-40) | complete |  | medium |
 | WI-0106 | Offline and application-update pack with an optional service worker: host-declared workers, explicit update-ready/activate lifecycle, cached shell; offline reference page proving cold offline launch, persisted outbox reconciliation, conflict, unknown outcome and the update path (GH-40) | complete |  | medium |
 | WI-0107 | Guardrail: register the limen.offline contract unit and its generated bindings (GH-40) | complete |  | medium |
+| WI-0108 | Worker-hosted WASM engines: a language-neutral dedicated-worker transport and worker host, F#, C# and Rust engines in a worker through the unchanged kernel, explicit worker faults and termination, and startup, latency, large-message and responsiveness measurements deciding the recommendation (GH-41) | complete |  | medium |
+| WI-0109 | Guardrail: type-check the minimal-engine worker composition root (tsconfig.guests.json) (GH-41) | complete |  | medium |

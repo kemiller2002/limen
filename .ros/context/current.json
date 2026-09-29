@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T12:15:42Z",
+  "updatedAt": "2026-09-29T12:31:51Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2292,6 +2292,64 @@
         "EXE-20260929T115944531Z-86f940e5"
       ],
       "completedAt": "2026-09-29T12:15:41Z"
+    },
+    {
+      "id": "WI-0108",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/hosts/worker-transport.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/worker-transport.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "scripts/smoke-guests.ts"
+        },
+        {
+          "type": "benchmark",
+          "path": "bench/results/worker-hosting.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:31:51Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T121714370Z-f3f42269"
+      ],
+      "completedAt": "2026-09-29T12:31:51Z"
+    },
+    {
+      "id": "WI-0109",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/hosts/worker-transport.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/worker-transport.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "scripts/smoke-guests.ts"
+        },
+        {
+          "type": "benchmark",
+          "path": "bench/results/worker-hosting.json"
+        }
+      ],
+      "updatedAt": "2026-09-29T12:31:50Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T121715790Z-0973705f"
+      ],
+      "completedAt": "2026-09-29T12:31:50Z"
     }
   ]
 }
