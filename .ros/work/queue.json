@@ -740,10 +740,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "captured",
+      "status": "ready",
       "attachments": [],
       "createdAt": "2026-09-29T06:28:59Z",
-      "updatedAt": "2026-09-29T06:28:59Z",
+      "updatedAt": "2026-09-29T19:34:55Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
