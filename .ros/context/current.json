@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T13:59:41Z",
+  "updatedAt": "2026-09-29T14:16:17Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2454,24 +2454,52 @@
     {
       "id": "WI-0114",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T13:59:41Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/coordination/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/coordination.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/coordination/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T14:16:17Z",
       "telemetryExecutionIds": [
         "EXE-20260929T135941465Z-310af3b3"
-      ]
+      ],
+      "completedAt": "2026-09-29T14:16:17Z"
     },
     {
       "id": "WI-0115",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T13:59:41Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/coordination/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/coordination.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/coordination/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T14:16:16Z",
       "telemetryExecutionIds": [
         "EXE-20260929T135942127Z-db2607c0"
-      ]
+      ],
+      "completedAt": "2026-09-29T14:16:16Z"
     }
   ]
 }

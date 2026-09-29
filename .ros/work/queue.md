@@ -118,5 +118,5 @@
 | WI-0111 | Browser credentials (WebAuthn passkeys) pack under the permission pattern: create/get, gesture-required, verification left to the engine and server (GH-42) | complete |  | medium |
 | WI-0112 | Guardrail: register the limen.geolocation and limen.credentials contract units and bindings (GH-42) | complete |  | medium |
 | WI-0113 | Opaque high-performance rendering adapter pattern: a Canvas scatter-plot adapter behind the governed adapter contract, pointer/focus/resize integration, fault isolation, and a trace proving bounded cross-boundary chatter (GH-45) | complete |  | medium |
-| WI-0114 | Cross-context coordination pack: same-origin channels (BroadcastChannel, SharedWorker hub), Web Locks with steal and loss facts, exact-origin frame messaging, validated JSON, context closure (GH-46) | ready |  | medium |
-| WI-0115 | Guardrail: register the limen.coordination contract unit and bindings (GH-46) | ready |  | medium |
+| WI-0114 | Cross-context coordination pack: same-origin channels (BroadcastChannel, SharedWorker hub), Web Locks with steal and loss facts, exact-origin frame messaging, validated JSON, context closure (GH-46) | complete |  | medium |
+| WI-0115 | Guardrail: register the limen.coordination contract unit and bindings (GH-46) | complete |  | medium |
