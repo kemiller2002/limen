@@ -1,9 +1,29 @@
 {
   "workItem": "WI-0056",
   "reference": "kemiller2002/limen#23 (LCP-007)",
-  "placement": "Capability Pack — src/capabilities/focus/ with its own contract unit; imports only core-contract, core-kernel and capability-support. Core is unchanged: the pack is absent unless an application registers it.",
+  "placement": "Capability Pack \u2014 src/capabilities/focus/ with its own contract unit; imports only core-contract, core-kernel and capability-support. Core is unchanged: the pack is absent unless an application registers it.",
   "guardrail": false,
-  "paths": ["contract/focus.contract.json", "src/capabilities/focus/**", "package.json", "bench/budgets.json", "test/**", "docs/**", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "architecture/typescript-boundary.json", "research/**"],
-  "expansions": [],
+  "paths": [
+    "contract/focus.contract.json",
+    "src/capabilities/focus/**",
+    "package.json",
+    "bench/budgets.json",
+    "test/**",
+    "docs/**",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "architecture/typescript-boundary.json",
+    "research/**"
+  ],
+  "expansions": [
+    {
+      "paths": [
+        "scripts/smoke-packs.ts",
+        "test/browser/packs/**"
+      ],
+      "reason": "Issue #23 requires the pack to be exercised in a real browser (CLAUDE.md definition of done). A generic runner that proves every pack page under a strict CSP was added once, so later packs need a page, not a new script or CI change. Not guardrail-owned; its CI wiring is WI-0058."
+    }
+  ],
   "recordedAfterCompletion": false
 }
