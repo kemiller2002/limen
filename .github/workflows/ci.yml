@@ -4,7 +4,7 @@ concurrency:
   # Same key for a branch's push event and its PR's synchronize event (the
   # PR event's own sha is a synthetic merge commit, so use its head sha
   # instead) — this cancels the redundant duplicate rather than running both.
-  group: ci-${{ github.event.pull_request.head.sha || github.sha }}
+  group: ci-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 on:
@@ -15,7 +15,15 @@ permissions:
   contents: read
 
 jobs:
+  debounce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Wait for commit batch
+        run: sleep 600
+
   build-and-test:
+    needs: debounce
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -71,6 +79,7 @@ jobs:
   # item and stays inside that item's declared scope; guardrail-owned paths
   # change only under a guardrail-scoped item (architecture/guardrails.json).
   work-item-scope:
+    needs: debounce
     name: Work-item scope
     runs-on: ubuntu-latest
     steps:
@@ -104,6 +113,7 @@ jobs:
   # recomputes the contract fingerprint, and runs the same shared vectors as
   # the TypeScript host (test/conformance-vectors.test.ts).
   guest-bindings:
+    needs: debounce
     name: Guest bindings (F#, C#, Rust)
     runs-on: ubuntu-latest
     steps:
@@ -136,6 +146,7 @@ jobs:
   # LCP-001: the F#, C# and Rust minimal engines compiled to WebAssembly, each
   # driving every built-in capability through the same kernel in real Chromium.
   guest-engines-browser:
+    needs: debounce
     name: Guest engines in a real browser (F#, C#, Rust WASM)
     runs-on: ubuntu-latest
     steps:
@@ -191,6 +202,7 @@ jobs:
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.
   packaged-cli:
+    needs: debounce
     name: Packaged CLI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
