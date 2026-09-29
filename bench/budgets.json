@@ -36,6 +36,10 @@
     {
       "workItem": "WI-0077",
       "change": "Added kernel-with-files (kemiller2002/limen#27): the files pack, with the shared handle table and target resolver, adds 6348 bytes gzip over the kernel, and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/files/."
+    },
+    {
+      "workItem": "WI-0079",
+      "change": "Added kernel-with-store (kemiller2002/limen#28): the IndexedDB store pack adds 9456 bytes gzip over the kernel (its generated codec is the largest part: the transaction and schema contract is the widest yet), and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/store/."
     }
   ],
   "profiles": [
@@ -97,7 +101,8 @@
         "dist/federation.js",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 92602,
@@ -123,7 +128,8 @@
         "dist/federation.js",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 92470,
@@ -149,7 +155,8 @@
         "dist/federation.js",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 95578,
@@ -175,7 +182,8 @@
         "dist/capability-support/",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 112426,
@@ -202,7 +210,8 @@
         "dist/capabilities/focus/",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 107508,
@@ -229,7 +238,8 @@
         "dist/capabilities/schedule/",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 124360,
@@ -258,7 +268,8 @@
         "dist/capabilities/measure/",
         "dist/capabilities/overlay/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 123906,
@@ -286,7 +297,8 @@
         "dist/capabilities/measure/",
         "dist/capabilities/events/",
         "dist/capabilities/realtime/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 125294,
@@ -314,7 +326,8 @@
         "dist/capabilities/measure/",
         "dist/capabilities/events/",
         "dist/capabilities/overlay/",
-        "dist/capabilities/files/"
+        "dist/capabilities/files/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 126374,
@@ -342,7 +355,8 @@
         "dist/capabilities/measure/",
         "dist/capabilities/events/",
         "dist/capabilities/overlay/",
-        "dist/capabilities/realtime/"
+        "dist/capabilities/realtime/",
+        "dist/capabilities/store/"
       ],
       "baseline": {
         "rawBytes": 127390,
@@ -351,6 +365,36 @@
       "budget": {
         "rawBytes": 140288,
         "gzipBytesBundled": 27648
+      }
+    },
+    {
+      "name": "kernel-with-store",
+      "doc": "The kernel plus the IndexedDB structured-storage capability pack (./capabilities/store), as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/store/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/"
+      ],
+      "baseline": {
+        "rawBytes": 144576,
+        "gzipBytesBundled": 27882
+      },
+      "budget": {
+        "rawBytes": 159744,
+        "gzipBytesBundled": 30720
       }
     }
   ]

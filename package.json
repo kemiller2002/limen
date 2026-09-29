@@ -51,6 +51,10 @@
       "types": "./dist/capabilities/files/index.d.ts",
       "import": "./dist/capabilities/files/index.js"
     },
+    "./capabilities/store": {
+      "types": "./dist/capabilities/store/index.d.ts",
+      "import": "./dist/capabilities/store/index.js"
+    },
     "./capability-support/handles": {
       "types": "./dist/capability-support/handles.d.ts",
       "import": "./dist/capability-support/handles.js"

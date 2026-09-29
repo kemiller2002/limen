@@ -1,0 +1,76 @@
+{
+  "unit": "limen.store",
+  "role": "capability",
+  "version": 1,
+  "doc": "Durable structured browser storage over IndexedDB (LCP-018). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged.",
+  "types": [
+    { "name": "IndexSchema", "kind": "record", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "unique", "type": "bool" }, { "name": "multiEntry", "type": "bool" } ] },
+    { "name": "StoreSchema", "kind": "record", "doc": "keyPath names the field that holds each record's key (a dotted path for a nested field).", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "indexes", "type": { "list": "IndexSchema" } } ] },
+    { "name": "TransactionMode", "kind": "enum", "values": ["readonly", "readwrite"] },
+    { "name": "KeyRange", "kind": "record", "doc": "A key is a string, a finite number, or a list of keys. Omitted bounds are open-ended.", "fields": [ { "name": "lower", "type": "json", "optional": true }, { "name": "upper", "type": "json", "optional": true }, { "name": "lowerOpen", "type": "bool" }, { "name": "upperOpen", "type": "bool" } ] },
+    {
+      "name": "Operation",
+      "kind": "union",
+      "tag": "op",
+      "variants": [
+        { "name": "get", "fields": [ { "name": "store", "type": "string" }, { "name": "key", "type": "json" } ] },
+        { "name": "put", "doc": "Insert or replace the record whose key is at the store's keyPath in value.", "fields": [ { "name": "store", "type": "string" }, { "name": "value", "type": "json" } ] },
+        { "name": "putIf", "doc": "Compare-and-put: write value only if the record stored under its key is exactly expected (JSON-equal), or absent when expected is null. Otherwise the whole transaction aborts as a conflict, reporting what is stored — the stale-write guard.", "fields": [ { "name": "store", "type": "string" }, { "name": "value", "type": "json" }, { "name": "expected", "type": "json" } ] },
+        { "name": "delete", "fields": [ { "name": "store", "type": "string" }, { "name": "key", "type": "json" } ] },
+        { "name": "query", "doc": "Records in key order (of the index, when given), at most limit (1 to 1000).", "fields": [ { "name": "store", "type": "string" }, { "name": "index", "type": "string", "optional": true }, { "name": "range", "type": "KeyRange", "optional": true }, { "name": "limit", "type": "int" }, { "name": "reverse", "type": "bool" } ] }
+      ]
+    },
+    {
+      "name": "OperationResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Found", "fields": [ { "name": "value", "type": "json" } ] },
+        { "name": "Missing", "fields": [] },
+        { "name": "Put", "fields": [ { "name": "key", "type": "json" } ] },
+        { "name": "Deleted", "fields": [] },
+        { "name": "Queried", "fields": [ { "name": "values", "type": { "list": "json" } } ] }
+      ]
+    },
+    { "name": "AbortReason", "kind": "enum", "doc": "conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.", "values": ["conflict", "constraint", "invalidKey", "quota", "unknownStore", "other"] },
+    {
+      "name": "StoreRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "open", "doc": "Open database at version. Opening at a higher version than the stored one upgrades it: every declared store and index that does not exist is created, and every store in dropStores is deleted — nothing else changes. Opening at the stored version checks the declared schema against the stored one.", "fields": [ { "name": "database", "type": "string" }, { "name": "version", "type": "int" }, { "name": "stores", "type": { "list": "StoreSchema" } }, { "name": "dropStores", "type": { "list": "string" } } ] },
+        { "name": "transact", "doc": "Run the operations, in order, in one transaction over the stores they name.", "fields": [ { "name": "database", "type": "string" }, { "name": "mode", "type": "TransactionMode" }, { "name": "operations", "type": { "list": "Operation" } } ] },
+        { "name": "close", "fields": [ { "name": "database", "type": "string" } ] },
+        { "name": "deleteDatabase", "fields": [ { "name": "database", "type": "string" } ] }
+      ]
+    },
+    {
+      "name": "StoreResult",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "Every outcome the engine must handle; the pack retries nothing.",
+      "variants": [
+        { "name": "Opened", "fields": [ { "name": "version", "type": "int" }, { "name": "upgradedFrom", "type": "int", "doc": "The version before this open; equal to version when nothing was upgraded, 0 for a new database." } ] },
+        { "name": "VersionConflict", "doc": "The stored database is newer than the version asked for: this page is out of date.", "fields": [ { "name": "stored", "type": "int" } ] },
+        { "name": "SchemaMismatch", "doc": "At the stored version, the declared schema and the stored one differ; the connection is not kept. Each problem names a store or index.", "fields": [ { "name": "problems", "type": { "list": "string" } } ] },
+        { "name": "Blocked", "doc": "Another page holds an older version open and did not close it; nothing was upgraded. The pack abandons the attempt.", "fields": [] },
+        { "name": "Committed", "fields": [ { "name": "results", "type": { "list": "OperationResult" } } ] },
+        { "name": "Aborted", "doc": "Nothing in the transaction was applied. operation is the index of the operation that failed, absent when the browser aborted the transaction as a whole at commit (quota, for example); current is what a conflicting putIf found (null when absent).", "fields": [ { "name": "reason", "type": "AbortReason" }, { "name": "operation", "type": "int", "optional": true }, { "name": "current", "type": "json", "optional": true } ] },
+        { "name": "NotOpen", "doc": "transact or close on a database this page has not opened, or whose connection was closed by a version change.", "fields": [] },
+        { "name": "Closed", "fields": [] },
+        { "name": "DatabaseDeleted", "fields": [] },
+        { "name": "InvalidRequest", "doc": "A malformed schema, key, range or limit, found before touching the database.", "fields": [ { "name": "problem", "type": "string" } ] },
+        { "name": "Unavailable", "doc": "This browser or context has no usable IndexedDB (for example some private modes). The exception's name only.", "fields": [ { "name": "reason", "type": "string" } ] },
+        { "name": "Cancelled", "doc": "The engine cancelled the request. A transaction cancelled while running is aborted, so nothing in it was applied.", "fields": [] }
+      ]
+    },
+    {
+      "name": "StoreFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "VersionChanged", "doc": "Another page upgraded or deleted this database. The pack closed this page's connection so it would not block; the engine reopens at the new version when its code understands it. newVersion is 0 for a deletion.", "fields": [ { "name": "database", "type": "string" }, { "name": "newVersion", "type": "int" } ] }
+      ]
+    }
+  ]
+}

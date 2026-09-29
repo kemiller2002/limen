@@ -48,6 +48,18 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **IndexedDB structured-storage capability pack (#28).** `./capabilities/store`
+  (`storeCapability()`, contract unit `limen.store`, with bindings for
+  TypeScript, F#, C# and Rust):
+  - the engine declares versioned stores and indexes; the pack creates what is
+    declared and drops only what is named;
+  - schema mismatches, version conflicts, blocked upgrades and unavailability
+    are typed outcomes;
+  - a transaction is atomic: `Committed` with every result, or `Aborted` with
+    the reason and the failing operation;
+  - `putIf` is a compare-and-put that rejects stale writes;
+  - another tab's upgrade is reported as `VersionChanged`.
+  `localStorage` support is unchanged.
 - **User-mediated file capability pack (#27).** `./capabilities/files`
   (`filesCapability()`, contract unit `limen.files`, with bindings for
   TypeScript, F#, C# and Rust):

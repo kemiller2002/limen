@@ -25,6 +25,7 @@ type Page = {
   on(event: "pageerror", handler: (error: { message?: string }) => void): void;
   on(event: "download", handler: (download: Download) => void): void;
   click(selector: string): Promise<void>;
+  reload(): Promise<unknown>;
   setInputFiles(selector: string, files: readonly { name: string; mimeType: string; buffer: Buffer }[]): Promise<void>;
   focus(selector: string): Promise<void>;
   dragAndDrop(source: string, target: string): Promise<void>;
@@ -79,16 +80,17 @@ const RECORD_VIOLATIONS = `
 //
 // Some facts exist only for trusted input: a real key press, a pointer drag, a
 // native drag and drop, IME composition, a trusted click (user activation),
-// files chosen in a file input. A page asks for one by setting
-// window.__limenPackAction; the runner performs it with Playwright's real
-// input (IME through the DevTools protocol) and calls
-// window.__limenPackActionDone().
+// files chosen in a file input, a reload. A page
+// asks for one by setting window.__limenPackAction; the runner performs it
+// with Playwright's real input (IME through the DevTools protocol)
+// and calls window.__limenPackActionDone().
 type Action =
   | { readonly kind: "press"; readonly selector: string; readonly key: string }
   | { readonly kind: "drag"; readonly from: readonly [number, number]; readonly to: readonly [number, number]; readonly steps: number }
   | { readonly kind: "dragAndDrop"; readonly source: string; readonly target: string }
   | { readonly kind: "compose"; readonly selector: string; readonly steps: readonly string[]; readonly commit: string }
   | { readonly kind: "click"; readonly selector: string }
+  | { readonly kind: "reload" }
   | { readonly kind: "setFiles"; readonly selector: string; readonly files: readonly { readonly name: string; readonly mimeType: string; readonly base64?: string; readonly size?: number }[] };
 
 // A file for setFiles: given bytes, or `size` bytes of the repeating pattern
@@ -113,6 +115,9 @@ const perform = async (page: Page, cdp: () => Promise<CdpSession>, action: Actio
       return;
     case "click":
       await page.click(action.selector);
+      return;
+    case "reload":
+      await page.reload();
       return;
     case "setFiles":
       await page.setInputFiles(action.selector, action.files.map((file) => ({ name: file.name, mimeType: file.mimeType, buffer: fileBuffer(file) })));
