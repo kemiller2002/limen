@@ -1,0 +1,21 @@
+{
+  "workItem": "WI-0108",
+  "reference": "kemiller2002/limen#41 (LCP-035)",
+  "placement": "Optional Host — src/hosts/worker-transport.ts (main thread) and src/hosts/worker-engine.ts (inside a dedicated worker). The main-thread side is an EngineTransport that moves the same serialized BrowserToEngine/EngineToBrowser JSON to a worker and decodes replies with the generated contract decoder, so the kernel is unchanged and semantically blind, and nothing about the guest language is known to the host. The worker side wraps whichever engine transport the worker builds (.NET WebAssembly, raw WebAssembly, or TypeScript). No DOM object, SharedArrayBuffer or shared memory crosses. Worker faults and termination are explicit errors that the fallback host (docs/44) reports and restarts. Performance is measured, and the numbers decide the recommendation.",
+  "guardrail": false,
+  "paths": [
+    "src/hosts/worker-transport.ts",
+    "src/hosts/worker-engine.ts",
+    "src/index.ts",
+    "guests/minimal/host/**",
+    "scripts/bench-worker.ts",
+    "bench/**",
+    "package.json",
+    "test/**",
+    "docs/**",
+    "CHANGELOG.md",
+    "CLAUDE.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
