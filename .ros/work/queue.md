@@ -135,4 +135,4 @@
 | WI-0128 | Core Admission proposal CA-0002 (kemiller2002/limen#39): the kernel adopts a server-rendered data-if root or data-each row instead of cloning its template; recorded pending for the owner, since hydration is outside Core under #59 and feature work cannot approve it | complete |  | medium |
 | WI-0129 | Media capture and recording capability pack (kemiller2002/limen#44, LCP-038): camera and microphone under the permission pattern, opaque capture and recording ids, previews into named video elements, bounded recording reads, explicit denied/device-unavailable/ended/cancelled outcomes and cleanup | active |  | medium |
 | WI-0130 | Guardrail: register the limen.media contract unit and its F#, C# and Rust bindings (kemiller2002/limen#44) | active |  | medium |
-| WI-0131 | Guardrail: the Core Admission test's mismatched-id fixture used CA-0002, which is now a real record; use an id no record will take (kemiller2002/limen#63) | ready |  | medium |
+| WI-0131 | Guardrail: the Core Admission test's mismatched-id fixture used CA-0002, which is now a real record; use an id no record will take (kemiller2002/limen#63) | complete |  | medium |

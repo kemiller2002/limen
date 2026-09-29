@@ -1958,10 +1958,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T17:53:57.924Z",
-      "updatedAt": "2026-09-29T17:54:08Z",
+      "updatedAt": "2026-09-29T17:54:24Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
