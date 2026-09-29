@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0125",
+  "reference": "kemiller2002/limen#59",
+  "placement": "Tooling / Conformance — a test only: the minimal F#, C# and Rust WebAssembly consumers' host (guests/minimal/host) loads Core plus the WASM host adapters and nothing else, registers no capability pack, and no minimal engine requests an optional capability. No source, guardrail or manifest change.",
+  "guardrail": false,
+  "paths": ["test/guest-minimal-core.test.ts"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
