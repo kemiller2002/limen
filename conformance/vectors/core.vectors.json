@@ -1,0 +1,924 @@
+{
+  "unit": "limen.core",
+  "doc": "Shared semantic vectors. Every language binding must accept every valid vector and round-trip it to equal JSON, and reject every invalid vector at exactly errorPath. Keys are ASCII so path rendering is identical in every language.",
+  "vectors": [
+    {
+      "name": "initialize without handshake (a 1.0 kernel)",
+      "type": "BrowserToEngineMessage",
+      "valid": true,
+      "json": {
+        "kind": "Initialize",
+        "protocolVersion": 1,
+        "capabilities": [
+          "Http",
+          "Storage",
+          "Clipboard",
+          "Navigation"
+        ],
+        "location": {
+          "origin": "https://example.com",
+          "path": "/invoices/42",
+          "query": "?tab=history",
+          "hash": ""
+        }
+      }
+    },
+    {
+      "name": "initialize with handshake",
+      "type": "BrowserToEngineMessage",
+      "valid": true,
+      "json": {
+        "kind": "Initialize",
+        "protocolVersion": 1,
+        "capabilities": [
+          "Http"
+        ],
+        "location": {
+          "origin": "https://example.com",
+          "path": "/invoices/42",
+          "query": "?tab=history",
+          "hash": ""
+        },
+        "handshake": {
+          "protocol": {
+            "major": 1,
+            "minor": 1
+          },
+          "contract": {
+            "unit": "limen.core",
+            "version": 1,
+            "fingerprint": "sha256:abc"
+          },
+          "capabilities": [
+            {
+              "id": "limen.focus",
+              "version": 1,
+              "fingerprint": "sha256:def"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "event with key and value",
+      "type": "BrowserToEngineMessage",
+      "valid": true,
+      "json": {
+        "kind": "Event",
+        "event": {
+          "kind": "Event",
+          "name": "save",
+          "key": "row-1",
+          "value": "x"
+        }
+      }
+    },
+    {
+      "name": "event with neither key nor value",
+      "type": "BrowserToEngineMessage",
+      "valid": true,
+      "json": {
+        "kind": "Event",
+        "event": {
+          "kind": "Event",
+          "name": "save"
+        }
+      }
+    },
+    {
+      "name": "location changed",
+      "type": "BrowserToEngineMessage",
+      "valid": true,
+      "json": {
+        "kind": "LocationChanged",
+        "location": {
+          "origin": "https://example.com",
+          "path": "/invoices/42",
+          "query": "?tab=history",
+          "hash": ""
+        }
+      }
+    },
+    {
+      "name": "capability fact carries an opaque payload",
+      "type": "BrowserToEngineMessage",
+      "valid": true,
+      "json": {
+        "kind": "CapabilityFact",
+        "capability": "limen.focus",
+        "version": 1,
+        "fact": {
+          "anything": [
+            1,
+            "two",
+            null,
+            true
+          ]
+        }
+      }
+    },
+    {
+      "name": "http success with json body",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c1",
+        "outcome": {
+          "kind": "Success",
+          "status": 200,
+          "body": {
+            "items": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "http failure with status",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c1",
+        "outcome": {
+          "kind": "Failure",
+          "reason": "invalid-response",
+          "status": 500
+        }
+      }
+    },
+    {
+      "name": "http failure without status",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c1",
+        "outcome": {
+          "kind": "Failure",
+          "reason": "network"
+        }
+      }
+    },
+    {
+      "name": "http cancelled",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c1",
+        "outcome": {
+          "kind": "Cancelled"
+        }
+      }
+    },
+    {
+      "name": "http outcome unknown",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c1",
+        "outcome": {
+          "kind": "OutcomeUnknown",
+          "reason": "timeout-after-dispatch"
+        }
+      }
+    },
+    {
+      "name": "storage success with value",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "StorageResult",
+        "correlationId": "s1",
+        "outcome": {
+          "kind": "Success",
+          "value": "v"
+        }
+      }
+    },
+    {
+      "name": "storage success with null (absent key)",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "StorageResult",
+        "correlationId": "s1",
+        "outcome": {
+          "kind": "Success",
+          "value": null
+        }
+      }
+    },
+    {
+      "name": "storage quota exceeded",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "StorageResult",
+        "correlationId": "s1",
+        "outcome": {
+          "kind": "Failure",
+          "reason": "quota-exceeded"
+        }
+      }
+    },
+    {
+      "name": "clipboard denied",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "ClipboardResult",
+        "correlationId": "k1",
+        "outcome": {
+          "kind": "Failure",
+          "reason": "denied"
+        }
+      }
+    },
+    {
+      "name": "clipboard success",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "ClipboardResult",
+        "correlationId": "k1",
+        "outcome": {
+          "kind": "Success"
+        }
+      }
+    },
+    {
+      "name": "navigation success",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "NavigationResult",
+        "correlationId": "n1",
+        "outcome": {
+          "kind": "Success",
+          "location": {
+            "origin": "https://example.com",
+            "path": "/invoices/42",
+            "query": "?tab=history",
+            "hash": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "navigation dispatched",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "NavigationResult",
+        "correlationId": "n1",
+        "outcome": {
+          "kind": "Dispatched"
+        }
+      }
+    },
+    {
+      "name": "navigation not same origin",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "NavigationResult",
+        "correlationId": "n1",
+        "outcome": {
+          "kind": "Failure",
+          "reason": "not-same-origin"
+        }
+      }
+    },
+    {
+      "name": "capability completed",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "CapabilityResult",
+        "correlationId": "f1",
+        "capability": "limen.focus",
+        "version": 1,
+        "outcome": {
+          "kind": "Completed",
+          "result": {
+            "kind": "Focused"
+          }
+        }
+      }
+    },
+    {
+      "name": "capability unsupported",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "CapabilityResult",
+        "correlationId": "f1",
+        "capability": "limen.focus",
+        "version": 2,
+        "outcome": {
+          "kind": "Unsupported",
+          "reason": "version-unsupported"
+        }
+      }
+    },
+    {
+      "name": "capability rejected",
+      "type": "EffectResult",
+      "valid": true,
+      "json": {
+        "kind": "CapabilityResult",
+        "correlationId": "f1",
+        "capability": "limen.focus",
+        "version": 1,
+        "outcome": {
+          "kind": "Rejected",
+          "reason": "malformed-request"
+        }
+      }
+    },
+    {
+      "name": "every effect kind",
+      "type": "EngineToBrowserMessage",
+      "valid": true,
+      "json": {
+        "view": {
+          "title": "Invoices",
+          "count": 3,
+          "ratio": 0.5,
+          "busy": false,
+          "rows": [
+            {
+              "id": "a",
+              "total": 1.25,
+              "paid": true
+            }
+          ]
+        },
+        "effects": [
+          {
+            "kind": "Http",
+            "correlationId": "h1",
+            "method": "POST",
+            "url": "/api",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "body": "{}",
+            "timeoutMs": 5000
+          },
+          {
+            "kind": "Http",
+            "correlationId": "h2",
+            "method": "GET",
+            "url": "/api",
+            "timeoutMs": 5000
+          },
+          {
+            "kind": "Storage",
+            "correlationId": "s1",
+            "operation": "get",
+            "key": "k"
+          },
+          {
+            "kind": "Storage",
+            "correlationId": "s2",
+            "operation": "set",
+            "key": "k",
+            "value": "v"
+          },
+          {
+            "kind": "Storage",
+            "correlationId": "s3",
+            "operation": "remove",
+            "key": "k"
+          },
+          {
+            "kind": "Clipboard",
+            "correlationId": "k1",
+            "operation": "writeText",
+            "text": "copied"
+          },
+          {
+            "kind": "Navigation",
+            "correlationId": "n1",
+            "operation": "push",
+            "url": "/a"
+          },
+          {
+            "kind": "Navigation",
+            "correlationId": "n2",
+            "operation": "replace",
+            "url": "/b"
+          },
+          {
+            "kind": "Navigation",
+            "correlationId": "n3",
+            "operation": "back"
+          },
+          {
+            "kind": "Navigation",
+            "correlationId": "n4",
+            "operation": "forward"
+          },
+          {
+            "kind": "Capability",
+            "correlationId": "f1",
+            "capability": "limen.focus",
+            "version": 1,
+            "request": {
+              "operation": "focus",
+              "target": "email"
+            }
+          }
+        ],
+        "cancellations": [
+          "h0"
+        ]
+      }
+    },
+    {
+      "name": "accepted handshake",
+      "type": "EngineToBrowserMessage",
+      "valid": true,
+      "json": {
+        "view": {},
+        "effects": [],
+        "cancellations": [],
+        "handshake": {
+          "kind": "Accepted",
+          "protocol": {
+            "major": 1,
+            "minor": 1
+          },
+          "contract": {
+            "unit": "limen.core",
+            "version": 1,
+            "fingerprint": "sha256:abc"
+          },
+          "capabilities": []
+        }
+      }
+    },
+    {
+      "name": "rejected handshake: protocol unsupported",
+      "type": "EngineHandshake",
+      "valid": true,
+      "json": {
+        "kind": "Rejected",
+        "reason": {
+          "kind": "ProtocolUnsupported",
+          "offered": {
+            "major": 2,
+            "minor": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "rejected handshake: contract mismatch",
+      "type": "EngineHandshake",
+      "valid": true,
+      "json": {
+        "kind": "Rejected",
+        "reason": {
+          "kind": "ContractMismatch",
+          "expected": {
+            "unit": "limen.core",
+            "version": 1,
+            "fingerprint": "sha256:a"
+          },
+          "offered": {
+            "unit": "limen.core",
+            "version": 1,
+            "fingerprint": "sha256:b"
+          }
+        }
+      }
+    },
+    {
+      "name": "rejected handshake: capability unavailable",
+      "type": "EngineHandshake",
+      "valid": true,
+      "json": {
+        "kind": "Rejected",
+        "reason": {
+          "kind": "CapabilityUnavailable",
+          "id": "limen.focus",
+          "version": 1
+        }
+      }
+    },
+    {
+      "name": "rejected handshake: handshake missing",
+      "type": "EngineHandshake",
+      "valid": true,
+      "json": {
+        "kind": "Rejected",
+        "reason": {
+          "kind": "HandshakeMissing"
+        }
+      }
+    },
+    {
+      "name": "view state with every value shape",
+      "type": "ViewState",
+      "valid": true,
+      "json": {
+        "a": "x",
+        "b": -7,
+        "c": 1.5,
+        "d": true,
+        "e": [],
+        "f": [
+          {
+            "k": "v",
+            "n": 0,
+            "b": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "an integer written with a fraction and exponent is still an integer",
+      "type": "EffectOutcome",
+      "valid": true,
+      "json": {
+        "kind": "Success",
+        "status": 200.0,
+        "body": null
+      }
+    },
+    {
+      "name": "unknown message kind",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.kind",
+      "json": {
+        "kind": "Teleport"
+      }
+    },
+    {
+      "name": "missing tag",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.kind",
+      "json": {
+        "event": {
+          "kind": "Event",
+          "name": "x"
+        }
+      }
+    },
+    {
+      "name": "tag is not a string",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.kind",
+      "json": {
+        "kind": 7
+      }
+    },
+    {
+      "name": "not an object",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$",
+      "json": [
+        "Initialize"
+      ]
+    },
+    {
+      "name": "unsupported protocol version literal",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.protocolVersion",
+      "json": {
+        "kind": "Initialize",
+        "protocolVersion": 2,
+        "capabilities": [],
+        "location": {
+          "origin": "https://example.com",
+          "path": "/invoices/42",
+          "query": "?tab=history",
+          "hash": ""
+        }
+      }
+    },
+    {
+      "name": "unknown built-in capability",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.capabilities[0]",
+      "json": {
+        "kind": "Initialize",
+        "protocolVersion": 1,
+        "capabilities": [
+          "Teleport"
+        ],
+        "location": {
+          "origin": "https://example.com",
+          "path": "/invoices/42",
+          "query": "?tab=history",
+          "hash": ""
+        }
+      }
+    },
+    {
+      "name": "semantic event with wrong constant kind",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.event.kind",
+      "json": {
+        "kind": "Event",
+        "event": {
+          "kind": "Click",
+          "name": "x"
+        }
+      }
+    },
+    {
+      "name": "unexpected field is corrupted wire data",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.extra",
+      "json": {
+        "kind": "LocationChanged",
+        "location": {
+          "origin": "https://example.com",
+          "path": "/invoices/42",
+          "query": "?tab=history",
+          "hash": ""
+        },
+        "extra": 1
+      }
+    },
+    {
+      "name": "the first unexpected field in ordinal order is reported",
+      "type": "BrowserToEngineMessage",
+      "valid": false,
+      "errorPath": "$.alpha",
+      "json": {
+        "kind": "LocationChanged",
+        "location": {
+          "origin": "https://example.com",
+          "path": "/invoices/42",
+          "query": "?tab=history",
+          "hash": ""
+        },
+        "zeta": 1,
+        "alpha": 2
+      }
+    },
+    {
+      "name": "missing required field",
+      "type": "EffectResult",
+      "valid": false,
+      "errorPath": "$.correlationId",
+      "json": {
+        "kind": "HttpResult",
+        "outcome": {
+          "kind": "Cancelled"
+        }
+      }
+    },
+    {
+      "name": "unknown outcome variant",
+      "type": "EffectResult",
+      "valid": false,
+      "errorPath": "$.outcome.kind",
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c",
+        "outcome": {
+          "kind": "Retried"
+        }
+      }
+    },
+    {
+      "name": "unknown failure reason",
+      "type": "EffectResult",
+      "valid": false,
+      "errorPath": "$.outcome.reason",
+      "json": {
+        "kind": "HttpResult",
+        "correlationId": "c",
+        "outcome": {
+          "kind": "Failure",
+          "reason": "teapot"
+        }
+      }
+    },
+    {
+      "name": "outcome unknown with a different reason",
+      "type": "EffectOutcome",
+      "valid": false,
+      "errorPath": "$.reason",
+      "json": {
+        "kind": "OutcomeUnknown",
+        "reason": "timeout"
+      }
+    },
+    {
+      "name": "status must be an integer",
+      "type": "EffectOutcome",
+      "valid": false,
+      "errorPath": "$.status",
+      "json": {
+        "kind": "Success",
+        "status": 200.5,
+        "body": null
+      }
+    },
+    {
+      "name": "status beyond the safe integer range",
+      "type": "EffectOutcome",
+      "valid": false,
+      "errorPath": "$.status",
+      "json": {
+        "kind": "Success",
+        "status": 9007199254740993,
+        "body": null
+      }
+    },
+    {
+      "name": "optional field may be absent but not null",
+      "type": "EffectOutcome",
+      "valid": false,
+      "errorPath": "$.status",
+      "json": {
+        "kind": "Failure",
+        "reason": "network",
+        "status": null
+      }
+    },
+    {
+      "name": "nullable field may be null but not absent",
+      "type": "StorageOutcome",
+      "valid": false,
+      "errorPath": "$.value",
+      "json": {
+        "kind": "Success"
+      }
+    },
+    {
+      "name": "unknown storage operation",
+      "type": "EffectRequest",
+      "valid": false,
+      "errorPath": "$.operation",
+      "json": {
+        "kind": "Storage",
+        "correlationId": "s",
+        "operation": "clear"
+      }
+    },
+    {
+      "name": "clipboard read does not exist",
+      "type": "EffectRequest",
+      "valid": false,
+      "errorPath": "$.operation",
+      "json": {
+        "kind": "Clipboard",
+        "correlationId": "k",
+        "operation": "readText"
+      }
+    },
+    {
+      "name": "unknown http method",
+      "type": "EffectRequest",
+      "valid": false,
+      "errorPath": "$.method",
+      "json": {
+        "kind": "Http",
+        "correlationId": "h",
+        "method": "TRACE",
+        "url": "/",
+        "timeoutMs": 1
+      }
+    },
+    {
+      "name": "header values are strings",
+      "type": "EffectRequest",
+      "valid": false,
+      "errorPath": "$.headers[\"x\"]",
+      "json": {
+        "kind": "Http",
+        "correlationId": "h",
+        "method": "GET",
+        "url": "/",
+        "headers": {
+          "x": 1
+        },
+        "timeoutMs": 1
+      }
+    },
+    {
+      "name": "a nested object is not a view value",
+      "type": "ViewState",
+      "valid": false,
+      "errorPath": "$[\"a\"]",
+      "json": {
+        "a": {
+          "nested": true
+        }
+      }
+    },
+    {
+      "name": "a list item field may not be a list",
+      "type": "ViewState",
+      "valid": false,
+      "errorPath": "$[\"rows\"][0][\"tags\"]",
+      "json": {
+        "rows": [
+          {
+            "id": "1",
+            "tags": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "null is not a view value",
+      "type": "ViewState",
+      "valid": false,
+      "errorPath": "$[\"a\"]",
+      "json": {
+        "a": null
+      }
+    },
+    {
+      "name": "the first failing map entry in ordinal order is reported",
+      "type": "ViewState",
+      "valid": false,
+      "errorPath": "$[\"b\"]",
+      "json": {
+        "z": null,
+        "b": null
+      }
+    },
+    {
+      "name": "effects must be a list",
+      "type": "EngineToBrowserMessage",
+      "valid": false,
+      "errorPath": "$.effects",
+      "json": {
+        "view": {},
+        "effects": null,
+        "cancellations": []
+      }
+    },
+    {
+      "name": "capability request needs a version",
+      "type": "EngineToBrowserMessage",
+      "valid": false,
+      "errorPath": "$.effects[0].version",
+      "json": {
+        "view": {},
+        "effects": [
+          {
+            "kind": "Capability",
+            "correlationId": "f",
+            "capability": "limen.focus",
+            "request": {}
+          }
+        ],
+        "cancellations": []
+      }
+    },
+    {
+      "name": "malformed handshake",
+      "type": "EngineHandshake",
+      "valid": false,
+      "errorPath": "$.protocol.minor",
+      "json": {
+        "kind": "Accepted",
+        "protocol": {
+          "major": 1
+        },
+        "contract": {
+          "unit": "u",
+          "version": 1,
+          "fingerprint": "f"
+        },
+        "capabilities": []
+      }
+    },
+    {
+      "name": "unknown rejection reason",
+      "type": "EngineHandshake",
+      "valid": false,
+      "errorPath": "$.reason.kind",
+      "json": {
+        "kind": "Rejected",
+        "reason": {
+          "kind": "Bored"
+        }
+      }
+    }
+  ]
+}

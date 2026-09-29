@@ -55,7 +55,48 @@ it has always had. The strict decoder for every type is
 JSON crosses into host code — typically a WebAssembly transport. It rejects
 unknown variants, missing fields, **and unexpected fields**.
 
-F#, C# and Rust emitters are tracked in #52/#55 and share this source.
+### Guest bindings: F#, C#, Rust
+
+The same source generates a binding for each WebAssembly guest language, each
+in that language's strongest closed representation:
+
+| Language | Project | Unions | Absence | Exhaustiveness |
+| --- | --- | --- | --- | --- |
+| F# | `guests/fsharp/Limen.Contract` | `[<RequireQualifiedAccess>]` discriminated unions | `option` | compiler; incomplete matches are errors (`--warnaserror:25`) |
+| C# | `guests/csharp/Limen.Contract` | abstract records closed by a private constructor, sealed nested variants | `#nullable enable` | a generated `Match` with one handler per variant: a new variant breaks every call site |
+| Rust | `guests/rust/limen-contract` | `enum` (never `#[non_exhaustive]`) | `Option` | compiler; `#![deny(warnings)]`, `#![forbid(unsafe_code)]` |
+
+Common rules, identical in every language:
+
+- **Literal-valued fields do not exist in guest types.** `Initialize.protocolVersion`
+  is fixed at `1` by the contract, so an F# `Initialize` case has no field for it:
+  there is nothing to get wrong. Decoders check it; encoders write it.
+- **The same wire names** become the same identifiers: `"invalid-response"` is
+  `InvalidResponse`, `"GET"` is `Get`, everywhere.
+- **`int` is a 53-bit-safe integer** (`int64`/`long`/`i64`); `2e2` is accepted,
+  `200.5` and `9007199254740993` are not.
+- **Absent and null are different facts.** An optional field may be absent but
+  not `null`; a nullable field may be `null` but not absent. A field cannot be
+  both.
+- **Decoders are strict and report the same first error at the same path** —
+  unknown variant, missing field, unexpected field (first in ordinal order),
+  wrong type — so a diagnostic from any guest names the same place.
+- **`json` slots are `RawJson`** — the serialized text, to be decoded by the
+  capability's own generated binding, never inspected generically.
+
+### Shared vectors
+
+[`conformance/vectors/core.vectors.json`](../conformance/vectors/core.vectors.json)
+holds valid and invalid wire values. Every language must accept each valid one
+and re-encode it to equal JSON, and reject each invalid one at exactly its
+`errorPath`. Each guest runner also **recomputes the contract fingerprint
+independently** from `contract/core.contract.json` (its own canonicalizer and
+SHA-256) and compares it with the constant in its generated binding.
+
+```sh
+node --experimental-strip-types --test test/conformance-vectors.test.ts   # TypeScript (part of npm test)
+npm run test:guests          # F#, C# and Rust (CI job "Guest bindings")
+```
 
 ## The fingerprint
 

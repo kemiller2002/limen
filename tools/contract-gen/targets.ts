@@ -1,10 +1,14 @@
 // contract/targets.json: which units exist and which bindings they produce.
 
-export const OUTPUT_KINDS = ["typescript-types", "typescript-codec"] as const;
+export const OUTPUT_KINDS = ["typescript-types", "typescript-codec", "fsharp-runtime", "fsharp-unit", "csharp-runtime", "csharp-unit", "rust-runtime", "rust-unit"] as const;
 export type OutputKind = (typeof OUTPUT_KINDS)[number];
 
+// A runtime is the per-language wire plumbing shared by every unit; it is
+// produced by the generator itself, not from any one contract unit.
+export const RUNTIME_KINDS: readonly OutputKind[] = ["fsharp-runtime", "csharp-runtime", "rust-runtime"];
+
 export type Target = {
-  readonly unit: string;
+  readonly unit: string | undefined;
   readonly kind: OutputKind;
   readonly path: string;
   readonly typesModule: string | undefined;
@@ -24,14 +28,16 @@ const parseTarget = (raw: unknown, index: number): Parsed<Target> => {
   const at = `outputs[${index}]`;
   if (!isRecord(raw)) return { ok: false, errors: [`${at}: must be an object`] };
   const errors = [
-    ...(typeof raw.unit === "string" ? [] : [`${at}: unit is required`]),
+    ...(RUNTIME_KINDS.some((kind) => kind === raw.kind)
+      ? (raw.unit === undefined ? [] : [`${at}: a runtime target names no unit`])
+      : (typeof raw.unit === "string" ? [] : [`${at}: unit is required`])),
     ...(isOutputKind(raw.kind) ? [] : [`${at}: kind must be one of ${OUTPUT_KINDS.join(", ")}`]),
     ...(typeof raw.path === "string" && !raw.path.startsWith("/") && !raw.path.includes("..") ? [] : [`${at}: path must be repository-relative`]),
     ...(raw.typesModule === undefined || typeof raw.typesModule === "string" ? [] : [`${at}: typesModule must be a string`]),
   ];
-  return errors.length > 0 || typeof raw.unit !== "string" || !isOutputKind(raw.kind) || typeof raw.path !== "string"
+  return errors.length > 0 || !isOutputKind(raw.kind) || typeof raw.path !== "string"
     ? { ok: false, errors }
-    : { ok: true, value: { unit: raw.unit, kind: raw.kind, path: raw.path, typesModule: typeof raw.typesModule === "string" ? raw.typesModule : undefined } };
+    : { ok: true, value: { unit: typeof raw.unit === "string" ? raw.unit : undefined, kind: raw.kind, path: raw.path, typesModule: typeof raw.typesModule === "string" ? raw.typesModule : undefined } };
 };
 
 export const parseTargets = (raw: unknown): Parsed<Targets> => {

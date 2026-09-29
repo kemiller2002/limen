@@ -67,6 +67,40 @@ jobs:
       - name: Clean-room install of the packed tarball
         run: npm run check:clean-room
 
+  # One language-neutral contract, four generated bindings. Each guest
+  # language compiles its binding under strict settings, independently
+  # recomputes the contract fingerprint, and runs the same shared vectors as
+  # the TypeScript host (test/conformance-vectors.test.ts).
+  guest-bindings:
+    name: Guest bindings (F#, C#, Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generated bindings are current (no stale or hand-edited output)
+        run: npm run contract:check
+
+      - name: F#, C# and Rust bindings compile strictly and agree on the shared vectors
+        run: npm run test:guests
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.

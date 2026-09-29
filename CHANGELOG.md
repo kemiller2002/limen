@@ -47,6 +47,15 @@ exhaustive lists.
   to a capability that was not negotiated are answered `Unsupported`; payloads
   the pack's generated decoder rejects are answered `Rejected`.
 
+- **F#, C# and Rust guest bindings (#52).** The same contract now generates
+  `guests/fsharp/Limen.Contract`, `guests/csharp/Limen.Contract` and
+  `guests/rust/limen-contract`, each in its language's strongest closed form
+  (discriminated unions; closed record hierarchies with a generated exhaustive
+  `Match`; enums), with strict decoders and encoders. All four languages run
+  the shared vectors in `conformance/vectors/` and agree on every accepted value
+  and on the exact path of every rejection; each independently recomputes the
+  contract fingerprint. `npm run test:guests`; CI job "Guest bindings".
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a

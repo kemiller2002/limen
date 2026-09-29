@@ -114,7 +114,11 @@
     "test:site:fsharp": "dotnet run --project site/fsharp/tests/Limen.Site.Engine.Tests/Limen.Site.Engine.Tests.fsproj -c Release && dotnet run --project site/fsharp/federation/tests/Limen.Federation.Proof.Tests/Limen.Federation.Proof.Tests.fsproj -c Release",
     "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh",
     "contract:generate": "node --experimental-strip-types tools/contract-gen/main.ts generate",
-    "contract:check": "node --experimental-strip-types tools/contract-gen/main.ts check"
+    "contract:check": "node --experimental-strip-types tools/contract-gen/main.ts check",
+    "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust",
+    "test:guests:fsharp": "dotnet run --project guests/fsharp/Limen.Contract.Conformance/Limen.Contract.Conformance.fsproj -c Release --nologo",
+    "test:guests:csharp": "dotnet run --project guests/csharp/Limen.Contract.Conformance/Limen.Contract.Conformance.csproj -c Release --nologo",
+    "test:guests:rust": "cargo test --manifest-path guests/rust/limen-contract/Cargo.toml --locked"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",

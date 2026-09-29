@@ -4,7 +4,7 @@
 // unit: limen.fixture.echo@1
 // contract-fingerprint: sha256:9aa4755b6c0ba31cd6cd385f9ce4faf2820567f53907e3378445be4c2ae08b23
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:d90b2037309ecc86fd3c8fc4629be44a87f63d349b678856e6e96944a3283a34
+// content-hash: sha256:2f9ad3308eb5ee29940d0223d2d0cb765878644ca90d387fccfd09c6a29ae6af
 // </auto-generated>
 import type { EchoRequest, EchoResult, EchoFact } from "./echo.ts";
 
@@ -57,7 +57,8 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 // never silently ignored. `null` means the caller dispatches on a tag first.
 const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
-  const unexpected = keys === null ? undefined : Object.keys(value).find((key) => !keys.includes(key));
+  // Sorted, so every language reports the same first unexpected field.
+  const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
   return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
@@ -70,7 +71,8 @@ const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: st
 
 const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
-  const decoded = Object.entries(value).map(([key, entry]) => [key, item(entry, `${path}[${JSON.stringify(key)}]`)] as const);
+  // Sorted, so every language reports the same first failing entry.
+  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
   const failed = decoded.find(([, entry]) => !entry.ok);
   return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
 };

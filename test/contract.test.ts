@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { canonicalize, fingerprintOf, parseUnit } from "../tools/contract-gen/model.ts";
 import { check, classify, render, withHeader } from "../tools/contract-gen/main.ts";
@@ -172,4 +174,72 @@ test("a non-integer where the contract says int fails", () => {
 test("an engine response with every optional absent decodes, and null where a list belongs fails", () => {
   assert.equal(decodeEngineToBrowserMessage({ view: {}, effects: [], cancellations: [] }).ok, true);
   assert.equal(decodeEngineToBrowserMessage({ view: {}, effects: null, cancellations: [] }).ok, false);
+});
+
+// ---------------------------------------------------------------------------
+// End to end: a contract edit without regeneration is caught in every language
+// ---------------------------------------------------------------------------
+
+const copyGenerationInputs = async (): Promise<string> => {
+  const scratch = await mkdtemp(join(tmpdir(), "limen-contract-"));
+  const targets = JSON.parse(await readFile(join(ROOT, "contract/targets.json"), "utf8")) as { units: string[]; outputs: { path: string }[] };
+  await Promise.all([
+    cp(join(ROOT, "contract"), join(scratch, "contract"), { recursive: true }),
+    ...targets.units.filter((unit) => !unit.startsWith("contract/")).map((unit) => cp(join(ROOT, unit), join(scratch, unit))),
+    ...targets.outputs.map((output) => cp(join(ROOT, output.path), join(scratch, output.path))),
+  ]);
+  return scratch;
+};
+
+test("changing the contract without regenerating makes every binding of that unit stale, in every language", async () => {
+  const scratch = await copyGenerationInputs();
+  try {
+    const path = join(scratch, "contract/core.contract.json");
+    const contract = JSON.parse(await readFile(path, "utf8")) as { types: { name: string; values?: string[] }[] };
+    const widened = { ...contract, types: contract.types.map((type) => (type.name === "HttpMethod" ? { ...type, values: [...(type.values ?? []), "HEAD"] } : type)) };
+    await writeFile(path, JSON.stringify(widened, null, 2));
+    const findings = await check(scratch);
+    const stale = findings.filter((finding) => finding.kind === "stale").map((finding) => finding.path).sort();
+    assert.deepEqual(stale, [
+      "guests/csharp/Limen.Contract/Generated/Core.cs",
+      "guests/fsharp/Limen.Contract/Generated/Core.fs",
+      "guests/rust/limen-contract/src/limen_core.rs",
+      "src/generated/core.codec.ts",
+      "src/generated/core.ts",
+    ]);
+    assert.equal(findings.length, stale.length, "only the changed unit's bindings are affected");
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test("a hand edit to a guest binding is caught as hand-edited", async () => {
+  const scratch = await copyGenerationInputs();
+  try {
+    const path = join(scratch, "guests/rust/limen-contract/src/limen_core.rs");
+    const source = await readFile(path, "utf8");
+    await writeFile(path, source.replace("pub enum HttpMethod {", "pub enum HttpMethod {\n    Head,"));
+    assert.deepEqual(await check(scratch), [{ kind: "hand-edited", path: "guests/rust/limen-contract/src/limen_core.rs" }]);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test("a copied generated file that no target produces is an orphan", async () => {
+  const scratch = await copyGenerationInputs();
+  try {
+    await cp(join(scratch, "src/generated/core.ts"), join(scratch, "src/generated/core-copy.ts"));
+    assert.deepEqual(await check(scratch), [{ kind: "orphan", path: "src/generated/core-copy.ts" }]);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test("every guest binding carries the same contract fingerprint as the TypeScript host", async () => {
+  const fingerprint = fingerprintOf(coreRaw);
+  for (const path of ["guests/fsharp/Limen.Contract/Generated/Core.fs", "guests/csharp/Limen.Contract/Generated/Core.cs", "guests/rust/limen-contract/src/limen_core.rs"]) {
+    const source = await readFile(join(ROOT, path), "utf8");
+    assert.ok(source.includes(`contract-fingerprint: ${fingerprint}`), `${path} header`);
+    assert.ok(source.includes(`"${fingerprint}"`), `${path} constant`);
+  }
 });

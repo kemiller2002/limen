@@ -240,7 +240,8 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 // never silently ignored. \`null\` means the caller dispatches on a tag first.
 const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
-  const unexpected = keys === null ? undefined : Object.keys(value).find((key) => !keys.includes(key));
+  // Sorted, so every language reports the same first unexpected field.
+  const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
   return unexpected === undefined ? ok(value) : { ok: false, error: { path: \`\${path}.\${unexpected}\`, expected: "no such field", found: "unexpected field" } };
 };
 
@@ -253,7 +254,8 @@ const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: st
 
 const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
-  const decoded = Object.entries(value).map(([key, entry]) => [key, item(entry, \`\${path}[\${JSON.stringify(key)}]\`)] as const);
+  // Sorted, so every language reports the same first failing entry.
+  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], \`\${path}[\${JSON.stringify(key)}]\`)] as const);
   const failed = decoded.find(([, entry]) => !entry.ok);
   return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
 };`;

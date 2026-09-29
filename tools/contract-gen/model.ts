@@ -111,6 +111,9 @@ const parseField = (raw: unknown, at: string): Parsed<Field> => {
   const type = parseTypeExpr(raw.type, `${at}.${raw.name}`);
   if (!type.ok) return type;
   if (raw.optional !== undefined && typeof raw.optional !== "boolean") return fail(`${at}.${raw.name}: optional must be a boolean`);
+  // "absent" and "null" are different wire facts; a field that could be both
+  // would need two layers of option in every guest language.
+  if (raw.optional === true && type.value.kind === "nullable") return fail(`${at}.${raw.name}: a field cannot be both optional and nullable`);
   return succeed({ name: raw.name, type: type.value, optional: raw.optional === true, doc: docOf(raw) });
 };
 

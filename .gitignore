@@ -32,6 +32,12 @@ site/fsharp/publish/
 # Each federation WASM module publishes beside its project (see build:site:wasm).
 site/fsharp/federation/*/publish/
 
+# Guest-language contract bindings (guests/) build output. Cargo.lock stays
+# tracked so the Rust guest's dependency graph is reproducible.
+guests/**/bin/
+guests/**/obj/
+guests/rust/**/target/
+
 # BEGIN echelon:visual-engineering
 # Installed Visual Engineering context. Refresh it with:
 #   npx @echelon-foundry/visual-engineering init

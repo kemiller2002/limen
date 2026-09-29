@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Generated F# bindings for the Limen contract. Files under Generated/
+       come from tools/contract-gen; never edit them. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+    <!-- 25: incomplete matches, 1182: unused variables, 3370: deprecated
+         syntax. Incomplete pattern handling at a Limen boundary is an error. -->
+    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25</OtherFlags>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Generated/Runtime.fs" />
+    <Compile Include="Generated/Core.fs" />
+  </ItemGroup>
+</Project>

@@ -245,6 +245,10 @@ npm test                   # pretest (build + build:examples) → architecture
                            #   → docs → node --test
 npm run check              # alias for npm test (pretest already builds)
 
+npm run contract:generate  # regenerate every binding from contract/*.contract.json
+npm run contract:check     # fail on stale / hand-edited / missing / orphaned bindings
+npm run test:guests        # F#, C#, Rust bindings: strict build + shared vectors
+                           #   (needs .NET SDK 8 and cargo; crates.io is reachable)
 npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)
 npm run build:cli          # publish the CLI binary for this platform
 npm run build:cli:all      # publish all five platform binaries

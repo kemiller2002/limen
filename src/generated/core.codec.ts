@@ -4,7 +4,7 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:85cbc5187130476cd38ede7eaa459e75df0d7bef7390a95f940aed0d28f0b480
+// content-hash: sha256:8ffe8809e2f1c2bc3413d9002fdd18e9e6bb3ebda4dc172d92115877aeacc1a1
 // </auto-generated>
 import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
 
@@ -57,7 +57,8 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 // never silently ignored. `null` means the caller dispatches on a tag first.
 const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
-  const unexpected = keys === null ? undefined : Object.keys(value).find((key) => !keys.includes(key));
+  // Sorted, so every language reports the same first unexpected field.
+  const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
   return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
@@ -70,7 +71,8 @@ const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: st
 
 const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
-  const decoded = Object.entries(value).map(([key, entry]) => [key, item(entry, `${path}[${JSON.stringify(key)}]`)] as const);
+  // Sorted, so every language reports the same first failing entry.
+  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
   const failed = decoded.find(([, entry]) => !entry.ok);
   return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
 };
