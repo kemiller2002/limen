@@ -1,0 +1,27 @@
+{
+  "workItem": "WI-0121",
+  "reference": "kemiller2002/limen#61",
+  "placement": "Packaging / Public API (guardrail) — src/index.ts re-exports Core only. Federation stays at ./federation (dist/federation.js, unchanged); the reference engine is ./reference-engine, now src/engine/index.ts (a superset of the old dist/engine/transport.js target: ReferenceEngine, project, DirectTypeScriptTransport and the domain types). The Core manifest's legacy root list is emptied, package-facade may import Core only, and the Core check and the package check prove the minimal root consumer's transitive graph (source and packed dist) contains Core files only. Federation and the reference engine are not redesigned. 0.x: the root removal ships in the next minor with a migration table; no root shim, because a shim would put optional code back in the minimal graph.",
+  "guardrail": true,
+  "paths": [
+    "src/index.ts",
+    "src/engine/index.ts",
+    "package.json",
+    "architecture/core.json",
+    "architecture/layers.json",
+    "tools/guardrails/core.ts",
+    "scripts/check-package.ts",
+    "test/root-surface.test.ts",
+    "test/core-boundary.test.ts",
+    "test/fixtures/minimal-consumer/**",
+    "bench/budgets.json",
+    "docs/**",
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CHANGELOG.md",
+    "examples/minimal/**"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
