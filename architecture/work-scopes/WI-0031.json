@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0031",
+  "reference": "kemiller2002/limen#32 (duplicate-correlation negative vector); carried from GH-16",
+  "placement": "Core (kernel effect execution) — a generic protocol-violation rule, no capability semantics",
+  "guardrail": false,
+  "paths": ["src/kernel/browser-kernel.ts", "test/kernel.test.ts", "test/handshake.test.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
