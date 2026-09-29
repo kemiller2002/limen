@@ -17,6 +17,9 @@ pub mod limen_focus;
 /// The optional scheduling capability (limen.schedule).
 pub mod limen_schedule;
 
+/// The optional measurement and observer capability (limen.measure).
+pub mod limen_measure;
+
 /// A test-only capability unit, compiled only for the conformance tests.
 #[cfg(test)]
 pub mod limen_fixture_echo;
