@@ -48,6 +48,15 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Environment evidence and formatting pack (#35).**
+  `./capabilities/environment` (`environmentCapability()`, contract unit
+  `limen.environment`, with bindings for TypeScript, F#, C# and Rust):
+  - locale, language preferences, time zone and direction as explicit facts,
+    with change facts;
+  - presentation preferences reported only when named;
+  - typed browser `Intl` formatting for a locale and time zone the engine
+    states;
+  - an injectable source, so a fake host can fix the environment.
 - **Resource-hint and view-transition pack (#34).**
   `./capabilities/presentation` (`presentationCapability()`, contract unit
   `limen.presentation`, with bindings for TypeScript, F#, C# and Rust):

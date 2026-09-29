@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen environment pack in a real browser</title>
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts under a strict CSP with Trusted Types.
+       main.js reads the real environment and formats with Chromium's Intl. -->
+  <button id="poke" data-event="poke">Ask</button>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

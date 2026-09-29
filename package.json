@@ -71,6 +71,10 @@
       "types": "./dist/capabilities/presentation/index.d.ts",
       "import": "./dist/capabilities/presentation/index.js"
     },
+    "./capabilities/environment": {
+      "types": "./dist/capabilities/environment/index.d.ts",
+      "import": "./dist/capabilities/environment/index.js"
+    },
     "./hosts/fallback": {
       "types": "./dist/hosts/fallback.d.ts",
       "import": "./dist/hosts/fallback.js"
