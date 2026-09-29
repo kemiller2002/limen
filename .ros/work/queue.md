@@ -103,3 +103,4 @@
 | WI-0096 | Guardrail: register the limen.environment contract unit and its generated bindings (GH-35) | complete |  | medium |
 | WI-0097 | Localization engine library: BCP 47 negotiation, direction from language or script, message catalogues with fallback, placeholders and plural categories; language-neutral vectors and F# reference (GH-35) | complete |  | medium |
 | WI-0098 | State-safe hot reload and fast edit loop: CSS swap in place, HTML remount, engine replacement restored only from an exactly compatible versioned snapshot, otherwise reset or full reload; dev server change stream (GH-36) | complete |  | medium |
+| WI-0099 | Virtualization evidence gate: record that the #19 baseline does not justify virtualization (update cost is dominated by rewriting unchanged bindings and strict decoding), with the re-measurement that would reopen it; no runtime change (GH-37) | ready |  | medium |
