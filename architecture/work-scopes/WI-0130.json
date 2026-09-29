@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0130",
+  "reference": "kemiller2002/limen#44",
+  "placement": "Guardrail — contract/targets.json and the guest projects are guardrail-owned. Registers the limen.media unit and includes its generated TypeScript, F#, C# and Rust bindings.",
+  "guardrail": true,
+  "paths": ["contract/targets.json", "src/capabilities/media/generated/**", "guests/fsharp/Limen.Contract/**", "guests/csharp/Limen.Contract/**", "guests/rust/limen-contract/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
