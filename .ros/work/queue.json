@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 127,
+  "nextSeq": 128,
   "items": [
     {
       "id": "WI-0001",
@@ -1892,6 +1892,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T17:10:19.407Z",
       "updatedAt": "2026-09-29T17:11:17Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0127",
+      "title": "Guardrail: the learning contract's optional documents are path patterns, not a list, so a new optional subsystem document is banner-checked without a manifest edit (kemiller2002/limen#63)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T17:34:49.237Z",
+      "updatedAt": "2026-09-29T17:34:59Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
