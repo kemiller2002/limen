@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 49,
+  "nextSeq": 50,
   "items": [
     {
       "id": "WI-0001",
@@ -800,6 +800,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T06:33:13Z",
       "updatedAt": "2026-09-29T06:33:45Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0049",
+      "title": "Static HTML/projection/event contract validation: adjacent view contracts, checker, engine conformance (GH-48)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T06:35:25Z",
+      "updatedAt": "2026-09-29T06:35:26Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
