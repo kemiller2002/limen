@@ -72,6 +72,78 @@ function emptyScope(): Scope {
   return { texts: [], attrs: [], ifs: [], eachs: [] };
 }
 
+// --- Projection validation --------------------------------------------------
+// A projection is checked completely before any of it is written, so a
+// malformed one cannot leave the page half updated. The rules are exactly the
+// ones application enforces; this only finds a violation first. Bound scopes
+// are checked against their bindings, and a section or row that would mount
+// is checked against its template's content, which is not yet bound.
+
+type ScalarValue = string | number | boolean;
+const isScalar = (raw: ViewValue | ViewItem[keyof ViewItem] | undefined): raw is ScalarValue =>
+  typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean";
+
+const firstProblem = (checks: readonly (() => string | undefined)[]): string | undefined =>
+  checks.reduce<string | undefined>((found, check) => found ?? check(), undefined);
+
+function listProblem(listKey: string, itemKey: string, raw: ViewValue | undefined, check: (item: ViewItem) => string | undefined): string | undefined {
+  if (!Array.isArray(raw)) return `data-each="${listKey}" requires an array view value`;
+  const items = raw as readonly ViewItem[];
+  const missing = items.find((item) => item[itemKey] === undefined);
+  if (missing !== undefined) return `data-each item missing key field "${itemKey}"`;
+  return firstProblem(items.map((item) => () => check(item)));
+}
+
+// Template content that would mount: exactly one root element, bound against `view`.
+function templateProblem(template: HTMLTemplateElement, label: string, view: ViewState): string | undefined {
+  const root = template.content.firstElementChild;
+  if (!(root instanceof HTMLElement)) return `${label} template must contain exactly one root element`;
+  return elementProblem(root, view);
+}
+
+function elementProblem(el: Element, view: ViewState): string | undefined {
+  if (el.localName === "template" && el.hasAttribute("data-if")) {
+    const key = el.getAttribute("data-if") ?? "";
+    return Boolean(view[key]) ? templateProblem(el as HTMLTemplateElement, `data-if="${key}"`, view) : undefined;
+  }
+  if (el.localName === "template" && el.hasAttribute("data-each")) {
+    const listKey = el.getAttribute("data-each") ?? "";
+    const itemKey = el.getAttribute("data-key");
+    if (itemKey === null || itemKey === "") return `data-each="${listKey}" requires data-key`;
+    return listProblem(listKey, itemKey, view[listKey], (item) => templateProblem(el as HTMLTemplateElement, `data-each="${listKey}"`, item));
+  }
+  const misplaced = ["data-if", "data-each"].find((name) => el.hasAttribute(name));
+  if (misplaced !== undefined) return `${misplaced}="${el.getAttribute(misplaced) ?? ""}" is only supported on a <template> element, but was found on <${el.localName}>`;
+  const text = el.getAttribute("data-text");
+  return firstProblem([
+    () => (text !== null && !isScalar(view[text]) ? `View value for "${text}" is missing or not scalar` : undefined),
+    ...el.getAttributeNames().filter((name) => name.startsWith("data-bind-")).map((name) => () => {
+      const attr = name.slice("data-bind-".length);
+      if (!isScalar(view[el.getAttribute(name) ?? ""])) return `Attribute binding "${attr}" requires a scalar view value`;
+      return attr === "value" && !("value" in el) ? `Element bound to "value" has no value property` : undefined;
+    }),
+    ...Array.from(el.children).map((child) => () => elementProblem(child, view)),
+  ]);
+}
+
+function scopeProblem(scope: Scope, view: ViewState): string | undefined {
+  return firstProblem([
+    ...scope.texts.map((text) => () => (isScalar(view[text.key]) ? undefined : `View value for "${text.key}" is missing or not scalar`)),
+    ...scope.attrs.map((bound) => () => (isScalar(view[bound.key]) ? undefined : `Attribute binding "${bound.attr}" requires a scalar view value`)),
+    ...scope.ifs.map((binding) => () => {
+      if (!Boolean(view[binding.key])) return undefined;
+      return binding.mounted !== null ? scopeProblem(binding.mounted.scope, view) : templateProblem(binding.template, `data-if="${binding.key}"`, view);
+    }),
+    ...scope.eachs.map((binding) => () => {
+      if (binding.anchor.parentNode === null) return `data-each anchor for "${binding.listKey}" is detached`;
+      return listProblem(binding.listKey, binding.itemKey, view[binding.listKey], (item) => {
+        const instance = binding.instances.get(String(item[binding.itemKey]));
+        return instance !== undefined ? scopeProblem(instance.scope, item) : templateProblem(binding.template, `data-each="${binding.listKey}"`, item);
+      });
+    }),
+  ]);
+}
+
 function readValue(el: HTMLElement): string | undefined {
   if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) return el.value;
   return undefined;
@@ -407,6 +479,13 @@ export class BrowserKernel {
   }
 
   async #apply(response: EngineToBrowserMessage): Promise<void> {
+    // All or nothing: a projection that would fail anywhere is not applied
+    // anywhere, and its effects are not run.
+    const problem = scopeProblem(this.#root, response.view);
+    if (problem !== undefined) {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "projection", detail: problem });
+      return;
+    }
     try {
       for (const refusal of this.#applyScope(this.#root, response.view)) this.#diagnostics.report({ kind: "BridgeError", phase: "projection", detail: refusal });
     } catch (error) {

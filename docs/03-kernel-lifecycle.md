@@ -197,14 +197,18 @@ distinct failures are handled, and none of them throw:
 | What failed | Reported as | What happens to the DOM |
 | --- | --- | --- |
 | `transport.dispatch()` rejected | `BridgeError { phase: "dispatch" }` | unchanged — last good view stays |
-| Applying the view threw | `BridgeError { phase: "projection" }` | **possibly partially applied** |
+| The view is malformed | `BridgeError { phase: "projection" }` | unchanged — none of it is applied, and its effects do not run |
 | `transport.start()` rejected | `BridgeError { phase: "dispatch" }` | never bound at all |
 
-The middle row deserves care. `#applyScope` writes bindings in order, so a
-projection that is valid for the first three bindings and invalid for the fourth
-leaves the first three applied. The kernel stops and reports rather than
-continuing, but it does not roll back. Projections should be total — every key
-any binding names should be present in every projection.
+The middle row deserves care. A projection is applied **all or nothing**. The
+kernel checks it completely before writing anything: every bound key, every
+list, every row, and every section or row that would mount, against its
+template. If any part would fail, none of it is written and its effects are
+not run (kemiller2002/limen#50). Until that change, a projection that was
+valid for the first three bindings and invalid for the fourth left the first
+three applied. Projections should still be total — every key any binding names
+should be present in every projection — because a malformed one changes
+nothing at all.
 
 Nothing here crashes the page, and nothing is guessed. The kernel never
 substitutes a default for a missing view key.

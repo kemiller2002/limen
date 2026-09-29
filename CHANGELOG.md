@@ -48,6 +48,12 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Fixed: a malformed projection partially mutated the view (#50).** Values
+  were written in document order, so a projection with, for example, a
+  non-array `data-each` value still rewrote an earlier `data-text`. The kernel
+  now validates the whole projection first, including sections and rows that
+  would mount, and applies all of it or none of it. A rejected projection's
+  effects still do not run.
 - **HTTP engine library and semantics (#47).** `conformance/http/` defines
   interceptor composition, retry decisions, ETag revalidation and polling as
   pure, language-neutral rules (42 cases). `libraries/fsharp/Limen.Http` is
