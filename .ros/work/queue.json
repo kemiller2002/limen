@@ -1706,10 +1706,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T13:48:54Z",
-      "updatedAt": "2026-09-29T13:48:55Z",
+      "updatedAt": "2026-09-29T13:58:32Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

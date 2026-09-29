@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T13:48:55Z",
+  "updatedAt": "2026-09-29T13:58:32Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2429,13 +2429,27 @@
     {
       "id": "WI-0113",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T13:48:55Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "examples/10-canvas-surface/scatter-adapter.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/canvas-surface.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "examples/10-canvas-surface/checks.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:58:32Z",
       "telemetryExecutionIds": [
         "EXE-20260929T134856010Z-e8c3953e"
-      ]
+      ],
+      "completedAt": "2026-09-29T13:58:32Z"
     }
   ]
 }
