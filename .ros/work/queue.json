@@ -1902,10 +1902,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T17:34:49.237Z",
-      "updatedAt": "2026-09-29T17:34:59Z",
+      "updatedAt": "2026-09-29T17:38:14Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
