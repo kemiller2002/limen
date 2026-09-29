@@ -54,7 +54,8 @@
       "check:docs",
       "check:site",
       "check:package",
-      "check:typescript"
+      "check:typescript",
+      "check:views"
     ],
     "ciSteps": [
       "npm run check",
