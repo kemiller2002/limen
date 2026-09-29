@@ -164,6 +164,7 @@ the kernel. They describe process, not architecture.
 - [Work adapter contract](https://github.com/kemiller2002/limen/blob/main/docs/work-adapter-contract.md)
 - [Pilot measurement plan](https://github.com/kemiller2002/limen/blob/main/docs/PILOT-MEASUREMENT-PLAN.md)
 - [Architecture records](https://github.com/kemiller2002/limen/blob/main/docs/architecture/README.md)
+- [Core boundary v1: verification record](https://github.com/kemiller2002/limen/blob/main/docs/architecture/core-boundary-v1.md) — where each #59 criterion is enforced
 - [Decision navigation](https://github.com/kemiller2002/limen/blob/main/docs/decisions/README.md)
 
 ## Upstream specifications
