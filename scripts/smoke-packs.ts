@@ -49,7 +49,7 @@ type Context = {
   setGeolocation(geolocation: { latitude: number; longitude: number; accuracy: number }): Promise<void>;
 };
 type Browser = { newContext(): Promise<Context>; close(): Promise<void> };
-type Chromium = { launch(options?: { channel?: string; ignoreDefaultArgs?: readonly string[] }): Promise<Browser> };
+type Chromium = { launch(options?: { channel?: string; ignoreDefaultArgs?: readonly string[]; args?: readonly string[] }): Promise<Browser> };
 type Check = { readonly name: string; readonly ok: boolean; readonly detail: string };
 
 const ROOT = process.cwd();
@@ -268,7 +268,7 @@ const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession
 // What a pack directory's optional page.json may say.
 // frames: origins this folder's pages may frame (frame-src) and be framed by
 // (frame-ancestors), each an exact origin.
-type PageConfig = { readonly url?: string; readonly host?: "localhost"; readonly backForwardCache?: boolean; readonly trustedTypes?: readonly string[]; readonly frames?: { readonly allow: readonly string[]; readonly ancestors: readonly string[] } };
+type PageConfig = { readonly url?: string; readonly host?: "localhost"; readonly backForwardCache?: boolean; readonly fakeMedia?: boolean; readonly trustedTypes?: readonly string[]; readonly frames?: { readonly allow: readonly string[]; readonly ancestors: readonly string[] } };
 
 const configOf = (pack: string): Promise<PageConfig> =>
   readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text): PageConfig => {
@@ -283,7 +283,7 @@ const configOf = (pack: string): Promise<PageConfig> =>
       return Array.isArray(list) ? list.filter((origin): origin is string => typeof origin === "string" && /^https?:\/\/[a-z0-9.-]+(:\d+)?$/.test(origin)) : [];
     };
     return {
-      ...(typeof url === "string" ? { url } : {}), ...(field("host") === "localhost" ? { host: "localhost" as const } : {}), backForwardCache: field("backForwardCache") === true, ...(names.length > 0 ? { trustedTypes: names } : {}),
+      ...(typeof url === "string" ? { url } : {}), ...(field("host") === "localhost" ? { host: "localhost" as const } : {}), backForwardCache: field("backForwardCache") === true, fakeMedia: field("fakeMedia") === true, ...(names.length > 0 ? { trustedTypes: names } : {}),
       ...(frames !== undefined ? { frames: { allow: origins("allow"), ancestors: origins("ancestors") } } : {}),
     };
   }, () => ({}));
@@ -333,7 +333,10 @@ const chromium = await (async (): Promise<Chromium | undefined> => {
   }
 })();
 
-const packs = (await readdir(join(ROOT, PACKS), { withFileTypes: true })).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+// LIMEN_PACKS=media,files runs only those pages, for a quick local loop. CI
+// never sets it, so every page always runs there.
+const only = (process.env.LIMEN_PACKS ?? "").split(",").map((name) => name.trim()).filter((name) => name !== "");
+const packs = (await readdir(join(ROOT, PACKS), { withFileTypes: true })).filter((entry) => entry.isDirectory()).map((entry) => entry.name).filter((name) => only.length === 0 || only.includes(name)).sort();
 
 if (chromium === undefined) {
   if (process.env.LIMEN_REQUIRE_BROWSER === "1") {
@@ -351,11 +354,20 @@ if (chromium === undefined) {
   // switch left out — launched only if one asks.
   const cached: { browser?: Promise<Browser> } = {};
   const withCache = (): Promise<Browser> => (cached.browser ??= chromium.launch({ channel: "chromium", ignoreDefaultArgs: ["--disable-back-forward-cache"] }));
+  // A media pack page gets Chromium's fake camera and microphone (a test
+  // pattern and a tone), launched only if one asks (page.json: { "fakeMedia": true }).
+  // Full Chromium: the headless shell rejects getUserMedia with
+  // NotSupportedError (measured). Permission stays the page's to be granted
+  // (by the grantPermissions action) or not: a prompt nobody granted is
+  // answered as a user's denial (--deny-permission-prompts), where full
+  // Chromium would otherwise wait on it forever.
+  const fake: { browser?: Promise<Browser> } = {};
+  const withFakeMedia = (): Promise<Browser> => (fake.browser ??= chromium.launch({ channel: "chromium", args: ["--use-fake-device-for-media-stream", "--deny-permission-prompts"] }));
   try {
     const failures = await packs.reduce<Promise<readonly string[]>>(async (done, pack) => {
       const previous = await done;
       const config = configs.get(pack) ?? {};
-      return [...previous, ...(await runPack(config.backForwardCache === true ? await withCache() : browser, pack, config))];
+      return [...previous, ...(await runPack(config.backForwardCache === true ? await withCache() : config.fakeMedia === true ? await withFakeMedia() : browser, pack, config))];
     }, Promise.resolve([]));
     if (failures.length > 0) {
       console.error(`\n${failures.length} capability pack check(s) failed:\n${failures.join("\n")}`);
@@ -366,6 +378,7 @@ if (chromium === undefined) {
   } finally {
     await browser.close();
     await (await cached.browser)?.close();
+    await (await fake.browser)?.close();
     server.close();
   }
 }

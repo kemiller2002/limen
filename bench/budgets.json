@@ -100,6 +100,10 @@
     {
       "workItem": "WI-0119",
       "change": "Added renderer (kemiller2002/limen#38): the optional server and static renderer, 87066 raw / 16648 gzip bytes bundled, measured with an absolute root. It runs on a server or at build time, never in a page; its closure must hold no BrowserKernel, pack, federation, reference engine, host or tooling."
+    },
+    {
+      "workItem": "WI-0129",
+      "change": "Added kernel-with-media (kemiller2002/limen#44): the capture and recording pack, with the shared permission, handle and target support, adds 11837 bytes gzip over the kernel (measured with an absolute root), and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/media/."
     }
   ],
   "profiles": [
@@ -174,7 +178,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 112498,
@@ -210,7 +215,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 102812,
@@ -246,7 +252,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 105920,
@@ -283,7 +290,8 @@
         "dist/hosts/worker-engine.js",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 117456,
@@ -319,7 +327,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 122768,
@@ -356,7 +365,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 115285,
@@ -393,7 +403,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 132137,
@@ -432,7 +443,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 132375,
@@ -470,7 +482,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 131934,
@@ -508,7 +521,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 133014,
@@ -546,7 +560,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 134030,
@@ -585,7 +600,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 151216,
@@ -624,7 +640,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 137357,
@@ -663,7 +680,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 130595,
@@ -688,7 +706,8 @@
         "dist/capability-support/",
         "dist/capabilities/",
         "dist/hosts/dotnet-wasm-transport.js",
-        "dist/hosts/raw-wasm-transport.js"
+        "dist/hosts/raw-wasm-transport.js",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 114331,
@@ -727,7 +746,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 127635,
@@ -761,7 +781,8 @@
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
-        "dist/capabilities/presentation/"
+        "dist/capabilities/presentation/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 137009,
@@ -796,7 +817,8 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 138815,
@@ -832,7 +854,8 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 138103,
@@ -871,7 +894,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/credentials/",
         "dist/capability-support/handles.js",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 136850,
@@ -910,7 +934,8 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capability-support/handles.js",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 145686,
@@ -947,7 +972,8 @@
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
         "dist/capabilities/lifecycle/",
-        "dist/capabilities/offline/"
+        "dist/capabilities/offline/",
+        "dist/capabilities/media/"
       ],
       "baseline": {
         "rawBytes": 153406,
@@ -980,6 +1006,45 @@
       "budget": {
         "rawBytes": 96256,
         "gzipBytesBundled": 18432
+      }
+    },
+    {
+      "name": "kernel-with-media",
+      "doc": "The kernel plus the camera and microphone capture and recording pack (./capabilities/media) and the shared permission, handle and target support it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/media/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/",
+        "dist/capabilities/geolocation/"
+      ],
+      "baseline": {
+        "rawBytes": 174295,
+        "gzipBytesBundled": 34341
+      },
+      "budget": {
+        "rawBytes": 192512,
+        "gzipBytesBundled": 37888
       }
     }
   ]

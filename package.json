@@ -87,6 +87,10 @@
       "types": "./dist/capabilities/offline/worker.d.ts",
       "import": "./dist/capabilities/offline/worker.js"
     },
+    "./capabilities/media": {
+      "types": "./dist/capabilities/media/index.d.ts",
+      "import": "./dist/capabilities/media/index.js"
+    },
     "./capabilities/geolocation": {
       "types": "./dist/capabilities/geolocation/index.d.ts",
       "import": "./dist/capabilities/geolocation/index.js"

@@ -99,6 +99,19 @@ exhaustive lists.
 
 ### Added
 
+- **Media capture and recording pack (#44), `…/capabilities/media`.**
+  - Camera and microphone follow the permission pattern: availability,
+    permission and each capture's outcome are kept apart.
+  - Captures and recordings are opaque ids. Previews go into a
+    `<video data-media-preview>` the HTML names, and recordings are read in
+    1 MiB slices.
+  - `Denied`, `DeviceUnavailable` (not found, in use, overconstrained),
+    `TrackEnded`, `CaptureEnded`, `RecordingInterrupted` and `Cancelled` are
+    explicit.
+  - `stop`, `release`, a cancelled capture and `dispose()` each stop every
+    track.
+  - Verified in Chromium with fake devices, 11 checks. See
+    [docs/55](https://github.com/kemiller2002/limen/blob/main/docs/55-media.md).
 - **Optional server and static renderer (#38), `…/renderer`.**
   - `renderRoute` and `renderStatic` run the same engine and page as the
     browser, and write the settled projection, head metadata included, into

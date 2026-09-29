@@ -1,0 +1,93 @@
+{
+  "unit": "limen.media",
+  "role": "capability",
+  "version": 1,
+  "doc": "Camera and microphone capture and recording (LCP-038), under the permission pattern: availability, permission state and each request's outcome are kept apart. A MediaStream, a track, a recorder or a Blob never crosses the boundary. The engine holds an opaque capture id, may show it in a <video data-media-preview> the HTML names, and reads a finished recording in bounded slices. Nothing is requested at initialization: only startCapture can make the browser prompt. Every long-lived resource ends explicitly: stop, release, a cancelled capture, and the provider's own disposal all stop every track.",
+  "constants": [
+    { "name": "MAX_READ_BYTES", "type": "int", "value": 1048576, "doc": "The largest single read of a recording, in bytes." }
+  ],
+  "types": [
+    { "name": "PermissionState", "kind": "enum", "doc": "Shared by every permission-sensitive pack.", "values": ["granted", "denied", "prompt"] },
+    { "name": "UnavailableReason", "kind": "enum", "doc": "Shared by every permission-sensitive pack.", "values": ["notSupported", "insecureContext", "blockedByPolicy"] },
+    { "name": "MediaDevice", "kind": "enum", "doc": "What a permission is for.", "values": ["camera", "microphone"] },
+    { "name": "DeviceKind", "kind": "enum", "values": ["videoinput", "audioinput", "audiooutput"] },
+    { "name": "TrackKind", "kind": "enum", "values": ["audio", "video"] },
+    { "name": "DeviceProblem", "kind": "enum", "doc": "notFound: no such device (or none at all); inUse: the device exists but could not be started, usually because another application holds it; overconstrained: no device satisfies what was asked.", "values": ["notFound", "inUse", "overconstrained"] },
+    { "name": "CaptureId", "kind": "brand", "of": "string", "doc": "Opaque; issued by this page's pack and meaningless anywhere else." },
+    { "name": "RecordingId", "kind": "brand", "of": "string", "doc": "Opaque; issued by this page's pack and meaningless anywhere else." },
+    { "name": "MediaStaleReason", "kind": "enum", "values": ["unknown", "disposed", "other-session"] },
+    { "name": "DeviceInfo", "kind": "record", "doc": "deviceId is the browser's per-origin identifier. label is empty until the user has granted access, as the browser decides.", "fields": [
+      { "name": "deviceId", "type": "string" }, { "name": "kind", "type": "DeviceKind" }, { "name": "label", "type": "string" } ] },
+    { "name": "TrackInfo", "kind": "record", "fields": [
+      { "name": "kind", "type": "TrackKind" }, { "name": "label", "type": "string" }, { "name": "width", "type": "int", "optional": true }, { "name": "height", "type": "int", "optional": true } ] },
+    { "name": "PreviewTarget", "kind": "record", "doc": "A <video> named in HTML by data-media-preview; key selects a row by the nearest data-media-key ancestor.", "fields": [ { "name": "name", "type": "string" }, { "name": "key", "type": "string", "optional": true } ] },
+    {
+      "name": "MediaRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "permission", "doc": "The current permission state, without asking.", "fields": [ { "name": "device", "type": "MediaDevice" } ] },
+        { "name": "watchPermission", "doc": "PermissionChanged facts follow until unwatchPermission.", "fields": [ { "name": "device", "type": "MediaDevice" } ] },
+        { "name": "unwatchPermission", "fields": [ { "name": "device", "type": "MediaDevice" } ] },
+        { "name": "devices", "doc": "The devices the browser lists. DevicesChanged facts follow any change.", "fields": [] },
+        { "name": "startCapture", "doc": "Start the camera, the microphone or both. May show the browser's permission prompt. audioDevice and videoDevice ask for exactly that device.", "fields": [
+          { "name": "audio", "type": "bool" }, { "name": "video", "type": "bool" },
+          { "name": "audioDevice", "type": "string", "optional": true }, { "name": "videoDevice", "type": "string", "optional": true } ] },
+        { "name": "preview", "doc": "Show a capture in the named <video>, muted. One capture per element; a new preview replaces the old.", "fields": [ { "name": "capture", "type": "CaptureId" }, { "name": "target", "type": "PreviewTarget" } ] },
+        { "name": "unpreview", "fields": [ { "name": "target", "type": "PreviewTarget" } ] },
+        { "name": "stop", "doc": "Stop every track of a capture, end any recording of it, clear its previews and release the id.", "fields": [ { "name": "capture", "type": "CaptureId" } ] },
+        { "name": "record", "doc": "Start recording a live capture. mimeType, if given, must be one this browser can record.", "fields": [ { "name": "capture", "type": "CaptureId" }, { "name": "mimeType", "type": "string", "optional": true } ] },
+        { "name": "finish", "doc": "Stop a recording; answers with its size once the browser has delivered every byte.", "fields": [ { "name": "recording", "type": "RecordingId" } ] },
+        { "name": "read", "doc": "Read length bytes (1 to MAX_READ_BYTES) of a finished recording from offset, as base64.", "fields": [ { "name": "recording", "type": "RecordingId" }, { "name": "offset", "type": "int" }, { "name": "length", "type": "int" } ] },
+        { "name": "release", "doc": "Discard a recording, stopping it first if it is still running.", "fields": [ { "name": "recording", "type": "RecordingId" } ] }
+      ]
+    },
+    {
+      "name": "MediaResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Permission", "doc": "state is absent when this browser cannot report it.", "fields": [ { "name": "state", "type": "PermissionState", "optional": true } ] },
+        { "name": "Watching", "fields": [ { "name": "state", "type": "PermissionState" } ] },
+        { "name": "Unwatched", "fields": [] },
+        { "name": "CannotWatch", "doc": "This browser cannot report permission changes.", "fields": [] },
+        { "name": "Devices", "fields": [ { "name": "devices", "type": { "list": "DeviceInfo" } } ] },
+        { "name": "Capturing", "fields": [ { "name": "capture", "type": "CaptureId" }, { "name": "tracks", "type": { "list": "TrackInfo" } } ] },
+        { "name": "NothingRequested", "doc": "startCapture with neither audio nor video.", "fields": [] },
+        { "name": "Previewing", "fields": [] },
+        { "name": "Unpreviewed", "fields": [] },
+        { "name": "NotFound", "doc": "No element carries that preview name (and key).", "fields": [] },
+        { "name": "Ambiguous", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "WrongElement", "doc": "The named element is not a <video>.", "fields": [] },
+        { "name": "Stopped", "fields": [] },
+        { "name": "RecordingStarted", "fields": [ { "name": "recording", "type": "RecordingId" }, { "name": "mimeType", "type": "string" } ] },
+        { "name": "Recorded", "fields": [ { "name": "recording", "type": "RecordingId" }, { "name": "bytes", "type": "int" }, { "name": "mimeType", "type": "string" }, { "name": "durationMs", "type": "number" } ] },
+        { "name": "Read", "fields": [ { "name": "data", "type": "string" }, { "name": "bytesRead", "type": "int" }, { "name": "eof", "type": "bool" } ] },
+        { "name": "Released", "fields": [] },
+        { "name": "Denied", "doc": "The user or the browser refused this origin the device.", "fields": [] },
+        { "name": "DeviceUnavailable", "fields": [ { "name": "problem", "type": "DeviceProblem" } ] },
+        { "name": "CaptureEnded", "doc": "The capture's tracks have all ended, so it cannot be recorded or previewed.", "fields": [] },
+        { "name": "NotRecordable", "doc": "This browser cannot record that type (or cannot record at all).", "fields": [ { "name": "mimeType", "type": "string" } ] },
+        { "name": "StillRecording", "doc": "A read of a recording that has not been finished. (release always succeeds: it stops the recording first.)", "fields": [] },
+        { "name": "InvalidRange", "fields": [] },
+        { "name": "TooLarge", "fields": [ { "name": "limit", "type": "int" } ] },
+        { "name": "Stale", "fields": [ { "name": "reason", "type": "MediaStaleReason" } ] },
+        { "name": "Unavailable", "fields": [ { "name": "reason", "type": "UnavailableReason" } ] },
+        { "name": "Cancelled", "doc": "The engine cancelled the request. A capture that arrives afterwards is stopped at once and never reported.", "fields": [] },
+        { "name": "Failed", "doc": "The browser failed in a way none of the above names. reason is its error name.", "fields": [ { "name": "reason", "type": "string" } ] }
+      ]
+    },
+    {
+      "name": "MediaFact",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "PermissionChanged", "doc": "A revocation is previous granted, state prompt or denied.", "fields": [ { "name": "device", "type": "MediaDevice" }, { "name": "state", "type": "PermissionState" }, { "name": "previous", "type": "PermissionState" } ] },
+        { "name": "DevicesChanged", "doc": "A device was added or removed; ask devices again.", "fields": [] },
+        { "name": "TrackEnded", "doc": "The browser ended one track of a capture (a device unplugged, access revoked).", "fields": [ { "name": "capture", "type": "CaptureId" }, { "name": "track", "type": "TrackKind" } ] },
+        { "name": "CaptureEnded", "doc": "Every track of the capture has ended. The id stays valid until stop.", "fields": [ { "name": "capture", "type": "CaptureId" } ] },
+        { "name": "RecordingInterrupted", "doc": "The browser stopped a recording the engine had not finished (its capture ended, or recording failed). finish still answers with what was recorded.", "fields": [ { "name": "recording", "type": "RecordingId" }, { "name": "reason", "type": "string" } ] }
+      ]
+    }
+  ]
+}
