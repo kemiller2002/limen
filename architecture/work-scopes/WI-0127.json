@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0127",
+  "reference": "kemiller2002/limen#63",
+  "placement": "Architecture / Governance (guardrail) — architecture/core.json learning.optionalDocs becomes path patterns (every numbered subsystem document outside the Core ones), matched by tools/guardrails/learning.ts, so a new optional document such as docs/54 must carry its banner without anyone editing the guardrail-owned manifest. The check does not get weaker: it covers every document it covered before, plus new ones automatically.",
+  "guardrail": true,
+  "paths": ["architecture/core.json", "tools/guardrails/learning.ts", "test/learning-contract.test.ts"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
