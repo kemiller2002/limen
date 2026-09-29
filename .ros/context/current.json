@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T04:57:34Z",
+  "updatedAt": "2026-09-29T05:11:38Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -589,13 +589,47 @@
     {
       "id": "WI-0033",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T04:57:34Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-fsharp.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-csharp.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "tools/contract-gen/emit-rust.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/conformance-vectors.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "guests/rust/limen-contract/tests/conformance.rs"
+        },
+        {
+          "type": "tests",
+          "path": "guests/fsharp/Limen.Contract.Conformance/Program.fs"
+        },
+        {
+          "type": "tests",
+          "path": "guests/csharp/Limen.Contract.Conformance/Program.cs"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T05:11:38Z",
       "telemetryExecutionIds": [
         "EXE-20260929T045734687Z-f65a7df8"
-      ]
+      ],
+      "completedAt": "2026-09-29T05:11:38Z"
     }
   ]
 }

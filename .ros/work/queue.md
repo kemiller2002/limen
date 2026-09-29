@@ -36,4 +36,4 @@
 | WI-0030 | Bring the federation envelope protocol (src/federation.ts) under the language-neutral contract; it is a second wire protocol defined only in TypeScript (carried from GH-16 / DF-LIMEN-2026-0001) | captured | carried-obligation | medium |
 | WI-0031 | Duplicate in-flight correlation id overwrites the kernel's AbortController (Http and Capability effects); add a negative conformance vector and a defined outcome (GH-32) | captured | carried-obligation | medium |
 | WI-0032 | ROS 3.1.3 'work start --classification' accepts values that 'validate' rejects (e.g. boundary-change); report upstream to repository-operating-system | captured | carried-obligation | medium |
-| WI-0033 | GH-52: deterministic F#/C#/Rust contract generation, cross-language fingerprint agreement, shared semantic vectors | ready | limen,gh-52,contract,guardrail | high |
+| WI-0033 | GH-52: deterministic F#/C#/Rust contract generation, cross-language fingerprint agreement, shared semantic vectors | complete | limen,gh-52,contract,guardrail | high |
