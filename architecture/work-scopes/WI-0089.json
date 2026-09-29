@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0089",
+  "reference": "kemiller2002/limen#50 (LCP-032: a malformed projection cannot partially mutate the current view)",
+  "placement": "Core (kernel projection mechanism) — atomic application is a property of the one place projections are applied, so it can only be fixed there. Reproduced: a projection whose data-each value was not an array still rewrote an earlier data-text. The kernel now validates a projection completely (bound scopes and not-yet-mounted templates alike) before writing anything; the rules are the ones application already enforced, checked first. No protocol change.",
+  "guardrail": false,
+  "paths": ["src/kernel/**", "test/**", "docs/**", "CHANGELOG.md", "bench/budgets.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
