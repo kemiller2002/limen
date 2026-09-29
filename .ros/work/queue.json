@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 116,
+  "nextSeq": 117,
   "items": [
     {
       "id": "WI-0001",
@@ -1738,6 +1738,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T13:59:40Z",
       "updatedAt": "2026-09-29T14:16:16Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0116",
+      "title": "Core: the kernel binds <head> as well as <body>, so route-specific document metadata (title, description, robots, canonical) is a projection on the client as on the server (GH-38)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T14:18:12Z",
+      "updatedAt": "2026-09-29T14:18:12Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
