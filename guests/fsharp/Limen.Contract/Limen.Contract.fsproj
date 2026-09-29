@@ -21,5 +21,6 @@
     <Compile Include="Generated/Realtime.fs" />
     <Compile Include="Generated/Files.fs" />
     <Compile Include="Generated/Store.fs" />
+    <Compile Include="Generated/Adapters.fs" />
   </ItemGroup>
 </Project>
