@@ -108,6 +108,10 @@
     {
       "workItem": "WI-0132",
       "change": "Added kernel-with-peer (kemiller2002/limen#44): the WebRTC peer connection pack adds 7867 bytes gzip over the kernel (absolute root), and only to applications that register it; it never loads the media pack or the permission support. Earlier kernel-with-* profiles now also forbid dist/capabilities/peer/. kernel-with-media grew 31 bytes gzip with the streamFor accessor, within its budget."
+    },
+    {
+      "workItem": "WI-0135",
+      "change": "Re-baselined kernel-only after WI-0043 (projection compares with the live DOM before writing): +80 bytes gzip (22504 -> 22584), which put it 56 bytes over a budget last set in WI-0085. Most of the headroom had gone to growth that stayed within budget since then (protocol 1.4, the head-binding policy of WI-0116). Measured with an absolute root."
     }
   ],
   "profiles": [
@@ -150,12 +154,12 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 100260,
-        "gzipBytesBundled": 20149
+        "rawBytes": 110122,
+        "gzipBytesBundled": 22584
       },
       "budget": {
-        "rawBytes": 110592,
-        "gzipBytesBundled": 22528
+        "rawBytes": 121856,
+        "gzipBytesBundled": 25600
       }
     },
     {
