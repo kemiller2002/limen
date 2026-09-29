@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T04:31:02Z",
+  "updatedAt": "2026-09-29T04:31:12Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -532,13 +532,14 @@
     {
       "id": "WI-0027",
       "type": "mechanical",
-      "state": "active",
-      "semanticState": "active",
+      "state": "complete",
+      "semanticState": "complete",
       "evidence": [],
-      "updatedAt": "2026-09-29T04:31:02Z",
+      "updatedAt": "2026-09-29T04:31:12Z",
       "telemetryExecutionIds": [
         "EXE-20260929T043103048Z-6fa34fc7"
-      ]
+      ],
+      "completedAt": "2026-09-29T04:31:12Z"
     }
   ]
 }

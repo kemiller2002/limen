@@ -474,10 +474,10 @@
         "build,mechanical"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T04:30:49.260Z",
-      "updatedAt": "2026-09-29T04:31:02Z",
+      "updatedAt": "2026-09-29T04:31:12Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
