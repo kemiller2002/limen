@@ -96,6 +96,26 @@
     {
       "workItem": "WI-0121",
       "change": "Lowered minimal-consumer (kemiller2002/limen#61): the package root no longer exports federation or the reference engine, so the minimal consumer loads Core only. Measured with an absolute root: 144579 -> 114362 raw bytes, 30286 -> 23819 gzip bundled. It now also forbids dist/federation.js, dist/engine/ and dist/renderer/."
+    },
+    {
+      "workItem": "WI-0119",
+      "change": "Added renderer (kemiller2002/limen#38): the optional server and static renderer, 87066 raw / 16648 gzip bytes bundled, measured with an absolute root. It runs on a server or at build time, never in a page; its closure must hold no BrowserKernel, pack, federation, reference engine, host or tooling."
+    },
+    {
+      "workItem": "WI-0129",
+      "change": "Added kernel-with-media (kemiller2002/limen#44): the capture and recording pack, with the shared permission, handle and target support, adds 11837 bytes gzip over the kernel (measured with an absolute root), and only to applications that register it. Earlier kernel-with-* profiles now also forbid dist/capabilities/media/."
+    },
+    {
+      "workItem": "WI-0132",
+      "change": "Added kernel-with-peer (kemiller2002/limen#44): the WebRTC peer connection pack adds 7867 bytes gzip over the kernel (absolute root), and only to applications that register it; it never loads the media pack or the permission support. Earlier kernel-with-* profiles now also forbid dist/capabilities/peer/. kernel-with-media grew 31 bytes gzip with the streamFor accessor, within its budget."
+    },
+    {
+      "workItem": "WI-0135",
+      "change": "Re-baselined kernel-only after WI-0043 (projection compares with the live DOM before writing): +80 bytes gzip (22504 -> 22584), which put it 56 bytes over a budget last set in WI-0085. Most of the headroom had gone to growth that stayed within budget since then (protocol 1.4, the head-binding policy of WI-0116). Measured with an absolute root."
+    },
+    {
+      "workItem": "WI-0136",
+      "change": "Re-baselined every profile that loads the kernel (absolute root). kernel-with-files had gone 31 bytes over after WI-0043 (compare-before-write) and WI-0044 (remove before reorder); its baseline, like most, predated in-budget kernel growth since WI-0085: protocol 1.4 (WI-0103), head binding and the metadata policy (WI-0116), and those two. Every budget again keeps 10% headroom over what ships. Gzip bundled, old baseline -> new: kernel-only 22584->22677; kernel-with-handles 23561->23729; kernel-with-dotnet-host 20967->23459; kernel-with-raw-host 21780->24278; kernel-with-worker-host 24619->24792; kernel-with-focus 24028->26553; kernel-with-schedule 22850->25375; kernel-with-measure 25765->28320; kernel-with-events 26679->29198; kernel-with-overlay 25769->28324; kernel-with-realtime 25994->28545; kernel-with-files 26528->29727; kernel-with-store 29607->32118; kernel-with-adapters 27612->30132; kernel-with-transfer 25489->28047; kernel-with-fallback-host 23831->25021; kernel-with-presentation 25551->26763; kernel-with-environment 26470->27693; kernel-with-lifecycle 26916->27099; kernel-with-offline 26831->27013; kernel-with-geolocation 27434->27601; kernel-with-credentials 29804->29966; kernel-with-coordination 29992->30152; kernel-with-media 34341->34535; kernel-with-peer 30371->30533."
     }
   ],
   "profiles": [
@@ -138,12 +158,12 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 100260,
-        "gzipBytesBundled": 20149
+        "rawBytes": 110346,
+        "gzipBytesBundled": 22677
       },
       "budget": {
-        "rawBytes": 110592,
-        "gzipBytesBundled": 22528
+        "rawBytes": 121856,
+        "gzipBytesBundled": 25600
       }
     },
     {
@@ -170,14 +190,16 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 112498,
-        "gzipBytesBundled": 23561
+        "rawBytes": 113110,
+        "gzipBytesBundled": 23729
       },
       "budget": {
-        "rawBytes": 123904,
+        "rawBytes": 124928,
         "gzipBytesBundled": 26624
       }
     },
@@ -206,15 +228,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 102812,
-        "gzipBytesBundled": 20967
+        "rawBytes": 112898,
+        "gzipBytesBundled": 23459
       },
       "budget": {
-        "rawBytes": 113664,
-        "gzipBytesBundled": 23552
+        "rawBytes": 124928,
+        "gzipBytesBundled": 26624
       }
     },
     {
@@ -242,15 +266,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 105920,
-        "gzipBytesBundled": 21780
+        "rawBytes": 116006,
+        "gzipBytesBundled": 24278
       },
       "budget": {
-        "rawBytes": 116736,
-        "gzipBytesBundled": 24576
+        "rawBytes": 128000,
+        "gzipBytesBundled": 27648
       }
     },
     {
@@ -279,11 +305,13 @@
         "dist/hosts/worker-engine.js",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 117456,
-        "gzipBytesBundled": 24619
+        "rawBytes": 118068,
+        "gzipBytesBundled": 24792
       },
       "budget": {
         "rawBytes": 130048,
@@ -315,15 +343,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 122768,
-        "gzipBytesBundled": 24028
+        "rawBytes": 132854,
+        "gzipBytesBundled": 26553
       },
       "budget": {
-        "rawBytes": 135168,
-        "gzipBytesBundled": 26624
+        "rawBytes": 146432,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -352,15 +382,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 115285,
-        "gzipBytesBundled": 22850
+        "rawBytes": 125371,
+        "gzipBytesBundled": 25375
       },
       "budget": {
-        "rawBytes": 126976,
-        "gzipBytesBundled": 25600
+        "rawBytes": 138240,
+        "gzipBytesBundled": 28672
       }
     },
     {
@@ -389,15 +421,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 132137,
-        "gzipBytesBundled": 25765
+        "rawBytes": 142223,
+        "gzipBytesBundled": 28320
       },
       "budget": {
-        "rawBytes": 145408,
-        "gzipBytesBundled": 28672
+        "rawBytes": 156672,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -428,15 +462,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 132375,
-        "gzipBytesBundled": 26679
+        "rawBytes": 142461,
+        "gzipBytesBundled": 29198
       },
       "budget": {
-        "rawBytes": 146432,
-        "gzipBytesBundled": 29696
+        "rawBytes": 157696,
+        "gzipBytesBundled": 32768
       }
     },
     {
@@ -466,15 +502,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 131934,
-        "gzipBytesBundled": 25769
+        "rawBytes": 142020,
+        "gzipBytesBundled": 28324
       },
       "budget": {
-        "rawBytes": 145408,
-        "gzipBytesBundled": 28672
+        "rawBytes": 156672,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -504,15 +542,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 133014,
-        "gzipBytesBundled": 25994
+        "rawBytes": 143100,
+        "gzipBytesBundled": 28545
       },
       "budget": {
-        "rawBytes": 146432,
-        "gzipBytesBundled": 28672
+        "rawBytes": 157696,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -542,15 +582,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 134030,
-        "gzipBytesBundled": 26528
+        "rawBytes": 144273,
+        "gzipBytesBundled": 29727
       },
       "budget": {
-        "rawBytes": 147456,
-        "gzipBytesBundled": 29696
+        "rawBytes": 158720,
+        "gzipBytesBundled": 32768
       }
     },
     {
@@ -581,15 +623,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 151216,
-        "gzipBytesBundled": 29607
+        "rawBytes": 161302,
+        "gzipBytesBundled": 32118
       },
       "budget": {
-        "rawBytes": 166912,
-        "gzipBytesBundled": 32768
+        "rawBytes": 178176,
+        "gzipBytesBundled": 35840
       }
     },
     {
@@ -620,15 +664,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 137357,
-        "gzipBytesBundled": 27612
+        "rawBytes": 147443,
+        "gzipBytesBundled": 30132
       },
       "budget": {
-        "rawBytes": 151552,
-        "gzipBytesBundled": 30720
+        "rawBytes": 162816,
+        "gzipBytesBundled": 33792
       }
     },
     {
@@ -659,15 +705,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 130595,
-        "gzipBytesBundled": 25489
+        "rawBytes": 140681,
+        "gzipBytesBundled": 28047
       },
       "budget": {
-        "rawBytes": 144384,
-        "gzipBytesBundled": 28672
+        "rawBytes": 155648,
+        "gzipBytesBundled": 31744
       }
     },
     {
@@ -684,15 +732,17 @@
         "dist/capability-support/",
         "dist/capabilities/",
         "dist/hosts/dotnet-wasm-transport.js",
-        "dist/hosts/raw-wasm-transport.js"
+        "dist/hosts/raw-wasm-transport.js",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 114331,
-        "gzipBytesBundled": 23831
+        "rawBytes": 118132,
+        "gzipBytesBundled": 25021
       },
       "budget": {
-        "rawBytes": 125952,
-        "gzipBytesBundled": 26624
+        "rawBytes": 130048,
+        "gzipBytesBundled": 27648
       }
     },
     {
@@ -723,15 +773,17 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capabilities/credentials/",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 127635,
-        "gzipBytesBundled": 25551
+        "rawBytes": 131436,
+        "gzipBytesBundled": 26763
       },
       "budget": {
-        "rawBytes": 141312,
-        "gzipBytesBundled": 28672
+        "rawBytes": 145408,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -757,15 +809,17 @@
         "dist/capabilities/store/",
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
-        "dist/capabilities/presentation/"
+        "dist/capabilities/presentation/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 137009,
-        "gzipBytesBundled": 26470
+        "rawBytes": 140810,
+        "gzipBytesBundled": 27693
       },
       "budget": {
-        "rawBytes": 151552,
-        "gzipBytesBundled": 29696
+        "rawBytes": 155648,
+        "gzipBytesBundled": 30720
       }
     },
     {
@@ -792,15 +846,17 @@
         "dist/capabilities/adapters/",
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
-        "dist/capabilities/environment/"
+        "dist/capabilities/environment/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 138815,
-        "gzipBytesBundled": 26916
+        "rawBytes": 139427,
+        "gzipBytesBundled": 27099
       },
       "budget": {
         "rawBytes": 153600,
-        "gzipBytesBundled": 29696
+        "gzipBytesBundled": 30720
       }
     },
     {
@@ -828,15 +884,17 @@
         "dist/capabilities/transfer/",
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
-        "dist/capabilities/lifecycle/"
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 138103,
-        "gzipBytesBundled": 26831
+        "rawBytes": 138715,
+        "gzipBytesBundled": 27013
       },
       "budget": {
-        "rawBytes": 152576,
-        "gzipBytesBundled": 29696
+        "rawBytes": 153600,
+        "gzipBytesBundled": 30720
       }
     },
     {
@@ -867,11 +925,13 @@
         "dist/capabilities/offline/",
         "dist/capabilities/credentials/",
         "dist/capability-support/handles.js",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 136850,
-        "gzipBytesBundled": 27434
+        "rawBytes": 137462,
+        "gzipBytesBundled": 27601
       },
       "budget": {
         "rawBytes": 151552,
@@ -906,14 +966,16 @@
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
         "dist/capability-support/handles.js",
-        "dist/capabilities/coordination/"
+        "dist/capabilities/coordination/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 145686,
-        "gzipBytesBundled": 29804
+        "rawBytes": 146298,
+        "gzipBytesBundled": 29966
       },
       "budget": {
-        "rawBytes": 160768,
+        "rawBytes": 161792,
         "gzipBytesBundled": 33792
       }
     },
@@ -943,11 +1005,118 @@
         "dist/capabilities/presentation/",
         "dist/capabilities/environment/",
         "dist/capabilities/lifecycle/",
-        "dist/capabilities/offline/"
+        "dist/capabilities/offline/",
+        "dist/capabilities/media/",
+        "dist/capabilities/peer/"
       ],
       "baseline": {
-        "rawBytes": 153406,
-        "gzipBytesBundled": 29992
+        "rawBytes": 154018,
+        "gzipBytesBundled": 30152
+      },
+      "budget": {
+        "rawBytes": 169984,
+        "gzipBytesBundled": 33792
+      }
+    },
+    {
+      "name": "renderer",
+      "doc": "The optional server and static renderer (./renderer, kemiller2002/limen#38): what a server or build step loads to render a route. It reuses the kernel's pure binding policy and handshake, never the BrowserKernel itself.",
+      "entries": [
+        "dist/renderer/index.js"
+      ],
+      "forbidden": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/",
+        "dist/capability-support/",
+        "dist/federation.js",
+        "dist/engine/",
+        "dist/hosts/",
+        "dist/tooling/"
+      ],
+      "baseline": {
+        "rawBytes": 87066,
+        "gzipBytesBundled": 16648
+      },
+      "budget": {
+        "rawBytes": 96256,
+        "gzipBytesBundled": 18432
+      }
+    },
+    {
+      "name": "kernel-with-media",
+      "doc": "The kernel plus the camera and microphone capture and recording pack (./capabilities/media) and the shared permission, handle and target support it imports, as an application that registers it loads them.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/media/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/peer/"
+      ],
+      "baseline": {
+        "rawBytes": 175196,
+        "gzipBytesBundled": 34535
+      },
+      "budget": {
+        "rawBytes": 193536,
+        "gzipBytesBundled": 38912
+      }
+    },
+    {
+      "name": "kernel-with-peer",
+      "doc": "The kernel plus the WebRTC peer connection pack (./capabilities/peer) and the shared handle and target support it imports, as an application that registers it loads them. It does not load the media pack: an application that sends a camera registers both and hands the peer pack the media pack's captures.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/peer/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/",
+        "dist/capabilities/geolocation/",
+        "dist/capabilities/media/",
+        "dist/capability-support/permissions.js"
+      ],
+      "baseline": {
+        "rawBytes": 153199,
+        "gzipBytesBundled": 30533
       },
       "budget": {
         "rawBytes": 168960,

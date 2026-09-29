@@ -19,7 +19,9 @@
     "contract/offline.contract.json",
     "contract/geolocation.contract.json",
     "contract/credentials.contract.json",
-    "contract/coordination.contract.json"
+    "contract/coordination.contract.json",
+    "contract/media.contract.json",
+    "contract/peer.contract.json"
   ],
   "outputs": [
     {
@@ -538,6 +540,58 @@
       "unit": "limen.coordination",
       "kind": "rust-unit",
       "path": "guests/rust/limen-contract/src/limen_coordination.rs"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "typescript-types",
+      "path": "src/capabilities/media/generated/media.ts"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/media/generated/media.codec.ts",
+      "typesModule": "./media.js"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Media.fs"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Media.cs"
+    },
+    {
+      "unit": "limen.media",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_media.rs"
+    },
+    {
+      "unit": "limen.peer",
+      "kind": "typescript-types",
+      "path": "src/capabilities/peer/generated/peer.ts"
+    },
+    {
+      "unit": "limen.peer",
+      "kind": "typescript-codec",
+      "path": "src/capabilities/peer/generated/peer.codec.ts",
+      "typesModule": "./peer.js"
+    },
+    {
+      "unit": "limen.peer",
+      "kind": "fsharp-unit",
+      "path": "guests/fsharp/Limen.Contract/Generated/Peer.fs"
+    },
+    {
+      "unit": "limen.peer",
+      "kind": "csharp-unit",
+      "path": "guests/csharp/Limen.Contract/Generated/Peer.cs"
+    },
+    {
+      "unit": "limen.peer",
+      "kind": "rust-unit",
+      "path": "guests/rust/limen-contract/src/limen_peer.rs"
     }
   ]
 }

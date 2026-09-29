@@ -123,12 +123,12 @@ const objectDecoderBody = (typeName: string, constantKeys: readonly Inherited[],
     `  const object = objectValue(value, path, ${JSON.stringify(keys)});`,
     "  if (!object.ok) return object;",
     ...constantKeys.flatMap((constant) => [
-      `  const ${constant.tag}Tag = literalValue(object.value[${JSON.stringify(constant.tag)}], \`\${path}.${constant.tag}\`, ${JSON.stringify(constant.value)});`,
+      `  const ${constant.tag}Tag = literalValue(object.value[${JSON.stringify(constant.tag)}], at(path, ${JSON.stringify(`.${constant.tag}`)}), ${JSON.stringify(constant.value)});`,
       `  if (!${constant.tag}Tag.ok) return ${constant.tag}Tag;`,
     ]),
     ...fields.flatMap((field) => {
       const access = `object.value[${JSON.stringify(field.name)}]`;
-      const at = `\`\${path}.${field.name}\``;
+      const at = `at(path, ${JSON.stringify(`.${field.name}`)})`;
       const local = `field_${field.name}`;
       return field.optional
         ? [`  const ${local} = ${access} === undefined ? ok(undefined) : ${decodeExpr(field.type, access, at)};`, `  if (!${local}.ok) return ${local};`]
@@ -144,7 +144,7 @@ const objectDecoderBody = (typeName: string, constantKeys: readonly Inherited[],
 };
 
 const emitDecoder = (decl: TypeDecl, inherited: ReadonlyMap<string, Inherited>, decls: ReadonlyMap<string, TypeDecl>): string => {
-  const header = `export const ${decoderName(decl.name)} = (value: unknown, path = "$"): Decoded<${decl.name}> =>`;
+  const header = `export const ${decoderName(decl.name)} = (value: unknown, path: Path = "$"): Decoded<${decl.name}> =>`;
   const parent = inherited.get(decl.name);
   const parentConstant = parent === undefined ? [] : [parent];
   const parentPrefix = parent === undefined ? [] : [`${parent.tag}: ${JSON.stringify(parent.value)}`];
@@ -176,12 +176,12 @@ const emitDecoder = (decl: TypeDecl, inherited: ReadonlyMap<string, Inherited>, 
         decl.variants.map((variant) => variant.kind === "flatten"
           ? `    case ${JSON.stringify(variant.name)}: return ${decoderName(variant.target)}(value, path);`
           : `    case ${JSON.stringify(variant.name)}: return ${decoderName(decl.name)}_${safe(variant.name)}(value, path);`),
-        `    default: return unknownVariant(\`\${path}.${decl.tag}\`, ${JSON.stringify(decl.variants.map((variant) => variant.name))}, tag);`,
+        `    default: return unknownVariant(at(path, ${JSON.stringify(`.${decl.tag}`)}), ${JSON.stringify(decl.variants.map((variant) => variant.name))}, tag);`,
         "  }",
         "};",
         ...decl.variants.flatMap((variant) => variant.kind === "flatten" ? [] : [
           "",
-          `const ${decoderName(decl.name)}_${safe(variant.name)} = (value: unknown, path: string): Decoded<${decl.name}> => {`,
+          `const ${decoderName(decl.name)}_${safe(variant.name)} = (value: unknown, path: Path): Decoded<${decl.name}> => {`,
           ...objectDecoderBody(decl.name, [...parentConstant, { tag: decl.tag, value: variant.name }], variant.fields, [...parentPrefix, `${decl.tag}: ${JSON.stringify(variant.name)}`]),
           "};",
         ]),
@@ -195,36 +195,47 @@ const CODEC_RUNTIME = `/** Where decoding stopped, and what the contract expecte
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: \`one of \${variants.join(" | ")}\`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: \`one of \${variants.join(" | ")}\`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -238,26 +249,40 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. \`null\` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: \`\${path}.\${unexpected}\`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: \`\${render(path)}.\${unexpected}\`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, \`\${path}[\${index}]\`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => \`\${render(path)}[\${index}]\`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], \`\${path}[\${JSON.stringify(key)}]\`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => \`\${render(path)}[\${JSON.stringify(key)}]\`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };`;
 
 export const emitTypeScriptCodec = (unit: ContractUnit, typesModule: string): string => {

@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0131",
+  "reference": "kemiller2002/limen#63",
+  "placement": "Guardrail test fix — test/core-admission.test.ts's mismatched-id fixture named CA-0002, which WI-0128 made a real record, so the fixture also tripped the duplicate-id rule. It now uses CA-0999 for the mismatch; the assertion is unchanged and no rule is weakened.",
+  "guardrail": true,
+  "paths": ["test/core-admission.test.ts"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

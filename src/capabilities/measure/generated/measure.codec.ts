@@ -4,7 +4,7 @@
 // unit: limen.measure@1
 // contract-fingerprint: sha256:29614596fd5bc8d9cce90e4bcc6fe92701f7d6b724cae6c49cf3106b8877e225
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:5ad5e607fb49db9d5626960a5575b4f285ffa081a50c7cc4fe10a3fe211a3757
+// content-hash: sha256:8b233f5313a484ee80cc8f89bc07f554115a06f6b6b5b827b6f7249a0b3ec27b
 // </auto-generated>
 import type { MeasureTarget, SubscriptionId, SubscriptionStaleReason, Rect, Viewport, MeasureRequest, MeasureResult, MeasureFact } from "./measure.js";
 
@@ -12,36 +12,47 @@ import type { MeasureTarget, SubscriptionId, SubscriptionStaleReason, Rect, View
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,77 +66,91 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeMeasureTarget = (value: unknown, path = "$"): Decoded<MeasureTarget> => {
+export const decodeMeasureTarget = (value: unknown, path: Path = "$"): Decoded<MeasureTarget> => {
   const object = objectValue(value, path, ["name","key"]);
   if (!object.ok) return object;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], `${path}.key`);
+  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
   return ok<MeasureTarget>({ name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}) });
 };
 
-export const decodeSubscriptionId = (value: unknown, path = "$"): Decoded<SubscriptionId> => brand<SubscriptionId>(stringValue(value, path));
+export const decodeSubscriptionId = (value: unknown, path: Path = "$"): Decoded<SubscriptionId> => brand<SubscriptionId>(stringValue(value, path));
 
-export const decodeSubscriptionStaleReason = (value: unknown, path = "$"): Decoded<SubscriptionStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
+export const decodeSubscriptionStaleReason = (value: unknown, path: Path = "$"): Decoded<SubscriptionStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
 
-export const decodeRect = (value: unknown, path = "$"): Decoded<Rect> => {
+export const decodeRect = (value: unknown, path: Path = "$"): Decoded<Rect> => {
   const object = objectValue(value, path, ["x","y","width","height"]);
   if (!object.ok) return object;
-  const field_x = numberValue(object.value["x"], `${path}.x`);
+  const field_x = numberValue(object.value["x"], at(path, ".x"));
   if (!field_x.ok) return field_x;
-  const field_y = numberValue(object.value["y"], `${path}.y`);
+  const field_y = numberValue(object.value["y"], at(path, ".y"));
   if (!field_y.ok) return field_y;
-  const field_width = numberValue(object.value["width"], `${path}.width`);
+  const field_width = numberValue(object.value["width"], at(path, ".width"));
   if (!field_width.ok) return field_width;
-  const field_height = numberValue(object.value["height"], `${path}.height`);
+  const field_height = numberValue(object.value["height"], at(path, ".height"));
   if (!field_height.ok) return field_height;
   return ok<Rect>({ x: field_x.value, y: field_y.value, width: field_width.value, height: field_height.value });
 };
 
-export const decodeViewport = (value: unknown, path = "$"): Decoded<Viewport> => {
+export const decodeViewport = (value: unknown, path: Path = "$"): Decoded<Viewport> => {
   const object = objectValue(value, path, ["width","height","scrollX","scrollY","scrollWidth","scrollHeight","devicePixelRatio"]);
   if (!object.ok) return object;
-  const field_width = numberValue(object.value["width"], `${path}.width`);
+  const field_width = numberValue(object.value["width"], at(path, ".width"));
   if (!field_width.ok) return field_width;
-  const field_height = numberValue(object.value["height"], `${path}.height`);
+  const field_height = numberValue(object.value["height"], at(path, ".height"));
   if (!field_height.ok) return field_height;
-  const field_scrollX = numberValue(object.value["scrollX"], `${path}.scrollX`);
+  const field_scrollX = numberValue(object.value["scrollX"], at(path, ".scrollX"));
   if (!field_scrollX.ok) return field_scrollX;
-  const field_scrollY = numberValue(object.value["scrollY"], `${path}.scrollY`);
+  const field_scrollY = numberValue(object.value["scrollY"], at(path, ".scrollY"));
   if (!field_scrollY.ok) return field_scrollY;
-  const field_scrollWidth = numberValue(object.value["scrollWidth"], `${path}.scrollWidth`);
+  const field_scrollWidth = numberValue(object.value["scrollWidth"], at(path, ".scrollWidth"));
   if (!field_scrollWidth.ok) return field_scrollWidth;
-  const field_scrollHeight = numberValue(object.value["scrollHeight"], `${path}.scrollHeight`);
+  const field_scrollHeight = numberValue(object.value["scrollHeight"], at(path, ".scrollHeight"));
   if (!field_scrollHeight.ok) return field_scrollHeight;
-  const field_devicePixelRatio = numberValue(object.value["devicePixelRatio"], `${path}.devicePixelRatio`);
+  const field_devicePixelRatio = numberValue(object.value["devicePixelRatio"], at(path, ".devicePixelRatio"));
   if (!field_devicePixelRatio.ok) return field_devicePixelRatio;
   return ok<Viewport>({ width: field_width.value, height: field_height.value, scrollX: field_scrollX.value, scrollY: field_scrollY.value, scrollWidth: field_scrollWidth.value, scrollHeight: field_scrollHeight.value, devicePixelRatio: field_devicePixelRatio.value });
 };
 
-export const decodeMeasureRequest = (value: unknown, path = "$"): Decoded<MeasureRequest> => {
+export const decodeMeasureRequest = (value: unknown, path: Path = "$"): Decoded<MeasureRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -135,61 +160,61 @@ export const decodeMeasureRequest = (value: unknown, path = "$"): Decoded<Measur
     case "observeSize": return decodeMeasureRequest_observeSize(value, path);
     case "observeVisibility": return decodeMeasureRequest_observeVisibility(value, path);
     case "unsubscribe": return decodeMeasureRequest_unsubscribe(value, path);
-    default: return unknownVariant(`${path}.operation`, ["measure","viewport","observeSize","observeVisibility","unsubscribe"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["measure","viewport","observeSize","observeVisibility","unsubscribe"], tag);
   }
 };
 
-const decodeMeasureRequest_measure = (value: unknown, path: string): Decoded<MeasureRequest> => {
+const decodeMeasureRequest_measure = (value: unknown, path: Path): Decoded<MeasureRequest> => {
   const object = objectValue(value, path, ["operation","target"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "measure");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "measure");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeMeasureTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeMeasureTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
   return ok<MeasureRequest>({ operation: "measure", target: field_target.value });
 };
 
-const decodeMeasureRequest_viewport = (value: unknown, path: string): Decoded<MeasureRequest> => {
+const decodeMeasureRequest_viewport = (value: unknown, path: Path): Decoded<MeasureRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "viewport");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "viewport");
   if (!operationTag.ok) return operationTag;
   return ok<MeasureRequest>({ operation: "viewport" });
 };
 
-const decodeMeasureRequest_observeSize = (value: unknown, path: string): Decoded<MeasureRequest> => {
+const decodeMeasureRequest_observeSize = (value: unknown, path: Path): Decoded<MeasureRequest> => {
   const object = objectValue(value, path, ["operation","target"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "observeSize");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "observeSize");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeMeasureTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeMeasureTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
   return ok<MeasureRequest>({ operation: "observeSize", target: field_target.value });
 };
 
-const decodeMeasureRequest_observeVisibility = (value: unknown, path: string): Decoded<MeasureRequest> => {
+const decodeMeasureRequest_observeVisibility = (value: unknown, path: Path): Decoded<MeasureRequest> => {
   const object = objectValue(value, path, ["operation","target","threshold"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "observeVisibility");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "observeVisibility");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeMeasureTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeMeasureTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
-  const field_threshold = numberValue(object.value["threshold"], `${path}.threshold`);
+  const field_threshold = numberValue(object.value["threshold"], at(path, ".threshold"));
   if (!field_threshold.ok) return field_threshold;
   return ok<MeasureRequest>({ operation: "observeVisibility", target: field_target.value, threshold: field_threshold.value });
 };
 
-const decodeMeasureRequest_unsubscribe = (value: unknown, path: string): Decoded<MeasureRequest> => {
+const decodeMeasureRequest_unsubscribe = (value: unknown, path: Path): Decoded<MeasureRequest> => {
   const object = objectValue(value, path, ["operation","subscription"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "unsubscribe");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "unsubscribe");
   if (!operationTag.ok) return operationTag;
-  const field_subscription = decodeSubscriptionId(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = decodeSubscriptionId(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
   return ok<MeasureRequest>({ operation: "unsubscribe", subscription: field_subscription.value });
 };
 
-export const decodeMeasureResult = (value: unknown, path = "$"): Decoded<MeasureResult> => {
+export const decodeMeasureResult = (value: unknown, path: Path = "$"): Decoded<MeasureResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -204,101 +229,101 @@ export const decodeMeasureResult = (value: unknown, path = "$"): Decoded<Measure
     case "InvalidThreshold": return decodeMeasureResult_InvalidThreshold(value, path);
     case "Unsupported": return decodeMeasureResult_Unsupported(value, path);
     case "Cancelled": return decodeMeasureResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Measured","ViewportMeasured","Subscribed","Unsubscribed","Stale","NotFound","Ambiguous","InvalidThreshold","Unsupported","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Measured","ViewportMeasured","Subscribed","Unsubscribed","Stale","NotFound","Ambiguous","InvalidThreshold","Unsupported","Cancelled"], tag);
   }
 };
 
-const decodeMeasureResult_Measured = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_Measured = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind","rect"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Measured");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Measured");
   if (!kindTag.ok) return kindTag;
-  const field_rect = decodeRect(object.value["rect"], `${path}.rect`);
+  const field_rect = decodeRect(object.value["rect"], at(path, ".rect"));
   if (!field_rect.ok) return field_rect;
   return ok<MeasureResult>({ kind: "Measured", rect: field_rect.value });
 };
 
-const decodeMeasureResult_ViewportMeasured = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_ViewportMeasured = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind","viewport"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "ViewportMeasured");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ViewportMeasured");
   if (!kindTag.ok) return kindTag;
-  const field_viewport = decodeViewport(object.value["viewport"], `${path}.viewport`);
+  const field_viewport = decodeViewport(object.value["viewport"], at(path, ".viewport"));
   if (!field_viewport.ok) return field_viewport;
   return ok<MeasureResult>({ kind: "ViewportMeasured", viewport: field_viewport.value });
 };
 
-const decodeMeasureResult_Subscribed = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_Subscribed = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind","subscription"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Subscribed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Subscribed");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = decodeSubscriptionId(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = decodeSubscriptionId(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
   return ok<MeasureResult>({ kind: "Subscribed", subscription: field_subscription.value });
 };
 
-const decodeMeasureResult_Unsubscribed = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_Unsubscribed = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsubscribed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsubscribed");
   if (!kindTag.ok) return kindTag;
   return ok<MeasureResult>({ kind: "Unsubscribed" });
 };
 
-const decodeMeasureResult_Stale = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_Stale = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Stale");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Stale");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeSubscriptionStaleReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeSubscriptionStaleReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<MeasureResult>({ kind: "Stale", reason: field_reason.value });
 };
 
-const decodeMeasureResult_NotFound = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_NotFound = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotFound");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotFound");
   if (!kindTag.ok) return kindTag;
   return ok<MeasureResult>({ kind: "NotFound" });
 };
 
-const decodeMeasureResult_Ambiguous = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_Ambiguous = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind","count"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Ambiguous");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Ambiguous");
   if (!kindTag.ok) return kindTag;
-  const field_count = intValue(object.value["count"], `${path}.count`);
+  const field_count = intValue(object.value["count"], at(path, ".count"));
   if (!field_count.ok) return field_count;
   return ok<MeasureResult>({ kind: "Ambiguous", count: field_count.value });
 };
 
-const decodeMeasureResult_InvalidThreshold = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_InvalidThreshold = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidThreshold");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidThreshold");
   if (!kindTag.ok) return kindTag;
   return ok<MeasureResult>({ kind: "InvalidThreshold" });
 };
 
-const decodeMeasureResult_Unsupported = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_Unsupported = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
   return ok<MeasureResult>({ kind: "Unsupported" });
 };
 
-const decodeMeasureResult_Cancelled = (value: unknown, path: string): Decoded<MeasureResult> => {
+const decodeMeasureResult_Cancelled = (value: unknown, path: Path): Decoded<MeasureResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<MeasureResult>({ kind: "Cancelled" });
 };
 
-export const decodeMeasureFact = (value: unknown, path = "$"): Decoded<MeasureFact> => {
+export const decodeMeasureFact = (value: unknown, path: Path = "$"): Decoded<MeasureFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -306,44 +331,44 @@ export const decodeMeasureFact = (value: unknown, path = "$"): Decoded<MeasureFa
     case "Resized": return decodeMeasureFact_Resized(value, path);
     case "Visibility": return decodeMeasureFact_Visibility(value, path);
     case "TargetRemoved": return decodeMeasureFact_TargetRemoved(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Resized","Visibility","TargetRemoved"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Resized","Visibility","TargetRemoved"], tag);
   }
 };
 
-const decodeMeasureFact_Resized = (value: unknown, path: string): Decoded<MeasureFact> => {
+const decodeMeasureFact_Resized = (value: unknown, path: Path): Decoded<MeasureFact> => {
   const object = objectValue(value, path, ["kind","subscription","width","height"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Resized");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Resized");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = decodeSubscriptionId(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = decodeSubscriptionId(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_width = numberValue(object.value["width"], `${path}.width`);
+  const field_width = numberValue(object.value["width"], at(path, ".width"));
   if (!field_width.ok) return field_width;
-  const field_height = numberValue(object.value["height"], `${path}.height`);
+  const field_height = numberValue(object.value["height"], at(path, ".height"));
   if (!field_height.ok) return field_height;
   return ok<MeasureFact>({ kind: "Resized", subscription: field_subscription.value, width: field_width.value, height: field_height.value });
 };
 
-const decodeMeasureFact_Visibility = (value: unknown, path: string): Decoded<MeasureFact> => {
+const decodeMeasureFact_Visibility = (value: unknown, path: Path): Decoded<MeasureFact> => {
   const object = objectValue(value, path, ["kind","subscription","intersecting","ratio"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Visibility");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Visibility");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = decodeSubscriptionId(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = decodeSubscriptionId(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
-  const field_intersecting = boolValue(object.value["intersecting"], `${path}.intersecting`);
+  const field_intersecting = boolValue(object.value["intersecting"], at(path, ".intersecting"));
   if (!field_intersecting.ok) return field_intersecting;
-  const field_ratio = numberValue(object.value["ratio"], `${path}.ratio`);
+  const field_ratio = numberValue(object.value["ratio"], at(path, ".ratio"));
   if (!field_ratio.ok) return field_ratio;
   return ok<MeasureFact>({ kind: "Visibility", subscription: field_subscription.value, intersecting: field_intersecting.value, ratio: field_ratio.value });
 };
 
-const decodeMeasureFact_TargetRemoved = (value: unknown, path: string): Decoded<MeasureFact> => {
+const decodeMeasureFact_TargetRemoved = (value: unknown, path: Path): Decoded<MeasureFact> => {
   const object = objectValue(value, path, ["kind","subscription"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "TargetRemoved");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "TargetRemoved");
   if (!kindTag.ok) return kindTag;
-  const field_subscription = decodeSubscriptionId(object.value["subscription"], `${path}.subscription`);
+  const field_subscription = decodeSubscriptionId(object.value["subscription"], at(path, ".subscription"));
   if (!field_subscription.ok) return field_subscription;
   return ok<MeasureFact>({ kind: "TargetRemoved", subscription: field_subscription.value });
 };

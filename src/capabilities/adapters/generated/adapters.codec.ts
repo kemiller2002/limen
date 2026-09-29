@@ -4,7 +4,7 @@
 // unit: limen.adapters@1
 // contract-fingerprint: sha256:928eb3acd33271f2995aff0f6d4d3f48ef3b40da6911132cfcab01adade65604
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:ae76676ed4a1399be09519b900d79bf68a69581ce1d6f2d4239375892d64a31a
+// content-hash: sha256:a492b983c93d40dbf8538d0d0268c92914d8b774768e64f9a582de032a605d68
 // </auto-generated>
 import type { AdapterRef, SlotTarget, InstanceId, InstanceStaleReason, FaultPhase, AdaptersRequest, AdaptersResult, AdaptersFact } from "./adapters.js";
 
@@ -12,36 +12,47 @@ import type { AdapterRef, SlotTarget, InstanceId, InstanceStaleReason, FaultPhas
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,55 +66,69 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeAdapterRef = (value: unknown, path = "$"): Decoded<AdapterRef> => {
+export const decodeAdapterRef = (value: unknown, path: Path = "$"): Decoded<AdapterRef> => {
   const object = objectValue(value, path, ["id","version"]);
   if (!object.ok) return object;
-  const field_id = stringValue(object.value["id"], `${path}.id`);
+  const field_id = stringValue(object.value["id"], at(path, ".id"));
   if (!field_id.ok) return field_id;
-  const field_version = intValue(object.value["version"], `${path}.version`);
+  const field_version = intValue(object.value["version"], at(path, ".version"));
   if (!field_version.ok) return field_version;
   return ok<AdapterRef>({ id: field_id.value, version: field_version.value });
 };
 
-export const decodeSlotTarget = (value: unknown, path = "$"): Decoded<SlotTarget> => {
+export const decodeSlotTarget = (value: unknown, path: Path = "$"): Decoded<SlotTarget> => {
   const object = objectValue(value, path, ["name","key"]);
   if (!object.ok) return object;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], `${path}.key`);
+  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
   return ok<SlotTarget>({ name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}) });
 };
 
-export const decodeInstanceId = (value: unknown, path = "$"): Decoded<InstanceId> => brand<InstanceId>(stringValue(value, path));
+export const decodeInstanceId = (value: unknown, path: Path = "$"): Decoded<InstanceId> => brand<InstanceId>(stringValue(value, path));
 
-export const decodeInstanceStaleReason = (value: unknown, path = "$"): Decoded<InstanceStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
+export const decodeInstanceStaleReason = (value: unknown, path: Path = "$"): Decoded<InstanceStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
 
-export const decodeFaultPhase = (value: unknown, path = "$"): Decoded<FaultPhase> => enumValue(value, path, ["mount","update","command","unmount","emit"] as const);
+export const decodeFaultPhase = (value: unknown, path: Path = "$"): Decoded<FaultPhase> => enumValue(value, path, ["mount","update","command","unmount","emit"] as const);
 
-export const decodeAdaptersRequest = (value: unknown, path = "$"): Decoded<AdaptersRequest> => {
+export const decodeAdaptersRequest = (value: unknown, path: Path = "$"): Decoded<AdaptersRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -113,69 +138,69 @@ export const decodeAdaptersRequest = (value: unknown, path = "$"): Decoded<Adapt
     case "command": return decodeAdaptersRequest_command(value, path);
     case "unmount": return decodeAdaptersRequest_unmount(value, path);
     case "describe": return decodeAdaptersRequest_describe(value, path);
-    default: return unknownVariant(`${path}.operation`, ["mount","update","command","unmount","describe"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["mount","update","command","unmount","describe"], tag);
   }
 };
 
-const decodeAdaptersRequest_mount = (value: unknown, path: string): Decoded<AdaptersRequest> => {
+const decodeAdaptersRequest_mount = (value: unknown, path: Path): Decoded<AdaptersRequest> => {
   const object = objectValue(value, path, ["operation","slot","adapter","props"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "mount");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "mount");
   if (!operationTag.ok) return operationTag;
-  const field_slot = decodeSlotTarget(object.value["slot"], `${path}.slot`);
+  const field_slot = decodeSlotTarget(object.value["slot"], at(path, ".slot"));
   if (!field_slot.ok) return field_slot;
-  const field_adapter = decodeAdapterRef(object.value["adapter"], `${path}.adapter`);
+  const field_adapter = decodeAdapterRef(object.value["adapter"], at(path, ".adapter"));
   if (!field_adapter.ok) return field_adapter;
-  const field_props = jsonValue(object.value["props"], `${path}.props`);
+  const field_props = jsonValue(object.value["props"], at(path, ".props"));
   if (!field_props.ok) return field_props;
   return ok<AdaptersRequest>({ operation: "mount", slot: field_slot.value, adapter: field_adapter.value, props: field_props.value });
 };
 
-const decodeAdaptersRequest_update = (value: unknown, path: string): Decoded<AdaptersRequest> => {
+const decodeAdaptersRequest_update = (value: unknown, path: Path): Decoded<AdaptersRequest> => {
   const object = objectValue(value, path, ["operation","instance","props"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "update");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "update");
   if (!operationTag.ok) return operationTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
-  const field_props = jsonValue(object.value["props"], `${path}.props`);
+  const field_props = jsonValue(object.value["props"], at(path, ".props"));
   if (!field_props.ok) return field_props;
   return ok<AdaptersRequest>({ operation: "update", instance: field_instance.value, props: field_props.value });
 };
 
-const decodeAdaptersRequest_command = (value: unknown, path: string): Decoded<AdaptersRequest> => {
+const decodeAdaptersRequest_command = (value: unknown, path: Path): Decoded<AdaptersRequest> => {
   const object = objectValue(value, path, ["operation","instance","name","args"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "command");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "command");
   if (!operationTag.ok) return operationTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_args = jsonValue(object.value["args"], `${path}.args`);
+  const field_args = jsonValue(object.value["args"], at(path, ".args"));
   if (!field_args.ok) return field_args;
   return ok<AdaptersRequest>({ operation: "command", instance: field_instance.value, name: field_name.value, args: field_args.value });
 };
 
-const decodeAdaptersRequest_unmount = (value: unknown, path: string): Decoded<AdaptersRequest> => {
+const decodeAdaptersRequest_unmount = (value: unknown, path: Path): Decoded<AdaptersRequest> => {
   const object = objectValue(value, path, ["operation","instance"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "unmount");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "unmount");
   if (!operationTag.ok) return operationTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
   return ok<AdaptersRequest>({ operation: "unmount", instance: field_instance.value });
 };
 
-const decodeAdaptersRequest_describe = (value: unknown, path: string): Decoded<AdaptersRequest> => {
+const decodeAdaptersRequest_describe = (value: unknown, path: Path): Decoded<AdaptersRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "describe");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "describe");
   if (!operationTag.ok) return operationTag;
   return ok<AdaptersRequest>({ operation: "describe" });
 };
 
-export const decodeAdaptersResult = (value: unknown, path = "$"): Decoded<AdaptersResult> => {
+export const decodeAdaptersResult = (value: unknown, path: Path = "$"): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -194,141 +219,141 @@ export const decodeAdaptersResult = (value: unknown, path = "$"): Decoded<Adapte
     case "Stale": return decodeAdaptersResult_Stale(value, path);
     case "Faulted": return decodeAdaptersResult_Faulted(value, path);
     case "Cancelled": return decodeAdaptersResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Mounted","Updated","CommandDone","Unmounted","Adapters","UnknownAdapter","VersionMismatch","UnknownCommand","SlotOccupied","NotFound","Ambiguous","Stale","Faulted","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Mounted","Updated","CommandDone","Unmounted","Adapters","UnknownAdapter","VersionMismatch","UnknownCommand","SlotOccupied","NotFound","Ambiguous","Stale","Faulted","Cancelled"], tag);
   }
 };
 
-const decodeAdaptersResult_Mounted = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Mounted = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","instance"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Mounted");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Mounted");
   if (!kindTag.ok) return kindTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
   return ok<AdaptersResult>({ kind: "Mounted", instance: field_instance.value });
 };
 
-const decodeAdaptersResult_Updated = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Updated = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Updated");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Updated");
   if (!kindTag.ok) return kindTag;
   return ok<AdaptersResult>({ kind: "Updated" });
 };
 
-const decodeAdaptersResult_CommandDone = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_CommandDone = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","result"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "CommandDone");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "CommandDone");
   if (!kindTag.ok) return kindTag;
-  const field_result = jsonValue(object.value["result"], `${path}.result`);
+  const field_result = jsonValue(object.value["result"], at(path, ".result"));
   if (!field_result.ok) return field_result;
   return ok<AdaptersResult>({ kind: "CommandDone", result: field_result.value });
 };
 
-const decodeAdaptersResult_Unmounted = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Unmounted = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unmounted");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unmounted");
   if (!kindTag.ok) return kindTag;
   return ok<AdaptersResult>({ kind: "Unmounted" });
 };
 
-const decodeAdaptersResult_Adapters = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Adapters = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","registered"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Adapters");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Adapters");
   if (!kindTag.ok) return kindTag;
-  const field_registered = listOf(object.value["registered"], `${path}.registered`, (item, at) => decodeAdapterRef(item, at));
+  const field_registered = listOf(object.value["registered"], at(path, ".registered"), (item, at) => decodeAdapterRef(item, at));
   if (!field_registered.ok) return field_registered;
   return ok<AdaptersResult>({ kind: "Adapters", registered: field_registered.value });
 };
 
-const decodeAdaptersResult_UnknownAdapter = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_UnknownAdapter = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UnknownAdapter");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UnknownAdapter");
   if (!kindTag.ok) return kindTag;
   return ok<AdaptersResult>({ kind: "UnknownAdapter" });
 };
 
-const decodeAdaptersResult_VersionMismatch = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_VersionMismatch = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","registered"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "VersionMismatch");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "VersionMismatch");
   if (!kindTag.ok) return kindTag;
-  const field_registered = intValue(object.value["registered"], `${path}.registered`);
+  const field_registered = intValue(object.value["registered"], at(path, ".registered"));
   if (!field_registered.ok) return field_registered;
   return ok<AdaptersResult>({ kind: "VersionMismatch", registered: field_registered.value });
 };
 
-const decodeAdaptersResult_UnknownCommand = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_UnknownCommand = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UnknownCommand");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UnknownCommand");
   if (!kindTag.ok) return kindTag;
   return ok<AdaptersResult>({ kind: "UnknownCommand" });
 };
 
-const decodeAdaptersResult_SlotOccupied = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_SlotOccupied = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","instance"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "SlotOccupied");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "SlotOccupied");
   if (!kindTag.ok) return kindTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
   return ok<AdaptersResult>({ kind: "SlotOccupied", instance: field_instance.value });
 };
 
-const decodeAdaptersResult_NotFound = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_NotFound = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotFound");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotFound");
   if (!kindTag.ok) return kindTag;
   return ok<AdaptersResult>({ kind: "NotFound" });
 };
 
-const decodeAdaptersResult_Ambiguous = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Ambiguous = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","count"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Ambiguous");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Ambiguous");
   if (!kindTag.ok) return kindTag;
-  const field_count = intValue(object.value["count"], `${path}.count`);
+  const field_count = intValue(object.value["count"], at(path, ".count"));
   if (!field_count.ok) return field_count;
   return ok<AdaptersResult>({ kind: "Ambiguous", count: field_count.value });
 };
 
-const decodeAdaptersResult_Stale = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Stale = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Stale");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Stale");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeInstanceStaleReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeInstanceStaleReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<AdaptersResult>({ kind: "Stale", reason: field_reason.value });
 };
 
-const decodeAdaptersResult_Faulted = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Faulted = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind","phase","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Faulted");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Faulted");
   if (!kindTag.ok) return kindTag;
-  const field_phase = decodeFaultPhase(object.value["phase"], `${path}.phase`);
+  const field_phase = decodeFaultPhase(object.value["phase"], at(path, ".phase"));
   if (!field_phase.ok) return field_phase;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<AdaptersResult>({ kind: "Faulted", phase: field_phase.value, reason: field_reason.value });
 };
 
-const decodeAdaptersResult_Cancelled = (value: unknown, path: string): Decoded<AdaptersResult> => {
+const decodeAdaptersResult_Cancelled = (value: unknown, path: Path): Decoded<AdaptersResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<AdaptersResult>({ kind: "Cancelled" });
 };
 
-export const decodeAdaptersFact = (value: unknown, path = "$"): Decoded<AdaptersFact> => {
+export const decodeAdaptersFact = (value: unknown, path: Path = "$"): Decoded<AdaptersFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -336,44 +361,44 @@ export const decodeAdaptersFact = (value: unknown, path = "$"): Decoded<Adapters
     case "AdapterEvent": return decodeAdaptersFact_AdapterEvent(value, path);
     case "AdapterFaulted": return decodeAdaptersFact_AdapterFaulted(value, path);
     case "SlotRemoved": return decodeAdaptersFact_SlotRemoved(value, path);
-    default: return unknownVariant(`${path}.kind`, ["AdapterEvent","AdapterFaulted","SlotRemoved"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["AdapterEvent","AdapterFaulted","SlotRemoved"], tag);
   }
 };
 
-const decodeAdaptersFact_AdapterEvent = (value: unknown, path: string): Decoded<AdaptersFact> => {
+const decodeAdaptersFact_AdapterEvent = (value: unknown, path: Path): Decoded<AdaptersFact> => {
   const object = objectValue(value, path, ["kind","instance","name","data"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "AdapterEvent");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "AdapterEvent");
   if (!kindTag.ok) return kindTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_data = jsonValue(object.value["data"], `${path}.data`);
+  const field_data = jsonValue(object.value["data"], at(path, ".data"));
   if (!field_data.ok) return field_data;
   return ok<AdaptersFact>({ kind: "AdapterEvent", instance: field_instance.value, name: field_name.value, data: field_data.value });
 };
 
-const decodeAdaptersFact_AdapterFaulted = (value: unknown, path: string): Decoded<AdaptersFact> => {
+const decodeAdaptersFact_AdapterFaulted = (value: unknown, path: Path): Decoded<AdaptersFact> => {
   const object = objectValue(value, path, ["kind","instance","phase","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "AdapterFaulted");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "AdapterFaulted");
   if (!kindTag.ok) return kindTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
-  const field_phase = decodeFaultPhase(object.value["phase"], `${path}.phase`);
+  const field_phase = decodeFaultPhase(object.value["phase"], at(path, ".phase"));
   if (!field_phase.ok) return field_phase;
-  const field_reason = stringValue(object.value["reason"], `${path}.reason`);
+  const field_reason = stringValue(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<AdaptersFact>({ kind: "AdapterFaulted", instance: field_instance.value, phase: field_phase.value, reason: field_reason.value });
 };
 
-const decodeAdaptersFact_SlotRemoved = (value: unknown, path: string): Decoded<AdaptersFact> => {
+const decodeAdaptersFact_SlotRemoved = (value: unknown, path: Path): Decoded<AdaptersFact> => {
   const object = objectValue(value, path, ["kind","instance"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "SlotRemoved");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "SlotRemoved");
   if (!kindTag.ok) return kindTag;
-  const field_instance = decodeInstanceId(object.value["instance"], `${path}.instance`);
+  const field_instance = decodeInstanceId(object.value["instance"], at(path, ".instance"));
   if (!field_instance.ok) return field_instance;
   return ok<AdaptersFact>({ kind: "SlotRemoved", instance: field_instance.value });
 };

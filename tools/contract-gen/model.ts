@@ -5,6 +5,7 @@
 // trusted value. Every emitter consumes only the validated model.
 
 import { createHash } from "node:crypto";
+import { pascal } from "./naming.ts";
 
 export type Primitive = "string" | "int" | "number" | "bool" | "json";
 
@@ -254,6 +255,13 @@ const wellFormednessErrors = (types: readonly TypeDecl[]): readonly string[] => 
   const tagErrors = types.flatMap((decl) => decl.kind !== "union" ? [] : [
     ...decl.variants.filter((variant, index) => decl.variants.findIndex((other) => other.name === variant.name) !== index).map((variant) => `${decl.name}: duplicate variant ${variant.name}`),
     ...decl.variants.flatMap((variant) => fieldNamesOf(decl, variant).includes(decl.tag) ? [`${decl.name}.${variant.name}: field shadows tag "${decl.tag}"`] : []),
+    // C# nests each variant as a record inside the union's class; a field
+    // named like ANOTHER variant is then shadowed by that inherited nested
+    // type, and the binding does not compile. (A field named like its own
+    // variant, as core's Event { event }, is fine.)
+    ...decl.variants.flatMap((variant) => fieldNamesOf(decl, variant)
+      .filter((field) => decl.variants.some((other) => other !== variant && pascal(other.name) === pascal(field)))
+      .map((field) => `${decl.name}.${variant.name}: field "${field}" is named like another variant of ${decl.name}; rename one (C# nests variants as records)`)),
   ]);
   const shapeErrors = types.flatMap((decl) => {
     if (decl.kind !== "shape-union") return [];

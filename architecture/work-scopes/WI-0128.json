@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0128",
+  "reference": "kemiller2002/limen#39",
+  "placement": "Architecture / Governance (guardrail) — a Core Admission record only: architecture/core-admissions/CA-0002.json proposes that the kernel adopt a server-rendered data-if root or data-each row (data-limen-if / data-limen-key, written by the #38 renderer) instead of cloning its template. Outcome pending: the owner decides. No kernel, manifest or baseline change; #39 stays blocked on the decision.",
+  "guardrail": true,
+  "paths": ["architecture/core-admissions/CA-0002.json", "docs/54-server-rendering.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

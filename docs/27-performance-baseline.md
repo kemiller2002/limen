@@ -161,14 +161,49 @@ acted on here.
    costs 10,000 DOM mutations and 22.8ms, and 100 unchanged form fields cost
    100 mutations. Writing only changed values is a kernel-mechanism change
    with no protocol impact. It is the largest DOM-side cost measured.
+   *Done in WI-0043:* the kernel compares each `data-text` and each plain or
+   URL attribute with the live DOM before writing. Measured on 2026-09-29, on
+   this machine:
+
+   | Case | Before | After |
+   | --- | --- | --- |
+   | list-10k no-op, DOM mutations | 10,000 | 0 |
+   | list-10k no-op, time | 32.9 ms | 12.0 ms |
+   | list-10k one-row update, DOM mutations | 10,000 | 1 |
+   | list-10k removal, DOM mutations | 20,001 | 10,001 |
+
+   The removal figure is halved; WI-0044 (item 2) removes the rest. A node
+   changed outside the kernel is still corrected, because the comparison is
+   with the DOM, not a cache (`test/kernel.test.ts`).
 2. **Removing a keyed row moves every row after it** (WI-0044). A middle
    removal costs twice the mutations of a middle insertion. The stale row
    leaves only after the reorder pass, so each following row fails the
    `nextSibling` check and is re-inserted.
+   *Done in WI-0044:* rows whose keys left the list are removed before the
+   reorder pass. A middle removal is now one DOM mutation: on list-10k it
+   went from 10,001 mutations to 1, and from 26.2 ms to 11.4 ms. Every
+   surviving row keeps its node, and no other row moves
+   (`test/kernel.test.ts`).
 3. **Strict decoding dominates the boundary cost** (WI-0045). Decoding a
    10k-row view takes 17.1ms, ten times `JSON.parse`, and roughly doubles the
    unchanged-list cost at the JSON boundary. The fix is decoder throughput
    (allocation and path bookkeeping), never weaker strictness.
+   *Done in WI-0045:* the generated codecs decode lists and maps in one pass
+   that stops at the first failure, instead of decoding every entry and then
+   searching for a failure. They also build an error path only when decoding
+   fails there. Building every path eagerly, including a `JSON.stringify` of
+   each map key, had cost more than all the checks together. Measured in
+   Chromium on 2026-09-29, on this machine:
+
+   | Case | Before | After |
+   | --- | --- | --- |
+   | 1k-row view, strict decode | 1.6 ms | 0.5 ms |
+   | 10k-row view, strict decode | 14.0 ms | 4.0 ms |
+
+   The result is 2.5 times `JSON.parse` of the same view, down from about
+   nine. Nothing accepted or rejected changed, and neither did any
+   `DecodeError`: the same first failure, with the same path
+   (`test/contract.test.ts`).
 4. **The F# guest is five times the C# guest** (WI-0046). The F# guest is
    26 MB and 188 requests, against 5.4 MB and 28, because FSharp.Core is not
    trim-clean and the F# host publishes untrimmed (see

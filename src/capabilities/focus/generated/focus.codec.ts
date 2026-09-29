@@ -4,7 +4,7 @@
 // unit: limen.focus@1
 // contract-fingerprint: sha256:6180bce797be6bf993594d62570550a2dc72507edc136263c52e262c5f7c66ec
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:533d6662405a5d6d0a1c05896ec50c3d7121a48f1c85077f939129c935d32e3d
+// content-hash: sha256:12d69ffddc0fcbd81710748e87c090bfdfe6efd21fcbd84f83ac5b60e6959f73
 // </auto-generated>
 import type { FocusTarget, ScrollBlock, FocusRequest, FocusResult } from "./focus.js";
 
@@ -12,36 +12,47 @@ import type { FocusTarget, ScrollBlock, FocusRequest, FocusResult } from "./focu
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,43 +66,57 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeFocusTarget = (value: unknown, path = "$"): Decoded<FocusTarget> => {
+export const decodeFocusTarget = (value: unknown, path: Path = "$"): Decoded<FocusTarget> => {
   const object = objectValue(value, path, ["name","key","generation"]);
   if (!object.ok) return object;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], `${path}.key`);
+  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
-  const field_generation = object.value["generation"] === undefined ? ok(undefined) : stringValue(object.value["generation"], `${path}.generation`);
+  const field_generation = object.value["generation"] === undefined ? ok(undefined) : stringValue(object.value["generation"], at(path, ".generation"));
   if (!field_generation.ok) return field_generation;
   return ok<FocusTarget>({ name: field_name.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}), ...(field_generation.value !== undefined ? { generation: field_generation.value } : {}) });
 };
 
-export const decodeScrollBlock = (value: unknown, path = "$"): Decoded<ScrollBlock> => enumValue(value, path, ["start","center","end","nearest"] as const);
+export const decodeScrollBlock = (value: unknown, path: Path = "$"): Decoded<ScrollBlock> => enumValue(value, path, ["start","center","end","nearest"] as const);
 
-export const decodeFocusRequest = (value: unknown, path = "$"): Decoded<FocusRequest> => {
+export const decodeFocusRequest = (value: unknown, path: Path = "$"): Decoded<FocusRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -103,91 +128,91 @@ export const decodeFocusRequest = (value: unknown, path = "$"): Decoded<FocusReq
     case "select": return decodeFocusRequest_select(value, path);
     case "selectAll": return decodeFocusRequest_selectAll(value, path);
     case "scrollIntoView": return decodeFocusRequest_scrollIntoView(value, path);
-    default: return unknownVariant(`${path}.operation`, ["focus","blur","focusFirst","focusLast","select","selectAll","scrollIntoView"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["focus","blur","focusFirst","focusLast","select","selectAll","scrollIntoView"], tag);
   }
 };
 
-const decodeFocusRequest_focus = (value: unknown, path: string): Decoded<FocusRequest> => {
+const decodeFocusRequest_focus = (value: unknown, path: Path): Decoded<FocusRequest> => {
   const object = objectValue(value, path, ["operation","target","preventScroll"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "focus");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "focus");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeFocusTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeFocusTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
-  const field_preventScroll = boolValue(object.value["preventScroll"], `${path}.preventScroll`);
+  const field_preventScroll = boolValue(object.value["preventScroll"], at(path, ".preventScroll"));
   if (!field_preventScroll.ok) return field_preventScroll;
   return ok<FocusRequest>({ operation: "focus", target: field_target.value, preventScroll: field_preventScroll.value });
 };
 
-const decodeFocusRequest_blur = (value: unknown, path: string): Decoded<FocusRequest> => {
+const decodeFocusRequest_blur = (value: unknown, path: Path): Decoded<FocusRequest> => {
   const object = objectValue(value, path, ["operation","target"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "blur");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "blur");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeFocusTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeFocusTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
   return ok<FocusRequest>({ operation: "blur", target: field_target.value });
 };
 
-const decodeFocusRequest_focusFirst = (value: unknown, path: string): Decoded<FocusRequest> => {
+const decodeFocusRequest_focusFirst = (value: unknown, path: Path): Decoded<FocusRequest> => {
   const object = objectValue(value, path, ["operation","scope"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "focusFirst");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "focusFirst");
   if (!operationTag.ok) return operationTag;
-  const field_scope = decodeFocusTarget(object.value["scope"], `${path}.scope`);
+  const field_scope = decodeFocusTarget(object.value["scope"], at(path, ".scope"));
   if (!field_scope.ok) return field_scope;
   return ok<FocusRequest>({ operation: "focusFirst", scope: field_scope.value });
 };
 
-const decodeFocusRequest_focusLast = (value: unknown, path: string): Decoded<FocusRequest> => {
+const decodeFocusRequest_focusLast = (value: unknown, path: Path): Decoded<FocusRequest> => {
   const object = objectValue(value, path, ["operation","scope"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "focusLast");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "focusLast");
   if (!operationTag.ok) return operationTag;
-  const field_scope = decodeFocusTarget(object.value["scope"], `${path}.scope`);
+  const field_scope = decodeFocusTarget(object.value["scope"], at(path, ".scope"));
   if (!field_scope.ok) return field_scope;
   return ok<FocusRequest>({ operation: "focusLast", scope: field_scope.value });
 };
 
-const decodeFocusRequest_select = (value: unknown, path: string): Decoded<FocusRequest> => {
+const decodeFocusRequest_select = (value: unknown, path: Path): Decoded<FocusRequest> => {
   const object = objectValue(value, path, ["operation","target","start","end"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "select");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "select");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeFocusTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeFocusTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
-  const field_start = intValue(object.value["start"], `${path}.start`);
+  const field_start = intValue(object.value["start"], at(path, ".start"));
   if (!field_start.ok) return field_start;
-  const field_end = intValue(object.value["end"], `${path}.end`);
+  const field_end = intValue(object.value["end"], at(path, ".end"));
   if (!field_end.ok) return field_end;
   return ok<FocusRequest>({ operation: "select", target: field_target.value, start: field_start.value, end: field_end.value });
 };
 
-const decodeFocusRequest_selectAll = (value: unknown, path: string): Decoded<FocusRequest> => {
+const decodeFocusRequest_selectAll = (value: unknown, path: Path): Decoded<FocusRequest> => {
   const object = objectValue(value, path, ["operation","target"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "selectAll");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "selectAll");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeFocusTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeFocusTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
   return ok<FocusRequest>({ operation: "selectAll", target: field_target.value });
 };
 
-const decodeFocusRequest_scrollIntoView = (value: unknown, path: string): Decoded<FocusRequest> => {
+const decodeFocusRequest_scrollIntoView = (value: unknown, path: Path): Decoded<FocusRequest> => {
   const object = objectValue(value, path, ["operation","target","block","smooth"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "scrollIntoView");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "scrollIntoView");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeFocusTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeFocusTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
-  const field_block = decodeScrollBlock(object.value["block"], `${path}.block`);
+  const field_block = decodeScrollBlock(object.value["block"], at(path, ".block"));
   if (!field_block.ok) return field_block;
-  const field_smooth = boolValue(object.value["smooth"], `${path}.smooth`);
+  const field_smooth = boolValue(object.value["smooth"], at(path, ".smooth"));
   if (!field_smooth.ok) return field_smooth;
   return ok<FocusRequest>({ operation: "scrollIntoView", target: field_target.value, block: field_block.value, smooth: field_smooth.value });
 };
 
-export const decodeFocusResult = (value: unknown, path = "$"): Decoded<FocusResult> => {
+export const decodeFocusResult = (value: unknown, path: Path = "$"): Decoded<FocusResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -201,82 +226,82 @@ export const decodeFocusResult = (value: unknown, path = "$"): Decoded<FocusResu
     case "Stale": return decodeFocusResult_Stale(value, path);
     case "Unavailable": return decodeFocusResult_Unavailable(value, path);
     case "Cancelled": return decodeFocusResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Done","NotFound","Ambiguous","NotFocusable","NotSelectable","InvalidRange","Stale","Unavailable","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Done","NotFound","Ambiguous","NotFocusable","NotSelectable","InvalidRange","Stale","Unavailable","Cancelled"], tag);
   }
 };
 
-const decodeFocusResult_Done = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_Done = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Done");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Done");
   if (!kindTag.ok) return kindTag;
   return ok<FocusResult>({ kind: "Done" });
 };
 
-const decodeFocusResult_NotFound = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_NotFound = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotFound");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotFound");
   if (!kindTag.ok) return kindTag;
   return ok<FocusResult>({ kind: "NotFound" });
 };
 
-const decodeFocusResult_Ambiguous = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_Ambiguous = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind","count"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Ambiguous");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Ambiguous");
   if (!kindTag.ok) return kindTag;
-  const field_count = intValue(object.value["count"], `${path}.count`);
+  const field_count = intValue(object.value["count"], at(path, ".count"));
   if (!field_count.ok) return field_count;
   return ok<FocusResult>({ kind: "Ambiguous", count: field_count.value });
 };
 
-const decodeFocusResult_NotFocusable = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_NotFocusable = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotFocusable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotFocusable");
   if (!kindTag.ok) return kindTag;
   return ok<FocusResult>({ kind: "NotFocusable" });
 };
 
-const decodeFocusResult_NotSelectable = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_NotSelectable = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotSelectable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotSelectable");
   if (!kindTag.ok) return kindTag;
   return ok<FocusResult>({ kind: "NotSelectable" });
 };
 
-const decodeFocusResult_InvalidRange = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_InvalidRange = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidRange");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidRange");
   if (!kindTag.ok) return kindTag;
   return ok<FocusResult>({ kind: "InvalidRange" });
 };
 
-const decodeFocusResult_Stale = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_Stale = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind","current"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Stale");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Stale");
   if (!kindTag.ok) return kindTag;
-  const field_current = stringValue(object.value["current"], `${path}.current`);
+  const field_current = stringValue(object.value["current"], at(path, ".current"));
   if (!field_current.ok) return field_current;
   return ok<FocusResult>({ kind: "Stale", current: field_current.value });
 };
 
-const decodeFocusResult_Unavailable = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_Unavailable = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unavailable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unavailable");
   if (!kindTag.ok) return kindTag;
   return ok<FocusResult>({ kind: "Unavailable" });
 };
 
-const decodeFocusResult_Cancelled = (value: unknown, path: string): Decoded<FocusResult> => {
+const decodeFocusResult_Cancelled = (value: unknown, path: Path): Decoded<FocusResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<FocusResult>({ kind: "Cancelled" });
 };

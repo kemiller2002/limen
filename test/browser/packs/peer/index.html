@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen peer pack in a real browser</title>
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts in Chromium with its fake camera and
+       microphone, under a strict CSP with Trusted Types. main.js connects two
+       peer connections in this page, relaying every description and
+       candidate itself, as an engine's signaling would. -->
+  <video data-peer-remote="far" width="320" height="240" playsinline muted></video>
+  <button id="poke" data-event="poke">Ask</button>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

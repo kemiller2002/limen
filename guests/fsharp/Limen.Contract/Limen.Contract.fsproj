@@ -30,5 +30,7 @@
     <Compile Include="Generated/Geolocation.fs" />
     <Compile Include="Generated/Credentials.fs" />
     <Compile Include="Generated/Coordination.fs" />
+    <Compile Include="Generated/Media.fs" />
+    <Compile Include="Generated/Peer.fs" />
   </ItemGroup>
 </Project>

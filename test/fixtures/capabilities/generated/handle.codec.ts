@@ -4,7 +4,7 @@
 // unit: limen.fixture.handle@1
 // contract-fingerprint: sha256:432661a3fe90552b7cd9429ea765d631712c41c7d71ae3cb16b5feaab81ad359
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:686fe071bde725a26c0a77e91cb964c43776e82065c51fe030c7a98b4b2ead5b
+// content-hash: sha256:2c698d85c3da4f36a203131d455e13ea361537e3fe517e4d0bb25241d9769a26
 // </auto-generated>
 import type { ResourceHandle, HandleStaleReason, HandleRequest, HandleResult } from "./handle.ts";
 
@@ -12,36 +12,47 @@ import type { ResourceHandle, HandleStaleReason, HandleRequest, HandleResult } f
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,33 +66,47 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeResourceHandle = (value: unknown, path = "$"): Decoded<ResourceHandle> => brand<ResourceHandle>(stringValue(value, path));
+export const decodeResourceHandle = (value: unknown, path: Path = "$"): Decoded<ResourceHandle> => brand<ResourceHandle>(stringValue(value, path));
 
-export const decodeHandleStaleReason = (value: unknown, path = "$"): Decoded<HandleStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
+export const decodeHandleStaleReason = (value: unknown, path: Path = "$"): Decoded<HandleStaleReason> => enumValue(value, path, ["unknown","disposed","other-session"] as const);
 
-export const decodeHandleRequest = (value: unknown, path = "$"): Decoded<HandleRequest> => {
+export const decodeHandleRequest = (value: unknown, path: Path = "$"): Decoded<HandleRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -89,41 +114,41 @@ export const decodeHandleRequest = (value: unknown, path = "$"): Decoded<HandleR
     case "open": return decodeHandleRequest_open(value, path);
     case "read": return decodeHandleRequest_read(value, path);
     case "close": return decodeHandleRequest_close(value, path);
-    default: return unknownVariant(`${path}.operation`, ["open","read","close"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["open","read","close"], tag);
   }
 };
 
-const decodeHandleRequest_open = (value: unknown, path: string): Decoded<HandleRequest> => {
+const decodeHandleRequest_open = (value: unknown, path: Path): Decoded<HandleRequest> => {
   const object = objectValue(value, path, ["operation","label"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "open");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "open");
   if (!operationTag.ok) return operationTag;
-  const field_label = stringValue(object.value["label"], `${path}.label`);
+  const field_label = stringValue(object.value["label"], at(path, ".label"));
   if (!field_label.ok) return field_label;
   return ok<HandleRequest>({ operation: "open", label: field_label.value });
 };
 
-const decodeHandleRequest_read = (value: unknown, path: string): Decoded<HandleRequest> => {
+const decodeHandleRequest_read = (value: unknown, path: Path): Decoded<HandleRequest> => {
   const object = objectValue(value, path, ["operation","handle"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "read");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "read");
   if (!operationTag.ok) return operationTag;
-  const field_handle = decodeResourceHandle(object.value["handle"], `${path}.handle`);
+  const field_handle = decodeResourceHandle(object.value["handle"], at(path, ".handle"));
   if (!field_handle.ok) return field_handle;
   return ok<HandleRequest>({ operation: "read", handle: field_handle.value });
 };
 
-const decodeHandleRequest_close = (value: unknown, path: string): Decoded<HandleRequest> => {
+const decodeHandleRequest_close = (value: unknown, path: Path): Decoded<HandleRequest> => {
   const object = objectValue(value, path, ["operation","handle"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "close");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "close");
   if (!operationTag.ok) return operationTag;
-  const field_handle = decodeResourceHandle(object.value["handle"], `${path}.handle`);
+  const field_handle = decodeResourceHandle(object.value["handle"], at(path, ".handle"));
   if (!field_handle.ok) return field_handle;
   return ok<HandleRequest>({ operation: "close", handle: field_handle.value });
 };
 
-export const decodeHandleResult = (value: unknown, path = "$"): Decoded<HandleResult> => {
+export const decodeHandleResult = (value: unknown, path: Path = "$"): Decoded<HandleResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -132,44 +157,44 @@ export const decodeHandleResult = (value: unknown, path = "$"): Decoded<HandleRe
     case "Read": return decodeHandleResult_Read(value, path);
     case "Closed": return decodeHandleResult_Closed(value, path);
     case "Stale": return decodeHandleResult_Stale(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Opened","Read","Closed","Stale"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Opened","Read","Closed","Stale"], tag);
   }
 };
 
-const decodeHandleResult_Opened = (value: unknown, path: string): Decoded<HandleResult> => {
+const decodeHandleResult_Opened = (value: unknown, path: Path): Decoded<HandleResult> => {
   const object = objectValue(value, path, ["kind","handle"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Opened");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Opened");
   if (!kindTag.ok) return kindTag;
-  const field_handle = decodeResourceHandle(object.value["handle"], `${path}.handle`);
+  const field_handle = decodeResourceHandle(object.value["handle"], at(path, ".handle"));
   if (!field_handle.ok) return field_handle;
   return ok<HandleResult>({ kind: "Opened", handle: field_handle.value });
 };
 
-const decodeHandleResult_Read = (value: unknown, path: string): Decoded<HandleResult> => {
+const decodeHandleResult_Read = (value: unknown, path: Path): Decoded<HandleResult> => {
   const object = objectValue(value, path, ["kind","label"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Read");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Read");
   if (!kindTag.ok) return kindTag;
-  const field_label = stringValue(object.value["label"], `${path}.label`);
+  const field_label = stringValue(object.value["label"], at(path, ".label"));
   if (!field_label.ok) return field_label;
   return ok<HandleResult>({ kind: "Read", label: field_label.value });
 };
 
-const decodeHandleResult_Closed = (value: unknown, path: string): Decoded<HandleResult> => {
+const decodeHandleResult_Closed = (value: unknown, path: Path): Decoded<HandleResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Closed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Closed");
   if (!kindTag.ok) return kindTag;
   return ok<HandleResult>({ kind: "Closed" });
 };
 
-const decodeHandleResult_Stale = (value: unknown, path: string): Decoded<HandleResult> => {
+const decodeHandleResult_Stale = (value: unknown, path: Path): Decoded<HandleResult> => {
   const object = objectValue(value, path, ["kind","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Stale");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Stale");
   if (!kindTag.ok) return kindTag;
-  const field_reason = decodeHandleStaleReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeHandleStaleReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<HandleResult>({ kind: "Stale", reason: field_reason.value });
 };

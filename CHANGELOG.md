@@ -97,7 +97,71 @@ exhaustive lists.
     packed `dist/`) fail if an optional module re-enters its graph or an
     optional export returns to the root.
 
+### Added
+
+- **WebRTC peer connection pack (#44), `…/capabilities/peer`.**
+  - Connections are opaque ids.
+  - Offers, answers and ICE candidates are data the engine relays: signaling
+    is the application's.
+  - Local media comes from media-pack captures, and only through the
+    `CaptureSource` the application passes in (`peerCapability({ captures:
+    media })`).
+  - Remote media plays in a named `<video data-peer-remote>`.
+  - Connection state and remote tracks are facts.
+  - `Rejected` (a refusal in the current state) is distinct from `Failed`.
+  - `close` and `dispose()` end everything.
+  - Verified in Chromium: two connections in one page connect with the
+    engine relaying, and one plays the other's fake camera (8 checks).
+  - The media pack gained `streamFor`.
+  - See [docs/56](https://github.com/kemiller2002/limen/blob/main/docs/56-peer-connections.md).
+- **Media capture and recording pack (#44), `…/capabilities/media`.**
+  - Camera and microphone follow the permission pattern: availability,
+    permission and each capture's outcome are kept apart.
+  - Captures and recordings are opaque ids. Previews go into a
+    `<video data-media-preview>` the HTML names, and recordings are read in
+    1 MiB slices.
+  - `Denied`, `DeviceUnavailable` (not found, in use, overconstrained),
+    `TrackEnded`, `CaptureEnded`, `RecordingInterrupted` and `Cancelled` are
+    explicit.
+  - `stop`, `release`, a cancelled capture and `dispose()` each stop every
+    track.
+  - Verified in Chromium with fake devices, 11 checks. See
+    [docs/55](https://github.com/kemiller2002/limen/blob/main/docs/55-media.md).
+- **Optional server and static renderer (#38), `…/renderer`.**
+  - `renderRoute` and `renderStatic` run the same engine and page as the
+    browser, and write the settled projection, head metadata included, into
+    semantic HTML, using the kernel's own binding policy.
+  - Only Http is offered, and only with a fetch you supply. Storage,
+    Clipboard and Navigation answer `Failure{unavailable}`; optional
+    capabilities answer `Unsupported{not-negotiated}`; an engine that selects
+    one is refused.
+  - `data-client-only` sections are written as authored.
+  - Rows and mounted sections carry the markers hydration (#39) will adopt.
+  - The renderer never imports the BrowserKernel.
+  - Streaming is not built: there is no measured use case yet.
+  - See [docs/54](https://github.com/kemiller2002/limen/blob/main/docs/54-server-rendering.md).
+
 ### Changed
+
+- **Strict decoding is 3.5 times faster, and exactly as strict (WI-0045, #19).**
+  - Every generated TypeScript codec decodes lists and maps in one pass that
+    stops at the first failure, and renders an error path only when decoding
+    fails there.
+  - Decoding a 10k-row view in Chromium went from 14.0 ms to 4.0 ms, and a
+    1k-row view from 1.6 ms to 0.5 ms.
+  - What is accepted and rejected, and every `DecodeError`, is unchanged. The
+    optional `path` argument of a generated decoder also accepts a function
+    that returns the path, so a caller's prefix is rendered only on failure.
+- **Removing a keyed row moves no other row (WI-0044, #19).**
+  - Rows whose keys left the list are removed before the reorder pass.
+  - A middle removal from a 10k-row list went from 10,001 DOM mutations to
+    1, and from 26.2 ms to 11.4 ms.
+- **Projection skips unchanged writes (WI-0043, #19).**
+  - The kernel compares each `data-text` and each plain or URL attribute with
+    the live DOM before writing.
+  - An unchanged 10k-row projection went from 10,000 DOM mutations to none
+    (32.9 ms to 12.0 ms). A one-row update went from 10,000 mutations to 1.
+  - Outside changes to a bound node are still corrected.
 
 - **`<head>` is bound, and page metadata is a projection (#38).**
   - The kernel binds `<head>` with the same rules as `<body>`, so a route's

@@ -29,6 +29,11 @@ No programming language's syntax is canonical. There is deliberately no
 `object`, `any` or `Dictionary<string, object>`: an attempt to express one is a
 contract error.
 
+A unit that cannot be generated safely for every language is rejected before
+anything is written. For example, in a union, a field may not be named like
+another variant of the same union: C# nests each variant as a record inside
+the union's class, and the nested type would shadow the property.
+
 ## Generated bindings are read-only
 
 ```sh

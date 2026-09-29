@@ -4,7 +4,7 @@
 // unit: limen.events@1
 // contract-fingerprint: sha256:a7929059991edf90bd23bca0fb54931f310f76fe44dc2b9f9c258bfb24dd4390
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:1f0bcdb3bb68d1c79aae4a46bddb435dd346c1f7af4fae10ee33d6b4b6667956
+// content-hash: sha256:75d217560a9c0b5960d569d214f9ceea2f050557325c62c622fbdc4308330ca4
 // </auto-generated>
 import type { Modifiers, KeyboardFacts, PointerFacts, DragPhase, DragFacts, CompositionPhase, CompositionFacts, SelectionFacts, TextDirection, InputFacts, RichEvent, Listener, EventsRequest, EventsResult } from "./events.js";
 
@@ -12,36 +12,47 @@ import type { Modifiers, KeyboardFacts, PointerFacts, DragPhase, DragFacts, Comp
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,211 +66,225 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeModifiers = (value: unknown, path = "$"): Decoded<Modifiers> => {
+export const decodeModifiers = (value: unknown, path: Path = "$"): Decoded<Modifiers> => {
   const object = objectValue(value, path, ["alt","ctrl","meta","shift"]);
   if (!object.ok) return object;
-  const field_alt = boolValue(object.value["alt"], `${path}.alt`);
+  const field_alt = boolValue(object.value["alt"], at(path, ".alt"));
   if (!field_alt.ok) return field_alt;
-  const field_ctrl = boolValue(object.value["ctrl"], `${path}.ctrl`);
+  const field_ctrl = boolValue(object.value["ctrl"], at(path, ".ctrl"));
   if (!field_ctrl.ok) return field_ctrl;
-  const field_meta = boolValue(object.value["meta"], `${path}.meta`);
+  const field_meta = boolValue(object.value["meta"], at(path, ".meta"));
   if (!field_meta.ok) return field_meta;
-  const field_shift = boolValue(object.value["shift"], `${path}.shift`);
+  const field_shift = boolValue(object.value["shift"], at(path, ".shift"));
   if (!field_shift.ok) return field_shift;
   return ok<Modifiers>({ alt: field_alt.value, ctrl: field_ctrl.value, meta: field_meta.value, shift: field_shift.value });
 };
 
-export const decodeKeyboardFacts = (value: unknown, path = "$"): Decoded<KeyboardFacts> => {
+export const decodeKeyboardFacts = (value: unknown, path: Path = "$"): Decoded<KeyboardFacts> => {
   const object = objectValue(value, path, ["key","code","repeat","composing"]);
   if (!object.ok) return object;
-  const field_key = stringValue(object.value["key"], `${path}.key`);
+  const field_key = stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
-  const field_code = stringValue(object.value["code"], `${path}.code`);
+  const field_code = stringValue(object.value["code"], at(path, ".code"));
   if (!field_code.ok) return field_code;
-  const field_repeat = boolValue(object.value["repeat"], `${path}.repeat`);
+  const field_repeat = boolValue(object.value["repeat"], at(path, ".repeat"));
   if (!field_repeat.ok) return field_repeat;
-  const field_composing = boolValue(object.value["composing"], `${path}.composing`);
+  const field_composing = boolValue(object.value["composing"], at(path, ".composing"));
   if (!field_composing.ok) return field_composing;
   return ok<KeyboardFacts>({ key: field_key.value, code: field_code.value, repeat: field_repeat.value, composing: field_composing.value });
 };
 
-export const decodePointerFacts = (value: unknown, path = "$"): Decoded<PointerFacts> => {
+export const decodePointerFacts = (value: unknown, path: Path = "$"): Decoded<PointerFacts> => {
   const object = objectValue(value, path, ["pointerType","pointerId","button","buttons","isPrimary","x","y"]);
   if (!object.ok) return object;
-  const field_pointerType = stringValue(object.value["pointerType"], `${path}.pointerType`);
+  const field_pointerType = stringValue(object.value["pointerType"], at(path, ".pointerType"));
   if (!field_pointerType.ok) return field_pointerType;
-  const field_pointerId = intValue(object.value["pointerId"], `${path}.pointerId`);
+  const field_pointerId = intValue(object.value["pointerId"], at(path, ".pointerId"));
   if (!field_pointerId.ok) return field_pointerId;
-  const field_button = intValue(object.value["button"], `${path}.button`);
+  const field_button = intValue(object.value["button"], at(path, ".button"));
   if (!field_button.ok) return field_button;
-  const field_buttons = intValue(object.value["buttons"], `${path}.buttons`);
+  const field_buttons = intValue(object.value["buttons"], at(path, ".buttons"));
   if (!field_buttons.ok) return field_buttons;
-  const field_isPrimary = boolValue(object.value["isPrimary"], `${path}.isPrimary`);
+  const field_isPrimary = boolValue(object.value["isPrimary"], at(path, ".isPrimary"));
   if (!field_isPrimary.ok) return field_isPrimary;
-  const field_x = object.value["x"] === undefined ? ok(undefined) : numberValue(object.value["x"], `${path}.x`);
+  const field_x = object.value["x"] === undefined ? ok(undefined) : numberValue(object.value["x"], at(path, ".x"));
   if (!field_x.ok) return field_x;
-  const field_y = object.value["y"] === undefined ? ok(undefined) : numberValue(object.value["y"], `${path}.y`);
+  const field_y = object.value["y"] === undefined ? ok(undefined) : numberValue(object.value["y"], at(path, ".y"));
   if (!field_y.ok) return field_y;
   return ok<PointerFacts>({ pointerType: field_pointerType.value, pointerId: field_pointerId.value, button: field_button.value, buttons: field_buttons.value, isPrimary: field_isPrimary.value, ...(field_x.value !== undefined ? { x: field_x.value } : {}), ...(field_y.value !== undefined ? { y: field_y.value } : {}) });
 };
 
-export const decodeDragPhase = (value: unknown, path = "$"): Decoded<DragPhase> => enumValue(value, path, ["start","enter","over","leave","drop","end"] as const);
+export const decodeDragPhase = (value: unknown, path: Path = "$"): Decoded<DragPhase> => enumValue(value, path, ["start","enter","over","leave","drop","end"] as const);
 
-export const decodeDragFacts = (value: unknown, path = "$"): Decoded<DragFacts> => {
+export const decodeDragFacts = (value: unknown, path: Path = "$"): Decoded<DragFacts> => {
   const object = objectValue(value, path, ["phase","types","fileCount"]);
   if (!object.ok) return object;
-  const field_phase = decodeDragPhase(object.value["phase"], `${path}.phase`);
+  const field_phase = decodeDragPhase(object.value["phase"], at(path, ".phase"));
   if (!field_phase.ok) return field_phase;
-  const field_types = listOf(object.value["types"], `${path}.types`, (item, at) => stringValue(item, at));
+  const field_types = listOf(object.value["types"], at(path, ".types"), (item, at) => stringValue(item, at));
   if (!field_types.ok) return field_types;
-  const field_fileCount = intValue(object.value["fileCount"], `${path}.fileCount`);
+  const field_fileCount = intValue(object.value["fileCount"], at(path, ".fileCount"));
   if (!field_fileCount.ok) return field_fileCount;
   return ok<DragFacts>({ phase: field_phase.value, types: field_types.value, fileCount: field_fileCount.value });
 };
 
-export const decodeCompositionPhase = (value: unknown, path = "$"): Decoded<CompositionPhase> => enumValue(value, path, ["start","update","end"] as const);
+export const decodeCompositionPhase = (value: unknown, path: Path = "$"): Decoded<CompositionPhase> => enumValue(value, path, ["start","update","end"] as const);
 
-export const decodeCompositionFacts = (value: unknown, path = "$"): Decoded<CompositionFacts> => {
+export const decodeCompositionFacts = (value: unknown, path: Path = "$"): Decoded<CompositionFacts> => {
   const object = objectValue(value, path, ["phase","committed"]);
   if (!object.ok) return object;
-  const field_phase = decodeCompositionPhase(object.value["phase"], `${path}.phase`);
+  const field_phase = decodeCompositionPhase(object.value["phase"], at(path, ".phase"));
   if (!field_phase.ok) return field_phase;
-  const field_committed = object.value["committed"] === undefined ? ok(undefined) : stringValue(object.value["committed"], `${path}.committed`);
+  const field_committed = object.value["committed"] === undefined ? ok(undefined) : stringValue(object.value["committed"], at(path, ".committed"));
   if (!field_committed.ok) return field_committed;
   return ok<CompositionFacts>({ phase: field_phase.value, ...(field_committed.value !== undefined ? { committed: field_committed.value } : {}) });
 };
 
-export const decodeSelectionFacts = (value: unknown, path = "$"): Decoded<SelectionFacts> => {
+export const decodeSelectionFacts = (value: unknown, path: Path = "$"): Decoded<SelectionFacts> => {
   const object = objectValue(value, path, ["start","end","direction"]);
   if (!object.ok) return object;
-  const field_start = intValue(object.value["start"], `${path}.start`);
+  const field_start = intValue(object.value["start"], at(path, ".start"));
   if (!field_start.ok) return field_start;
-  const field_end = intValue(object.value["end"], `${path}.end`);
+  const field_end = intValue(object.value["end"], at(path, ".end"));
   if (!field_end.ok) return field_end;
-  const field_direction = stringValue(object.value["direction"], `${path}.direction`);
+  const field_direction = stringValue(object.value["direction"], at(path, ".direction"));
   if (!field_direction.ok) return field_direction;
   return ok<SelectionFacts>({ start: field_start.value, end: field_end.value, direction: field_direction.value });
 };
 
-export const decodeTextDirection = (value: unknown, path = "$"): Decoded<TextDirection> => enumValue(value, path, ["ltr","rtl"] as const);
+export const decodeTextDirection = (value: unknown, path: Path = "$"): Decoded<TextDirection> => enumValue(value, path, ["ltr","rtl"] as const);
 
-export const decodeInputFacts = (value: unknown, path = "$"): Decoded<InputFacts> => {
+export const decodeInputFacts = (value: unknown, path: Path = "$"): Decoded<InputFacts> => {
   const object = objectValue(value, path, ["inputType","data"]);
   if (!object.ok) return object;
-  const field_inputType = stringValue(object.value["inputType"], `${path}.inputType`);
+  const field_inputType = stringValue(object.value["inputType"], at(path, ".inputType"));
   if (!field_inputType.ok) return field_inputType;
-  const field_data = object.value["data"] === undefined ? ok(undefined) : stringValue(object.value["data"], `${path}.data`);
+  const field_data = object.value["data"] === undefined ? ok(undefined) : stringValue(object.value["data"], at(path, ".data"));
   if (!field_data.ok) return field_data;
   return ok<InputFacts>({ inputType: field_inputType.value, ...(field_data.value !== undefined ? { data: field_data.value } : {}) });
 };
 
-export const decodeRichEvent = (value: unknown, path = "$"): Decoded<RichEvent> => {
+export const decodeRichEvent = (value: unknown, path: Path = "$"): Decoded<RichEvent> => {
   const object = objectValue(value, path, ["name","type","key","value","modifiers","keyboard","pointer","drag","composition","selection","input","direction"]);
   if (!object.ok) return object;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_type = stringValue(object.value["type"], `${path}.type`);
+  const field_type = stringValue(object.value["type"], at(path, ".type"));
   if (!field_type.ok) return field_type;
-  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], `${path}.key`);
+  const field_key = object.value["key"] === undefined ? ok(undefined) : stringValue(object.value["key"], at(path, ".key"));
   if (!field_key.ok) return field_key;
-  const field_value = object.value["value"] === undefined ? ok(undefined) : stringValue(object.value["value"], `${path}.value`);
+  const field_value = object.value["value"] === undefined ? ok(undefined) : stringValue(object.value["value"], at(path, ".value"));
   if (!field_value.ok) return field_value;
-  const field_modifiers = object.value["modifiers"] === undefined ? ok(undefined) : decodeModifiers(object.value["modifiers"], `${path}.modifiers`);
+  const field_modifiers = object.value["modifiers"] === undefined ? ok(undefined) : decodeModifiers(object.value["modifiers"], at(path, ".modifiers"));
   if (!field_modifiers.ok) return field_modifiers;
-  const field_keyboard = object.value["keyboard"] === undefined ? ok(undefined) : decodeKeyboardFacts(object.value["keyboard"], `${path}.keyboard`);
+  const field_keyboard = object.value["keyboard"] === undefined ? ok(undefined) : decodeKeyboardFacts(object.value["keyboard"], at(path, ".keyboard"));
   if (!field_keyboard.ok) return field_keyboard;
-  const field_pointer = object.value["pointer"] === undefined ? ok(undefined) : decodePointerFacts(object.value["pointer"], `${path}.pointer`);
+  const field_pointer = object.value["pointer"] === undefined ? ok(undefined) : decodePointerFacts(object.value["pointer"], at(path, ".pointer"));
   if (!field_pointer.ok) return field_pointer;
-  const field_drag = object.value["drag"] === undefined ? ok(undefined) : decodeDragFacts(object.value["drag"], `${path}.drag`);
+  const field_drag = object.value["drag"] === undefined ? ok(undefined) : decodeDragFacts(object.value["drag"], at(path, ".drag"));
   if (!field_drag.ok) return field_drag;
-  const field_composition = object.value["composition"] === undefined ? ok(undefined) : decodeCompositionFacts(object.value["composition"], `${path}.composition`);
+  const field_composition = object.value["composition"] === undefined ? ok(undefined) : decodeCompositionFacts(object.value["composition"], at(path, ".composition"));
   if (!field_composition.ok) return field_composition;
-  const field_selection = object.value["selection"] === undefined ? ok(undefined) : decodeSelectionFacts(object.value["selection"], `${path}.selection`);
+  const field_selection = object.value["selection"] === undefined ? ok(undefined) : decodeSelectionFacts(object.value["selection"], at(path, ".selection"));
   if (!field_selection.ok) return field_selection;
-  const field_input = object.value["input"] === undefined ? ok(undefined) : decodeInputFacts(object.value["input"], `${path}.input`);
+  const field_input = object.value["input"] === undefined ? ok(undefined) : decodeInputFacts(object.value["input"], at(path, ".input"));
   if (!field_input.ok) return field_input;
-  const field_direction = object.value["direction"] === undefined ? ok(undefined) : decodeTextDirection(object.value["direction"], `${path}.direction`);
+  const field_direction = object.value["direction"] === undefined ? ok(undefined) : decodeTextDirection(object.value["direction"], at(path, ".direction"));
   if (!field_direction.ok) return field_direction;
   return ok<RichEvent>({ name: field_name.value, type: field_type.value, ...(field_key.value !== undefined ? { key: field_key.value } : {}), ...(field_value.value !== undefined ? { value: field_value.value } : {}), ...(field_modifiers.value !== undefined ? { modifiers: field_modifiers.value } : {}), ...(field_keyboard.value !== undefined ? { keyboard: field_keyboard.value } : {}), ...(field_pointer.value !== undefined ? { pointer: field_pointer.value } : {}), ...(field_drag.value !== undefined ? { drag: field_drag.value } : {}), ...(field_composition.value !== undefined ? { composition: field_composition.value } : {}), ...(field_selection.value !== undefined ? { selection: field_selection.value } : {}), ...(field_input.value !== undefined ? { input: field_input.value } : {}), ...(field_direction.value !== undefined ? { direction: field_direction.value } : {}) });
 };
 
-export const decodeListener = (value: unknown, path = "$"): Decoded<Listener> => {
+export const decodeListener = (value: unknown, path: Path = "$"): Decoded<Listener> => {
   const object = objectValue(value, path, ["name","type","refused"]);
   if (!object.ok) return object;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_type = stringValue(object.value["type"], `${path}.type`);
+  const field_type = stringValue(object.value["type"], at(path, ".type"));
   if (!field_type.ok) return field_type;
-  const field_refused = object.value["refused"] === undefined ? ok(undefined) : stringValue(object.value["refused"], `${path}.refused`);
+  const field_refused = object.value["refused"] === undefined ? ok(undefined) : stringValue(object.value["refused"], at(path, ".refused"));
   if (!field_refused.ok) return field_refused;
   return ok<Listener>({ name: field_name.value, type: field_type.value, ...(field_refused.value !== undefined ? { refused: field_refused.value } : {}) });
 };
 
-export const decodeEventsRequest = (value: unknown, path = "$"): Decoded<EventsRequest> => {
+export const decodeEventsRequest = (value: unknown, path: Path = "$"): Decoded<EventsRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
   switch (tag) {
     case "describe": return decodeEventsRequest_describe(value, path);
-    default: return unknownVariant(`${path}.operation`, ["describe"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["describe"], tag);
   }
 };
 
-const decodeEventsRequest_describe = (value: unknown, path: string): Decoded<EventsRequest> => {
+const decodeEventsRequest_describe = (value: unknown, path: Path): Decoded<EventsRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "describe");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "describe");
   if (!operationTag.ok) return operationTag;
   return ok<EventsRequest>({ operation: "describe" });
 };
 
-export const decodeEventsResult = (value: unknown, path = "$"): Decoded<EventsResult> => {
+export const decodeEventsResult = (value: unknown, path: Path = "$"): Decoded<EventsResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "Listening": return decodeEventsResult_Listening(value, path);
     case "Cancelled": return decodeEventsResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Listening","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Listening","Cancelled"], tag);
   }
 };
 
-const decodeEventsResult_Listening = (value: unknown, path: string): Decoded<EventsResult> => {
+const decodeEventsResult_Listening = (value: unknown, path: Path): Decoded<EventsResult> => {
   const object = objectValue(value, path, ["kind","listeners"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Listening");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Listening");
   if (!kindTag.ok) return kindTag;
-  const field_listeners = listOf(object.value["listeners"], `${path}.listeners`, (item, at) => decodeListener(item, at));
+  const field_listeners = listOf(object.value["listeners"], at(path, ".listeners"), (item, at) => decodeListener(item, at));
   if (!field_listeners.ok) return field_listeners;
   return ok<EventsResult>({ kind: "Listening", listeners: field_listeners.value });
 };
 
-const decodeEventsResult_Cancelled = (value: unknown, path: string): Decoded<EventsResult> => {
+const decodeEventsResult_Cancelled = (value: unknown, path: Path): Decoded<EventsResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<EventsResult>({ kind: "Cancelled" });
 };

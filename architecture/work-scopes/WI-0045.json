@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0045",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Guardrail — tools/contract-gen/emit-typescript.ts changes only how the generated TypeScript codecs spend time, never what they accept: listOf and mapOf decode in one pass and stop at the first failure (the same first failure the three-pass version reported), and error paths are built lazily, only when a decode fails. Every accepted and rejected input, and every DecodeError path, expected and found, stays byte-identical; the shared vectors in test/contract.test.ts prove it. All generated TypeScript codecs are regenerated, never hand-edited.",
+  "guardrail": true,
+  "paths": ["tools/contract-gen/emit-typescript.ts", "src/generated/**", "src/capabilities/*/generated/*.codec.ts", "test/**", "bench/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

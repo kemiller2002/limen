@@ -168,3 +168,18 @@ test("the F#, C# and Rust minimal engines are held to the guest host's contract 
   const html = await readFile("guests/minimal/host/index.html", "utf8");
   assert.deepEqual(checkPage("guests/minimal/host/index.html", html, contract), []);
 });
+
+// Server-rendered pages (kemiller2002/limen#38): a row the renderer wrote
+// after its template (data-limen-key) is checked in its list's item scope,
+// exactly as the template it came from.
+test("a server-rendered row is checked in its list's item scope", () => {
+  const contract: ViewContract = { view: { rows: { list: { id: "string", label: "string" } }, title: "string" }, events: { pick: { item: "rows" } } };
+  const page = (row: string): string => `<ul><template data-each="rows" data-key="id"><li><span data-text="label"></span></li></template>${row}</ul><h1 data-text="title"></h1>`;
+  assert.deepEqual(checkPage("p.html", page(`<li data-limen-key="a"><span data-text="label">A</span><button data-event="pick">x</button></li>`), contract), []);
+  const wrongScope = checkPage("p.html", page(`<li data-limen-key="a"><span data-text="title">A</span></li>`), contract);
+  assert.deepEqual(wrongScope.map((diagnostic) => diagnostic.message), [`"title" is not a field of rows's items`]);
+  // After the row closes, bindings are top-level again.
+  assert.deepEqual(checkPage("p.html", page(`<li data-limen-key="a"><li><span data-text="label"></span></li></li>`), contract), []);
+  const orphan = checkPage("p.html", `<li data-limen-key="a"><span data-text="title"></span></li>`, contract);
+  assert.ok(orphan.some((diagnostic) => diagnostic.binding === "data-limen-key" && /no data-each template before it/.test(diagnostic.message)));
+});

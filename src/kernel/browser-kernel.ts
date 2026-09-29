@@ -245,14 +245,14 @@ function applyBoundAttribute(bound: AttrBinding, raw: ViewValue | undefined): st
     case "Url": {
       const verdict = checkUrl(String(raw), el.ownerDocument.baseURI);
       if (verdict.kind === "Safe") {
-        el.setAttribute(attr, String(raw));
+        if (el.getAttribute(attr) !== String(raw)) el.setAttribute(attr, String(raw));
         return undefined;
       }
       el.removeAttribute(attr);
       return `refused a ${verdict.scheme} URL for <${el.tagName.toLowerCase()} ${attr}>; only http, https, mailto, tel and relative URLs are projected`;
     }
     case "Attribute":
-      el.setAttribute(attr, String(raw));
+      if (el.getAttribute(attr) !== String(raw)) el.setAttribute(attr, String(raw));
       return undefined;
     case "Forbidden":
       throw new Error(`data-bind-${attr}: ${target.reason}`);
@@ -559,7 +559,12 @@ export class BrowserKernel {
   // Returns the refusals the projection produced (an unsafe URL not written);
   // a malformed projection still throws.
   #applyScope(scope: Scope, view: ViewState): readonly string[] {
-    for (const text of scope.texts) text.element.textContent = coerceScalar(view[text.key], text.key);
+    // Compared with the live DOM, not a cached value: an unchanged projection
+    // writes nothing, and a node changed outside the kernel is still corrected.
+    for (const text of scope.texts) {
+      const next = coerceScalar(view[text.key], text.key);
+      if (text.element.textContent !== next) text.element.textContent = next;
+    }
     return [
       ...scope.attrs.flatMap((bound) => applyBoundAttribute(bound, view[bound.key]) ?? []),
       ...scope.ifs.flatMap((ifBinding) => this.#applyIf(ifBinding, view)),
@@ -595,14 +600,21 @@ export class BrowserKernel {
     const items = raw as readonly ViewItem[];
     const parent = binding.anchor.parentNode;
     if (!parent) throw new Error(`data-each anchor for "${binding.listKey}" is detached`);
-    const seen = new Set<string>();
+    const keyOf = (item: ViewItem): string => {
+      const rawKey = item[binding.itemKey];
+      if (rawKey === undefined) throw new Error(`data-each item missing key field "${binding.itemKey}"`);
+      return String(rawKey);
+    };
+    const seen = new Set(items.map(keyOf));
+    // Rows whose keys left the list go first: removed after the reorder pass,
+    // each following row looked out of place and was moved (WI-0044).
+    for (const [key, instance] of binding.instances) {
+      if (!seen.has(key)) { instance.root.remove(); binding.instances.delete(key); }
+    }
     const refusals: string[] = [];
     let cursor: ChildNode = binding.anchor;
     for (const item of items) {
-      const rawKey = item[binding.itemKey];
-      if (rawKey === undefined) throw new Error(`data-each item missing key field "${binding.itemKey}"`);
-      const key = String(rawKey);
-      seen.add(key);
+      const key = keyOf(item);
       let instance = binding.instances.get(key);
       if (!instance) {
         const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
@@ -619,9 +631,6 @@ export class BrowserKernel {
       refusals.push(...this.#applyScope(instance.scope, item));
       if (cursor.nextSibling !== instance.root) parent.insertBefore(instance.root, cursor.nextSibling);
       cursor = instance.root;
-    }
-    for (const [key, instance] of binding.instances) {
-      if (!seen.has(key)) { instance.root.remove(); binding.instances.delete(key); }
     }
     return refusals;
   }

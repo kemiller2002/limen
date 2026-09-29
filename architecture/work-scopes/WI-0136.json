@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0136",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Tooling — bench/budgets.json only: re-measure every profile that loads the kernel (absolute root, as the test measures) and reset baseline and budget by the 10% rule, as WI-0085 did, with a history entry naming what grew. No source change.",
+  "guardrail": false,
+  "paths": ["bench/budgets.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

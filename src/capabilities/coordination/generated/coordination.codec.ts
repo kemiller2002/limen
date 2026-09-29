@@ -4,7 +4,7 @@
 // unit: limen.coordination@1
 // contract-fingerprint: sha256:510dfbcd2f3f7966b842d518d209a511ada3ffb30132853f291e9d5fa8342684
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:0caaec883b16a9c89471a7b53b33bf55af0664ef32184bfc936ac880ddba98a9
+// content-hash: sha256:7eca8bc303609ff740821a3c31e3fc66a57e93687db1a5aa98d0473481d756a1
 // </auto-generated>
 import type { ContextId, LockHandle, PeerId, Via, LockMode, UndeliverableReason, RefusedReason, FrameTarget, CoordinationRequest, CoordinationResult, CoordinationFact } from "./coordination.js";
 
@@ -12,36 +12,47 @@ import type { ContextId, LockHandle, PeerId, Via, LockMode, UndeliverableReason,
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
 export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
 
+/**
+ * Where a value sits in the message. A path is rendered only when decoding
+ * fails there, so a successful decode never builds one: building every path
+ * eagerly cost more than all the checks together.
+ */
+export type Path = string | (() => string);
+
+const render = (path: Path): string => (typeof path === "string" ? path : path());
+
+const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
+
 const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
 
 const jsonKind = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
-const mismatch = <T>(path: string, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected, found: jsonKind(value) } });
+const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
 
-const unknownVariant = <T>(path: string, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path, expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
+const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
+  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
 
-const stringValue = (value: unknown, path: string): Decoded<string> =>
+const stringValue = (value: unknown, path: Path): Decoded<string> =>
   typeof value === "string" ? ok(value) : mismatch(path, "string", value);
 
-const intValue = (value: unknown, path: string): Decoded<number> =>
+const intValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
 
-const numberValue = (value: unknown, path: string): Decoded<number> =>
+const numberValue = (value: unknown, path: Path): Decoded<number> =>
   typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
 
-const boolValue = (value: unknown, path: string): Decoded<boolean> =>
+const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
   typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
 
-const jsonValue = (value: unknown, path: string): Decoded<unknown> =>
+const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
   value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
 
-const literalValue = <T extends string | number>(value: unknown, path: string, expected: T): Decoded<T> =>
+const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
   value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
 
-const enumValue = <T extends string>(value: unknown, path: string, values: readonly T[]): Decoded<T> => {
+const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
   const found = values.find((candidate) => candidate === value);
   return found === undefined ? unknownVariant(path, values, value) : ok(found);
 };
@@ -55,72 +66,86 @@ const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown
 
 // A closed key set: an unexpected field is corrupted or mismatched wire data,
 // never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: string, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
+const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first unexpected field.
   const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${path}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
+  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
 };
 
-const listOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<readonly T[]> => {
+// One pass that stops at the first failure: the same failure a decode of
+// every entry would report first. The accumulator is created here and never
+// escapes until it is complete, so the function stays pure.
+const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
   if (!Array.isArray(value)) return mismatch(path, "array", value);
-  const decoded = value.map((entry, index) => item(entry, `${path}[${index}]`));
-  const failed = decoded.find((entry) => !entry.ok);
-  return failed !== undefined && !failed.ok ? failed : ok(decoded.flatMap((entry) => (entry.ok ? [entry.value] : [])));
+  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
+    if (!decoded.ok) return decoded;
+    const next = item(entry, () => `${render(path)}[${index}]`);
+    return next.ok ? (decoded.value.push(next.value), decoded) : next;
+  }, ok<T[]>([]));
 };
 
-const mapOf = <T>(value: unknown, path: string, item: (value: unknown, path: string) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
+// An own property even for "__proto__", as JSON.parse made it: plain
+// assignment would set the prototype instead.
+const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
+  key === "__proto__"
+    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+    : ((target[key] = value), target);
+
+const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
   if (!isPlainObject(value)) return mismatch(path, "object", value);
   // Sorted, so every language reports the same first failing entry.
-  const decoded = Object.keys(value).sort().map((key) => [key, item(value[key], `${path}[${JSON.stringify(key)}]`)] as const);
-  const failed = decoded.find(([, entry]) => !entry.ok);
-  return failed !== undefined && !failed[1].ok ? failed[1] : ok(Object.fromEntries(decoded.flatMap(([key, entry]) => (entry.ok ? [[key, entry.value] as const] : []))));
+  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
+    if (!decoded.ok) return decoded;
+    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
+    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
+  }, ok<Record<string, T>>({}));
 };
 
-export const decodeContextId = (value: unknown, path = "$"): Decoded<ContextId> => brand<ContextId>(stringValue(value, path));
+export const decodeContextId = (value: unknown, path: Path = "$"): Decoded<ContextId> => brand<ContextId>(stringValue(value, path));
 
-export const decodeLockHandle = (value: unknown, path = "$"): Decoded<LockHandle> => brand<LockHandle>(stringValue(value, path));
+export const decodeLockHandle = (value: unknown, path: Path = "$"): Decoded<LockHandle> => brand<LockHandle>(stringValue(value, path));
 
-export const decodePeerId = (value: unknown, path = "$"): Decoded<PeerId> => brand<PeerId>(stringValue(value, path));
+export const decodePeerId = (value: unknown, path: Path = "$"): Decoded<PeerId> => brand<PeerId>(stringValue(value, path));
 
-export const decodeVia = (value: unknown, path = "$"): Decoded<Via> => enumValue(value, path, ["broadcast","hub"] as const);
+export const decodeVia = (value: unknown, path: Path = "$"): Decoded<Via> => enumValue(value, path, ["broadcast","hub"] as const);
 
-export const decodeLockMode = (value: unknown, path = "$"): Decoded<LockMode> => enumValue(value, path, ["exclusive","shared"] as const);
+export const decodeLockMode = (value: unknown, path: Path = "$"): Decoded<LockMode> => enumValue(value, path, ["exclusive","shared"] as const);
 
-export const decodeUndeliverableReason = (value: unknown, path = "$"): Decoded<UndeliverableReason> => enumValue(value, path, ["not-json","malformed","too-large"] as const);
+export const decodeUndeliverableReason = (value: unknown, path: Path = "$"): Decoded<UndeliverableReason> => enumValue(value, path, ["not-json","malformed","too-large"] as const);
 
-export const decodeRefusedReason = (value: unknown, path = "$"): Decoded<RefusedReason> => enumValue(value, path, ["wrong-origin","wrong-source","not-json"] as const);
+export const decodeRefusedReason = (value: unknown, path: Path = "$"): Decoded<RefusedReason> => enumValue(value, path, ["wrong-origin","wrong-source","not-json"] as const);
 
-export const decodeFrameTarget = (value: unknown, path = "$"): Decoded<FrameTarget> => {
+export const decodeFrameTarget = (value: unknown, path: Path = "$"): Decoded<FrameTarget> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "frame": return decodeFrameTarget_frame(value, path);
     case "parent": return decodeFrameTarget_parent(value, path);
-    default: return unknownVariant(`${path}.kind`, ["frame","parent"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["frame","parent"], tag);
   }
 };
 
-const decodeFrameTarget_frame = (value: unknown, path: string): Decoded<FrameTarget> => {
+const decodeFrameTarget_frame = (value: unknown, path: Path): Decoded<FrameTarget> => {
   const object = objectValue(value, path, ["kind","name"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "frame");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "frame");
   if (!kindTag.ok) return kindTag;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
   return ok<FrameTarget>({ kind: "frame", name: field_name.value });
 };
 
-const decodeFrameTarget_parent = (value: unknown, path: string): Decoded<FrameTarget> => {
+const decodeFrameTarget_parent = (value: unknown, path: Path): Decoded<FrameTarget> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "parent");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "parent");
   if (!kindTag.ok) return kindTag;
   return ok<FrameTarget>({ kind: "parent" });
 };
 
-export const decodeCoordinationRequest = (value: unknown, path = "$"): Decoded<CoordinationRequest> => {
+export const decodeCoordinationRequest = (value: unknown, path: Path = "$"): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["operation"];
@@ -134,113 +159,113 @@ export const decodeCoordinationRequest = (value: unknown, path = "$"): Decoded<C
     case "listen": return decodeCoordinationRequest_listen(value, path);
     case "post": return decodeCoordinationRequest_post(value, path);
     case "unlisten": return decodeCoordinationRequest_unlisten(value, path);
-    default: return unknownVariant(`${path}.operation`, ["identity","open","close","broadcast","acquire","release","listen","post","unlisten"], tag);
+    default: return unknownVariant(at(path, ".operation"), ["identity","open","close","broadcast","acquire","release","listen","post","unlisten"], tag);
   }
 };
 
-const decodeCoordinationRequest_identity = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_identity = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "identity");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "identity");
   if (!operationTag.ok) return operationTag;
   return ok<CoordinationRequest>({ operation: "identity" });
 };
 
-const decodeCoordinationRequest_open = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_open = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","channel","via"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "open");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "open");
   if (!operationTag.ok) return operationTag;
-  const field_channel = stringValue(object.value["channel"], `${path}.channel`);
+  const field_channel = stringValue(object.value["channel"], at(path, ".channel"));
   if (!field_channel.ok) return field_channel;
-  const field_via = decodeVia(object.value["via"], `${path}.via`);
+  const field_via = decodeVia(object.value["via"], at(path, ".via"));
   if (!field_via.ok) return field_via;
   return ok<CoordinationRequest>({ operation: "open", channel: field_channel.value, via: field_via.value });
 };
 
-const decodeCoordinationRequest_close = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_close = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","channel"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "close");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "close");
   if (!operationTag.ok) return operationTag;
-  const field_channel = stringValue(object.value["channel"], `${path}.channel`);
+  const field_channel = stringValue(object.value["channel"], at(path, ".channel"));
   if (!field_channel.ok) return field_channel;
   return ok<CoordinationRequest>({ operation: "close", channel: field_channel.value });
 };
 
-const decodeCoordinationRequest_broadcast = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_broadcast = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","channel","message"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "broadcast");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "broadcast");
   if (!operationTag.ok) return operationTag;
-  const field_channel = stringValue(object.value["channel"], `${path}.channel`);
+  const field_channel = stringValue(object.value["channel"], at(path, ".channel"));
   if (!field_channel.ok) return field_channel;
-  const field_message = jsonValue(object.value["message"], `${path}.message`);
+  const field_message = jsonValue(object.value["message"], at(path, ".message"));
   if (!field_message.ok) return field_message;
   return ok<CoordinationRequest>({ operation: "broadcast", channel: field_channel.value, message: field_message.value });
 };
 
-const decodeCoordinationRequest_acquire = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_acquire = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","name","mode","wait","steal"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "acquire");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "acquire");
   if (!operationTag.ok) return operationTag;
-  const field_name = stringValue(object.value["name"], `${path}.name`);
+  const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
-  const field_mode = decodeLockMode(object.value["mode"], `${path}.mode`);
+  const field_mode = decodeLockMode(object.value["mode"], at(path, ".mode"));
   if (!field_mode.ok) return field_mode;
-  const field_wait = boolValue(object.value["wait"], `${path}.wait`);
+  const field_wait = boolValue(object.value["wait"], at(path, ".wait"));
   if (!field_wait.ok) return field_wait;
-  const field_steal = boolValue(object.value["steal"], `${path}.steal`);
+  const field_steal = boolValue(object.value["steal"], at(path, ".steal"));
   if (!field_steal.ok) return field_steal;
   return ok<CoordinationRequest>({ operation: "acquire", name: field_name.value, mode: field_mode.value, wait: field_wait.value, steal: field_steal.value });
 };
 
-const decodeCoordinationRequest_release = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_release = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","lock"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "release");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "release");
   if (!operationTag.ok) return operationTag;
-  const field_lock = decodeLockHandle(object.value["lock"], `${path}.lock`);
+  const field_lock = decodeLockHandle(object.value["lock"], at(path, ".lock"));
   if (!field_lock.ok) return field_lock;
   return ok<CoordinationRequest>({ operation: "release", lock: field_lock.value });
 };
 
-const decodeCoordinationRequest_listen = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_listen = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","target","origin"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "listen");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "listen");
   if (!operationTag.ok) return operationTag;
-  const field_target = decodeFrameTarget(object.value["target"], `${path}.target`);
+  const field_target = decodeFrameTarget(object.value["target"], at(path, ".target"));
   if (!field_target.ok) return field_target;
-  const field_origin = stringValue(object.value["origin"], `${path}.origin`);
+  const field_origin = stringValue(object.value["origin"], at(path, ".origin"));
   if (!field_origin.ok) return field_origin;
   return ok<CoordinationRequest>({ operation: "listen", target: field_target.value, origin: field_origin.value });
 };
 
-const decodeCoordinationRequest_post = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_post = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","peer","message"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "post");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "post");
   if (!operationTag.ok) return operationTag;
-  const field_peer = decodePeerId(object.value["peer"], `${path}.peer`);
+  const field_peer = decodePeerId(object.value["peer"], at(path, ".peer"));
   if (!field_peer.ok) return field_peer;
-  const field_message = jsonValue(object.value["message"], `${path}.message`);
+  const field_message = jsonValue(object.value["message"], at(path, ".message"));
   if (!field_message.ok) return field_message;
   return ok<CoordinationRequest>({ operation: "post", peer: field_peer.value, message: field_message.value });
 };
 
-const decodeCoordinationRequest_unlisten = (value: unknown, path: string): Decoded<CoordinationRequest> => {
+const decodeCoordinationRequest_unlisten = (value: unknown, path: Path): Decoded<CoordinationRequest> => {
   const object = objectValue(value, path, ["operation","peer"]);
   if (!object.ok) return object;
-  const operationTag = literalValue(object.value["operation"], `${path}.operation`, "unlisten");
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "unlisten");
   if (!operationTag.ok) return operationTag;
-  const field_peer = decodePeerId(object.value["peer"], `${path}.peer`);
+  const field_peer = decodePeerId(object.value["peer"], at(path, ".peer"));
   if (!field_peer.ok) return field_peer;
   return ok<CoordinationRequest>({ operation: "unlisten", peer: field_peer.value });
 };
 
-export const decodeCoordinationResult = (value: unknown, path = "$"): Decoded<CoordinationResult> => {
+export const decodeCoordinationResult = (value: unknown, path: Path = "$"): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -264,177 +289,177 @@ export const decodeCoordinationResult = (value: unknown, path = "$"): Decoded<Co
     case "Unlistened": return decodeCoordinationResult_Unlistened(value, path);
     case "Unsupported": return decodeCoordinationResult_Unsupported(value, path);
     case "Cancelled": return decodeCoordinationResult_Cancelled(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Identity","Opened","AlreadyOpen","Closed","NotOpen","Sent","TooLarge","Acquired","Busy","Released","UnknownLock","Listening","InvalidOrigin","NotFound","PeerGone","UnknownPeer","Unlistened","Unsupported","Cancelled"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Identity","Opened","AlreadyOpen","Closed","NotOpen","Sent","TooLarge","Acquired","Busy","Released","UnknownLock","Listening","InvalidOrigin","NotFound","PeerGone","UnknownPeer","Unlistened","Unsupported","Cancelled"], tag);
   }
 };
 
-const decodeCoordinationResult_Identity = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Identity = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind","context"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Identity");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Identity");
   if (!kindTag.ok) return kindTag;
-  const field_context = decodeContextId(object.value["context"], `${path}.context`);
+  const field_context = decodeContextId(object.value["context"], at(path, ".context"));
   if (!field_context.ok) return field_context;
   return ok<CoordinationResult>({ kind: "Identity", context: field_context.value });
 };
 
-const decodeCoordinationResult_Opened = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Opened = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind","channel","context"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Opened");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Opened");
   if (!kindTag.ok) return kindTag;
-  const field_channel = stringValue(object.value["channel"], `${path}.channel`);
+  const field_channel = stringValue(object.value["channel"], at(path, ".channel"));
   if (!field_channel.ok) return field_channel;
-  const field_context = decodeContextId(object.value["context"], `${path}.context`);
+  const field_context = decodeContextId(object.value["context"], at(path, ".context"));
   if (!field_context.ok) return field_context;
   return ok<CoordinationResult>({ kind: "Opened", channel: field_channel.value, context: field_context.value });
 };
 
-const decodeCoordinationResult_AlreadyOpen = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_AlreadyOpen = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "AlreadyOpen");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "AlreadyOpen");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "AlreadyOpen" });
 };
 
-const decodeCoordinationResult_Closed = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Closed = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Closed");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Closed");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "Closed" });
 };
 
-const decodeCoordinationResult_NotOpen = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_NotOpen = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotOpen");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotOpen");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "NotOpen" });
 };
 
-const decodeCoordinationResult_Sent = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Sent = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Sent");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Sent");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "Sent" });
 };
 
-const decodeCoordinationResult_TooLarge = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_TooLarge = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind","limit"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "TooLarge");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "TooLarge");
   if (!kindTag.ok) return kindTag;
-  const field_limit = intValue(object.value["limit"], `${path}.limit`);
+  const field_limit = intValue(object.value["limit"], at(path, ".limit"));
   if (!field_limit.ok) return field_limit;
   return ok<CoordinationResult>({ kind: "TooLarge", limit: field_limit.value });
 };
 
-const decodeCoordinationResult_Acquired = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Acquired = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind","lock"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Acquired");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Acquired");
   if (!kindTag.ok) return kindTag;
-  const field_lock = decodeLockHandle(object.value["lock"], `${path}.lock`);
+  const field_lock = decodeLockHandle(object.value["lock"], at(path, ".lock"));
   if (!field_lock.ok) return field_lock;
   return ok<CoordinationResult>({ kind: "Acquired", lock: field_lock.value });
 };
 
-const decodeCoordinationResult_Busy = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Busy = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Busy");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Busy");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "Busy" });
 };
 
-const decodeCoordinationResult_Released = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Released = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Released");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Released");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "Released" });
 };
 
-const decodeCoordinationResult_UnknownLock = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_UnknownLock = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UnknownLock");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UnknownLock");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "UnknownLock" });
 };
 
-const decodeCoordinationResult_Listening = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Listening = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind","peer"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Listening");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Listening");
   if (!kindTag.ok) return kindTag;
-  const field_peer = decodePeerId(object.value["peer"], `${path}.peer`);
+  const field_peer = decodePeerId(object.value["peer"], at(path, ".peer"));
   if (!field_peer.ok) return field_peer;
   return ok<CoordinationResult>({ kind: "Listening", peer: field_peer.value });
 };
 
-const decodeCoordinationResult_InvalidOrigin = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_InvalidOrigin = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind","problem"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "InvalidOrigin");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "InvalidOrigin");
   if (!kindTag.ok) return kindTag;
-  const field_problem = stringValue(object.value["problem"], `${path}.problem`);
+  const field_problem = stringValue(object.value["problem"], at(path, ".problem"));
   if (!field_problem.ok) return field_problem;
   return ok<CoordinationResult>({ kind: "InvalidOrigin", problem: field_problem.value });
 };
 
-const decodeCoordinationResult_NotFound = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_NotFound = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "NotFound");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "NotFound");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "NotFound" });
 };
 
-const decodeCoordinationResult_PeerGone = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_PeerGone = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PeerGone");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PeerGone");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "PeerGone" });
 };
 
-const decodeCoordinationResult_UnknownPeer = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_UnknownPeer = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "UnknownPeer");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "UnknownPeer");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "UnknownPeer" });
 };
 
-const decodeCoordinationResult_Unlistened = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Unlistened = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unlistened");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unlistened");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "Unlistened" });
 };
 
-const decodeCoordinationResult_Unsupported = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Unsupported = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Unsupported");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "Unsupported" });
 };
 
-const decodeCoordinationResult_Cancelled = (value: unknown, path: string): Decoded<CoordinationResult> => {
+const decodeCoordinationResult_Cancelled = (value: unknown, path: Path): Decoded<CoordinationResult> => {
   const object = objectValue(value, path, ["kind"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Cancelled");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Cancelled");
   if (!kindTag.ok) return kindTag;
   return ok<CoordinationResult>({ kind: "Cancelled" });
 };
 
-export const decodeCoordinationFact = (value: unknown, path = "$"): Decoded<CoordinationFact> => {
+export const decodeCoordinationFact = (value: unknown, path: Path = "$"): Decoded<CoordinationFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
@@ -444,68 +469,68 @@ export const decodeCoordinationFact = (value: unknown, path = "$"): Decoded<Coor
     case "LockLost": return decodeCoordinationFact_LockLost(value, path);
     case "PeerMessage": return decodeCoordinationFact_PeerMessage(value, path);
     case "PeerRefused": return decodeCoordinationFact_PeerRefused(value, path);
-    default: return unknownVariant(`${path}.kind`, ["Received","Undeliverable","LockLost","PeerMessage","PeerRefused"], tag);
+    default: return unknownVariant(at(path, ".kind"), ["Received","Undeliverable","LockLost","PeerMessage","PeerRefused"], tag);
   }
 };
 
-const decodeCoordinationFact_Received = (value: unknown, path: string): Decoded<CoordinationFact> => {
+const decodeCoordinationFact_Received = (value: unknown, path: Path): Decoded<CoordinationFact> => {
   const object = objectValue(value, path, ["kind","channel","from","message"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Received");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Received");
   if (!kindTag.ok) return kindTag;
-  const field_channel = stringValue(object.value["channel"], `${path}.channel`);
+  const field_channel = stringValue(object.value["channel"], at(path, ".channel"));
   if (!field_channel.ok) return field_channel;
-  const field_from = decodeContextId(object.value["from"], `${path}.from`);
+  const field_from = decodeContextId(object.value["from"], at(path, ".from"));
   if (!field_from.ok) return field_from;
-  const field_message = jsonValue(object.value["message"], `${path}.message`);
+  const field_message = jsonValue(object.value["message"], at(path, ".message"));
   if (!field_message.ok) return field_message;
   return ok<CoordinationFact>({ kind: "Received", channel: field_channel.value, from: field_from.value, message: field_message.value });
 };
 
-const decodeCoordinationFact_Undeliverable = (value: unknown, path: string): Decoded<CoordinationFact> => {
+const decodeCoordinationFact_Undeliverable = (value: unknown, path: Path): Decoded<CoordinationFact> => {
   const object = objectValue(value, path, ["kind","channel","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "Undeliverable");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Undeliverable");
   if (!kindTag.ok) return kindTag;
-  const field_channel = stringValue(object.value["channel"], `${path}.channel`);
+  const field_channel = stringValue(object.value["channel"], at(path, ".channel"));
   if (!field_channel.ok) return field_channel;
-  const field_reason = decodeUndeliverableReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeUndeliverableReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<CoordinationFact>({ kind: "Undeliverable", channel: field_channel.value, reason: field_reason.value });
 };
 
-const decodeCoordinationFact_LockLost = (value: unknown, path: string): Decoded<CoordinationFact> => {
+const decodeCoordinationFact_LockLost = (value: unknown, path: Path): Decoded<CoordinationFact> => {
   const object = objectValue(value, path, ["kind","lock"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "LockLost");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "LockLost");
   if (!kindTag.ok) return kindTag;
-  const field_lock = decodeLockHandle(object.value["lock"], `${path}.lock`);
+  const field_lock = decodeLockHandle(object.value["lock"], at(path, ".lock"));
   if (!field_lock.ok) return field_lock;
   return ok<CoordinationFact>({ kind: "LockLost", lock: field_lock.value });
 };
 
-const decodeCoordinationFact_PeerMessage = (value: unknown, path: string): Decoded<CoordinationFact> => {
+const decodeCoordinationFact_PeerMessage = (value: unknown, path: Path): Decoded<CoordinationFact> => {
   const object = objectValue(value, path, ["kind","peer","message"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PeerMessage");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PeerMessage");
   if (!kindTag.ok) return kindTag;
-  const field_peer = decodePeerId(object.value["peer"], `${path}.peer`);
+  const field_peer = decodePeerId(object.value["peer"], at(path, ".peer"));
   if (!field_peer.ok) return field_peer;
-  const field_message = jsonValue(object.value["message"], `${path}.message`);
+  const field_message = jsonValue(object.value["message"], at(path, ".message"));
   if (!field_message.ok) return field_message;
   return ok<CoordinationFact>({ kind: "PeerMessage", peer: field_peer.value, message: field_message.value });
 };
 
-const decodeCoordinationFact_PeerRefused = (value: unknown, path: string): Decoded<CoordinationFact> => {
+const decodeCoordinationFact_PeerRefused = (value: unknown, path: Path): Decoded<CoordinationFact> => {
   const object = objectValue(value, path, ["kind","peer","origin","reason"]);
   if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], `${path}.kind`, "PeerRefused");
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "PeerRefused");
   if (!kindTag.ok) return kindTag;
-  const field_peer = decodePeerId(object.value["peer"], `${path}.peer`);
+  const field_peer = decodePeerId(object.value["peer"], at(path, ".peer"));
   if (!field_peer.ok) return field_peer;
-  const field_origin = stringValue(object.value["origin"], `${path}.origin`);
+  const field_origin = stringValue(object.value["origin"], at(path, ".origin"));
   if (!field_origin.ok) return field_origin;
-  const field_reason = decodeRefusedReason(object.value["reason"], `${path}.reason`);
+  const field_reason = decodeRefusedReason(object.value["reason"], at(path, ".reason"));
   if (!field_reason.ok) return field_reason;
   return ok<CoordinationFact>({ kind: "PeerRefused", peer: field_peer.value, origin: field_origin.value, reason: field_reason.value });
 };

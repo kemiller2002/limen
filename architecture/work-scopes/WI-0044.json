@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0044",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Core (core-kernel), mechanism only — data-each removes rows whose keys left the list before the reorder pass instead of after it, so a removal no longer makes every following row look out of place and get moved. Keyed identity, order and the removal itself are unchanged. No new concept, file, export or primitive; the Core budget measures it. Evidence before and after from npm run bench.",
+  "guardrail": false,
+  "paths": ["src/kernel/browser-kernel.ts", "test/kernel.test.ts", "bench/budgets.json", "docs/27-performance-baseline.md", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

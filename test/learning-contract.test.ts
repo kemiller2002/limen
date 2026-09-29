@@ -3,11 +3,11 @@
 // legitimate optional capability ships without touching the Core model.
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import { parseCoreManifest, type CoreManifest } from "../tools/guardrails/core.ts";
-import { checkLearning, conceptsIn, linksIn, parseLearning, type Document } from "../tools/guardrails/learning.ts";
+import { checkLearning, conceptsIn, isOptionalDoc, linksIn, parseLearning, type Document } from "../tools/guardrails/learning.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 const rawManifest = JSON.parse(await readFile(join(ROOT, "architecture/core.json"), "utf8")) as unknown;
@@ -15,7 +15,7 @@ const manifest = parseCoreManifest(rawManifest);
 const learning = parseLearning(rawManifest);
 const read = async (path: string): Promise<Document> => ({ path, text: await readFile(join(ROOT, path), "utf8") });
 const documents: readonly Document[] = await Promise.all([
-  ...new Set([learning.canonical, learning.requiredReading.file, ...learning.path, ...learning.quickStarts, ...learning.optionalDocs, "docs/18-naming-and-compatibility.md", "docs/13-anti-patterns.md", "docs/USAGE.md", "README.md"]),
+  ...new Set([learning.canonical, learning.requiredReading.file, ...learning.path, ...learning.quickStarts, ...(await readdir(join(ROOT, "docs"))).filter((name) => name.endsWith(".md")).map((name) => `docs/${name}`), "README.md"]),
 ].map(read));
 
 const replaced = (path: string, change: (text: string) => string): readonly Document[] =>
@@ -70,13 +70,22 @@ test("an optional document that does not name the Core concept it composes with 
   assert.deepEqual(rules(unknownConcept), ["optional-doc-banner"]);
 });
 
-test("a legitimate optional capability ships without changing the Core model or its reading", () => {
+test("which documents are optional is a pattern: every subsystem document from 20 up, except Core's own", () => {
+  const optional = documents.map((document) => document.path).filter((path) => isOptionalDoc(learning, path));
+  assert.ok(optional.length >= 32, optional.join(", "));
+  for (const path of ["docs/23-wasm-federation.md", "docs/53-cross-context-coordination.md", "docs/54-server-rendering.md"]) assert.ok(optional.includes(path), path);
+  for (const path of ["docs/24-contract-and-capabilities.md", "docs/25-guardrails.md", "docs/29-binding-security.md", "docs/core-mental-model.md", "docs/11-api-reference.md"]) assert.ok(!optional.includes(path), path);
+});
+
+test("a legitimate optional capability ships without changing the Core model, its reading, or the manifest", () => {
   const packDoc: Document = {
-    path: "docs/54-vibration.md",
+    path: "docs/99-vibration.md",
     text: "# Vibration\n\n> **Optional — not Limen Core.** This is the vibration pack, a capability pack. It composes with the Core concept `typed-capabilities`: it is requested through the generic Capability seam.\n\nimport { vibrationCapability } from \"@echelon-foundry/typescript-wasm-kernel/capabilities/vibration\";\n",
   };
-  const withPack = { ...learning, optionalDocs: [...learning.optionalDocs, packDoc.path] };
-  assert.deepEqual(checkLearning(manifest, withPack, [...documents, packDoc]), []);
+  assert.deepEqual(checkLearning(manifest, learning, [...documents, packDoc]), []);
+  // The same document without its banner is caught, with no manifest edit either way.
+  const unbannered = { ...packDoc, text: packDoc.text.replace(/^> .*$/m, "") };
+  assert.deepEqual(checkLearning(manifest, learning, [...documents, unbannered]).map((found) => found.rule), ["optional-doc-banner"]);
 });
 
 test("links are read as repository paths, relative or absolute", () => {

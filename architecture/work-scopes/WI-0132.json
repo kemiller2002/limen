@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0132",
+  "reference": "kemiller2002/limen#44 (LCP-038)",
+  "placement": "Capability Pack — src/capabilities/peer/ with its own contract unit limen.peer. An RTCPeerConnection never crosses: the engine holds an opaque connection id; descriptions and ICE candidates are plain data it relays itself (who the peer is and how to reach it is signaling meaning, the engine's). Local tracks come from the media pack only through a tracksFor accessor the application passes to peerCapability at its composition root — packs never import each other; the media pack gains that accessor. Remote media is shown in a <video data-peer-remote> the HTML names. Connection state, local candidates, remote tracks and negotiation are facts; close and the provider's dispose() end every connection. Core unchanged; absent unless registered.",
+  "guardrail": false,
+  "paths": ["contract/peer.contract.json", "src/capabilities/peer/index.ts", "src/capabilities/media/index.ts", "package.json", "bench/budgets.json", "test/**", "scripts/smoke-packs.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

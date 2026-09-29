@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0135",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Tooling — bench/budgets.json only: re-baseline the kernel-only profile (the ./kernel subpath) at what ships after WI-0043, with the usual 10% headroom, and record in its history what grew and why. No source change.",
+  "guardrail": false,
+  "paths": ["bench/budgets.json"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
