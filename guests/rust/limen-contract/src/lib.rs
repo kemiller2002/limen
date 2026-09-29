@@ -11,6 +11,9 @@ pub mod runtime;
 
 pub mod limen_core;
 
+/// The optional focus, selection and scroll capability (limen.focus).
+pub mod limen_focus;
+
 /// A test-only capability unit, compiled only for the conformance tests.
 #[cfg(test)]
 pub mod limen_fixture_echo;

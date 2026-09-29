@@ -13,5 +13,6 @@
   <ItemGroup>
     <Compile Include="Generated/Runtime.fs" />
     <Compile Include="Generated/Core.fs" />
+    <Compile Include="Generated/Focus.fs" />
   </ItemGroup>
 </Project>
