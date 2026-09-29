@@ -42,6 +42,11 @@ guests/minimal/out/
 guests/minimal/host/*.js
 dist-guests/
 
+# The benchmark page compiles in place (npm run build:bench); an ad-hoc run
+# writes bench/results/latest.json. Committed baselines use other names.
+bench/pages/*.js
+bench/results/latest.json
+
 # BEGIN echelon:visual-engineering
 # Installed Visual Engineering context. Refresh it with:
 #   npx @echelon-foundry/visual-engineering init

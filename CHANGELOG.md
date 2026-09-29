@@ -26,6 +26,15 @@ exhaustive lists.
 
 ### Added
 
+- **Performance baseline and payload budgets (#19).** `npm run bench` drives
+  the real kernel in Chromium (event, forms-100, list-1k/10k, routes,
+  serialization, federation, directly and through the WebAssembly JSON
+  boundary) and the F#, C# and Rust guests through one host, recording the
+  environment with every result. The baseline is in
+  `bench/results/baseline-2026-09-29.json` and
+  `docs/27-performance-baseline.md`. Per-profile payload budgets
+  (`bench/budgets.json`) are enforced by `npm test`, including that the
+  minimal consumer loads no optional capability, tooling or host code.
 - **Opaque handles and provider conformance (#32).** `./capability-support/handles`
   exports `createHandleTable`: browser resources stay browser-side, only ids
   cross, a disposed, unknown or other-session id is answered `Stale` with its

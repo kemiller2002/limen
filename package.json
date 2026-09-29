@@ -126,7 +126,7 @@
     "build:cli": "node --experimental-strip-types scripts/build-cli.ts --current",
     "build:cli:all": "node --experimental-strip-types scripts/build-cli.ts",
     "test:cli": "dotnet test cli/tests/Limen.Core.Tests/Limen.Core.Tests.fsproj --nologo -v q",
-    "pretest": "npm run build && npm run build:examples && npm run build:site",
+    "pretest": "npm run build && npm run build:examples && npm run build:site && npm run build:bench",
     "test": "npm run contract:check && npm run check:architecture && npm run check:layers && npm run check:typescript && npm run check:docs && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
     "prepack": "npm run clean && npm run check && npm run build:cli:all",
@@ -149,6 +149,8 @@
     "test:guests:pressure": "node --experimental-strip-types scripts/guest-pressure.ts",
     "build:guests": "node --experimental-strip-types scripts/build-guests-site.ts",
     "smoke:guests": "node --experimental-strip-types scripts/smoke-guests.ts",
+    "build:bench": "tsc -p tsconfig.bench.json",
+    "bench": "npm run build && npm run build:bench && node --experimental-strip-types scripts/bench.ts",
     "test:guests:sessions": "dotnet run --project guests/minimal/fsharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.fsproj -c Release --nologo && dotnet run --project guests/minimal/csharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.csproj -c Release --nologo && cargo test --quiet --manifest-path guests/minimal/rust/limen-minimal/Cargo.toml"
   },
   "devDependencies": {

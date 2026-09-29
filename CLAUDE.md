@@ -255,6 +255,7 @@ npm run contract:generate  # regenerate every binding from contract/*.contract.j
 npm run contract:check     # fail on stale / hand-edited / missing / orphaned bindings
 npm run build:guests       # F#, C#, Rust minimal engines → WebAssembly → dist-guests/
 npm run smoke:guests       # each WASM engine drives every capability in Chromium
+npm run bench              # performance baseline → bench/results/latest.json (docs/27)
 npm run test:guests        # F#, C#, Rust bindings: strict build + shared vectors
                            #   (needs .NET SDK 8 and cargo; crates.io is reachable)
 npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)

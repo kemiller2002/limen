@@ -1,0 +1,117 @@
+{
+  "doc": "Payload budgets per consumer profile (kemiller2002/limen#19). Each budget is the measured baseline plus 10%, rounded up to a whole KiB; test/bench-size.test.ts fails when a profile exceeds its budget or loads a forbidden module. Raising a budget needs its own work item saying what grew and why; lowering one after an optimization is encouraged.",
+  "profiles": [
+    {
+      "name": "minimal-consumer",
+      "doc": "What examples/minimal (the copy shipped in the package) loads: the package root. It carries the reference email engine and federation, which a consumer never registers — see docs/27-performance-baseline.md.",
+      "entries": [
+        "dist/index.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/capabilities/"
+      ],
+      "baseline": {
+        "rawBytes": 112707,
+        "gzipBytesBundled": 21893
+      },
+      "budget": {
+        "rawBytes": 124928,
+        "gzipBytesBundled": 24576
+      }
+    },
+    {
+      "name": "kernel-only",
+      "doc": "The ./kernel subpath: BrowserKernel and what it needs, nothing else.",
+      "entries": [
+        "dist/kernel/browser-kernel.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js"
+      ],
+      "baseline": {
+        "rawBytes": 83090,
+        "gzipBytesBundled": 15358
+      },
+      "budget": {
+        "rawBytes": 92160,
+        "gzipBytesBundled": 17408
+      }
+    },
+    {
+      "name": "kernel-with-handles",
+      "doc": "A representative optional set: the kernel plus capability-support's handle table, the library every handle-returning pack imports.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capability-support/handles.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js"
+      ],
+      "baseline": {
+        "rawBytes": 85774,
+        "gzipBytesBundled": 16387
+      },
+      "budget": {
+        "rawBytes": 95232,
+        "gzipBytesBundled": 18432
+      }
+    },
+    {
+      "name": "kernel-with-dotnet-host",
+      "doc": "The kernel plus the .NET WebAssembly host adapter (F# and C# guests), excluding the .NET runtime itself.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/dotnet-wasm-transport.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js"
+      ],
+      "baseline": {
+        "rawBytes": 85642,
+        "gzipBytesBundled": 16115
+      },
+      "budget": {
+        "rawBytes": 94208,
+        "gzipBytesBundled": 18432
+      }
+    },
+    {
+      "name": "kernel-with-raw-host",
+      "doc": "The kernel plus the raw WebAssembly host adapter (Rust guest), excluding the .wasm module.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/raw-wasm-transport.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js"
+      ],
+      "baseline": {
+        "rawBytes": 88750,
+        "gzipBytesBundled": 16981
+      },
+      "budget": {
+        "rawBytes": 98304,
+        "gzipBytesBundled": 19456
+      }
+    }
+  ]
+}

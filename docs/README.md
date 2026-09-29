@@ -65,6 +65,7 @@ Then, for depth:
 | 21 | [Installation and upgrade](https://github.com/kemiller2002/limen/blob/main/docs/21-installation-and-upgrade.md) | What `init` does, who owns which file, what an upgrade may change |
 | 23 | [WASM federation](23-wasm-federation.md) | How do multiple independently loaded engines exchange typed transitions without sharing state? |
 | 26 | [Fake host, traces and replay](https://github.com/kemiller2002/limen/blob/main/docs/26-fake-host-trace-replay.md) | How do I test an engine deterministically without a browser, and see or replay what crossed the boundary? |
+| 27 | [Performance baseline](https://github.com/kemiller2002/limen/blob/main/docs/27-performance-baseline.md) | What does Limen cost today — round trips, lists, forms, guest engines, payload — and where is the evidence for any optimization? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 
