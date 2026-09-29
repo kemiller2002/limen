@@ -38,4 +38,4 @@
 | WI-0032 | ROS 3.1.3 'work start --classification' accepts values that 'validate' rejects (e.g. boundary-change); report upstream to repository-operating-system | captured | carried-obligation | medium |
 | WI-0033 | GH-52: deterministic F#/C#/Rust contract generation, cross-language fingerprint agreement, shared semantic vectors | complete | limen,gh-52,contract,guardrail | high |
 | WI-0034 | GH-53: enforce dependency directions (layer map + import checker) and work-item path scope (scope manifests + commit-level check), guardrail self-modification protection | complete | limen,gh-53,guardrail,governance | high |
-| WI-0035 | GH-54: restricted handwritten TypeScript boundary checker (compiler-API based) with failing fixtures; remove existing escape hatches from Core and the core WASM transport | ready | limen,gh-54,guardrail | high |
+| WI-0035 | GH-54: restricted handwritten TypeScript boundary checker (compiler-API based) with failing fixtures; remove existing escape hatches from Core and the core WASM transport | complete | limen,gh-54,guardrail | high |
