@@ -29,5 +29,6 @@
     <Compile Include="Generated/Offline.fs" />
     <Compile Include="Generated/Geolocation.fs" />
     <Compile Include="Generated/Credentials.fs" />
+    <Compile Include="Generated/Coordination.fs" />
   </ItemGroup>
 </Project>
