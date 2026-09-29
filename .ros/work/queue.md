@@ -57,5 +57,5 @@
 | WI-0051 | Binding security: forbidden targets, URL scheme policy, Trusted Types/strict CSP smoke, diagnostics redaction (GH-18) | complete |  | medium |
 | WI-0052 | Guardrail: check:views runs the built checker from dist/ (the checker now shares the kernel's binding policy module) (GH-18) | complete |  | medium |
 | WI-0053 | Raise kernel payload budgets for the binding security policy (+2.1 KB gzip, GH-18) | complete |  | medium |
-| WI-0054 | Guardrail: build-guests-site copies the guest host stylesheet (strict CSP, GH-18) | active |  | medium |
+| WI-0054 | Guardrail: build-guests-site copies the guest host stylesheet (strict CSP, GH-18) | complete |  | medium |
 | WI-0055 | Guardrail: CI runs smoke:security (strict CSP + Trusted Types, kernel and guests) as a required step (GH-18) | complete |  | medium |

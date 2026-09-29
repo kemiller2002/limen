@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T07:03:26Z",
+  "updatedAt": "2026-09-29T07:03:39Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1025,13 +1025,23 @@
     {
       "id": "WI-0054",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T07:02:47Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/build-guests-site.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-security.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:03:39Z",
       "telemetryExecutionIds": [
         "EXE-20260929T070247723Z-367326af"
-      ]
+      ],
+      "completedAt": "2026-09-29T07:03:39Z"
     },
     {
       "id": "WI-0055",
