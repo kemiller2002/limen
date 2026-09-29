@@ -114,6 +114,6 @@
 | WI-0107 | Guardrail: register the limen.offline contract unit and its generated bindings (GH-40) | complete |  | medium |
 | WI-0108 | Worker-hosted WASM engines: a language-neutral dedicated-worker transport and worker host, F#, C# and Rust engines in a worker through the unchanged kernel, explicit worker faults and termination, and startup, latency, large-message and responsiveness measurements deciding the recommendation (GH-41) | complete |  | medium |
 | WI-0109 | Guardrail: type-check the minimal-engine worker composition root (tsconfig.guests.json) (GH-41) | complete |  | medium |
-| WI-0110 | Permission-sensitive capability pattern and geolocation pack: shared permission/availability/gesture conventions, denied vs unavailable, revocation facts (GH-42) | ready |  | medium |
-| WI-0111 | Browser credentials (WebAuthn passkeys) pack under the permission pattern: create/get, gesture-required, verification left to the engine and server (GH-42) | ready |  | medium |
-| WI-0112 | Guardrail: register the limen.geolocation and limen.credentials contract units and bindings (GH-42) | ready |  | medium |
+| WI-0110 | Permission-sensitive capability pattern and geolocation pack: shared permission/availability/gesture conventions, denied vs unavailable, revocation facts (GH-42) | complete |  | medium |
+| WI-0111 | Browser credentials (WebAuthn passkeys) pack under the permission pattern: create/get, gesture-required, verification left to the engine and server (GH-42) | complete |  | medium |
+| WI-0112 | Guardrail: register the limen.geolocation and limen.credentials contract units and bindings (GH-42) | complete |  | medium |

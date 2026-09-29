@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T13:30:02Z",
+  "updatedAt": "2026-09-29T13:47:20Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2354,35 +2354,77 @@
     {
       "id": "WI-0110",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T13:30:00Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capability-support/permissions.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/permissions.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/permissions/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:47:19Z",
       "telemetryExecutionIds": [
         "EXE-20260929T133001100Z-be82e7dd"
-      ]
+      ],
+      "completedAt": "2026-09-29T13:47:19Z"
     },
     {
       "id": "WI-0111",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T13:30:01Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capability-support/permissions.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/permissions.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/permissions/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:47:20Z",
       "telemetryExecutionIds": [
         "EXE-20260929T133002253Z-17ded246"
-      ]
+      ],
+      "completedAt": "2026-09-29T13:47:20Z"
     },
     {
       "id": "WI-0112",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T13:30:02Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capability-support/permissions.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/permissions.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/permissions/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T13:47:18Z",
       "telemetryExecutionIds": [
         "EXE-20260929T133002868Z-45e9cf59"
-      ]
+      ],
+      "completedAt": "2026-09-29T13:47:18Z"
     }
   ]
 }
