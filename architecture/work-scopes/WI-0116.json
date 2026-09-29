@@ -3,7 +3,20 @@
   "reference": "kemiller2002/limen#38 (LCP-022)",
   "placement": "Core (kernel mechanism). The kernel bound only <body>, so document metadata in <head> — the title, meta description and robots, the canonical link — could not be projected, and a server renderer could produce head content the client could never keep in step. Binding <head> with the same data-text / data-bind-* rules and the same binding policy (an unsafe canonical URL is refused like any other) is the universal mechanism; a pack would be a second, competing path for the same projection. No wire change.",
   "guardrail": false,
-  "paths": ["src/kernel/browser-kernel.ts", "test/**", "docs/**", "CHANGELOG.md"],
-  "expansions": [],
+  "paths": [
+    "src/kernel/browser-kernel.ts",
+    "test/**",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [
+    {
+      "paths": [
+        "src/kernel/binding-policy.ts",
+        "src/tooling/view-contract.ts"
+      ],
+      "reason": "Binding <head> met the binding policy refusing every <meta> and <link>; the inert page-metadata forms had to be allowed there, and the static view checker calls the same policy with the element attributes it now reads."
+    }
+  ],
   "recordedAfterCompletion": false
 }
