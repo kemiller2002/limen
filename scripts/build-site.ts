@@ -26,8 +26,9 @@ type Page = {
 };
 
 const PAGES: readonly Page[] = [
-  { slug: "index", title: "Overview", description: "Limen is an explicit boundary that keeps browser capabilities separate from application authority.", script: "main.js" },
-  { slug: "architecture", title: "Architecture", description: "What runs where in a Limen application, who owns state, and why the boundary is drawn where it is." },
+  { slug: "index", title: "Overview", description: "Limen is a language-neutral WebAssembly boundary that keeps browser capabilities separate from application authority.", script: "main.js" },
+  { slug: "why-limen", title: "Why Limen", description: "Why Limen narrows the legal architectural choices, how it differs from React and Angular, and which of its claims are implemented, accepted, or still unmeasured." },
+  { slug: "architecture", title: "Architecture", description: "What runs where in a Limen application, who owns state, how the language-neutral WASM contract is drawn, and what this site's F# reference engine demonstrates." },
   { slug: "demos", title: "Demos", description: "Interactive demonstrations of Limen's event flow, state model, and effect outcomes — driven by the real kernel.", script: "main.js" },
   { slug: "federation", title: "Federation", description: "A real-browser existence proof with two independently loaded F# WebAssembly modules exchanging versioned transitions through Limen.", script: "federation-proof.js" },
   { slug: "evidence", title: "Evidence", description: "What has actually been measured about Limen, what has not, and where every number comes from." },

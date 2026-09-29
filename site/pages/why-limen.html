@@ -1,0 +1,325 @@
+    <section class="page-intro">
+      <p class="eyebrow">Why Limen</p>
+      <h1>Make fewer architectures legal.</h1>
+      <p class="lead">
+        React and Angular are mature, capable frameworks. Limen is aimed at a
+        different problem. It does not add more abstraction or more APIs. It
+        makes application authority, effects, outcomes, and browser interaction
+        explicit enough that compilers and repository checks can reject whole
+        categories of mistakes.
+      </p>
+      <blockquote>
+        <p>React and Angular provide powerful ways to build applications. Limen deliberately narrows the number of legal architectural choices so important mistakes can be rejected by types, contracts, conformance tests, and repository guardrails.</p>
+      </blockquote>
+      <p class="note">
+        This page describes design intent and structural consequences. Each claim
+        below is labelled as implemented today or as accepted architecture that is
+        still being built. Measured comparisons with React or Angular do not exist
+        yet — see <a href="./evidence.html">Evidence</a>.
+      </p>
+    </section>
+
+    <section aria-labelledby="why-target">
+      <div class="section-heading">
+        <div><p class="eyebrow">01 · Optimization target</p><h2 id="why-target">Different questions, not a better score.</h2></div>
+        <p class="section-note">React and Angular make the right thing convenient. Limen&rsquo;s goal is to make the wrong thing structurally difficult.</p>
+      </div>
+
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>What each approach optimizes for — a description, not a ranking</caption>
+          <thead>
+            <tr><th scope="col">Question</th><th scope="col">React</th><th scope="col">Angular</th><th scope="col">Limen</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Primary optimization</th>
+              <td>A flexible component model and the freedom to assemble an architecture from a broad ecosystem</td>
+              <td>An integrated framework: components, dependency injection, routing, forms, and tooling that fit together</td>
+              <td>System legibility: one explicit owner of application meaning and a small set of legal places for behavior to live</td>
+            </tr>
+            <tr>
+              <th scope="row">Where application architecture comes from</th>
+              <td>Team choice, assembled from framework facilities and libraries</td>
+              <td>Framework conventions, with room for team choice</td>
+              <td>The boundary itself: meaning in the engine, mechanism in the browser, data between them</td>
+            </tr>
+            <tr>
+              <th scope="row">How architectural mistakes are caught</th>
+              <td>Review, linting, conventions, and the team&rsquo;s own discipline</td>
+              <td>Framework structure, strong tooling, template type-checking, and review</td>
+              <td>Types, the protocol, architecture checks, and repository guardrails — some implemented today, more accepted and in progress</td>
+            </tr>
+            <tr>
+              <th scope="row">How capability grows</th>
+              <td>Add libraries</td>
+              <td>Add framework features and libraries</td>
+              <td>Add optional capability packs, engine libraries, or hosts — without growing the Core an application must learn</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose">
+        Both frameworks can be used to build well-structured applications, and many
+        teams do. The difference is where the structure comes from: in React and
+        Angular it is largely a design choice made inside a flexible system; in Limen
+        it is the thing the system is built around.
+      </p>
+    </section>
+
+    <section class="method-band" aria-labelledby="why-authority">
+      <div>
+        <p class="eyebrow">02 · Authority boundary</p>
+        <h2 id="why-authority">Meaning and browser authority never sit in the same code.</h2>
+        <p>
+          The code that knows what something means cannot directly perform browser
+          authority, and the code with browser authority cannot know what the
+          application means.
+        </p>
+        <p>
+          The DOM is output, never application truth. Effects are explicit data.
+          Browser APIs are capabilities performed by the browser side. Application
+          meaning belongs to the engine.
+        </p>
+        <p class="note">Implemented today for HTTP, storage, clipboard write, and navigation. The language-neutral WASM contract in step 04 is accepted architecture; today the contract is the TypeScript protocol in <code>src/protocol.ts</code>.</p>
+      </div>
+      <ol>
+        <li><span>01</span><div><strong>Application engine</strong> holds authoritative state.</div></li>
+        <li><span>02</span><div><strong>Legal transition</strong> decides what may happen now.</div></li>
+        <li><span>03</span><div><strong>Typed capability request</strong> describes an effect as data.</div></li>
+        <li><span>04</span><div><strong>Language-neutral WASM contract</strong> carries it across the boundary.</div></li>
+        <li><span>05</span><div><strong>Browser provider</strong> performs it and classifies the outcome.</div></li>
+        <li><span>06</span><div><strong>Browser API</strong> — the only place the browser is actually touched.</div></li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="why-outcomes">
+      <div class="section-heading">
+        <div><p class="eyebrow">03 · Illegal states and typed outcomes</p><h2 id="why-outcomes">Name every state, including &ldquo;we do not know&rdquo;.</h2></div>
+        <p class="section-note">A closed set of states leaves no room for an impossible combination of flags.</p>
+      </div>
+
+      <div class="split">
+        <figure class="code-figure">
+          <figcaption>An asynchronous resource, as one closed type</figcaption>
+          <pre><code><span class="k">type</span> Resource =
+  | NotRequested
+  | Loading
+  | Ready
+  | Refreshing
+  | Failed
+
+<span class="c">// Illustrative model. A shared async-resource</span>
+<span class="c">// engine library is accepted work (#15, LCP-009).</span></code></pre>
+        </figure>
+        <figure class="code-figure">
+          <figcaption>The four HTTP outcomes in Limen&rsquo;s protocol today (<code>src/protocol.ts</code>)</figcaption>
+          <pre><code><span class="k">type</span> EffectOutcome =
+  | { kind: <span class="s">"Success"</span>; status; body }
+  | { kind: <span class="s">"Failure"</span>; reason: <span class="s">"network"</span> | <span class="s">"aborted"</span> | <span class="s">"invalid-response"</span> }
+  | { kind: <span class="s">"Cancelled"</span> }
+  | { kind: <span class="s">"OutcomeUnknown"</span>; reason: <span class="s">"timeout-after-dispatch"</span> };
+
+<span class="c">// OutcomeUnknown is not Failure: a timed-out</span>
+<span class="c">// write may already have been applied.</span></code></pre>
+        </figure>
+      </div>
+
+      <p class="prose">
+        React and Angular applications can be modelled this way too, and good ones
+        often are. Nothing in either framework prevents strong state modelling. The
+        Limen claim is narrower: it makes explicit state, capabilities, outcomes, and
+        authority boundaries <em>foundational</em> — part of the protocol every engine
+        speaks and of the tooling that checks it — rather than a practice a team
+        chooses to adopt.
+      </p>
+      <p class="prose">
+        Unknown outcomes remain unknown until reconciled. On this site&rsquo;s release
+        demo, a timeout after dispatch becomes reconciliation-required state with no
+        retry button until authoritative evidence arrives.
+      </p>
+    </section>
+
+    <section aria-labelledby="why-agents">
+      <div class="section-heading">
+        <div><p class="eyebrow">04 · Agent constraint</p><h2 id="why-agents">Better instructions are useful. Mechanical constraints are stronger.</h2></div>
+        <p class="section-note">Autonomous agents infer and continue. A rule that only lives in a prompt can be missed; a rule that fails the build cannot.</p>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <p class="card-kicker">Instruction</p>
+          <h3>&ldquo;Please don&rsquo;t keep application state in browser JavaScript.&rdquo;</h3>
+          <p>Depends on the agent reading, retaining, and applying it on every change.</p>
+        </div>
+        <div class="card">
+          <p class="card-kicker">Mechanical rule</p>
+          <h3>The build fails because browser-side code crossed the authority boundary.</h3>
+          <p>Holds whether or not the instruction was read.</p>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Guardrails and their current status on <code>main</code></caption>
+          <thead><tr><th scope="col">Guardrail</th><th scope="col">What it rejects</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Engine purity check</th><td>Browser APIs, <code>any</code>, or <code>dynamic</code> in the TypeScript reference engine; JS interop or I/O in this site&rsquo;s F# engine</td><td><strong>Implemented</strong> — <code>scripts/check-architecture.ts</code>, run by <code>npm test</code> and CI</td></tr>
+            <tr><th scope="row">Compiler-visible closed types</th><td>An unhandled union case in this site&rsquo;s F# engine and federation modules (warnings are errors)</td><td><strong>Implemented</strong> for the F# reference engine</td></tr>
+            <tr><th scope="row">Work-item attribution</th><td>Meaningful changes with no recorded work item</td><td><strong>Implemented</strong> — <code>ros validate</code> in CI</td></tr>
+            <tr><th scope="row">One neutral contract source</th><td>Two hand-maintained copies of the wire protocol drifting apart</td><td><strong>Accepted, in progress</strong> — #15, #52</td></tr>
+            <tr><th scope="row">Generated, read-only bindings</th><td>Hand edits to, or stale copies of, generated protocol code</td><td><strong>Accepted, in progress</strong> — #52</td></tr>
+            <tr><th scope="row">Restricted TypeScript</th><td><code>any</code>, suppression directives, <code>eval</code>, and untyped escape hatches in handwritten boundary code</td><td><strong>Partial</strong> — engine-side ban today; the full subset is #54</td></tr>
+            <tr><th scope="row">Dependency and path-scope checks</th><td>Core importing optional capabilities or application code; a change outside its work item&rsquo;s declared scope</td><td><strong>Accepted, in progress</strong> — #53</td></tr>
+            <tr><th scope="row">Shared conformance vectors</th><td>A guest engine that encodes or decodes the contract differently from the others</td><td><strong>Accepted, in progress</strong> — #17, #32</td></tr>
+            <tr><th scope="row">Non-weakenable guardrails</th><td>Feature work that disables or loosens the check blocking it</td><td><strong>Accepted rule</strong> (#51); enforced today by review and work-item scope, not yet by a check</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        Limen is designed to reduce the legal implementation search space available
+        to an agent. That is an architectural objective. Whether it measurably
+        improves agent accuracy, defect rates, or token use has not been tested.
+      </p>
+    </section>
+
+    <section aria-labelledby="why-wasm">
+      <div class="section-heading">
+        <div><p class="eyebrow">05 · Language-neutral WebAssembly</p><h2 id="why-wasm">Limen is a WebAssembly boundary, not an F# framework.</h2></div>
+        <p class="section-note">F# is our reference implementation. The contract is language-neutral.</p>
+      </div>
+
+      <div class="split">
+        <figure class="code-figure">
+          <figcaption>One contract, many guests, one browser host</figcaption>
+          <pre role="img" aria-label="One language-neutral Limen contract feeds F#, C#, and Rust WebAssembly engines; all of them talk to one browser host, TypeScript today, which alone calls browser APIs."><code>        language-neutral Limen contract
+                   │
+     ┌─────────────┼─────────────┐
+     ▼             ▼             ▼
+  F# WASM       C# WASM      Rust WASM
+     │             │             │
+     └─────────────┼─────────────┘
+                   ▼
+             browser host
+           (TypeScript today)
+                   │
+                   ▼
+             browser APIs</code></pre>
+        </figure>
+        <div class="prose">
+          <p>
+            No guest language is canonical. Each guest should receive the strongest
+            closed-type model natural to it, generated from the same source, and pass
+            the same conformance vectors.
+          </p>
+          <ul>
+            <li>JSON is the current baseline wire format.</li>
+            <li>WebAssembly Component Model / WIT may become an additional backend; Limen does not require it.</li>
+            <li>TypeScript is the browser host language today — mechanism, not semantic authority.</li>
+            <li>Echelon Foundry prefers F# for its own engines. That preference is not part of the protocol.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>How each language enforces the same contract</caption>
+          <thead><tr><th scope="col">Language</th><th scope="col">Role</th><th scope="col">Compile-time enforcement</th><th scope="col">Status on <code>main</code></th></tr></thead>
+          <tbody>
+            <tr><th scope="row">F#</th><td>WASM application engine</td><td>Discriminated unions and exhaustive pattern matching</td><td><strong>Running</strong> — this site&rsquo;s engine and the two-module federation proof. Its protocol types are a handwritten mirror today.</td></tr>
+            <tr><th scope="row">Rust</th><td>WASM application engine</td><td>Enums, <code>Result</code> / <code>Option</code>, exhaustive matching</td><td><strong>Accepted target</strong> — #17, #55</td></tr>
+            <tr><th scope="row">C#</th><td>WASM application engine</td><td>Generated closed representations, nullable analysis, analyzers or source generators where the compiler alone is not enough</td><td><strong>Accepted target</strong> — #17, #55. C# on this site today is only the <code>[JSExport]</code> marshalling shim.</td></tr>
+            <tr><th scope="row">TypeScript</th><td>Browser host</td><td>Discriminated wire types; generated from the neutral contract once #52 lands</td><td><strong>Running</strong> as the host and kernel; protocol types handwritten today</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="why-effects">
+      <div class="section-heading">
+        <div><p class="eyebrow">06 · Effects are inspectable data</p><h2 id="why-effects">An effect you can read is an effect you can test.</h2></div>
+        <p class="section-note">Because the engine returns requests instead of performing them, everything below is ordinary data handling.</p>
+      </div>
+      <div class="grid">
+        <div class="card"><p class="card-kicker">Implemented</p><h3>Deterministic engine tests</h3><p>Given state and evidence, assert the next state and the effects requested — no browser, no mocks of <code>fetch</code>.</p></div>
+        <div class="card"><p class="card-kicker">Implemented</p><h3>Correlation and stale-result rejection</h3><p>Every request carries a correlation ID, so the engine can recognise a late result for an older request and discard it.</p></div>
+        <div class="card"><p class="card-kicker">Implemented</p><h3>Cancellation</h3><p>The engine lists correlation IDs to cancel; the kernel aborts those HTTP requests and reports <code>Cancelled</code>.</p></div>
+        <div class="card"><p class="card-kicker">Implemented</p><h3>Explicit unknown outcomes</h3><p><code>OutcomeUnknown</code> stays distinct from failure and becomes a reconciliation obligation, not a blind retry.</p></div>
+        <div class="card"><p class="card-kicker">Partial</p><h3>Fake hosts</h3><p>Tests drive the kernel with a scripted transport today. A generic fake host and conformance suite is accepted work (LCP-031).</p></div>
+        <div class="card"><p class="card-kicker">Accepted, not built</p><h3>Trace and replay</h3><p>Messages are serializable, so a recorded session can in principle be replayed. Runtime trace/replay tooling is accepted work (LCP-029).</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="why-core">
+      <div class="section-heading">
+        <div><p class="eyebrow">07 · A small cognitive Core</p><h2 id="why-core">Capability reach does not require Core accumulation.</h2></div>
+        <p class="section-note">Minimize the concepts an agent must understand, not the outcomes Limen can support.</p>
+      </div>
+
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>The placement model: every concern has one home</caption>
+          <thead><tr><th scope="col">If it is…</th><th scope="col">It belongs in…</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Meaning</th><td>The engine</td></tr>
+            <tr><th scope="row">Browser mechanism</th><td>A capability</td></tr>
+            <tr><th scope="row">Appearance</th><td>CSS</td></tr>
+            <tr><th scope="row">Structure</th><td>HTML</td></tr>
+            <tr><th scope="row">Opaque complex surface</th><td>A governed adapter</td></tr>
+            <tr><th scope="row">Alternate execution or delivery</th><td>An optional host or renderer</td></tr>
+            <tr><th scope="row">Development verification</th><td>Tooling and conformance</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose">
+        An application imports and learns only the capabilities it uses. Engine
+        libraries, capability packs, adapters, optional hosts, Forma interaction
+        patterns, and tooling stay distinct from Core, so broader reach does not
+        make the minimal application harder to understand. Today&rsquo;s Core carries four
+        capabilities — HTTP, storage, clipboard write, and navigation. The wider
+        placement model is accepted architecture from the
+        <a href="https://github.com/kemiller2002/limen/issues/15">capability parity specification (#15)</a>.
+      </p>
+    </section>
+
+    <section aria-labelledby="why-stronger">
+      <div class="section-heading">
+        <div><p class="eyebrow">08 · Honest trade-offs</p><h2 id="why-stronger">Where React and Angular are stronger today.</h2></div>
+        <p class="section-note">These are real advantages, and for many projects they should decide the question.</p>
+      </div>
+      <div class="columns">
+        <div class="card"><h3>Mature ecosystems</h3><p>Years of production use, extensive community knowledge, and answers to most problems already written down.</p></div>
+        <div class="card"><h3>Component and UI libraries</h3><p>Design systems, data grids, editors, and charting ready to use. Limen has none of its own yet.</p></div>
+        <div class="card"><h3>Hiring and familiarity</h3><p>Many developers already know React or Angular. Limen requires learning a different model.</p></div>
+        <div class="card"><h3>Framework tooling</h3><p>Angular&rsquo;s integrated CLI, dependency injection, routing, forms, and template type-checking; React&rsquo;s developer tools and wide tool support.</p></div>
+        <div class="card"><h3>Integrations and rendering</h3><p>Established server rendering, hydration, accessibility tooling, and third-party integrations. Limen&rsquo;s equivalents are accepted work, not shipped features.</p></div>
+        <div class="card"><h3>Time to first screen</h3><p>For a conventional application, a familiar framework and its scaffolding usually gets a first screen working sooner.</p></div>
+      </div>
+      <blockquote>
+        <p>Limen is aimed at systems where enforceable correctness, explicit authority, language-neutral WASM, agent legibility, and long-term architectural integrity are worth giving up some ecosystem convenience.</p>
+      </blockquote>
+      <p class="prose">
+        That is a statement of positioning, not a measured ranking. If ecosystem
+        breadth or delivery speed on a conventional application matters most to
+        you, React or Angular is likely the better fit today.
+      </p>
+    </section>
+
+    <section class="method-band" aria-labelledby="why-evidence">
+      <div>
+        <p class="eyebrow">09 · Evidence</p>
+        <h2 id="why-evidence">What is proven, and what is still an argument.</h2>
+        <p>
+          This site keeps four kinds of claim apart, so a persuasive sentence
+          cannot pass as a result.
+        </p>
+        <p><a href="./evidence.html">Read the evidence and the claims still unmeasured →</a></p>
+      </div>
+      <ol>
+        <li><span>01</span><div><strong>Enforced</strong> — a build or check fails if the property is false.</div></li>
+        <li><span>02</span><div><strong>Demonstrated</strong> — a real implementation shows it can be done, such as this site&rsquo;s F# WebAssembly engine.</div></li>
+        <li><span>03</span><div><strong>Structurally implied</strong> — follows from the architecture when its rules hold.</div></li>
+        <li><span>04</span><div><strong>Still requires controlled comparison</strong> — speed, defects, agent accuracy, tokens, cost, and size compared with React or Angular.</div></li>
+      </ol>
+    </section>

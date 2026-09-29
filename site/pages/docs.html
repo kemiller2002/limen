@@ -93,9 +93,29 @@
       <div class="columns">
         <a class="card card-link" href="https://github.com/kemiller2002/limen/blob/main/docs/ROADMAP.md"><h3>Roadmap</h3><p>Every bridge responsibility against what is actually implemented and tested — and why several are deferred on purpose.</p></a>
         <a class="card card-link" href="https://github.com/kemiller2002/limen/blob/main/docs/DOCUMENTATION-AUDIT.md"><h3>Documentation audit</h3><p>Findings, ambiguities, defects found and fixed, and the questions left open rather than guessed at.</p></a>
-        <a class="card card-link" href="https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md"><h3>WebAssembly</h3><p>How the F# product-site engine crosses the real WASM boundary, what the package ships, and what remains unmeasured.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md"><h3>WebAssembly</h3><p>How this site&rsquo;s F# reference engine crosses the real WASM boundary, what the package ships, and what remains unmeasured.</p></a>
         <a class="card card-link" href="https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md"><h3>Naming and compatibility</h3><p>What &ldquo;Limen&rdquo; renamed, what it deliberately did not, and why nothing broke.</p></a>
       </div>
+    </section>
+
+    <section aria-labelledby="docs-direction">
+      <div class="section-heading">
+        <div><p class="eyebrow">Architecture direction</p><h2 id="docs-direction">The language-neutral contract and its guardrails.</h2></div>
+        <p class="section-note">Accepted specifications. Their implementation is in progress.</p>
+      </div>
+      <div class="columns">
+        <a class="card card-link" href="https://github.com/kemiller2002/limen/issues/15"><p class="card-kicker">#15</p><h3>Capability parity specification</h3><p>Parity as capability reach rather than framework accumulation, the small-Core rule, the language-neutral WASM invariant, and the placement vocabulary.</p></a>
+        <a class="card card-link" href="https://github.com/kemiller2002/limen/issues/51"><p class="card-kicker">#51</p><h3>Guardrail specification</h3><p>Generated-contract integrity, the fingerprint handshake, dependency direction, restricted TypeScript, guest compiler enforcement, and non-weakenable checks.</p></a>
+        <a class="card card-link" href="./why-limen.html"><p class="card-kicker">Site</p><h3>Why Limen</h3><p>The argument in plain terms, with every claim marked as implemented, accepted, or unmeasured.</p></a>
+      </div>
+      <p class="prose">
+        The canonical repository documents for the neutral contract, multi-language
+        conformance, and guest-language guidance will be written with the
+        implementation work these specifications describe. Until they are on
+        <code>main</code>, the specifications above are the authority, and
+        <a href="https://github.com/kemiller2002/limen/blob/main/docs/17-wasm-migration.md">WebAssembly status</a>
+        describes what exists today.
+      </p>
     </section>
 
     <section>

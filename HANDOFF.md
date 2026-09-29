@@ -135,3 +135,59 @@ under:
 while holding model, requirements and verification method constant and
 recording rework, defects, changed files, build cycles and available
 cost/context telemetry.
+
+---
+
+## GH-57 — site positioning: Why Limen, language-neutral WASM, agent-safe correctness
+
+Work item: `GH-57` (external ID; GitHub issue #57, context #15 and #51). A local
+`WI-####` was deliberately not used: open PR #56 already allocates
+WI-0027…WI-0038, and a new local number would collide when both merge.
+
+### Ordo record
+
+- **Prior state:** product-level copy said "The application is F#" and
+  "F# application authority"; no Why Limen page; no comparative-claims
+  section; no link to the #15/#51 specifications.
+- **Required state:** Limen presented as a language-neutral WebAssembly
+  boundary; this site's F#/.NET engine presented as the reference consumer;
+  every claim labelled as implemented, accepted/in progress, or unmeasured.
+- **Legal transition:** communication-only change to `site/pages`,
+  `site/templates`, `scripts/build-site.ts`, the site CSS, and
+  `test/site.test.ts`. No protocol, kernel, engine, or guardrail change.
+- **Evidence:** `npm run check` (137 pass, 1 pre-existing skip: CLI binary not
+  built), `npm run smoke:site:wasm` in real Chromium, docs cross-check of the
+  quoted `EffectOutcome`, Playwright inspection at 320–1440px (no horizontal
+  overflow), keyboard focus trail, forced colors, reduced motion.
+- **Negative knowledge (checked on `main`, 2026-09-29):** no neutral contract
+  source, no generated bindings, no fingerprint handshake, no C# or Rust
+  engine, no dependency/path-scope check, no restricted-TS checker beyond the
+  `src/engine` substring ban, no generic fake host, no trace/replay tooling.
+  This site's F# protocol types are a handwritten mirror of `src/protocol.ts`.
+  Canonical repository documents for the neutral contract do not exist yet, so
+  the Docs page links the #15 and #51 issues instead.
+- **Stale-claim guard:** `test/site.test.ts` now fails if the old product-level
+  F# phrases return, if Why Limen leaves the primary navigation, or if the
+  evidence page stops marking the seven comparative outcomes "Not established".
+
+### When #52/#55/#17 land
+
+The site states their work as "Accepted, in progress". When PR #56 (or its
+successors) merges, update the status cells in `why-limen.html` (guardrail and
+language tables), `architecture.html` (contract model table), `agents.html`
+(status card and the handwritten-mirror exception), and link the new canonical
+documents from `docs.html`. Do not upgrade a status without the merged
+implementation and its checks.
+
+### Follow-ups observed, not fixed here
+
+- `site/fsharp/federation/*/publish/` build outputs are not git-ignored, so a
+  local build leaves untracked meaningful paths that fail `ros validate`.
+  Already addressed on PR #56 (its WI-0027); not duplicated here.
+- `npm install` rewrites `package-lock.json` to mark
+  `@echelon-foundry/repository-operating-system` as a dev dependency (it
+  already is in `package.json`). Lockfile drift predates this work; left
+  untouched to keep the diff bounded.
+- Visual Engineering context (`.visual-engineering/`) is git-ignored and must
+  be regenerated with `npx @echelon-foundry/visual-engineering init` in a fresh
+  checkout before `verify` passes.

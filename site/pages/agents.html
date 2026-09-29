@@ -8,6 +8,64 @@
       </p>
     </section>
 
+    <section aria-labelledby="agents-governance">
+      <div class="section-heading">
+        <div><p class="eyebrow">Governance</p><h2 id="agents-governance">Three systems, three questions.</h2></div>
+        <p class="section-note">They do not overlap. When one answers, the others do not override it.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Who governs what when an agent changes this repository</caption>
+          <thead><tr><th scope="col">System</th><th scope="col">Governs</th><th scope="col">What it asks of you</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Ordo / SDE</th><td>Engineering legality and evidence</td><td>Know the current state, the legal transition, and the evidence required before you change anything. The installed method is in <code>.sde/</code>.</td></tr>
+            <tr><th scope="row">Praxis / ROS</th><td>Work lifecycle and attribution</td><td>Start a work item before editing and complete it with real evidence. CI rejects changes no work item accounts for.</td></tr>
+            <tr><th scope="row">Limen</th><td>Architectural placement</td><td>Put each change in the one layer allowed to own it. The rest of this page is that rule.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="agents-contract">
+      <div class="section-heading">
+        <div><p class="eyebrow">Contract and guardrails</p><h2 id="agents-contract">Do not widen the boundary to finish a task.</h2></div>
+        <p class="section-note">If an implementation is hard, that is not permission to weaken a rule.</p>
+      </div>
+      <div class="split">
+        <div class="card">
+          <p class="card-kicker">Rules</p>
+          <ul>
+            <li>One language-neutral contract is the source of truth. No guest language is canonical.</li>
+            <li>Generated contract code is read-only output: regenerate it, never hand-edit it.</li>
+            <li>No handwritten parallel wire types beside generated ones.</li>
+            <li>No untyped escape hatch at the boundary: no <code>any</code>, <code>dynamic</code>, <code>object</code> bag, or string-typed operation.</li>
+            <li>Feature work never weakens the guardrail that is blocking it. A wrong guardrail is changed in its own work item, with evidence.</li>
+            <li>Every task declares its architectural placement and stays inside that scope.</li>
+            <li>Compiler enforcement differs by language — F# unions, Rust enums, C# generated closed types with analyzers — but each maps the same neutral contract.</li>
+            <li>If the architecture blocks the work, create an explicit work item. Do not broaden the boundary quietly.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card-kicker">Status on <code>main</code></p>
+          <p>
+            Implemented today: engine-purity checks (<code>scripts/check-architecture.ts</code>),
+            F# builds with warnings as errors, and work-item attribution in CI.
+          </p>
+          <p>
+            Accepted and in progress: the neutral contract source and generated
+            bindings (#52), dependency and path-scope checks (#53), the restricted
+            TypeScript subset (#54), C# and Rust guest enforcement (#55).
+          </p>
+          <p>
+            Until generation lands, <code>src/protocol.ts</code> is the contract and this
+            site&rsquo;s F# engine mirrors it by hand. That mirror is the known
+            exception to the no-parallel-types rule, not a pattern to copy.
+          </p>
+          <p><a href="https://github.com/kemiller2002/limen/issues/51">The guardrail specification (#51) →</a></p>
+        </div>
+      </div>
+    </section>
+
     <section>
       <div class="section-heading">
         <div><p class="eyebrow">Contract</p><h2>Ten rules, all MUST.</h2></div>
@@ -167,5 +225,6 @@
         <li><span>03</span><div>Is this about how something looks? → CSS</div></li>
         <li><span>04</span><div>Is this about what something is? → HTML</div></li>
         <li><span>05</span><div>Still unsure? → ask. Do not infer a new mechanism and continue.</div></li>
+        <li><span>06</span><div>Blocked by the architecture? → record a work item. Do not weaken the check.</div></li>
       </ol>
     </section>

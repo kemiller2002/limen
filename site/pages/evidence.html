@@ -59,7 +59,9 @@
         What this establishes: Limen's protocol and transport seam can host a real
         F# WebAssembly application with nontrivial state inside the Limen repository
         itself. What it does not establish: that this is faster, cheaper, smaller,
-        easier, or less defective than another architecture.
+        easier, or less defective than another architecture — or that the boundary
+        is language-neutral in practice. No C# or Rust engine has crossed it yet;
+        that multi-guest proof is accepted future work, listed below.
       </p>
     </section>
 
@@ -177,6 +179,46 @@
       </div>
     </section>
 
+    <section aria-labelledby="evidence-comparative">
+      <div class="section-heading">
+        <div><p class="eyebrow">Comparative claims</p><h2 id="evidence-comparative">An architectural comparison is not measured superiority.</h2></div>
+        <p class="section-note">The <a href="./why-limen.html">Why Limen</a> page compares design constraints. This table records what that comparison does not show.</p>
+      </div>
+
+      <p class="prose">
+        The comparison with React and Angular identifies different design
+        constraints and their structural consequences. It has not been tested
+        experimentally. Every outcome below needs controlled evidence before this
+        site will claim it.
+      </p>
+
+      <div class="table-scroll">
+        <table class="boundary">
+          <caption>Comparative outcomes versus React and Angular</caption>
+          <thead><tr><th scope="col">Claim</th><th scope="col">Status</th><th scope="col">What would be needed</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Lower defect rate</th><td><strong>Not established</strong></td><td>Defects by discovery stage under matched requirements</td></tr>
+            <tr><th scope="row">Faster development</th><td><strong>Not established</strong></td><td>A controlled construction comparison with effort held constant</td></tr>
+            <tr><th scope="row">Lower token usage</th><td><strong>Not established</strong></td><td>Consistently exposed agent telemetry on both arms</td></tr>
+            <tr><th scope="row">Better agent accuracy</th><td><strong>Not established</strong></td><td>Preregistered agent tasks scored by an independent pass</td></tr>
+            <tr><th scope="row">Faster runtime</th><td><strong>Not established</strong></td><td>Benchmarks on equivalent applications and hardware</td></tr>
+            <tr><th scope="row">Smaller bundle</th><td><strong>Not established</strong></td><td>Size measurement of equivalent applications, including the WASM runtime</td></tr>
+            <tr><th scope="row">Lower cost</th><td><strong>Not established</strong></td><td>Attributable cost data across the full lifecycle</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Accepted evidence work</h3>
+      <p class="prose">Planned work. None of it is a result yet, and none of it promises an outcome.</p>
+      <div class="columns">
+        <div class="card"><p class="card-kicker">#17</p><h3>Multi-language WASM conformance</h3><p>Minimal F#, C#, and Rust engines negotiating the same contract.</p></div>
+        <div class="card"><p class="card-kicker">#17, #32</p><h3>Cross-language golden vectors</h3><p>One set of positive and negative wire cases every guest must pass.</p></div>
+        <div class="card"><p class="card-kicker">#19</p><h3>Minimal-Core footprint</h3><p>Recorded size and runtime of the smallest Limen application, so growth is visible.</p></div>
+        <div class="card"><p class="card-kicker">#51</p><h3>Guarded Focus reference capability</h3><p>One small capability built end to end under the full guardrail workflow.</p></div>
+        <div class="card"><p class="card-kicker">Proposed</p><h3>Controlled framework comparison</h3><p>Only when preregistered and designed to isolate the architecture — see below.</p></div>
+      </div>
+    </section>
+
     <section>
       <div class="section-heading">
         <div><p class="eyebrow">Adjacent evidence</p><h2>Ordo/SDE results are still not Limen results.</h2></div>
@@ -206,7 +248,7 @@
       </div>
       <ol>
         <li><span>01</span><div>Same requirement set and starting constraints.</div></li>
-        <li><span>02</span><div>Limen/F# WASM arm versus a conventional browser-state architecture.</div></li>
+        <li><span>02</span><div>Limen WASM-engine arm versus a conventional browser-state architecture such as React or Angular.</div></li>
         <li><span>03</span><div>Measure time, files inspected/changed, build cycles, rework, defects by discovery stage, and escapes.</div></li>
         <li><span>04</span><div>Record model identity and token/cost data only when actually exposed.</div></li>
         <li><span>05</span><div>Freeze predictions before either arm begins.</div></li>

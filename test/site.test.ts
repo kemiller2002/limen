@@ -71,7 +71,7 @@ function markupEvents(html: string): Set<string> {
 
 test("the site builds every expected page", { skip: built ? false : "run `npm run build:site` first" }, async () => {
   assert.deepEqual(await pages(), [
-    "agents.html", "architecture.html", "demos.html", "docs.html", "evidence.html", "federation.html", "index.html",
+    "agents.html", "architecture.html", "demos.html", "docs.html", "evidence.html", "federation.html", "index.html", "why-limen.html",
   ]);
 });
 
@@ -82,6 +82,50 @@ test("every page has one h1, a nav current marker, and a skip-link target", { sk
     assert.equal(document.querySelectorAll('nav a[aria-current="page"]').length, 1, `${name}: nav current`);
     assert.ok(document.querySelector("#main-content"), `${name}: skip target`);
     assert.equal(document.querySelector("a.skip-link")?.getAttribute("href"), "#main-content", `${name}: skip link`);
+  }
+});
+
+test("every page offers Why Limen in the primary navigation", { skip: built ? false : "not built" }, async () => {
+  for (const name of await pages()) {
+    const document = await load(name);
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Primary"] a[href="./why-limen.html"]'));
+    assert.deepEqual(links.map((link) => link.textContent?.trim()), ["Why Limen"], `${name}: Why Limen nav link`);
+  }
+});
+
+// Limen is a language-neutral WebAssembly boundary; F# is this site's reference
+// engine. These phrases stated F# as the product architecture (GH-57). Checked
+// against the page sources so the guard runs without a site build.
+const STALE_PRODUCT_CLAIMS: readonly string[] = [
+  "The application is F#",
+  "F# application authority",
+  "F# makes the legal state space visible",
+  "product application remains one F# engine",
+];
+
+test("no page states F# as Limen's product architecture", async () => {
+  const names = (await readdir(new URL("../site/pages/", import.meta.url))).filter((name) => name.endsWith(".html"));
+  const sources = await Promise.all(names.map(async (name) => ({ name, html: await source(`../site/pages/${name}`) })));
+  const leaks = sources.flatMap(({ name, html }) =>
+    STALE_PRODUCT_CLAIMS.filter((claim) => html.includes(claim)).map((claim) => `${name}: "${claim}"`));
+  assert.deepEqual(leaks, []);
+});
+
+test("the site still names its F#/.NET reference engine where it describes itself", async () => {
+  for (const name of ["index.html", "architecture.html"]) {
+    assert.match(await source(`../site/pages/${name}`), /F#\/\.NET/, `${name}: F#/.NET reference engine`);
+  }
+});
+
+test("comparative claims stay separated from measured outcomes", async () => {
+  const why = await source("../site/pages/why-limen.html");
+  const evidence = await source("../site/pages/evidence.html");
+
+  assert.match(why, /Where React and Angular are stronger today/);
+  assert.match(why, /href="\.\/evidence\.html"/);
+  assert.match(evidence, /Comparative claims/);
+  for (const claim of ["Lower defect rate", "Faster development", "Lower token usage", "Better agent accuracy", "Faster runtime", "Smaller bundle", "Lower cost"]) {
+    assert.match(evidence, new RegExp(`${claim}</th><td><strong>Not established</strong>`), `evidence.html: ${claim}`);
   }
 });
 
@@ -105,7 +149,7 @@ test("application pages load Limen plus the WASM transport; prose pages do not",
   );
   assert.equal(federation.querySelectorAll('script[src*="main.js"]').length, 0, "federation.html: no main app script");
 
-  for (const name of ["architecture.html", "evidence.html", "agents.html", "docs.html"]) {
+  for (const name of ["why-limen.html", "architecture.html", "evidence.html", "agents.html", "docs.html"]) {
     const document = await load(name);
     assert.equal(document.querySelectorAll('script[src*="main.js"]').length, 0, `${name}: prose page should not load app`);
   }

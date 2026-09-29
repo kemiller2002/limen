@@ -1,25 +1,31 @@
     <section class="hero">
       <div class="hero-grid">
         <div>
-          <p class="eyebrow">F# application authority · Limen browser boundary</p>
+          <p class="eyebrow">Language-neutral WASM application authority · explicit browser boundary</p>
           <h1>Make the browser a mechanism, not a second application.</h1>
           <p class="lead">
             Limen gives the browser a narrow job: carry semantic events, apply a
-            projection, and perform explicit effects. The application behind this
-            page is F# compiled to WebAssembly. It owns the state, legal
-            transitions, capabilities, obligations, and interpretation of evidence.
+            projection, and perform explicit effects. Authoritative application
+            state and meaning live behind a WebAssembly boundary, in an engine that
+            owns the state, legal transitions, capabilities, obligations, and
+            interpretation of evidence.
+          </p>
+          <p class="prose">
+            This website&rsquo;s reference engine is F# compiled to .NET WebAssembly.
+            The boundary itself is language-neutral: the same contract is intended
+            for C#, Rust, and other strongly modelled WASM engines.
           </p>
           <div class="actions">
-            <a class="button primary" href="./demos.html">Challenge the boundary</a>
+            <a class="button primary" href="./why-limen.html">Why Limen</a>
+            <a class="button ghost" href="./demos.html">Challenge the boundary</a>
             <a class="button ghost" href="./architecture.html">See the architecture</a>
-            <a class="button ghost" href="https://github.com/kemiller2002/limen">Source</a>
           </div>
         </div>
         <div class="stack">
           <p class="signal">This site is a consumer of Limen, not a mockup of it.</p>
-          <ul class="list-inline">
-            <li>application state: F#</li>
-            <li>application runtime: WebAssembly</li>
+          <ul class="list-inline" aria-label="This site's implementation">
+            <li>application state: WASM engine</li>
+            <li>this site&rsquo;s engine: F#/.NET</li>
             <li>browser authority: Limen</li>
             <li>markup: static HTML</li>
           </ul>
@@ -57,6 +63,22 @@
           <p>HTTP is browser mechanism. Interpreting 409 is application meaning. Focus control is not currently a Limen capability. Those distinctions are the architecture.</p>
         </div>
       </div>
+    </section>
+
+    <section aria-labelledby="home-constraint">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Framework flexibility versus architectural constraint</p>
+          <h2 id="home-constraint">Fewer legal places for behavior to live.</h2>
+        </div>
+        <p class="section-note">React and Angular make the right thing convenient. Limen&rsquo;s goal is to make the wrong thing structurally difficult.</p>
+      </div>
+      <div class="columns">
+        <div class="card"><p class="card-kicker">Powerful frameworks</p><h3>Many ways to build it</h3><p>React and Angular are mature and capable. They give teams flexible mechanisms and let each team assemble its own architecture.</p></div>
+        <div class="card"><p class="card-kicker">Constrained architecture</p><h3>One place for meaning</h3><p>Limen fixes where application meaning, browser mechanism, appearance, and structure go, so a misplaced decision is visibly wrong.</p></div>
+        <div class="card"><p class="card-kicker">Enforcement</p><h3>Checked, not just advised</h3><p>Types, the protocol, and repository checks reject boundary violations. Some checks run today; more are accepted and in progress.</p></div>
+      </div>
+      <p class="prose">This is a difference in design goals, not a measured ranking. <a href="./why-limen.html">Why Limen, and where React and Angular are stronger today →</a></p>
     </section>
 
     <section class="method-band">
@@ -155,14 +177,14 @@
     <section>
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Why F# here</p>
+          <p class="eyebrow">Why a strongly typed engine</p>
           <h2>The difficult part becomes ordinary typed code.</h2>
         </div>
-        <p class="section-note">The engine never imports a browser API.</p>
+        <p class="section-note">The engine never imports a browser API. F# is this site&rsquo;s reference language; Rust enums and generated C# closed types are the accepted equivalents.</p>
       </div>
       <div class="split">
         <figure class="code-figure">
-          <figcaption>F# state that cannot lie about deployment</figcaption>
+          <figcaption>This site&rsquo;s F# engine: state that cannot lie about deployment</figcaption>
           <pre><code><span class="k">type</span> DeploymentState =
   | NotStarted
   | InFlight of CorrelationId
@@ -201,7 +223,7 @@
         <p class="section-note">The evidence page separates what is enforced from what remains unmeasured.</p>
       </div>
       <div class="grid">
-        <div class="card"><h3>Application state has one owner</h3><p>The F# engine decides. The DOM is projection output and browser-local state remains browser-local.</p></div>
+        <div class="card"><h3>Application state has one owner</h3><p>The WASM engine decides — F# on this site. The DOM is projection output and browser-local state remains browser-local.</p></div>
         <div class="card"><h3>Effects are evidence</h3><p>The browser reports classified outcomes. The engine decides what those outcomes mean to the application.</p></div>
         <div class="card"><h3>Capabilities are projected</h3><p>The UI does not reconstruct permission by peeking at text, CSS classes, or unrelated flags.</p></div>
         <div class="card"><h3>The boundary is executable</h3><p>This site crosses it for real: static HTML → Limen → serialized protocol → F# WebAssembly → projection.</p></div>
@@ -213,9 +235,10 @@
       <div class="section-heading">
         <div><p class="eyebrow">Go deeper</p><h2>Make the hard cases fail in front of you.</h2></div>
       </div>
-      <div class="grid">
+      <div class="columns">
         <a class="card card-link" href="./demos.html"><p class="card-kicker">Challenge</p><h3>Interactive engineering cases</h3><p>Release gating, stale evidence, ambiguous effects, and boundary-placement problems.</p></a>
-        <a class="card card-link" href="./architecture.html"><p class="card-kicker">Understand</p><h3>Architecture</h3><p>What runs in F#, what stays in the browser, and what the kernel is forbidden to know.</p></a>
+        <a class="card card-link" href="./architecture.html"><p class="card-kicker">Understand</p><h3>Architecture</h3><p>What runs in the engine, what stays in the browser, and what the kernel is forbidden to know.</p></a>
+        <a class="card card-link" href="./why-limen.html"><p class="card-kicker">Decide</p><h3>Why Limen</h3><p>How Limen differs from React and Angular, and which claims are implemented, accepted, or unmeasured.</p></a>
         <a class="card card-link" href="./agents.html"><p class="card-kicker">Build</p><h3>For AI agents</h3><p>A bounded answer to “where does this change belong?”</p></a>
         <a class="card card-link" href="./docs.html"><p class="card-kicker">Reference</p><h3>Documentation</h3><p>Protocol, effects, testing, routing, clipboard, troubleshooting, lifecycle CLI.</p></a>
       </div>
