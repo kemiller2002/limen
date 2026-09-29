@@ -99,5 +99,5 @@
 | WI-0092 | Route/workflow-driven lazy federation loading: ensure with dependencies, explicit loading/ready/faulted/blocked, release with snapshot and deterministic restore, retry only on request (GH-33) | complete |  | medium |
 | WI-0093 | Resource-hint and View Transition capability pack: idempotent preconnect/preload/modulepreload/prefetch, engine-labelled view transitions around the next projection, unsupported fallback (GH-34) | complete |  | medium |
 | WI-0094 | Guardrail: register the limen.presentation contract unit and its generated bindings (GH-34) | complete |  | medium |
-| WI-0095 | Environment evidence and native formatting pack: locale, languages, time zone, direction, opt-in preferences, change facts, typed Intl formatting for a supplied locale and time zone (GH-35) | active |  | medium |
-| WI-0096 | Guardrail: register the limen.environment contract unit and its generated bindings (GH-35) | ready |  | medium |
+| WI-0095 | Environment evidence and native formatting pack: locale, languages, time zone, direction, opt-in preferences, change facts, typed Intl formatting for a supplied locale and time zone (GH-35) | complete |  | medium |
+| WI-0096 | Guardrail: register the limen.environment contract unit and its generated bindings (GH-35) | complete |  | medium |
