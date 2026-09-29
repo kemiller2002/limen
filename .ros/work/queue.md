@@ -120,5 +120,5 @@
 | WI-0113 | Opaque high-performance rendering adapter pattern: a Canvas scatter-plot adapter behind the governed adapter contract, pointer/focus/resize integration, fault isolation, and a trace proving bounded cross-boundary chatter (GH-45) | complete |  | medium |
 | WI-0114 | Cross-context coordination pack: same-origin channels (BroadcastChannel, SharedWorker hub), Web Locks with steal and loss facts, exact-origin frame messaging, validated JSON, context closure (GH-46) | complete |  | medium |
 | WI-0115 | Guardrail: register the limen.coordination contract unit and bindings (GH-46) | complete |  | medium |
-| WI-0116 | Core: the kernel binds <head> as well as <body>, so route-specific document metadata (title, description, robots, canonical) is a projection on the client as on the server (GH-38) | active |  | medium |
-| WI-0117 | Re-baseline the kernel-with-handles payload budget after head binding and the metadata policy (GH-38) | ready |  | medium |
+| WI-0116 | Core: the kernel binds <head> as well as <body>, so route-specific document metadata (title, description, robots, canonical) is a projection on the client as on the server (GH-38) | complete |  | medium |
+| WI-0117 | Re-baseline the kernel-with-handles payload budget after head binding and the metadata policy (GH-38) | complete |  | medium |
