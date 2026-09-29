@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T07:08:04Z",
+  "updatedAt": "2026-09-29T07:16:42Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1116,24 +1116,69 @@
     {
       "id": "WI-0056",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T07:08:03Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/focus/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/focus.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/focus/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:16:41Z",
       "telemetryExecutionIds": [
         "EXE-20260929T070804138Z-7b90ee1d"
-      ]
+      ],
+      "completedAt": "2026-09-29T07:16:41Z"
     },
     {
       "id": "WI-0057",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T07:08:04Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:16:41Z",
       "telemetryExecutionIds": [
         "EXE-20260929T070805322Z-c1c32da1"
-      ]
+      ],
+      "completedAt": "2026-09-29T07:16:41Z"
+    },
+    {
+      "id": "WI-0058",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:16:42Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T071622896Z-900761d6"
+      ],
+      "completedAt": "2026-09-29T07:16:42Z"
     }
   ]
 }

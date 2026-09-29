@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 58,
+  "nextSeq": 59,
   "items": [
     {
       "id": "WI-0001",
@@ -908,10 +908,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T07:08:03Z",
-      "updatedAt": "2026-09-29T07:08:03Z",
+      "updatedAt": "2026-09-29T07:16:41Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -922,10 +922,24 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T07:08:04Z",
-      "updatedAt": "2026-09-29T07:08:04Z",
+      "updatedAt": "2026-09-29T07:16:41Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0058",
+      "title": "Guardrail: CI runs smoke:packs (every capability pack in Chromium under strict CSP) as a required step (GH-23)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-29T07:16:21Z",
+      "updatedAt": "2026-09-29T07:16:42Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
