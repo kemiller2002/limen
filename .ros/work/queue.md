@@ -75,4 +75,4 @@
 | WI-0068 | Rich browser event facts capability pack: opt-in keyboard, pointer, drag, composition, selection and input facts with declarative listener mechanics (GH-29) | complete |  | medium |
 | WI-0069 | Guardrail: register the limen.events contract unit and its generated bindings (GH-29) | complete |  | medium |
 | WI-0070 | Accessible interaction reference patterns (Forma proofs): tabs, menu, listbox, combobox, tree, grid, dialog over generic focus and event mechanics (GH-31) | active |  | medium |
-| WI-0071 | Kernel: HTML boolean attributes (inert, required, readonly, multiple, ...) are toggled by presence, never set to the string "false" (GH-31, found building the dialog pattern) | ready |  | medium |
+| WI-0071 | Kernel: HTML boolean attributes (inert, required, readonly, multiple, ...) are toggled by presence, never set to the string "false" (GH-31, found building the dialog pattern) | complete |  | medium |
