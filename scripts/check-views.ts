@@ -1,7 +1,8 @@
 // Static HTML/projection/event contract validation (kemiller2002/limen#48):
 // every Limen page in the repository against the view contract beside it
 // (`page.html` → `page.view.json`), with no browser. See
-// docs/28-view-contracts.md.
+// docs/28-view-contracts.md. Runs the built checker (dist/), as the tests do:
+// it shares the kernel's binding policy module; npm test builds first.
 //
 // Fails when a page binds a key its contract lacks, a list item field or
 // data-key that is not in the item contract, an event the engine does not
@@ -10,7 +11,7 @@
 
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { checkPage, formatDiagnostic, parseViewContract, tagsOf } from "../src/tooling/view-contract.ts";
+import { checkPage, formatDiagnostic, parseViewContract, tagsOf } from "../dist/tooling/view-contract.js";
 
 const ROOT = process.cwd();
 const SKIP = new Set(["node_modules", ".git", "dist", "dist-site", "dist-guests", "bin", "obj", "target", "publish", "runtimes", "release", "fixtures"]);
