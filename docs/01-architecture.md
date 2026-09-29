@@ -90,10 +90,11 @@ Two message shapes cross the boundary — one in each direction.
 
 ```ts
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation }
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation; handshake?: HostHandshake }
   | { kind: "Event";           event:    SemanticEvent }
   | { kind: "EffectResult";    result:   EffectResult }
-  | { kind: "LocationChanged"; location: BrowserLocation };
+  | { kind: "LocationChanged"; location: BrowserLocation }
+  | { kind: "CapabilityFact";  capability: CapabilityId; version: number; fact: unknown };
 
 type SemanticEvent = {
   kind: "Event";

@@ -61,8 +61,13 @@ Browser → Engine        Engine → Browser
 Initialize              view          (a ViewState: plain named values and lists)
 Event                   effects       (what to do in the browser)
 EffectResult            cancellations (which in-flight effects are no longer wanted)
-LocationChanged
+LocationChanged         handshake     (on Initialize only: do we speak the same contract?)
+CapabilityFact
 ```
+
+The wire types are generated from one language-neutral contract,
+[`contract/core.contract.json`](https://github.com/kemiller2002/limen/blob/main/contract/core.contract.json);
+see [contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md).
 
 Everything is plain, JSON-serializable data. No functions, no DOM nodes, no
 class instances. That constraint is what makes the engine portable. The
@@ -152,10 +157,11 @@ Stated plainly, because guessing is expensive:
 - No virtual DOM, no diffing of HTML you did not write, no components.
 - No expression language in attributes.
 - No routing *policy* — the kernel pushes and pops; what a URL means is yours.
-- No capabilities beyond Http, Storage, Clipboard and Navigation. Files,
-  timers, focus management, geolocation, IndexedDB, WebSocket: not implemented.
-  Adding one is a deliberate protocol change, documented in
-  [recipes](https://github.com/kemiller2002/limen/blob/main/docs/15-recipes.md).
+- No built-in capabilities beyond Http, Storage, Clipboard and Navigation.
+  Files, timers, focus management, geolocation, IndexedDB, WebSocket: not
+  implemented yet. The generic mechanism for adding one *without changing
+  Core* — an optional capability pack with its own contract unit — exists; see
+  [contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md).
 - No list virtualization, no animation, no focus restoration.
 - No state persistence of its own. Nothing is remembered across a reload unless
   your engine asked for a `Storage` effect.

@@ -1,0 +1,34 @@
+{
+  "unit": "limen.fixture.echo",
+  "role": "capability",
+  "version": 1,
+  "doc": "A test-only capability that proves a new capability family can be added without changing Core. It echoes text, optionally after waiting (so cancellation can be observed), and emits a fact on request.",
+  "types": [
+    {
+      "name": "EchoRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "echo", "fields": [ { "name": "text", "type": "string" } ] },
+        { "name": "wait", "fields": [ { "name": "ms", "type": "int" } ] },
+        { "name": "announce", "fields": [ { "name": "text", "type": "string" } ] }
+      ]
+    },
+    {
+      "name": "EchoResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Echoed", "fields": [ { "name": "text", "type": "string" } ] },
+        { "name": "Waited", "fields": [] },
+        { "name": "Cancelled", "fields": [] },
+        { "name": "Announced", "fields": [] }
+      ]
+    },
+    {
+      "name": "EchoFact",
+      "kind": "record",
+      "fields": [ { "name": "text", "type": "string" } ]
+    }
+  ]
+}

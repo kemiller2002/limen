@@ -327,10 +327,11 @@ Full semantics and design rules:
 type Capability = "Http" | "Storage" | "Clipboard" | "Navigation";
 
 type BrowserToEngineMessage =
-  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation }
+  | { kind: "Initialize"; protocolVersion: 1; capabilities: readonly Capability[]; location: BrowserLocation; handshake?: HostHandshake }
   | { kind: "Event";           event:    SemanticEvent }
   | { kind: "EffectResult";    result:   EffectResult }
-  | { kind: "LocationChanged"; location: BrowserLocation };
+  | { kind: "LocationChanged"; location: BrowserLocation }
+  | { kind: "CapabilityFact";  capability: CapabilityId; version: number; fact: unknown };
 ```
 
 `capabilities` lists what the **kernel implements** — not what this browser will
@@ -562,7 +563,8 @@ type EffectResult =
   | { kind: "HttpResult";       correlationId: CorrelationId; outcome: EffectOutcome }
   | { kind: "StorageResult";    correlationId: CorrelationId; outcome: StorageOutcome }
   | { kind: "ClipboardResult";  correlationId: CorrelationId; outcome: ClipboardOutcome }
-  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome };
+  | { kind: "NavigationResult"; correlationId: CorrelationId; outcome: NavigationOutcome }
+  | { kind: "CapabilityResult"; correlationId: CorrelationId; capability: CapabilityId; version: number; outcome: CapabilityOutcome };
 ```
 
 An effect kind the kernel does not implement produces **no result at all** — it
@@ -577,8 +579,9 @@ correlation id waits forever, which is why it is reported loudly.
 interface DiagnosticsSink { report(event: DiagnosticEvent): void; }
 
 type DiagnosticEvent =
-  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect"; detail: string }
-  | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number };
+  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect" | "protocol"; detail: string }
+  | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number }
+  | { kind: "Handshake";    verdict: HandshakeVerdict };   // reported once, after Initialize
 
 const noopDiagnostics: DiagnosticsSink;   // the default
 ```

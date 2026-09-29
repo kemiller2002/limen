@@ -1,5 +1,7 @@
-import { PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import { CORE_CONTRACT_IDENTITY, PROTOCOL_MINOR, PROTOCOL_VERSION, type BrowserLocation, type BrowserToEngineMessage, type Capability, type CapabilityEffectRequest, type CapabilityId, type CapabilityOutcome, type ClipboardEffectRequest, type ClipboardOutcome, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport, type HostHandshake, type HttpEffectRequest, type NavigationEffectRequest, type NavigationOutcome, type SemanticEvent, type StorageEffectRequest, type StorageOutcome, type ViewItem, type ViewState, type ViewValue } from "../protocol.js";
+import type { CapabilityProvider } from "./capabilities.js";
 import { noopDiagnostics, type DiagnosticsSink } from "./diagnostics.js";
+import { verifyHandshake, type Incompatibility, type Negotiation } from "./handshake.js";
 
 // Exceptions to the "click" default: element types whose most natural
 // interaction isn't a click. Any other element (a row, a card, a div acting
@@ -24,6 +26,26 @@ const BOOLEAN_PROPS = new Set(["disabled", "checked", "selected", "hidden", "ope
 // capability here. Keeping the announcement static means an engine's startup
 // branch does not silently change between browsers.
 const CAPABILITIES: readonly Capability[] = ["Http", "Storage", "Clipboard", "Navigation"];
+
+export type KernelOptions = {
+  // Optional capability packs this host implements. Each is offered in the
+  // handshake; only those the engine selects are activated. An application
+  // that registers none loads none.
+  readonly capabilities?: readonly CapabilityProvider[];
+  // Refuse engines that send no handshake (protocol 1.0) instead of running
+  // them in legacy mode. Generated WebAssembly guests always handshake.
+  readonly requireHandshake?: boolean;
+};
+
+// The kernel's own lifecycle. Normal traffic — events, effects, facts — flows
+// only in Running. Incompatible is terminal: nothing from that engine is ever
+// applied. See research/decisions/DF-LIMEN-2026-001.
+type Phase =
+  | { readonly kind: "Unstarted" }
+  | { readonly kind: "Starting" }
+  | { readonly kind: "Running"; readonly negotiation: Negotiation }
+  | { readonly kind: "Incompatible"; readonly reason: Incompatibility }
+  | { readonly kind: "Faulted" };
 
 type TextBinding = { readonly element: HTMLElement; readonly key: string };
 type AttrBinding = { readonly element: HTMLElement; readonly attr: string; readonly key: string };
@@ -91,19 +113,33 @@ export class BrowserKernel {
   readonly #flushable = new Map<HTMLFormElement, Array<{ readonly element: HTMLElement; readonly fire: () => Promise<void> }>>();
   readonly #root: Scope = emptyScope();
   readonly #diagnostics: DiagnosticsSink;
+  readonly #providers: ReadonlyMap<CapabilityId, CapabilityProvider>;
+  readonly #requireHandshake: boolean;
+  #phase: Phase = { kind: "Unstarted" };
   readonly transport: EngineTransport;
   readonly document: Document;
 
-  constructor(transport: EngineTransport, document: Document, diagnostics: DiagnosticsSink = noopDiagnostics) {
+  constructor(transport: EngineTransport, document: Document, diagnostics: DiagnosticsSink = noopDiagnostics, options: KernelOptions = {}) {
     this.transport = transport;
     this.document = document;
     this.#diagnostics = diagnostics;
+    const providers = options.capabilities ?? [];
+    const duplicate = providers.find((provider, index) => providers.findIndex((other) => other.descriptor.id === provider.descriptor.id) !== index);
+    if (duplicate !== undefined) throw new Error(`Capability ${duplicate.descriptor.id} is registered more than once`);
+    this.#providers = new Map(providers.map((provider) => [provider.descriptor.id, provider] as const));
+    this.#requireHandshake = options.requireHandshake ?? false;
   }
 
   async start(): Promise<void> {
+    if (this.#phase.kind !== "Unstarted") {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: "start() called more than once" });
+      return;
+    }
+    this.#phase = { kind: "Starting" };
     try {
       await this.transport.start();
     } catch (error) {
+      this.#phase = { kind: "Faulted" };
       this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
       return;
     }
@@ -114,6 +150,7 @@ export class BrowserKernel {
       // outcome — the same rule #send applies. Reporting rather than throwing
       // keeps start()'s "never rejects" contract true and routes the failure
       // through the one channel consumers already watch.
+      this.#phase = { kind: "Faulted" };
       this.#diagnostics.report({ kind: "BridgeError", phase: "binding", detail: String(error) });
       return;
     }
@@ -124,7 +161,50 @@ export class BrowserKernel {
     window.addEventListener("popstate", () => {
       void this.#send({ kind: "LocationChanged", location: readLocation() });
     });
-    await this.#send({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: CAPABILITIES, location: readLocation() });
+    await this.#initialize();
+  }
+
+  get #offer(): HostHandshake {
+    return {
+      protocol: { major: PROTOCOL_VERSION, minor: PROTOCOL_MINOR },
+      contract: { unit: CORE_CONTRACT_IDENTITY.unit, version: CORE_CONTRACT_IDENTITY.version, fingerprint: CORE_CONTRACT_IDENTITY.fingerprint },
+      capabilities: Array.from(this.#providers.values(), (provider) => provider.descriptor),
+    };
+  }
+
+  // Initialize is the one round trip that happens before normal traffic. Its
+  // response is applied only after the engine's handshake has been verified:
+  // an incompatible engine's view and effects never reach the page.
+  async #initialize(): Promise<void> {
+    const offer = this.#offer;
+    let response: EngineToBrowserMessage;
+    try {
+      response = await this.transport.dispatch({ kind: "Initialize", protocolVersion: PROTOCOL_VERSION, capabilities: CAPABILITIES, location: readLocation(), handshake: offer });
+    } catch (error) {
+      this.#phase = { kind: "Faulted" };
+      this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
+      return;
+    }
+    const verdict = verifyHandshake(offer, response.handshake, this.#requireHandshake);
+    this.#diagnostics.report({ kind: "Handshake", verdict });
+    if (verdict.kind === "Incompatible") {
+      this.#phase = { kind: "Incompatible", reason: verdict.reason };
+      return;
+    }
+    this.#phase = { kind: "Running", negotiation: verdict.negotiation };
+    this.#activateNegotiated(verdict.negotiation);
+    await this.#apply(response);
+  }
+
+  #activateNegotiated(negotiation: Negotiation): void {
+    if (negotiation.kind === "Legacy") return;
+    for (const selected of negotiation.capabilities) {
+      const provider = this.#providers.get(selected.id);
+      provider?.activate({
+        document: this.document,
+        emitFact: (fact) => { void this.#send({ kind: "CapabilityFact", capability: selected.id, version: selected.version, fact }); },
+      });
+    }
   }
 
   // Binds only root's descendants, not root itself — the recursive step
@@ -208,6 +288,11 @@ export class BrowserKernel {
   // bad projection or a dead transport cannot crash the page or silently
   // corrupt already-applied view state.
   async #send(message: BrowserToEngineMessage): Promise<void> {
+    // Nothing flows before the handshake is verified, or ever after it failed.
+    if (this.#phase.kind !== "Running") {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: `${message.kind} not dispatched: kernel is ${this.#phase.kind}` });
+      return;
+    }
     let response: EngineToBrowserMessage;
     try {
       response = await this.transport.dispatch(message);
@@ -215,6 +300,16 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "dispatch", detail: String(error) });
       return;
     }
+    // A handshake is an answer to Initialize only. Anywhere else it is a
+    // protocol violation, and the response carrying it is not applied.
+    if (response.handshake !== undefined) {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: `handshake in response to ${message.kind}` });
+      return;
+    }
+    await this.#apply(response);
+  }
+
+  async #apply(response: EngineToBrowserMessage): Promise<void> {
     try {
       this.#applyScope(this.#root, response.view);
     } catch (error) {
@@ -319,7 +414,31 @@ export class BrowserKernel {
       case "Storage": return this.#executeStorage(effect);
       case "Clipboard": return await this.#executeClipboard(effect);
       case "Navigation": return this.#executeNavigation(effect);
+      case "Capability": return await this.#executeCapability(effect);
       default: return assertNeverEffect(effect);
+    }
+  }
+
+  // Core routes by negotiated identity and never looks inside the request. A
+  // capability the engine did not negotiate — or a legacy engine asking for
+  // any — gets a typed Unsupported answer, never a silent drop.
+  async #executeCapability(effect: CapabilityEffectRequest): Promise<EffectResult> {
+    const answer = (outcome: CapabilityOutcome): EffectResult =>
+      ({ kind: "CapabilityResult", correlationId: effect.correlationId, capability: effect.capability, version: effect.version, outcome });
+    const negotiated = this.#phase.kind === "Running" && this.#phase.negotiation.kind === "Negotiated"
+      ? this.#phase.negotiation.capabilities.find((capability) => capability.id === effect.capability)
+      : undefined;
+    const provider = this.#providers.get(effect.capability);
+    if (negotiated === undefined || provider === undefined) return answer({ kind: "Unsupported", reason: "not-negotiated" });
+    if (negotiated.version !== effect.version) return answer({ kind: "Unsupported", reason: "version-unsupported" });
+    const controller = new AbortController();
+    this.#controllers.set(effect.correlationId, controller);
+    try {
+      const result = await provider.execute(effect.request, { correlationId: effect.correlationId, signal: controller.signal, document: this.document });
+      if (result.kind === "Rejected") this.#diagnostics.report({ kind: "BridgeError", phase: "effect", detail: `${effect.capability} rejected request ${effect.correlationId}: ${result.reason}` });
+      return answer(result);
+    } finally {
+      this.#controllers.delete(effect.correlationId);
     }
   }
 

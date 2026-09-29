@@ -1,0 +1,392 @@
+{
+  "unit": "limen.core",
+  "role": "core",
+  "version": 1,
+  "doc": "The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.",
+  "constants": [
+    { "name": "PROTOCOL_VERSION", "type": "int", "value": 1, "doc": "The wire envelope major version. Revision 1.1 added the handshake and the generic capability envelope, both additive." },
+    { "name": "PROTOCOL_MINOR", "type": "int", "value": 1, "doc": "Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine." }
+  ],
+  "types": [
+    {
+      "name": "CorrelationId",
+      "kind": "brand",
+      "of": "string",
+      "doc": "Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected."
+    },
+    {
+      "name": "Capability",
+      "kind": "enum",
+      "values": ["Http", "Storage", "Clipboard", "Navigation"],
+      "doc": "What the kernel implements, announced once in Initialize. Not a statement about what this browser will permit at the moment an effect runs: permission and availability are reported per effect, in that effect's own outcome."
+    },
+    {
+      "name": "SemanticEvent",
+      "kind": "record",
+      "doc": "`name` is a domain-chosen identifier (the value of a data-event attribute). The bridge does not know its meaning; only the engine interprets it.",
+      "fields": [
+        { "name": "kind", "type": { "literal": "Event" } },
+        { "name": "name", "type": "string" },
+        { "name": "key", "type": "string", "optional": true },
+        { "name": "value", "type": "string", "optional": true }
+      ]
+    },
+    {
+      "name": "BrowserLocation",
+      "kind": "record",
+      "doc": "The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this.",
+      "fields": [
+        { "name": "origin", "type": "string", "doc": "Scheme, host and port, no trailing slash." },
+        { "name": "path", "type": "string", "doc": "Always begins with /." },
+        { "name": "query", "type": "string", "doc": "Leading ? included, or empty." },
+        { "name": "hash", "type": "string", "doc": "Leading # included, or empty." }
+      ]
+    },
+    {
+      "name": "HttpFailureReason",
+      "kind": "enum",
+      "values": ["network", "aborted", "invalid-response"]
+    },
+    {
+      "name": "EffectOutcome",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.",
+      "variants": [
+        { "name": "Success", "fields": [
+          { "name": "status", "type": "int" },
+          { "name": "body", "type": "json", "doc": "The decoded response body. The engine narrows it with its own typed decoder." }
+        ] },
+        { "name": "Failure", "fields": [
+          { "name": "reason", "type": "HttpFailureReason" },
+          { "name": "status", "type": "int", "optional": true, "doc": "Present exactly when a response was received (invalid-response)." }
+        ] },
+        { "name": "Cancelled", "fields": [] },
+        { "name": "OutcomeUnknown", "fields": [
+          { "name": "reason", "type": { "literal": "timeout-after-dispatch" } }
+        ] }
+      ]
+    },
+    {
+      "name": "StorageFailureReason",
+      "kind": "enum",
+      "values": ["unavailable", "quota-exceeded"]
+    },
+    {
+      "name": "StorageOutcome",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "A single localStorage call is atomic, so there is no dispatched-but-uncertain case. Success.value is null when a key was absent or the operation was set/remove.",
+      "variants": [
+        { "name": "Success", "fields": [ { "name": "value", "type": { "nullable": "string" } } ] },
+        { "name": "Failure", "fields": [ { "name": "reason", "type": "StorageFailureReason" } ] }
+      ]
+    },
+    {
+      "name": "ClipboardFailureReason",
+      "kind": "enum",
+      "values": ["denied", "unavailable", "unknown"],
+      "doc": "denied is usually recoverable by another user gesture; unavailable never is in this browser."
+    },
+    {
+      "name": "ClipboardOutcome",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Success", "fields": [] },
+        { "name": "Failure", "fields": [ { "name": "reason", "type": "ClipboardFailureReason" } ] }
+      ]
+    },
+    {
+      "name": "NavigationFailureReason",
+      "kind": "enum",
+      "values": ["unavailable", "not-same-origin"]
+    },
+    {
+      "name": "NavigationOutcome",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "Dispatched is not a weaker Success: back/forward only ask the browser to move, and the move arrives later as LocationChanged, or never.",
+      "variants": [
+        { "name": "Success", "fields": [ { "name": "location", "type": "BrowserLocation" } ] },
+        { "name": "Dispatched", "fields": [] },
+        { "name": "Failure", "fields": [ { "name": "reason", "type": "NavigationFailureReason" } ] }
+      ]
+    },
+    {
+      "name": "CapabilityId",
+      "kind": "brand",
+      "of": "string",
+      "doc": "The identity of an optional capability pack, e.g. limen.focus. Chosen by the pack's own contract unit; Core never interprets it beyond equality."
+    },
+    {
+      "name": "CapabilityUnsupportedReason",
+      "kind": "enum",
+      "values": ["not-negotiated", "version-unsupported"]
+    },
+    {
+      "name": "CapabilityRejectedReason",
+      "kind": "enum",
+      "values": ["malformed-request"]
+    },
+    {
+      "name": "CapabilityOutcome",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "How Core answers a capability effect. Completed carries the capability's own closed outcome, which is where its success, failure, cancellation and unknown variants live. Unsupported and Rejected are compatibility facts, never effect outcomes: they mean the request was not executed.",
+      "variants": [
+        { "name": "Completed", "fields": [ { "name": "result", "type": "json", "doc": "Encoded by the capability's generated binding; decoded by the engine with the same." } ] },
+        { "name": "Unsupported", "fields": [ { "name": "reason", "type": "CapabilityUnsupportedReason" } ] },
+        { "name": "Rejected", "fields": [ { "name": "reason", "type": "CapabilityRejectedReason" } ] }
+      ]
+    },
+    {
+      "name": "EffectResult",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "HttpResult", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "outcome", "type": "EffectOutcome" }
+        ] },
+        { "name": "StorageResult", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "outcome", "type": "StorageOutcome" }
+        ] },
+        { "name": "ClipboardResult", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "outcome", "type": "ClipboardOutcome" }
+        ] },
+        { "name": "NavigationResult", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "outcome", "type": "NavigationOutcome" }
+        ] },
+        { "name": "CapabilityResult", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "capability", "type": "CapabilityId" },
+          { "name": "version", "type": "int" },
+          { "name": "outcome", "type": "CapabilityOutcome" }
+        ] }
+      ]
+    },
+    {
+      "name": "ProtocolRevision",
+      "kind": "record",
+      "fields": [
+        { "name": "major", "type": "int" },
+        { "name": "minor", "type": "int" }
+      ]
+    },
+    {
+      "name": "ContractIdentity",
+      "kind": "record",
+      "doc": "Identifies one generated contract unit. The fingerprint is SHA-256 over the unit's canonical JSON with documentation removed.",
+      "fields": [
+        { "name": "unit", "type": "string" },
+        { "name": "version", "type": "int" },
+        { "name": "fingerprint", "type": "string" }
+      ]
+    },
+    {
+      "name": "CapabilityOffer",
+      "kind": "record",
+      "doc": "An optional capability the host implements. An offer is not permission.",
+      "fields": [
+        { "name": "id", "type": "CapabilityId" },
+        { "name": "version", "type": "int" },
+        { "name": "fingerprint", "type": "string" }
+      ]
+    },
+    {
+      "name": "HostHandshake",
+      "kind": "record",
+      "fields": [
+        { "name": "protocol", "type": "ProtocolRevision" },
+        { "name": "contract", "type": "ContractIdentity" },
+        { "name": "capabilities", "type": { "list": "CapabilityOffer" } }
+      ]
+    },
+    {
+      "name": "HandshakeRejection",
+      "kind": "union",
+      "tag": "kind",
+      "doc": "Why an engine refused the host. Protocol incompatibility is a compatibility state, never an effect OutcomeUnknown.",
+      "variants": [
+        { "name": "ProtocolUnsupported", "fields": [ { "name": "offered", "type": "ProtocolRevision" } ] },
+        { "name": "ContractMismatch", "fields": [
+          { "name": "expected", "type": "ContractIdentity" },
+          { "name": "offered", "type": "ContractIdentity" }
+        ] },
+        { "name": "CapabilityUnavailable", "fields": [
+          { "name": "id", "type": "CapabilityId" },
+          { "name": "version", "type": "int" }
+        ] },
+        { "name": "HandshakeMissing", "fields": [] }
+      ]
+    },
+    {
+      "name": "EngineHandshake",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Accepted", "fields": [
+          { "name": "protocol", "type": "ProtocolRevision" },
+          { "name": "contract", "type": "ContractIdentity" },
+          { "name": "capabilities", "type": { "list": "CapabilityOffer" }, "doc": "The capabilities this engine will use. Every one must have been offered with the same version and fingerprint." }
+        ] },
+        { "name": "Rejected", "fields": [ { "name": "reason", "type": "HandshakeRejection" } ] }
+      ]
+    },
+    {
+      "name": "BrowserToEngineMessage",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Initialize", "doc": "Delivered once at startup. handshake is absent only from kernels older than protocol 1.1.", "fields": [
+          { "name": "protocolVersion", "type": { "literal": 1 } },
+          { "name": "capabilities", "type": { "list": "Capability" } },
+          { "name": "location", "type": "BrowserLocation" },
+          { "name": "handshake", "type": "HostHandshake", "optional": true }
+        ] },
+        { "name": "Event", "fields": [ { "name": "event", "type": "SemanticEvent" } ] },
+        { "name": "EffectResult", "fields": [ { "name": "result", "type": "EffectResult" } ] },
+        { "name": "LocationChanged", "doc": "The browser moved through history on its own. Adopt it; never answer it with another navigation.", "fields": [
+          { "name": "location", "type": "BrowserLocation" }
+        ] },
+        { "name": "CapabilityFact", "doc": "A browser-originated fact from a negotiated capability (a subscription update, a lifecycle change). Not correlated with a result.", "fields": [
+          { "name": "capability", "type": "CapabilityId" },
+          { "name": "version", "type": "int" },
+          { "name": "fact", "type": "json", "doc": "Encoded by the capability's generated binding." }
+        ] }
+      ]
+    },
+    {
+      "name": "ViewPrimitive",
+      "kind": "shape-union",
+      "variants": [
+        { "name": "Text", "type": "string" },
+        { "name": "Number", "type": "number" },
+        { "name": "Flag", "type": "bool" }
+      ]
+    },
+    {
+      "name": "ViewItem",
+      "kind": "map",
+      "of": "ViewPrimitive"
+    },
+    {
+      "name": "ViewValue",
+      "kind": "shape-union",
+      "variants": [
+        { "name": "Text", "type": "string" },
+        { "name": "Number", "type": "number" },
+        { "name": "Flag", "type": "bool" },
+        { "name": "Items", "type": { "list": "ViewItem" } }
+      ]
+    },
+    {
+      "name": "ViewState",
+      "kind": "map",
+      "of": "ViewValue",
+      "doc": "A projection, not the engine's internal state: named values a view binds to and named lists it repeats."
+    },
+    {
+      "name": "HttpMethod",
+      "kind": "enum",
+      "values": ["GET", "PUT", "POST", "PATCH", "DELETE"]
+    },
+    {
+      "name": "HttpEffectRequest",
+      "kind": "record",
+      "fields": [
+        { "name": "correlationId", "type": "CorrelationId" },
+        { "name": "method", "type": "HttpMethod" },
+        { "name": "url", "type": "string" },
+        { "name": "headers", "type": { "map": "string" }, "optional": true, "doc": "Never surfaced in diagnostics: headers commonly carry credentials." },
+        { "name": "body", "type": "string", "optional": true, "doc": "Pre-serialized by the engine; the kernel never interprets it." },
+        { "name": "timeoutMs", "type": "int" }
+      ]
+    },
+    {
+      "name": "StorageEffectRequest",
+      "kind": "union",
+      "tag": "operation",
+      "variants": [
+        { "name": "get", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "key", "type": "string" }
+        ] },
+        { "name": "set", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "key", "type": "string" },
+          { "name": "value", "type": "string" }
+        ] },
+        { "name": "remove", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "key", "type": "string" }
+        ] }
+      ]
+    },
+    {
+      "name": "ClipboardEffectRequest",
+      "kind": "record",
+      "doc": "Write-only by design (LCP-019 intentional non-parity). text is never surfaced in diagnostics.",
+      "fields": [
+        { "name": "correlationId", "type": "CorrelationId" },
+        { "name": "operation", "type": { "literal": "writeText" } },
+        { "name": "text", "type": "string" }
+      ]
+    },
+    {
+      "name": "NavigationEffectRequest",
+      "kind": "union",
+      "tag": "operation",
+      "doc": "url is same-origin and root-relative; the kernel refuses anything else.",
+      "variants": [
+        { "name": "push", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "url", "type": "string" }
+        ] },
+        { "name": "replace", "fields": [
+          { "name": "correlationId", "type": "CorrelationId" },
+          { "name": "url", "type": "string" }
+        ] },
+        { "name": "back", "fields": [ { "name": "correlationId", "type": "CorrelationId" } ] },
+        { "name": "forward", "fields": [ { "name": "correlationId", "type": "CorrelationId" } ] }
+      ]
+    },
+    {
+      "name": "CapabilityEffectRequest",
+      "kind": "record",
+      "doc": "A request to a negotiated optional capability. request is encoded by that capability's generated binding; Core routes it by capability and never interprets it.",
+      "fields": [
+        { "name": "correlationId", "type": "CorrelationId" },
+        { "name": "capability", "type": "CapabilityId" },
+        { "name": "version", "type": "int" },
+        { "name": "request", "type": "json" }
+      ]
+    },
+    {
+      "name": "EffectRequest",
+      "kind": "union",
+      "tag": "kind",
+      "variants": [
+        { "name": "Http", "flatten": "HttpEffectRequest" },
+        { "name": "Storage", "flatten": "StorageEffectRequest" },
+        { "name": "Clipboard", "flatten": "ClipboardEffectRequest" },
+        { "name": "Navigation", "flatten": "NavigationEffectRequest" },
+        { "name": "Capability", "flatten": "CapabilityEffectRequest" }
+      ]
+    },
+    {
+      "name": "EngineToBrowserMessage",
+      "kind": "record",
+      "fields": [
+        { "name": "view", "type": "ViewState" },
+        { "name": "effects", "type": { "list": "EffectRequest" } },
+        { "name": "cancellations", "type": { "list": "CorrelationId" }, "doc": "Previously requested effects whose result is no longer wanted. Only the engine decides this." },
+        { "name": "handshake", "type": "EngineHandshake", "optional": true, "doc": "Only meaningful on the response to Initialize." }
+      ]
+    }
+  ]
+}

@@ -94,18 +94,27 @@ src/protocol.ts the threshold itself: plain, JSON-serializable data only
 src/engine/     TypeScript reference-engine meaning ONLY — state, transitions, validation
 ```
 
-Four message types cross the boundary, and nothing else does:
+These message types cross the boundary, and nothing else does. They are
+**generated** from the language-neutral contract `contract/core.contract.json`
+— never edit `src/generated/**` by hand; change the contract and run
+`npm run contract:generate` (see [docs/24](docs/24-contract-and-capabilities.md)):
 
 ```ts
 // Browser → Engine
-{ kind: "Initialize";      protocolVersion; capabilities; location }
+{ kind: "Initialize";      protocolVersion; capabilities; location; handshake? }
 { kind: "Event";           event:    SemanticEvent }   // { name, key?, value? }
 { kind: "EffectResult";    result:   EffectResult }
 { kind: "LocationChanged"; location: BrowserLocation } // the browser moved on its own
+{ kind: "CapabilityFact";  capability; version; fact } // from a negotiated optional capability
 
 // Engine → Browser
-{ view: ViewState; effects: EffectRequest[]; cancellations: CorrelationId[] }
+{ view: ViewState; effects: EffectRequest[]; cancellations: CorrelationId[]; handshake? }
 ```
+
+The kernel verifies the engine's `handshake` (contract fingerprint, protocol
+revision, selected optional capabilities) before applying anything from it.
+Optional capabilities are packs registered with the kernel and reached through
+one generic `Capability` effect; Core never learns what a pack means.
 
 The kernel implements four capabilities, announced in `Initialize`:
 

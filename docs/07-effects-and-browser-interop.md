@@ -467,8 +467,9 @@ Every effect is timed and reported:
 
 ```ts
 type DiagnosticEvent =
-  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect"; detail: string }
-  | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number };
+  | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect" | "protocol"; detail: string }
+  | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number }
+  | { kind: "Handshake";    verdict: HandshakeVerdict };   // reported once, after Initialize
 ```
 
 ```ts

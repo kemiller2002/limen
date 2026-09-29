@@ -67,6 +67,7 @@ Measured, not assumed — each of these cost real time to rediscover.
 | Pushing a branch | **Allowed** — create and update both work. |
 | Pushing a tag | **Blocked.** Every form fails identically: annotated, lightweight, explicit refspec. The error is `send-pack: unexpected disconnect`, which looks transient and is not. |
 | Deleting any ref | **Blocked**, branches included. |
+| `npm run smoke:site:wasm` | **Fails here on unmodified `main`** (verified 2026-09-29 against `origin/main` in a clean worktree): Chrome `--dump-dom --virtual-time-budget` never reaches the F# marker. Playwright is available (`/opt/pw-browsers`; link the global `playwright` into `node_modules`) and loads both site pages to their markers — use it to verify, and let CI run the real script. `npm run smoke:browser` works. |
 
 Two consequences worth internalising before you act:
 
@@ -174,6 +175,13 @@ code, not after.
 - `src/protocol.ts` — the stable engine↔kernel contract: `SemanticEvent`,
   `ViewState`, `EffectRequest`/`EffectResult`/`EffectOutcome`/`StorageOutcome`,
   `EngineTransport`. Read this file first; everything else is built on it.
+  Its wire types are **generated** from `contract/core.contract.json` into
+  `src/generated/` by `tools/contract-gen` — never edit generated files;
+  `npm run contract:check` (part of `npm test`) fails on stale or hand-edited
+  output. See `docs/24-contract-and-capabilities.md`.
+- `src/kernel/handshake.ts`, `src/kernel/capabilities.ts`,
+  `src/guest/handshake.ts` — the contract-fingerprint handshake (host and
+  engine halves) and the generic optional-capability seam.
 - `src/kernel/browser-kernel.ts` — the generic declarative bridge. Binds
   `data-event`/`data-text`/`data-bind-<attr>`/`data-if`/`data-each`, executes
   Http effects (any method, caller headers/body), Storage effects

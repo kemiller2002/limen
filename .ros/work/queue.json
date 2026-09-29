@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 28,
+  "nextSeq": 29,
   "items": [
     {
       "id": "WI-0001",
@@ -481,6 +481,22 @@
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "WI-0028",
+      "title": "GH-16 LCP-002: versioned capability extension architecture (neutral contract source, TS generation, fingerprint handshake, generic capability envelope)",
+      "description": "Placement: Core (protocol envelope + kernel extension registry) with Tooling (contract source + TypeScript generator). Allowed paths: contract/**, tools/contract-gen/**, src/protocol.ts, src/generated/**, src/kernel/**, src/index.ts, test/**, docs/**, research/decisions/**, package.json, tsconfig*.json, architecture.yaml, scripts/check-*.ts, README.md, CHANGELOG.md, AGENTS.md, CLAUDE.md. Prohibited: examples/** semantics, site/fsharp/** (migration is GH-17), optional concrete capabilities (GH-23+). F#/C#/Rust emitters, determinism/stale checks in CI are GH-52.",
+      "tags": [
+        "limen,gh-16,lcp-002,core,contract"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T04:32:49Z",
+      "updatedAt": "2026-09-29T04:32:53Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#16"
     }
   ]
 }

@@ -1,0 +1,30 @@
+{
+  "units": [
+    "contract/core.contract.json",
+    "test/fixtures/capabilities/echo.contract.json"
+  ],
+  "outputs": [
+    {
+      "unit": "limen.core",
+      "kind": "typescript-types",
+      "path": "src/generated/core.ts"
+    },
+    {
+      "unit": "limen.core",
+      "kind": "typescript-codec",
+      "path": "src/generated/core.codec.ts",
+      "typesModule": "./core.js"
+    },
+    {
+      "unit": "limen.fixture.echo",
+      "kind": "typescript-types",
+      "path": "test/fixtures/capabilities/generated/echo.ts"
+    },
+    {
+      "unit": "limen.fixture.echo",
+      "kind": "typescript-codec",
+      "path": "test/fixtures/capabilities/generated/echo.codec.ts",
+      "typesModule": "./echo.ts"
+    }
+  ]
+}

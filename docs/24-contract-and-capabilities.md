@@ -1,0 +1,176 @@
+# The contract, the handshake, and optional capabilities
+
+**What this answers:** where the Limen wire contract is defined, how bindings
+for each language are produced, how a host and an engine agree they speak the
+same contract before anything else happens, and how an optional browser
+capability is added without changing Core.
+
+Decision record: [DF-LIMEN-2026-001](../research/decisions/DF-LIMEN-2026-001--neutral-contract-and-capability-extension.md).
+
+---
+
+## One source of truth
+
+The contract is data, not code: [`contract/core.contract.json`](../contract/core.contract.json).
+It is written in a small language-neutral algebra:
+
+| Construct | Meaning | Example |
+| --- | --- | --- |
+| `record` | fixed named fields | `BrowserLocation` |
+| `union` + `tag` | closed set of variants, discriminated by one field | `EffectOutcome` (`kind`) |
+| `flatten` variant | a variant whose fields come from another record/union | `EffectRequest.Storage` |
+| `enum` | closed set of string values | `HttpMethod` |
+| `brand` | a string/int that must not be mixed with others | `CorrelationId` |
+| `shape-union` | variants told apart by JSON shape, not a tag | `ViewValue` |
+| `map`, `list`, `nullable`, `literal` | the usual | `ViewState`, `readonly Capability[]` |
+| `json` | an opaque slot filled only by another generated binding | a capability's payload |
+
+No programming language's syntax is canonical. There is deliberately no
+`object`, `any` or `Dictionary<string, object>`: an attempt to express one is a
+contract error.
+
+## Generated bindings are read-only
+
+```sh
+npm run contract:generate   # write every binding listed in contract/targets.json
+npm run contract:check      # regenerate in memory and compare byte-for-byte (part of npm test)
+```
+
+Every generated file starts with a provenance header — source, unit, contract
+fingerprint, generator, and a hash of its own body. `contract:check` uses that
+to tell you *what happened*, not just that files differ:
+
+| Finding | Meaning | Fix |
+| --- | --- | --- |
+| `missing` | a target was never generated | run `contract:generate` |
+| `stale` | the contract or generator changed; the file was not regenerated | run `contract:generate`, commit |
+| `hand-edited` | the file body no longer matches its own header | revert; change the contract instead |
+| `orphan` | a file carries the generated marker but no target produces it | delete it, or add a target |
+
+In TypeScript, [`src/protocol.ts`](../src/protocol.ts) re-exports the generated
+[`src/generated/core.ts`](../src/generated/core.ts) under the same public names
+it has always had. The strict decoder for every type is
+[`src/generated/core.codec.ts`](../src/generated/core.codec.ts), exported as
+`@echelon-foundry/typescript-wasm-kernel/contract`. Use it wherever untrusted
+JSON crosses into host code — typically a WebAssembly transport. It rejects
+unknown variants, missing fields, **and unexpected fields**.
+
+F#, C# and Rust emitters are tracked in #52/#55 and share this source.
+
+## The fingerprint
+
+Each contract unit's fingerprint is SHA-256 over its canonical JSON (keys
+sorted, whitespace and every `doc` removed). Rewording documentation never
+changes compatibility; any change to a name, field, variant or type does.
+
+## The handshake (protocol 1.1)
+
+`Initialize` now carries the host's offer:
+
+```ts
+handshake?: {
+  protocol: { major: 1, minor: 1 },
+  contract: { unit: "limen.core", version: 1, fingerprint: "sha256:…" },
+  capabilities: [ { id: "limen.focus", version: 1, fingerprint: "sha256:…" } ],
+}
+```
+
+The engine's response to `Initialize` may carry its answer:
+
+```ts
+handshake?: { kind: "Accepted", protocol, contract, capabilities /* the ones it will use */ }
+          | { kind: "Rejected", reason: HandshakeRejection }
+```
+
+**The kernel applies nothing from that response until it has verified the
+answer.** The rules, in [`src/kernel/handshake.ts`](../src/kernel/handshake.ts):
+
+| Engine answer | Kernel state |
+| --- | --- |
+| none (a protocol 1.0 engine) | `Running(Legacy)` — the four built-in effects only; or `Incompatible(handshake-required)` if the kernel was created with `requireHandshake: true` |
+| `Accepted`, same protocol major, minor ≤ host's, identical core contract, every selected capability offered with identical version and fingerprint | `Running(Negotiated)` |
+| anything else, including a malformed handshake | `Incompatible(reason)` — terminal |
+
+In `Incompatible`, no view is applied, no effect runs, and later events are not
+dispatched; the kernel reports `{ kind: "Handshake", verdict }` and a
+`BridgeError { phase: "protocol" }` for each refused message.
+
+**A compatibility failure is not an effect outcome.** It is never
+`OutcomeUnknown`, and never a capability `Failure`.
+
+The engine's half is a pure function, `answerHandshake(offer, requirements)`
+([`src/guest/handshake.ts`](../src/guest/handshake.ts)). An engine given an
+`Initialize` with **no** handshake — i.e. running under a kernel older than
+1.1 — answers `Rejected(HandshakeMissing)` and should project nothing else. The
+old kernel ignores the answer, but the engine's own typed state now says why it
+is inert.
+
+## Optional capabilities
+
+A capability pack is its own contract unit with `"role": "capability"`. Its
+generated binding exports `CAPABILITY_OFFER` (id, version, fingerprint) plus its
+request/result/fact types and decoders. Core carries its payloads in one generic
+envelope and never looks inside:
+
+```ts
+// engine → browser
+{ kind: "Capability", correlationId, capability, version, request }
+// browser → engine
+{ kind: "EffectResult", result: { kind: "CapabilityResult", correlationId, capability, version,
+    outcome: { kind: "Completed", result }            // the pack's own closed outcome
+           | { kind: "Unsupported", reason: "not-negotiated" | "version-unsupported" }
+           | { kind: "Rejected", reason: "malformed-request" } } }
+{ kind: "CapabilityFact", capability, version, fact }  // subscription updates, lifecycle facts
+```
+
+A host registers the packs it implements:
+
+```ts
+import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { focusCapability } from "…/focus";          // an optional pack; not imported, not loaded
+
+new BrowserKernel(transport, document, diagnostics, { capabilities: [focusCapability()] });
+```
+
+A pack's provider is built with `defineCapability`, whose only route from wire
+JSON to a typed request is the pack's generated decoder:
+
+```ts
+defineCapability<FocusRequest, FocusOutcome, never>({
+  offer: CAPABILITY_OFFER,
+  decodeRequest: decodeFocusRequest,
+  execute: async (request, { signal, document }) => { /* browser mechanism only */ },
+});
+```
+
+Rules a pack must follow:
+
+- **Offered is not permitted.** Permission, availability and user-gesture
+  failures are variants of the pack's own outcome.
+- **Cancellation is reported, not fabricated.** The kernel aborts `signal`;
+  the provider returns its own `Cancelled` variant.
+- **No hidden policy.** No retries, reconnection, caching or recovery in a
+  provider. Those are engine decisions.
+- **Nothing browser-owned crosses.** Opaque handles, never DOM nodes, `File`s
+  or streams.
+
+An application that registers no pack loads no pack code: packs are separate
+modules that Core never imports.
+
+The repository's test-only pack,
+[`test/fixtures/capabilities/echo.contract.json`](../test/fixtures/capabilities/echo.contract.json),
+is the executable proof that a capability family can be added without touching
+Core; [`test/handshake.test.ts`](../test/handshake.test.ts) exercises every rule
+above.
+
+## Compatibility notes for existing consumers
+
+- Public TypeScript names are unchanged. `Initialize` and
+  `EngineToBrowserMessage` gained one optional field each.
+- `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` gained a member
+  each. An exhaustive `switch` in your engine now fails to compile until it
+  handles `Capability`/`CapabilityResult`/`CapabilityFact` — for an engine that
+  negotiates no capability, those are contract violations; throw.
+- `DiagnosticEvent` gained `Handshake`, and `BridgeError.phase` gained
+  `"protocol"`. A diagnostics sink that assumed only two kinds will misreport
+  the new one; switch on `kind`.

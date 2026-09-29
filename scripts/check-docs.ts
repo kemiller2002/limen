@@ -158,14 +158,19 @@ for (const file of files) {
 // equal the set in the source. A document showing an abbreviated declaration
 // must mark it with an ellipsis (…) — then it is treated as an excerpt and
 // skipped, which is an honest label rather than a silent exception.
+//
+// Wire types are read from the generated TypeScript binding, the file every
+// consumer actually compiles against (src/protocol.ts only re-exports it; the
+// language-neutral source is contract/core.contract.json).
+const WIRE = "src/generated/core.ts";
 const CHECKED_TYPES: readonly { readonly name: string; readonly source: string }[] = [
-  { name: "Capability", source: "src/protocol.ts" },
-  { name: "ClipboardOutcome", source: "src/protocol.ts" },
-  { name: "NavigationOutcome", source: "src/protocol.ts" },
-  { name: "StorageOutcome", source: "src/protocol.ts" },
-  { name: "EffectOutcome", source: "src/protocol.ts" },
-  { name: "EffectResult", source: "src/protocol.ts" },
-  { name: "BrowserToEngineMessage", source: "src/protocol.ts" },
+  { name: "Capability", source: WIRE },
+  { name: "ClipboardOutcome", source: WIRE },
+  { name: "NavigationOutcome", source: WIRE },
+  { name: "StorageOutcome", source: WIRE },
+  { name: "EffectOutcome", source: WIRE },
+  { name: "EffectResult", source: WIRE },
+  { name: "BrowserToEngineMessage", source: WIRE },
   { name: "DiagnosticEvent", source: "src/kernel/diagnostics.ts" },
 ];
 

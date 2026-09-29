@@ -246,9 +246,16 @@ const diagnosticsLines = [];
 const diagnosticsSink = {
   report(event) {
     const stamp = new Date().toISOString().slice(11, 19);
-    const line = event.kind === "BridgeError"
-      ? `[${stamp}] BridgeError (${event.phase}): ${event.detail}`
-      : `[${stamp}] EffectTiming ${event.correlationId}: ${event.durationMs.toFixed(1)}ms`;
+    // Switch on kind, and say something for kinds this page does not know:
+    // DiagnosticEvent grows (Handshake arrived in protocol 1.1).
+    const line = (() => {
+      switch (event.kind) {
+        case "BridgeError": return `[${stamp}] BridgeError (${event.phase}): ${event.detail}`;
+        case "EffectTiming": return `[${stamp}] EffectTiming ${event.correlationId}: ${event.durationMs.toFixed(1)}ms`;
+        case "Handshake": return `[${stamp}] Handshake: ${event.verdict.kind}${event.verdict.kind === "Compatible" ? ` (${event.verdict.negotiation.kind})` : ` — ${event.verdict.reason.kind}`}`;
+        default: return `[${stamp}] ${event.kind}`;
+      }
+    })();
     diagnosticsLines.unshift(line);
     diagnosticsLines.length = Math.min(diagnosticsLines.length, 12);
     diagnosticsEl.textContent = diagnosticsLines.join("\n");

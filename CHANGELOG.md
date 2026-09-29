@@ -26,6 +26,43 @@ exhaustive lists.
 
 ### Added
 
+- **One language-neutral contract (#16).** The wire protocol is now defined once,
+  as data, in `contract/core.contract.json`, and the TypeScript types in
+  `src/protocol.ts` are generated from it by `tools/contract-gen`
+  (`npm run contract:generate`; `npm run contract:check` fails on stale,
+  hand-edited, missing or orphaned bindings). Public names and shapes are
+  unchanged. A strict generated decoder for every type is exported as
+  `./contract`.
+- **Contract fingerprint handshake (protocol 1.1, additive).** `Initialize`
+  carries the host's protocol revision, core contract fingerprint and optional
+  capability offers; the engine's `Initialize` response may accept or reject.
+  The kernel applies nothing from an engine until the answer is verified, and
+  an incompatible engine never receives normal traffic. Engines that send no
+  handshake run exactly as before (legacy mode) unless the host sets
+  `requireHandshake`. `answerHandshake` is the engine-side half.
+- **Generic optional-capability envelope.** `EffectRequest.Capability`,
+  `EffectResult.CapabilityResult` and `BrowserToEngineMessage.CapabilityFact`
+  let a capability pack, registered via `new BrowserKernel(…, { capabilities })`
+  and built with `defineCapability`, be added without changing Core. Requests
+  to a capability that was not negotiated are answered `Unsupported`; payloads
+  the pack's generated decoder rejects are answered `Rejected`.
+
+### Changed — compile-time pressure, by design
+
+- `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a
+  member, so an exhaustive `switch` over them must now handle `Capability`,
+  `CapabilityResult` and `CapabilityFact`.
+- `DiagnosticEvent` gained `{ kind: "Handshake" }` and `BridgeError.phase`
+  gained `"protocol"`. A diagnostics sink that assumed only `BridgeError` and
+  `EffectTiming` must switch on `kind` (the kitchen-sink example did not, and
+  threw in a real browser).
+- `BrowserKernel.start()` called a second time is now refused with a
+  diagnostic instead of re-binding the DOM.
+- Events that arrive before the handshake completes are not dispatched (they
+  are reported as `BridgeError { phase: "protocol" }`).
+
+### Added (earlier in this release)
+
 - **Federated engine runtime for multi-WASM applications.** `ModuleFederation`,
   `ModuleManifest`, versioned `FederationEnvelope` contracts, explicit module
   lifecycle, dependency/capability preflight, contract compatibility checks,

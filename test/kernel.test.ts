@@ -6,7 +6,7 @@ import test from "node:test";
 // builds first, so this is always fresh.
 import { BrowserKernel } from "../dist/kernel/browser-kernel.js";
 import type { DiagnosticEvent, DiagnosticsSink } from "../dist/kernel/diagnostics.js";
-import type { BrowserToEngineMessage, CorrelationId, EffectOutcome, EffectRequest, EffectResult, EngineToBrowserMessage, EngineTransport } from "../dist/protocol.js";
+import { CORE_CONTRACT_IDENTITY, type BrowserToEngineMessage, type CorrelationId, type EffectOutcome, type EffectRequest, type EffectResult, type EngineToBrowserMessage, type EngineTransport } from "../dist/protocol.js";
 import { withClipboard, withDom, withFetch } from "./dom-helpers.ts";
 
 function respond(overrides: Partial<EngineToBrowserMessage> = {}): EngineToBrowserMessage {
@@ -79,6 +79,9 @@ test("start() dispatches Initialize with the protocol version and applies the in
       // `origin` rides along so an engine can compose an absolute, shareable
       // link to the current screen — Navigation and Clipboard used together.
       location: { origin: "http://localhost", path: "/", query: "", hash: "" },
+      // Protocol 1.1: the host's side of the compatibility handshake. With no
+      // optional capability registered, it offers only the core contract.
+      handshake: { protocol: { major: 1, minor: 1 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] },
     });
     assert.equal(document.querySelector("p")!.textContent, "ready");
   });
@@ -655,8 +658,10 @@ test("a malformed projection is reported via diagnostics instead of throwing, an
   );
   await withDom(`<p data-text="message"></p>`, async (document) => {
     await assert.doesNotReject(new BrowserKernel(transport, document, sink).start());
-    assert.equal(events.length, 1);
-    assert.equal(events[0]?.kind === "BridgeError" && events[0].phase, "projection");
+    // The handshake verdict (a legacy engine here) is reported first, then the failure.
+    assert.deepEqual(events[0], { kind: "Handshake", verdict: { kind: "Compatible", negotiation: { kind: "Legacy" } } });
+    assert.equal(events.length, 2);
+    assert.equal(events[1]?.kind === "BridgeError" && events[1].phase, "projection");
     // The malformed view must not be treated as a green light to run its effects.
     assert.equal(transport.calls.some((call) => call.kind === "EffectResult"), false);
   });

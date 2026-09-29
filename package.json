@@ -1,7 +1,7 @@
 {
   "name": "@echelon-foundry/typescript-wasm-kernel",
   "version": "0.6.2",
-  "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority. A dependency-free browser kernel — HTTP, storage, clipboard and history as typed effects, with application state, transitions and decisions kept out of the browser entirely — plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
+  "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority. A dependency-free browser kernel \u2014 HTTP, storage, clipboard and history as typed effects, with application state, transitions and decisions kept out of the browser entirely \u2014 plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,6 +14,14 @@
     "./protocol": {
       "types": "./dist/protocol.d.ts",
       "import": "./dist/protocol.js"
+    },
+    "./contract": {
+      "types": "./dist/generated/core.codec.d.ts",
+      "import": "./dist/generated/core.codec.js"
+    },
+    "./capabilities": {
+      "types": "./dist/kernel/capabilities.d.ts",
+      "import": "./dist/kernel/capabilities.js"
     },
     "./kernel": {
       "types": "./dist/kernel/browser-kernel.d.ts",
@@ -95,7 +103,7 @@
     "build:cli:all": "node --experimental-strip-types scripts/build-cli.ts",
     "test:cli": "dotnet test cli/tests/Limen.Core.Tests/Limen.Core.Tests.fsproj --nologo -v q",
     "pretest": "npm run build && npm run build:examples && npm run build:site",
-    "test": "npm run check:architecture && npm run check:docs && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
+    "test": "npm run contract:check && npm run check:architecture && npm run check:docs && npm run check:site && npm run check:package && node --experimental-strip-types --test test/*.test.ts",
     "check": "npm test",
     "prepack": "npm run clean && npm run check && npm run build:cli:all",
     "check:site": "node --experimental-strip-types scripts/check-site.ts",
@@ -104,7 +112,9 @@
     "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.ts",
     "build:site:wasm": "dotnet workload restore site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj && dotnet publish site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj -c Release -o site/fsharp/publish && dotnet publish site/fsharp/federation/Limen.Federation.Source.Wasm/Limen.Federation.Source.Wasm.csproj -c Release -o site/fsharp/federation/Limen.Federation.Source.Wasm/publish && dotnet publish site/fsharp/federation/Limen.Federation.Target.Wasm/Limen.Federation.Target.Wasm.csproj -c Release -o site/fsharp/federation/Limen.Federation.Target.Wasm/publish",
     "test:site:fsharp": "dotnet run --project site/fsharp/tests/Limen.Site.Engine.Tests/Limen.Site.Engine.Tests.fsproj -c Release && dotnet run --project site/fsharp/federation/tests/Limen.Federation.Proof.Tests/Limen.Federation.Proof.Tests.fsproj -c Release",
-    "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh"
+    "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh",
+    "contract:generate": "node --experimental-strip-types tools/contract-gen/main.ts generate",
+    "contract:check": "node --experimental-strip-types tools/contract-gen/main.ts check"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",

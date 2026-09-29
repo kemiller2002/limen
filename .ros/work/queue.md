@@ -31,3 +31,4 @@
 | WI-0025 | Demonstrate federation with two independent F# WebAssembly modules | complete | limen, wasm, federation, fsharp, existence-proof | high |
 | WI-0026 | Add federation failure isolation and diagnostics | complete | limen, wasm, federation, diagnostics, resilience | high |
 | WI-0027 | Ignore federation WASM publish outputs so ros validate passes after a build | complete | build,mechanical | medium |
+| WI-0028 | GH-16 LCP-002: versioned capability extension architecture (neutral contract source, TS generation, fingerprint handshake, generic capability envelope) | ready | limen,gh-16,lcp-002,core,contract | high |
