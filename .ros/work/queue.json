@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 129,
+  "nextSeq": 131,
   "items": [
     {
       "id": "WI-0001",
@@ -1920,6 +1920,34 @@
       "attachments": [],
       "createdAt": "2026-09-29T17:38:50.185Z",
       "updatedAt": "2026-09-29T17:39:38Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0129",
+      "title": "Media capture and recording capability pack (kemiller2002/limen#44, LCP-038): camera and microphone under the permission pattern, opaque capture and recording ids, previews into named video elements, bounded recording reads, explicit denied/device-unavailable/ended/cancelled outcomes and cleanup",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T17:41:21.876Z",
+      "updatedAt": "2026-09-29T17:41:37Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0130",
+      "title": "Guardrail: register the limen.media contract unit and its F#, C# and Rust bindings (kemiller2002/limen#44)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T17:41:22.196Z",
+      "updatedAt": "2026-09-29T17:41:37Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
