@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 51,
+  "nextSeq": 52,
   "items": [
     {
       "id": "WI-0001",
@@ -828,6 +828,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T06:46:56Z",
       "updatedAt": "2026-09-29T06:49:14Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0051",
+      "title": "Binding security: forbidden targets, URL scheme policy, Trusted Types/strict CSP smoke, diagnostics redaction (GH-18)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T06:50:58Z",
+      "updatedAt": "2026-09-29T06:50:58Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

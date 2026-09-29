@@ -54,3 +54,4 @@
 | WI-0048 | Guardrail: strict compiler config for the benchmark page (tsconfig.bench.json) (GH-19) | complete |  | medium |
 | WI-0049 | Static HTML/projection/event contract validation: adjacent view contracts, checker, engine conformance (GH-48) | complete |  | medium |
 | WI-0050 | Guardrail: check:views — every bound page against its view contract, a required npm test gate (GH-48) | complete |  | medium |
+| WI-0051 | Binding security: forbidden targets, URL scheme policy, Trusted Types/strict CSP smoke, diagnostics redaction (GH-18) | ready |  | medium |

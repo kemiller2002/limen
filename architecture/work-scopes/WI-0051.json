@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0051",
+  "reference": "kemiller2002/limen#18 (LCP-027)",
+  "placement": "Core (kernel binding mechanism) — the data-bind/data-text primitives are Core, so their safety cannot live in a pack; plus the same policy in the static view checker (Tooling) and a real-browser strict CSP / Trusted Types smoke",
+  "guardrail": false,
+  "paths": ["src/kernel/**", "src/tooling/**", "src/index.ts", "test/**", "scripts/smoke-security.ts", "package.json", "bench/budgets.json", "docs/**", "examples/**/README.md", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md", "research/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
