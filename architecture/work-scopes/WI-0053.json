@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0053",
+  "reference": "kemiller2002/limen#18, kemiller2002/limen#19",
+  "placement": "Tooling / Conformance — payload budgets. bench/budgets.json requires a raise to be its own work item stating what grew and why.",
+  "guardrail": false,
+  "paths": ["bench/budgets.json", "docs/27-performance-baseline.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
