@@ -76,6 +76,10 @@
     {
       "workItem": "WI-0106",
       "change": "Added kernel-with-offline (kemiller2002/limen#40): the service-worker registration and update pack adds 4451 bytes gzip over the kernel (measured against kernel-only as it ships now), and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/offline/."
+    },
+    {
+      "workItem": "WI-0108",
+      "change": "Added kernel-with-worker-host (kemiller2002/limen#41): the page side of the worker host adds 2136 bytes gzip over the kernel as it ships now; the engine and the worker-side module load in the worker, never the page."
     }
   ],
   "profiles": [
@@ -219,6 +223,40 @@
       "budget": {
         "rawBytes": 116736,
         "gzipBytesBundled": 24576
+      }
+    },
+    {
+      "name": "kernel-with-worker-host",
+      "doc": "The kernel plus the worker host adapter's page side (./hosts/worker), as a page whose engine runs in a dedicated worker loads them. The worker's own modules and the engine load in the worker, not the page.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/hosts/worker-transport.js"
+      ],
+      "forbidden": [
+        "dist/capability-support/",
+        "dist/tooling/",
+        "dist/capabilities/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/",
+        "dist/hosts/worker-engine.js"
+      ],
+      "baseline": {
+        "rawBytes": 115953,
+        "gzipBytesBundled": 23929
+      },
+      "budget": {
+        "rawBytes": 128000,
+        "gzipBytesBundled": 26624
       }
     },
     {

@@ -103,6 +103,14 @@
       "types": "./dist/hosts/raw-wasm-transport.d.ts",
       "import": "./dist/hosts/raw-wasm-transport.js"
     },
+    "./hosts/worker": {
+      "types": "./dist/hosts/worker-transport.d.ts",
+      "import": "./dist/hosts/worker-transport.js"
+    },
+    "./hosts/worker-engine": {
+      "types": "./dist/hosts/worker-engine.d.ts",
+      "import": "./dist/hosts/worker-engine.js"
+    },
     "./testing": {
       "types": "./dist/tooling/fake-host.d.ts",
       "import": "./dist/tooling/fake-host.js"
@@ -232,6 +240,7 @@
     "check:views": "node --experimental-strip-types scripts/check-views.ts",
     "build:bench": "tsc -p tsconfig.bench.json",
     "bench": "npm run build && npm run build:bench && node --experimental-strip-types scripts/bench.ts",
+    "bench:worker": "npm run build && node --experimental-strip-types scripts/bench-worker.ts",
     "test:guests:sessions": "dotnet run --project guests/minimal/fsharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.fsproj -c Release --nologo && dotnet run --project guests/minimal/csharp/Limen.Minimal.Sessions/Limen.Minimal.Sessions.csproj -c Release --nologo && cargo test --quiet --manifest-path guests/minimal/rust/limen-minimal/Cargo.toml"
   },
   "devDependencies": {

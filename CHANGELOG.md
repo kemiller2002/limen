@@ -72,6 +72,19 @@ exhaustive lists.
     reset); anything else reloads the page;
   - a dev server that streams file changes.
   Development only; nothing in Core imports it.
+- **Worker-hosted engines (#41).** `./hosts/worker` (`WorkerTransport`) and
+  `./hosts/worker-engine` (`serveEngine`):
+  - any engine runs in a dedicated worker behind the same serialized contract;
+    the kernel, the DOM and every effect stay on the main thread;
+  - no DOM object or shared memory crosses, and the host never knows the guest
+    language;
+  - every worker failure is a named `WorkerFault` that terminates the worker
+    and rejects what was in flight; under the fallback host it becomes an
+    error id and a restart with a new worker;
+  - `npm run bench:worker` measures startup, round trip, large messages and
+    main-thread responsiveness. `docs/50` recommends a worker for long
+    transitions, not for large views.
+  `npm run smoke:guests` now runs the F#, C# and Rust engines in a worker too.
 - **Offline and application-update pack (#40).** `./capabilities/offline`
   (`offlineCapability()`, contract unit `limen.offline`, with bindings for
   TypeScript, F#, C# and Rust) and the optional service worker

@@ -88,6 +88,7 @@ Then, for depth:
 | 47 | [State-safe hot reload](https://github.com/kemiller2002/limen/blob/main/docs/47-hot-reload.md) | How does the edit loop swap CSS, remount HTML and replace an engine — keeping state only when a versioned snapshot proves it safe? |
 | 48 | [Page, connectivity and lifecycle evidence](https://github.com/kemiller2002/limen/blob/main/docs/48-page-lifecycle.md) | How does an engine learn that the network went away, the page was hidden, frozen or restored from the back/forward cache — and decide what that means itself? |
 | 49 | [Offline, service workers and application updates](https://github.com/kemiller2002/limen/blob/main/docs/49-offline-and-updates.md) | How does an application start with no network, keep and reconcile the user's work, and take a new version only when it decides to? |
+| 50 | [Worker-hosted engines](https://github.com/kemiller2002/limen/blob/main/docs/50-worker-hosting.md) | How does an engine in any language run off the main thread behind the same boundary, what happens when its worker fails, and when is that worth doing? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 
