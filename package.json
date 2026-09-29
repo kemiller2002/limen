@@ -95,6 +95,14 @@
       "types": "./dist/capabilities/credentials/index.d.ts",
       "import": "./dist/capabilities/credentials/index.js"
     },
+    "./capabilities/coordination": {
+      "types": "./dist/capabilities/coordination/index.d.ts",
+      "import": "./dist/capabilities/coordination/index.js"
+    },
+    "./capabilities/coordination/hub": {
+      "types": "./dist/capabilities/coordination/hub.d.ts",
+      "import": "./dist/capabilities/coordination/hub.js"
+    },
     "./hosts/fallback": {
       "types": "./dist/hosts/fallback.d.ts",
       "import": "./dist/hosts/fallback.js"

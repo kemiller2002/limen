@@ -72,6 +72,19 @@ exhaustive lists.
     reset); anything else reloads the page;
   - a dev server that streams file changes.
   Development only; nothing in Core imports it.
+- **Cross-context coordination pack (#46).** `./capabilities/coordination`
+  (`coordinationCapability()`, contract unit `limen.coordination`, with
+  bindings for TypeScript, F#, C# and Rust) and the optional SharedWorker hub
+  `./capabilities/coordination/hub`:
+  - same-origin channels over BroadcastChannel or the hub, never echoed to the
+    sender;
+  - Web Locks with `Busy`, queueing, cancellation and a steal reported as
+    `LockLost`; what a lock means stays the engine's;
+  - point-to-point frame messaging with one exact origin, refusing the wrong
+    origin and the wrong source;
+  - every message size-bounded and checked as JSON before an engine sees it.
+
+  The pack smoke runner gains second-tab actions and per-folder frame policies.
 - **Rendering surfaces behind governed adapters (#45).**
   [Example 10](https://github.com/kemiller2002/limen/blob/main/examples/10-canvas-surface/README.md) and `docs/52`:
   - a canvas scatter plot draws at frame rate behind the existing adapters

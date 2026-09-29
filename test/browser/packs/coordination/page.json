@@ -1,0 +1,1 @@
+{ "trustedTypes": ["limen-coordination"], "frames": { "allow": ["http://localhost:4194"], "ancestors": ["http://127.0.0.1:4194"] } }

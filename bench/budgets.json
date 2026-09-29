@@ -84,6 +84,10 @@
     {
       "workItem": "WI-0110",
       "change": "Added kernel-with-geolocation and kernel-with-credentials (kemiller2002/limen#42): the two permission-sensitive packs add 5128 and 6842 bytes gzip over the kernel as it ships now, including the shared capability-support/permissions module, and only to applications that register them. Earlier kernel-with-* capability profiles now also forbid both."
+    },
+    {
+      "workItem": "WI-0114",
+      "change": "Added kernel-with-coordination (kemiller2002/limen#46): the cross-context coordination pack adds 6841 bytes gzip over the kernel as it ships now, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/coordination/."
     }
   ],
   "profiles": [
@@ -154,7 +158,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 103024,
@@ -189,7 +194,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 102812,
@@ -224,7 +230,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 105920,
@@ -260,7 +267,8 @@
         "dist/capabilities/offline/",
         "dist/hosts/worker-engine.js",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 115953,
@@ -295,7 +303,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 122768,
@@ -331,7 +340,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 115285,
@@ -367,7 +377,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 132137,
@@ -405,7 +416,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 132375,
@@ -442,7 +454,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 131934,
@@ -479,7 +492,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 133014,
@@ -516,7 +530,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 134030,
@@ -554,7 +569,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 151216,
@@ -592,7 +608,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 137357,
@@ -630,7 +647,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 130595,
@@ -693,7 +711,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capabilities/credentials/"
+        "dist/capabilities/credentials/",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 127635,
@@ -836,7 +855,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/credentials/",
-        "dist/capability-support/handles.js"
+        "dist/capability-support/handles.js",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 135347,
@@ -874,7 +894,8 @@
         "dist/capabilities/lifecycle/",
         "dist/capabilities/offline/",
         "dist/capabilities/geolocation/",
-        "dist/capability-support/handles.js"
+        "dist/capability-support/handles.js",
+        "dist/capabilities/coordination/"
       ],
       "baseline": {
         "rawBytes": 144183,
@@ -882,6 +903,43 @@
       },
       "budget": {
         "rawBytes": 158720,
+        "gzipBytesBundled": 31744
+      }
+    },
+    {
+      "name": "kernel-with-coordination",
+      "doc": "The kernel plus the cross-context coordination pack (./capabilities/coordination), as an application that registers it loads them. The hub module runs in the SharedWorker, not the page.",
+      "entries": [
+        "dist/kernel/browser-kernel.js",
+        "dist/capabilities/coordination/index.js"
+      ],
+      "forbidden": [
+        "dist/tooling/",
+        "dist/hosts/",
+        "dist/engine/",
+        "dist/federation.js",
+        "dist/capability-support/",
+        "dist/capabilities/focus/",
+        "dist/capabilities/schedule/",
+        "dist/capabilities/measure/",
+        "dist/capabilities/events/",
+        "dist/capabilities/overlay/",
+        "dist/capabilities/realtime/",
+        "dist/capabilities/files/",
+        "dist/capabilities/store/",
+        "dist/capabilities/adapters/",
+        "dist/capabilities/transfer/",
+        "dist/capabilities/presentation/",
+        "dist/capabilities/environment/",
+        "dist/capabilities/lifecycle/",
+        "dist/capabilities/offline/"
+      ],
+      "baseline": {
+        "rawBytes": 151903,
+        "gzipBytesBundled": 28634
+      },
+      "budget": {
+        "rawBytes": 167936,
         "gzipBytesBundled": 31744
       }
     }

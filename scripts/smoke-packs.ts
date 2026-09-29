@@ -23,6 +23,7 @@ import { serveRealtime, upgradeRealtime } from "../test/browser/servers/realtime
 type Page = {
   goto(url: string): Promise<unknown>;
   url(): string;
+  close(): Promise<void>;
   goBack(options: { waitUntil: "commit" }): Promise<unknown>;
   evaluate<T>(fn: string): Promise<T>;
   addInitScript(script: { content: string }): Promise<void>;
@@ -66,12 +67,15 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = { ".html": "text/html; c
 // A page whose host creates Trusted Types policies names them in page.json
 // (service-worker registration is a Trusted Types sink, so no policy means no
 // worker). Only those names are allowed, and only for that page's folder.
-const policyFor = (trustedTypes: ReadonlyMap<string, readonly string[]>, path: string): string => {
-  const names = [...trustedTypes].find(([pack]) => path.startsWith(`/${PACKS}/${pack}/`))?.[1];
-  return names === undefined ? POLICY : POLICY.replace("trusted-types 'none'", `trusted-types ${names.join(" ")}`);
+const policyFor = (configs: ReadonlyMap<string, PageConfig>, path: string): string => {
+  const config = [...configs].find(([pack]) => path.startsWith(`/${PACKS}/${pack}/`))?.[1];
+  const names = config?.trustedTypes;
+  const frames = config?.frames;
+  const typed = names === undefined ? POLICY : POLICY.replace("trusted-types 'none'", `trusted-types ${names.join(" ")}`);
+  return frames === undefined ? typed : `${typed.replace("frame-ancestors 'none'", `frame-ancestors 'self' ${frames.ancestors.join(" ")}`)}; frame-src 'self' ${frames.allow.join(" ")}`;
 };
 
-const serve = (trustedTypes: ReadonlyMap<string, readonly string[]>): Promise<Server> => {
+const serve = (configs: ReadonlyMap<string, PageConfig>): Promise<Server> => {
   const server = createServer((request, response) => {
     // Same-origin test endpoints a pack page may need (realtime, HTTP, offline); not files.
     if (serveRealtime(request, response) || serveHttp(request, response) || serveOffline(request, response)) return;
@@ -79,7 +83,7 @@ const serve = (trustedTypes: ReadonlyMap<string, readonly string[]>): Promise<Se
     const file = join(ROOT, path.endsWith("/") ? `${path}index.html` : path);
     if (!file.startsWith(ROOT)) { response.writeHead(403).end(); return; }
     readFile(file).then(
-      (body) => { response.writeHead(200, { "Content-Type": CONTENT_TYPES[extname(file)] ?? "application/octet-stream", "Content-Security-Policy": policyFor(trustedTypes, path) }).end(body); },
+      (body) => { response.writeHead(200, { "Content-Type": CONTENT_TYPES[extname(file)] ?? "application/octet-stream", "Content-Security-Policy": policyFor(configs, path) }).end(body); },
       () => { response.writeHead(404).end(); },
     );
   });
@@ -133,6 +137,10 @@ type Action =
   // A virtual WebAuthn authenticator (a platform passkey provider) through the
   // DevTools protocol; a second call changes whether it verifies the user.
   | { readonly kind: "authenticator"; readonly userVerified: boolean }
+  // A second tab of the same application (same browser context), and closing
+  // the most recent one: another context for cross-context packs.
+  | { readonly kind: "openPage"; readonly url: string }
+  | { readonly kind: "closePage" }
   | { readonly kind: "setFiles"; readonly selector: string; readonly files: readonly { readonly name: string; readonly mimeType: string; readonly base64?: string; readonly size?: number }[] };
 
 // A file for setFiles: given bytes, or `size` bytes of the repeating pattern
@@ -152,6 +160,9 @@ const quietly = (session: CdpSession): Quiet => async <T>(expression: string): P
   const result: unknown = typeof answer === "object" && answer !== null ? Reflect.get(answer, "result") : undefined;
   return (typeof result === "object" && result !== null ? Reflect.get(result, "value") : undefined) as T;
 };
+
+// The extra tabs each pack page opened, most recent last.
+const extraPages = new WeakMap<Page, Page[]>();
 
 const perform = async (page: Page, context: Context, cdp: () => Promise<CdpSession>, action: Action): Promise<void> => {
   switch (action.kind) {
@@ -196,6 +207,18 @@ const perform = async (page: Page, context: Context, cdp: () => Promise<CdpSessi
     case "setGeolocation":
       await context.setGeolocation({ latitude: action.latitude, longitude: action.longitude, accuracy: action.accuracy });
       return;
+    case "openPage": {
+      const extra = await context.newPage();
+      extraPages.set(page, [...(extraPages.get(page) ?? []), extra]);
+      await extra.goto(new URL(`/${action.url}`, page.url()).href);
+      return;
+    }
+    case "closePage": {
+      const extras = extraPages.get(page) ?? [];
+      await extras.at(-1)?.close();
+      extraPages.set(page, extras.slice(0, -1));
+      return;
+    }
     case "authenticator": {
       const session = await cdp();
       const existing = authenticators.get(session);
@@ -243,7 +266,9 @@ const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession
 };
 
 // What a pack directory's optional page.json may say.
-type PageConfig = { readonly url?: string; readonly host?: "localhost"; readonly backForwardCache?: boolean; readonly trustedTypes?: readonly string[] };
+// frames: origins this folder's pages may frame (frame-src) and be framed by
+// (frame-ancestors), each an exact origin.
+type PageConfig = { readonly url?: string; readonly host?: "localhost"; readonly backForwardCache?: boolean; readonly trustedTypes?: readonly string[]; readonly frames?: { readonly allow: readonly string[]; readonly ancestors: readonly string[] } };
 
 const configOf = (pack: string): Promise<PageConfig> =>
   readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text): PageConfig => {
@@ -252,7 +277,15 @@ const configOf = (pack: string): Promise<PageConfig> =>
     const url = field("url");
     const trustedTypes = field("trustedTypes");
     const names = Array.isArray(trustedTypes) ? trustedTypes.filter((name): name is string => typeof name === "string" && /^[A-Za-z0-9-]+$/.test(name)) : [];
-    return { ...(typeof url === "string" ? { url } : {}), ...(field("host") === "localhost" ? { host: "localhost" as const } : {}), backForwardCache: field("backForwardCache") === true, ...(names.length > 0 ? { trustedTypes: names } : {}) };
+    const frames = field("frames");
+    const origins = (name: string): readonly string[] => {
+      const list: unknown = typeof frames === "object" && frames !== null ? Reflect.get(frames, name) : undefined;
+      return Array.isArray(list) ? list.filter((origin): origin is string => typeof origin === "string" && /^https?:\/\/[a-z0-9.-]+(:\d+)?$/.test(origin)) : [];
+    };
+    return {
+      ...(typeof url === "string" ? { url } : {}), ...(field("host") === "localhost" ? { host: "localhost" as const } : {}), backForwardCache: field("backForwardCache") === true, ...(names.length > 0 ? { trustedTypes: names } : {}),
+      ...(frames !== undefined ? { frames: { allow: origins("allow"), ancestors: origins("ancestors") } } : {}),
+    };
   }, () => ({}));
 
 const runPack = async (browser: Browser, pack: string, config: PageConfig): Promise<readonly string[]> => {
@@ -311,7 +344,7 @@ if (chromium === undefined) {
   }
 } else {
   const configs = new Map(await Promise.all(packs.map(async (pack) => [pack, await configOf(pack)] as const)));
-  const server = await serve(new Map([...configs].flatMap(([pack, config]) => (config.trustedTypes !== undefined ? [[pack, config.trustedTypes] as const] : []))));
+  const server = await serve(configs);
   const browser = await chromium.launch();
   // Playwright's default Chromium is the headless shell with the back/forward
   // cache switched off. A pack that needs the cache gets full Chromium with the
