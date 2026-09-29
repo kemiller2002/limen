@@ -14,7 +14,10 @@ let describeOutcome (outcome: EffectOutcome) : string =
         | HttpFailureReason.InvalidResponse -> "invalid response"
         | HttpFailureReason.TooLarge -> "too large"
     | EffectOutcome.Cancelled -> "cancelled"
-    | EffectOutcome.OutcomeUnknown -> "unknown: reconcile before retrying"
+    | EffectOutcome.OutcomeUnknown reason ->
+        match reason with
+        | OutcomeUnknownReason.TimeoutAfterDispatch -> "unknown (timed out): reconcile before retrying"
+        | OutcomeUnknownReason.ConnectionLost -> "unknown (connection lost): reconcile before retrying"
 
 let describeResult (result: EffectResult) : string =
     match result with

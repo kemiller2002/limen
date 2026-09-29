@@ -12,7 +12,7 @@ public static class Consumer
         success: value => "success " + value.Status,
         failure: value => value.Reason.Match(network: () => "network", aborted: () => "aborted", invalidResponse: () => "invalid response", tooLarge: () => "too large"),
         cancelled: _ => "cancelled",
-        outcomeUnknown: _ => "unknown: reconcile before retrying");
+        outcomeUnknown: value => value.Reason.Match(timeoutAfterDispatch: () => "unknown (timed out): reconcile before retrying", connectionLost: () => "unknown (connection lost): reconcile before retrying"));
 
     public static string DescribeResult(EffectResult result) => result.Match(
         httpResult: value => DescribeOutcome(value.Outcome),

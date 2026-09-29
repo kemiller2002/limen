@@ -1,7 +1,7 @@
 //! How an engine is expected to handle contract unions in Rust: every variant
 //! matched, no wildcard. A new variant in the contract must break this build.
 
-use limen_contract::limen_core::{EffectOutcome, EffectResult, HttpFailureReason};
+use limen_contract::limen_core::{EffectOutcome, EffectResult, HttpFailureReason, OutcomeUnknownReason};
 
 pub fn describe_outcome(outcome: &EffectOutcome) -> String {
     match outcome {
@@ -13,7 +13,10 @@ pub fn describe_outcome(outcome: &EffectOutcome) -> String {
             HttpFailureReason::TooLarge => "too large".to_string(),
         },
         EffectOutcome::Cancelled => "cancelled".to_string(),
-        EffectOutcome::OutcomeUnknown => "unknown: reconcile before retrying".to_string(),
+        EffectOutcome::OutcomeUnknown { reason } => match reason {
+            OutcomeUnknownReason::TimeoutAfterDispatch => "unknown (timed out): reconcile before retrying".to_string(),
+            OutcomeUnknownReason::ConnectionLost => "unknown (connection lost): reconcile before retrying".to_string(),
+        },
     }
 }
 
