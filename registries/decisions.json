@@ -108,5 +108,41 @@
     "work_items": [
       "WI-0037"
     ]
+  },
+  {
+    "author_agent": "claude-code",
+    "created": "2026-09-29",
+    "external_references": [
+      "kemiller2002/limen#37",
+      "kemiller2002/limen#19"
+    ],
+    "id": "DF-LIMEN-2026-0004",
+    "path": "research/decisions/DF-LIMEN-2026-0004--virtualization-evidence-gate.md",
+    "related_documents": [
+      "docs/27-performance-baseline.md",
+      "bench/results/baseline-2026-09-29.json"
+    ],
+    "related_projects": [
+      "limen"
+    ],
+    "status": "accepted",
+    "superseded_by": [],
+    "supersedes": [],
+    "tags": [
+      "performance",
+      "virtualization",
+      "evidence-gate",
+      "lcp-015"
+    ],
+    "title": "Virtualization is not built — the evidence gate is not met",
+    "type": "decision-record",
+    "updated": "2026-09-29",
+    "version": "1.0.0",
+    "work_items": [
+      "WI-0099",
+      "WI-0042",
+      "WI-0043",
+      "WI-0045"
+    ]
   }
 ]

@@ -1510,10 +1510,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T11:19:27Z",
-      "updatedAt": "2026-09-29T11:19:28Z",
+      "updatedAt": "2026-09-29T11:19:42Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
