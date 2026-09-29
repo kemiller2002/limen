@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T07:54:32Z",
+  "updatedAt": "2026-09-29T07:59:32Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1271,24 +1271,48 @@
     {
       "id": "WI-0063",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T07:54:31Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/schedule/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/schedule.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/schedule/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:59:32Z",
       "telemetryExecutionIds": [
         "EXE-20260929T075431409Z-cb0221df"
-      ]
+      ],
+      "completedAt": "2026-09-29T07:59:32Z"
     },
     {
       "id": "WI-0064",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T07:54:32Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/targets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T07:59:32Z",
       "telemetryExecutionIds": [
         "EXE-20260929T075432618Z-306f6767"
-      ]
+      ],
+      "completedAt": "2026-09-29T07:59:32Z"
     }
   ]
 }

@@ -67,5 +67,5 @@
 | WI-0060 | Language-neutral form-state semantics (scenario vectors) with the F# reference engine library (GH-21) | complete |  | medium |
 | WI-0061 | Kernel form-control values: checkbox checked state, radio groups, select-multiple values and submitter identity reach the engine (GH-21, found while defining form semantics) | complete |  | medium |
 | WI-0062 | Language-neutral async-resource and optimistic-mutation semantics with the F# reference engine library (GH-22) | complete |  | medium |
-| WI-0063 | Scheduling capability pack: timeout, animation frame, idle; typed, cancellable, exactly-once (GH-24) | active |  | medium |
-| WI-0064 | Guardrail: register the limen.schedule contract unit and its generated bindings (GH-24) | ready |  | medium |
+| WI-0063 | Scheduling capability pack: timeout, animation frame, idle; typed, cancellable, exactly-once (GH-24) | complete |  | medium |
+| WI-0064 | Guardrail: register the limen.schedule contract unit and its generated bindings (GH-24) | complete |  | medium |
