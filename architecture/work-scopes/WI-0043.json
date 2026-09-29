@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0043",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Core (core-kernel), mechanism only — projection skips a DOM write when the element already holds the projected value: data-text, plain attributes and URL attributes compare with the live DOM value first (never a cached one, so drift introduced outside the kernel is still corrected). No new concept, file, export or primitive; the Core budget measures the growth. Evidence before and after from npm run bench.",
+  "guardrail": false,
+  "paths": ["src/kernel/browser-kernel.ts", "test/kernel.test.ts", "bench/results/**", "bench/budgets.json", "docs/27-performance-baseline.md", "docs/ROADMAP.md", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
