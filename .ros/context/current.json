@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T16:20:16Z",
+  "updatedAt": "2026-09-29T16:28:00Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -2546,13 +2546,23 @@
     {
       "id": "WI-0118",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T14:50:04Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "architecture/layers.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/renderer.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:28:00Z",
       "telemetryExecutionIds": [
         "EXE-20260929T145004999Z-889d87ca"
-      ]
+      ],
+      "completedAt": "2026-09-29T16:28:00Z"
     },
     {
       "id": "WI-0119",
@@ -2568,13 +2578,27 @@
     {
       "id": "WI-0120",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T16:20:16Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tools/guardrails/core.ts"
+        },
+        {
+          "type": "manifest",
+          "path": "architecture/core.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/core-boundary.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T16:28:00Z",
       "telemetryExecutionIds": [
         "EXE-20260929T162017034Z-73108c3f"
-      ]
+      ],
+      "completedAt": "2026-09-29T16:28:00Z"
     }
   ]
 }
