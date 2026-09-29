@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0104",
+  "reference": "kemiller2002/limen#40",
+  "placement": "Guardrail — the F#, C# and Rust compile-pressure consumers are guardrail-owned: they prove an added variant breaks every language's build. Protocol 1.4 gave OutcomeUnknown a reason field typed by the new OutcomeUnknownReason enum, so each consumer names both reasons; the pressure check itself is unchanged and still demands exhaustive matching.",
+  "guardrail": true,
+  "paths": [
+    "guests/csharp/Limen.Contract.Pressure/Consumer.cs",
+    "guests/fsharp/Limen.Contract.Pressure/Consumer.fs",
+    "guests/rust/limen-contract/examples/consumer.rs"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
