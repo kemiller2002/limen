@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title data-text="title">Catalogue</title>
+  <meta name="description" data-bind-content="description" content="">
+  <meta name="robots" data-bind-content="robots" content="index">
+  <link rel="canonical" data-bind-href="canonical" href="/">
+</head>
+<body>
+  <main>
+    <h1 data-text="heading">Catalogue</h1>
+    <p id="status" data-text="status">Loading…</p>
+    <template data-if="showList">
+      <ul id="items">
+        <template data-each="items" data-key="id">
+          <li><a data-bind-href="href" data-text="name">item</a> <span data-text="price">0</span></li>
+        </template>
+      </ul>
+    </template>
+    <template data-if="showDetail">
+      <article id="detail">
+        <h2 data-text="detailName">name</h2>
+        <p data-text="detailText">text</p>
+        <a id="back" href="/">All items</a>
+      </article>
+    </template>
+    <p id="recent" data-text="recent">…</p>
+    <section id="stock" data-client-only>
+      <p>Live stock levels appear once the page is running.</p>
+    </section>
+    <button type="button" data-event="refresh">Refresh</button>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

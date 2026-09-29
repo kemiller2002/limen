@@ -35,6 +35,24 @@ export async function withDom<T>(bodyHtml: string, run: (document: Document) => 
   }
 }
 
+// A whole document (head included) at a given URL, with the same globals as
+// withDom. For pages whose <head> is bound, and for server-rendered output.
+export async function withDocument<T>(html: string, url: string, run: (document: Document) => Promise<T>): Promise<T> {
+  const dom = new JSDOM(html, { url });
+  const globals = globalThis as unknown as Globals;
+  const saved = new Map<string, unknown>();
+  for (const key of DOM_GLOBALS) {
+    saved.set(key, globals[key]);
+    globals[key] = (dom.window as unknown as Globals)[key];
+  }
+  try {
+    return await run(dom.window.document);
+  } finally {
+    for (const key of DOM_GLOBALS) globals[key] = saved.get(key);
+    dom.window.close();
+  }
+}
+
 // Reads an example's real index.html and returns its <body> markup with the
 // module <script> removed. Tests drive the actual shipped file rather than a
 // copy of its markup, so an example whose HTML drifts from its documented
