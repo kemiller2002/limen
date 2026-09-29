@@ -106,6 +106,11 @@ exhaustive lists.
   binding, answers the fingerprint handshake with the shared guest library,
   and the site's kernel now requires it (`requireHandshake: true`).
 
+- **Duplicate in-flight correlation ids are refused.** The kernel no longer
+  executes an effect whose correlation id is still in flight (which used to
+  overwrite the first effect's abort controller); it reports a protocol
+  diagnostic instead. Ids may be reused after completion.
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a

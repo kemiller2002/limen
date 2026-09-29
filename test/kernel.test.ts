@@ -972,3 +972,56 @@ test("a radio reports its own value, so one event name covers the whole group", 
     },
   );
 });
+
+// ---------------------------------------------------------------------------
+// Duplicate in-flight correlation ids (conformance negative vector, #32)
+// ---------------------------------------------------------------------------
+
+test("a second effect under a correlation id still in flight is refused, and the first still completes and can still be cancelled", async () => {
+  const { sink, events } = collectDiagnostics();
+  const correlationId = withCorrelation("dup");
+  const gate = deferredValue<Response>();
+  const fetched: string[] = [];
+  const transport = new ScriptedTransport((message) => {
+    if (message.kind === "Initialize") {
+      return respond({ effects: [
+        { kind: "Http", correlationId, method: "GET", url: "/first", timeoutMs: 10_000 },
+        { kind: "Http", correlationId, method: "POST", url: "/second", timeoutMs: 10_000 },
+      ] });
+    }
+    return respond();
+  });
+  await withFetch(async (url) => { fetched.push(String(url)); return gate.promise; }, async () => {
+    await withDom(`<p></p>`, async (document) => {
+      const started = new BrowserKernel(transport, document, sink).start();
+      await flush();
+      assert.deepEqual(fetched, ["/first"], "the duplicate never reached the network");
+      assert.ok(events.some((event) => event.kind === "BridgeError" && event.phase === "protocol" && event.detail.includes("already in flight")));
+      gate.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      await started;
+      await flush();
+      const results = transport.calls.filter((call) => call.kind === "EffectResult");
+      assert.equal(results.length, 1, "exactly one answer for the one request that ran");
+    });
+  });
+});
+
+test("a correlation id may be reused once its earlier effect has completed", async () => {
+  const correlationId = withCorrelation("again");
+  const fetched: string[] = [];
+  const transport = new ScriptedTransport((message, calls) => {
+    if (message.kind === "Initialize") return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/one", timeoutMs: 1000 }] });
+    if (message.kind === "EffectResult" && calls.filter((call) => call.kind === "EffectResult").length === 1) {
+      return respond({ effects: [{ kind: "Http", correlationId, method: "GET", url: "/two", timeoutMs: 1000 }] });
+    }
+    return respond();
+  });
+  await withFetch(async (url) => { fetched.push(String(url)); return new Response("{}", { status: 200 }); }, async () => {
+    await withDom(`<p></p>`, async (document) => {
+      await new BrowserKernel(transport, document).start();
+      await flush();
+      await flush();
+      assert.deepEqual(fetched, ["/one", "/two"]);
+    });
+  });
+});

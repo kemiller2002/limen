@@ -214,6 +214,13 @@ defineCapability<FocusRequest, FocusOutcome, never>({
 });
 ```
 
+**Correlation ids are unique while in flight.** For every effect kind, a
+request whose correlation id belongs to an effect that has not yet been
+answered is refused — not executed — and reported as
+`BridgeError { phase: "protocol" }`: two answers under one id would be
+indistinguishable to the engine. An id may be reused once its earlier effect
+has completed.
+
 Rules a pack must follow:
 
 - **Offered is not permitted.** Permission, availability and user-gesture

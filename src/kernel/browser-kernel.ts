@@ -111,6 +111,11 @@ function makeEvent(name: string, key: string | undefined, value: string | undefi
 
 export class BrowserKernel {
   readonly #controllers = new Map<CorrelationId, AbortController>();
+  // Every effect from request until its result is handed back. A second
+  // request under an id that is still in flight would make the two answers
+  // indistinguishable to the engine — and would overwrite the first one's
+  // abort controller — so it is refused, never executed.
+  readonly #inFlight = new Set<CorrelationId>();
   // The element is kept alongside its callback so an unmounted binding (a
   // data-if that closed, a data-each row removed) can be pruned at flush time.
   readonly #flushable = new Map<HTMLFormElement, Array<{ readonly element: HTMLElement; readonly fire: () => Promise<void> }>>();
@@ -389,11 +394,17 @@ export class BrowserKernel {
   }
 
   async #executeEffect(effect: EffectRequest): Promise<void> {
+    if (this.#inFlight.has(effect.correlationId)) {
+      this.#diagnostics.report({ kind: "BridgeError", phase: "protocol", detail: `${effect.kind} not executed: correlation id ${effect.correlationId} is already in flight` });
+      return;
+    }
+    this.#inFlight.add(effect.correlationId);
     const started = performance.now();
     let result: EffectResult;
     try {
       result = await this.#runEffect(effect);
     } catch (error) {
+      this.#inFlight.delete(effect.correlationId);
       // The kernel could not run the effect at all: an effect kind it does not
       // implement, or a browser API that threw where its own contract says it
       // cannot. There is no outcome it could report honestly, so it reports
@@ -403,6 +414,7 @@ export class BrowserKernel {
       this.#diagnostics.report({ kind: "BridgeError", phase: "effect", detail: String(error) });
       return;
     }
+    this.#inFlight.delete(effect.correlationId);
     this.#diagnostics.report({ kind: "EffectTiming", correlationId: effect.correlationId, durationMs: performance.now() - started });
     await this.#send({ kind: "EffectResult", result });
   }
