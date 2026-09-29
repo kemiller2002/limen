@@ -31,6 +31,15 @@ exhaustive lists.
 
 ### Added
 
+- **Language-neutral routing semantics and the F# reference library (#20).**
+  `conformance/routing/` defines routing as data: 40 resolutions, 12 builds
+  and a deep-link, navigation and history session. It covers nested routes,
+  typed path and query parameters with deterministic failures, wildcard
+  fallback, redirects with loop rejection, guards as engine decisions (not
+  authorization), resource preconditions and canonical links. Adopting a
+  reported location never pushes. `libraries/fsharp/Limen.Routing` is a pure
+  engine library that agrees with every vector (`npm run test:libraries`).
+  The kernel and the protocol are unchanged.
 - **Focus, selection and scroll capability pack (#23).** The first shipped
   optional pack: `./capabilities/focus` (`focusCapability()`, contract unit
   `limen.focus`, with bindings for TypeScript, F#, C# and Rust). It supports

@@ -260,6 +260,7 @@ npm run check:views        # every page against its *.view.json contract (docs/2
 npm run smoke:security     # strict CSP + Trusted Types in Chromium: kernel and guests (docs/29)
 npm run smoke:packs        # every capability pack page in Chromium under strict CSP (test/browser/packs/)
 npm run test:guests        # F#, C#, Rust bindings: strict build + shared vectors
+npm run test:libraries     # engine libraries (F# routing) against their language-neutral vectors
                            #   (needs .NET SDK 8 and cargo; crates.io is reachable)
 npm run test:cli           # dotnet test — the F# lifecycle core (needs .NET SDK 8)
 npm run build:cli          # publish the CLI binary for this platform

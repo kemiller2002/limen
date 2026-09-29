@@ -52,3 +52,9 @@ bench/results/latest.json
 #   npx @echelon-foundry/visual-engineering init
 .visual-engineering/
 # END echelon:visual-engineering
+
+# Engine libraries and their conformance runners (.NET build output).
+libraries/**/bin/
+libraries/**/obj/
+conformance/**/bin/
+conformance/**/obj/
