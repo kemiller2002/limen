@@ -36,5 +36,40 @@
     "work_items": [
       "WI-0028"
     ]
+  },
+  {
+    "author_agent": "claude-code",
+    "created": "2026-09-29",
+    "external_references": [
+      "kemiller2002/limen#53",
+      "kemiller2002/limen#51"
+    ],
+    "id": "DF-LIMEN-2026-0002",
+    "path": "research/decisions/DF-LIMEN-2026-0002--dependency-direction-and-work-item-scope.md",
+    "related_documents": [
+      "architecture/layers.json",
+      "architecture/guardrails.json",
+      "docs/25-guardrails.md"
+    ],
+    "related_projects": [
+      "limen"
+    ],
+    "status": "accepted",
+    "superseded_by": [],
+    "supersedes": [],
+    "tags": [
+      "guardrails",
+      "governance",
+      "architecture",
+      "dependency-direction",
+      "scope"
+    ],
+    "title": "Dependency directions and work-item scope are enforced mechanically, per commit",
+    "type": "decision-record",
+    "updated": "2026-09-29",
+    "version": "1.0.0",
+    "work_items": [
+      "WI-0034"
+    ]
   }
 ]
