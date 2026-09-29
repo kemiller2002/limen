@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 103,
+  "nextSeq": 104,
   "items": [
     {
       "id": "WI-0001",
@@ -1556,6 +1556,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T11:37:58Z",
       "updatedAt": "2026-09-29T11:40:52Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0103",
+      "title": "Core Http: a thrown fetch for a non-safe method is OutcomeUnknown(connection-lost), not a retryable Failure(network); protocol 1.4 (GH-40, found while proving the offline outbox)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:42:58Z",
+      "updatedAt": "2026-09-29T11:42:58Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
