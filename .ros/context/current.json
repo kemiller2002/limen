@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T09:57:45Z",
+  "updatedAt": "2026-09-29T10:00:22Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1727,35 +1727,69 @@
     {
       "id": "WI-0083",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T09:41:00Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/http-profile.test.ts"
+        },
+        {
+          "type": "smoke",
+          "path": "test/browser/packs/core-http/main.js"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:00:21Z",
       "telemetryExecutionIds": [
         "EXE-20260929T094100408Z-cc0f5047"
-      ]
+      ],
+      "completedAt": "2026-09-29T10:00:21Z"
     },
     {
       "id": "WI-0084",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T09:57:15Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/fsharp/Limen.Contract.Pressure/Consumer.fs"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/guest-pressure.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:00:21Z",
       "telemetryExecutionIds": [
         "EXE-20260929T095715762Z-e9a3171f"
-      ]
+      ],
+      "completedAt": "2026-09-29T10:00:21Z"
     },
     {
       "id": "WI-0085",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T09:57:45Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/budgets.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/bench-size.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-29T10:00:22Z",
       "telemetryExecutionIds": [
         "EXE-20260929T095746055Z-83d233d9"
-      ]
+      ],
+      "completedAt": "2026-09-29T10:00:22Z"
     }
   ]
 }
