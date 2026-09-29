@@ -4,7 +4,7 @@
 // unit: limen.fixture.echo@1
 // contract-fingerprint: sha256:9aa4755b6c0ba31cd6cd385f9ce4faf2820567f53907e3378445be4c2ae08b23
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:08dd5e34f012a6ba6cd1be137bd88eec7f542c816d8310653876805c6234d76a
+// content-hash: sha256:3bbab1dd6ce85cae9a2d7c6e95c0ff5b64852fc2af6d3f61659ba83c66cd10fa
 // </auto-generated>
 #nullable enable
 
@@ -20,6 +20,7 @@ public static class Contract
     public const string Fingerprint = "sha256:9aa4755b6c0ba31cd6cd385f9ce4faf2820567f53907e3378445be4c2ae08b23";
 }
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record EchoRequest
 {
     private EchoRequest() { }
@@ -38,6 +39,7 @@ public abstract record EchoRequest
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record EchoResult
 {
     private EchoResult() { }

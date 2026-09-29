@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 36,
+  "nextSeq": 37,
   "items": [
     {
       "id": "WI-0001",
@@ -609,6 +609,22 @@
       "createdBy": "claude-code",
       "source": "github",
       "sourceReference": "kemiller2002/limen#54"
+    },
+    {
+      "id": "WI-0036",
+      "title": "GH-55: guest compiler enforcement — added-variant compile pressure in F#/C#/Rust, Roslyn analyzer for C# closed-union handling and escape hatches, C# enum Match",
+      "description": null,
+      "tags": [
+        "limen,gh-55,guardrail,guests"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T05:30:34Z",
+      "updatedAt": "2026-09-29T05:30:34Z",
+      "createdBy": "claude-code",
+      "source": "github",
+      "sourceReference": "kemiller2002/limen#55"
     }
   ]
 }

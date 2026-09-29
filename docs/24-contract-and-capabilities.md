@@ -63,7 +63,7 @@ in that language's strongest closed representation:
 | Language | Project | Unions | Absence | Exhaustiveness |
 | --- | --- | --- | --- | --- |
 | F# | `guests/fsharp/Limen.Contract` | `[<RequireQualifiedAccess>]` discriminated unions | `option` | compiler; incomplete matches are errors (`--warnaserror:25`) |
-| C# | `guests/csharp/Limen.Contract` | abstract records closed by a private constructor, sealed nested variants | `#nullable enable` | a generated `Match` with one handler per variant: a new variant breaks every call site |
+| C# | `guests/csharp/Limen.Contract` | abstract records closed by a private constructor, sealed nested variants, `[ClosedUnion]` | `#nullable enable` (reading an optional field without handling absence is CS8602, an error) | a generated `Match` with one handler per variant (unions and enums): a new variant breaks every call site; the **Limen analyzer** (`guests/csharp/Limen.Contract.Analyzers`) makes `Match` the only way — `LIMEN001` rejects `switch` over a contract union or enum, `LIMEN002` rejects `dynamic` and `Dictionary<string, object>`, `LIMEN003` rejects calling the wire plumbing directly |
 | Rust | `guests/rust/limen-contract` | `enum` (never `#[non_exhaustive]`) | `Option` | compiler; `#![deny(warnings)]`, `#![forbid(unsafe_code)]` |
 
 Common rules, identical in every language:
@@ -97,6 +97,16 @@ SHA-256) and compares it with the constant in its generated binding.
 node --experimental-strip-types --test test/conformance-vectors.test.ts   # TypeScript (part of npm test)
 npm run test:guests          # F#, C# and Rust (CI job "Guest bindings")
 ```
+
+### Compile pressure, demonstrated
+
+`npm run test:guests:pressure` (part of `test:guests`) adds a variant to
+`EffectOutcome` and a value to `HttpFailureReason` in a scratch copy of the
+contract, regenerates, and rebuilds a reference consumer in each language —
+code that handles every case the idiomatic way (F# `match` with no wildcard,
+C# `Match`, Rust `match` with no `_`). All three must fail to compile (`FS0025`,
+`CS7036`, `E0004`), and all three must compile against the real contract. It
+also requires each C# analyzer fixture to fail with its own rule.
 
 ## The fingerprint
 

@@ -4,7 +4,7 @@
 // unit: (runtime: shared by every unit)
 // contract-fingerprint: (none)
 // generator: limen-contract-gen/1 (csharp-runtime)
-// content-hash: sha256:46c410f78ba257a219c4d6043cc8cc9a5605d8c2fc8a099eaa50a49d0f0e85ae
+// content-hash: sha256:f1d2db50e19a69e3f654ba5bc4f4a01b8fdbd33774e5b62ae6fb201757887bce
 // </auto-generated>
 #nullable enable
 
@@ -15,6 +15,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Limen.Contract;
+
+/// <summary>Marks a generated closed union or enum. Handle it with its generated Match, never a switch: the Limen analyzer (LIMEN001) enforces this, because C# cannot prove a switch over it exhaustive.</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
+public sealed class ClosedUnionAttribute : Attribute
+{
+}
 
 /// <summary>An opaque JSON value, filled and read only by another generated binding (a capability payload) or by the engine's own decoder (an Http body).</summary>
 public readonly record struct RawJson(string Text);

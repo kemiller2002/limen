@@ -4,7 +4,7 @@
 // unit: limen.fixture.echo@1
 // contract-fingerprint: sha256:9aa4755b6c0ba31cd6cd385f9ce4faf2820567f53907e3378445be4c2ae08b23
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:aa9762fbfc0d1d6d26996f4a3e888250274bbf5246ef6e71261bf368a97efc71
+// content-hash: sha256:b31e38f7c08f9dc46fe7b6fca9e62c128cd3c40f73762107d30bc288bf8fccda
 // </auto-generated>
 //! A test-only capability that proves a new capability family can be added without changing Core. It echoes text, optionally after waiting (so cancellation can be observed), and emits a fact on request.
 
@@ -124,6 +124,36 @@ pub fn encode_echo_result(value: &EchoResult) -> Value {
 
 pub fn encode_echo_fact(value: &EchoFact) -> Value {
     wire::of_object(vec![Some(("text", wire::of_string(&value.text)))])
+}
+
+/// Parses untrusted JSON text into a EchoRequest, or says where and why it is not one.
+pub fn parse_echo_request(json: &str) -> Result<EchoRequest, DecodeError> {
+    wire::parse(json, decode_echo_request)
+}
+
+/// Serializes a EchoRequest to wire JSON text.
+pub fn serialize_echo_request(value: &EchoRequest) -> String {
+    encode_echo_request(value).to_string()
+}
+
+/// Parses untrusted JSON text into a EchoResult, or says where and why it is not one.
+pub fn parse_echo_result(json: &str) -> Result<EchoResult, DecodeError> {
+    wire::parse(json, decode_echo_result)
+}
+
+/// Serializes a EchoResult to wire JSON text.
+pub fn serialize_echo_result(value: &EchoResult) -> String {
+    encode_echo_result(value).to_string()
+}
+
+/// Parses untrusted JSON text into a EchoFact, or says where and why it is not one.
+pub fn parse_echo_fact(json: &str) -> Result<EchoFact, DecodeError> {
+    wire::parse(json, decode_echo_fact)
+}
+
+/// Serializes a EchoFact to wire JSON text.
+pub fn serialize_echo_fact(value: &EchoFact) -> String {
+    encode_echo_fact(value).to_string()
 }
 
 /// Decode-then-encode by type name. Used only by the shared conformance runner.

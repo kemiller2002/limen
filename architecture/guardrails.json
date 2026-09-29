@@ -20,7 +20,12 @@
     "test/scope.test.ts",
     "architecture/typescript-boundary.json",
     "test/typescript-boundary.test.ts",
-    "test/fixtures/negative/**"
+    "test/fixtures/negative/**",
+    "scripts/guest-pressure.ts",
+    "guests/csharp/Limen.Contract.Analyzers/**",
+    "guests/csharp/Limen.Contract.Pressure/**",
+    "guests/fsharp/Limen.Contract.Pressure/**",
+    "guests/rust/limen-contract/examples/consumer.rs"
   ],
   "exemptPaths": [
     ".ros/**",

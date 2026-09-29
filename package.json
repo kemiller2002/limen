@@ -115,13 +115,14 @@
     "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh",
     "contract:generate": "node --experimental-strip-types tools/contract-gen/main.ts generate",
     "contract:check": "node --experimental-strip-types tools/contract-gen/main.ts check",
-    "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust",
+    "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust && npm run test:guests:pressure",
     "test:guests:fsharp": "dotnet run --project guests/fsharp/Limen.Contract.Conformance/Limen.Contract.Conformance.fsproj -c Release --nologo",
     "test:guests:csharp": "dotnet run --project guests/csharp/Limen.Contract.Conformance/Limen.Contract.Conformance.csproj -c Release --nologo",
     "test:guests:rust": "cargo test --manifest-path guests/rust/limen-contract/Cargo.toml --locked",
     "check:layers": "node --experimental-strip-types scripts/check-layers.ts",
     "check:scope": "node --experimental-strip-types scripts/check-scope.ts",
-    "check:typescript": "node --experimental-strip-types scripts/check-typescript.ts"
+    "check:typescript": "node --experimental-strip-types scripts/check-typescript.ts",
+    "test:guests:pressure": "node --experimental-strip-types scripts/guest-pressure.ts"
   },
   "devDependencies": {
     "@echelon-foundry/repository-operating-system": "^1.2.1",

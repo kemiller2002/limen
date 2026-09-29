@@ -15,6 +15,11 @@
 /guests/**/Cargo.toml         @kemiller2002
 /guests/rust/*/src/lib.rs     @kemiller2002
 /test/fixtures/negative/      @kemiller2002
+/scripts/guest-pressure.ts    @kemiller2002
+/guests/csharp/Limen.Contract.Analyzers/ @kemiller2002
+/guests/csharp/Limen.Contract.Pressure/  @kemiller2002
+/guests/fsharp/Limen.Contract.Pressure/  @kemiller2002
+/guests/rust/limen-contract/examples/consumer.rs @kemiller2002
 /test/guardrails.test.ts      @kemiller2002
 /test/layers.test.ts          @kemiller2002
 /test/scope.test.ts           @kemiller2002

@@ -84,6 +84,7 @@ const matchMethod = (union: string, cases: readonly string[]): readonly string[]
 
 const closedUnion = (name: string, docText: string | undefined, body: readonly string[], cases: readonly string[]): readonly string[] => [
   ...doc(docText, 0),
+  "[global::Limen.Contract.ClosedUnion]",
   `public abstract record ${name}`,
   "{",
   indent(1, `private ${name}() { }`),
@@ -98,7 +99,21 @@ const typeDecl = (decl: TypeDecl, decls: Decls, ns: string): readonly string[] =
     case "brand":
       return [...doc(decl.doc, 0), `public readonly record struct ${decl.name}(${decl.of === "int" ? "long" : "string"} Value);`];
     case "enum":
-      return [...doc(decl.doc, 0), `public enum ${decl.name}`, "{", ...decl.values.map((value) => indent(1, `${pascal(value)},`)), "}"];
+      return [
+        ...doc(decl.doc, 0),
+        "[global::Limen.Contract.ClosedUnion]",
+        `public enum ${decl.name}`, "{", ...decl.values.map((value) => indent(1, `${pascal(value)},`)), "}",
+        "",
+        `/// <summary>Exhaustive handling of ${decl.name}: one handler per value, so a new value is a compile error at every call site.</summary>`,
+        `public static class ${decl.name}Match`,
+        "{",
+        indent(1, `public static TResult Match<TResult>(this ${decl.name} value, ${decl.values.map((wire) => `global::System.Func<TResult> ${identifier(camel(wire))}`).join(", ")}) => value switch`),
+        indent(1, "{"),
+        ...decl.values.map((wire) => indent(2, `${decl.name}.${pascal(wire)} => ${identifier(camel(wire))}(),`)),
+        indent(2, `_ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a ${decl.name} value."),`),
+        indent(1, "};"),
+        "}",
+      ];
     case "record": {
       if (dataFields(decl.fields).length === 0) throw new Error(`C#: record ${decl.name} needs at least one non-literal field`);
       return [...doc(decl.doc, 0), `public sealed record ${decl.name}(${parameters(decl.name, decl.fields, decls, ns)});`];
@@ -345,6 +360,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Limen.Contract;
+
+/// <summary>Marks a generated closed union or enum. Handle it with its generated Match, never a switch: the Limen analyzer (LIMEN001) enforces this, because C# cannot prove a switch over it exhaustive.</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
+public sealed class ClosedUnionAttribute : Attribute
+{
+}
 
 /// <summary>An opaque JSON value, filled and read only by another generated binding (a capability payload) or by the engine's own decoder (an Http body).</summary>
 public readonly record struct RawJson(string Text);

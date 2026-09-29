@@ -4,7 +4,7 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:a3cf88ac8de898ffe9e086966695e404fd6a94acf919785a4a8be996ce1a1c04
+// content-hash: sha256:73162ec962ff6b95c31b0a73463d71977f9fce03bd2de095209094b2541f71fa
 // </auto-generated>
 #nullable enable
 
@@ -26,6 +26,7 @@ public static class Contract
 public readonly record struct CorrelationId(string Value);
 
 /// <summary>What the kernel implements, announced once in Initialize. Not a statement about what this browser will permit at the moment an effect runs: permission and availability are reported per effect, in that effect's own outcome.</summary>
+[global::Limen.Contract.ClosedUnion]
 public enum Capability
 {
     Http,
@@ -34,12 +35,26 @@ public enum Capability
     Navigation,
 }
 
+/// <summary>Exhaustive handling of Capability: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class CapabilityMatch
+{
+    public static TResult Match<TResult>(this Capability value, global::System.Func<TResult> http, global::System.Func<TResult> storage, global::System.Func<TResult> clipboard, global::System.Func<TResult> navigation) => value switch
+    {
+        Capability.Http => http(),
+        Capability.Storage => storage(),
+        Capability.Clipboard => clipboard(),
+        Capability.Navigation => navigation(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a Capability value."),
+    };
+}
+
 /// <summary>`name` is a domain-chosen identifier (the value of a data-event attribute). The bridge does not know its meaning; only the engine interprets it.</summary>
 public sealed record SemanticEvent(string Name, string? Key, string? Value);
 
 /// <summary>The browser's current URL, split mechanically by the kernel. Deciding what a path means is application meaning, so the kernel never parses further than this.</summary>
 public sealed record BrowserLocation(string Origin, string Path, string Query, string Hash);
 
+[global::Limen.Contract.ClosedUnion]
 public enum HttpFailureReason
 {
     Network,
@@ -47,7 +62,20 @@ public enum HttpFailureReason
     InvalidResponse,
 }
 
+/// <summary>Exhaustive handling of HttpFailureReason: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class HttpFailureReasonMatch
+{
+    public static TResult Match<TResult>(this HttpFailureReason value, global::System.Func<TResult> network, global::System.Func<TResult> aborted, global::System.Func<TResult> invalidResponse) => value switch
+    {
+        HttpFailureReason.Network => network(),
+        HttpFailureReason.Aborted => aborted(),
+        HttpFailureReason.InvalidResponse => invalidResponse(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpFailureReason value."),
+    };
+}
+
 /// <summary>The outcome of an Http effect. OutcomeUnknown exists because a timed-out request may already have reached the server; it must never be collapsed into Failure.</summary>
+[global::Limen.Contract.ClosedUnion]
 public abstract record EffectOutcome
 {
     private EffectOutcome() { }
@@ -68,13 +96,26 @@ public abstract record EffectOutcome
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public enum StorageFailureReason
 {
     Unavailable,
     QuotaExceeded,
 }
 
+/// <summary>Exhaustive handling of StorageFailureReason: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class StorageFailureReasonMatch
+{
+    public static TResult Match<TResult>(this StorageFailureReason value, global::System.Func<TResult> unavailable, global::System.Func<TResult> quotaExceeded) => value switch
+    {
+        StorageFailureReason.Unavailable => unavailable(),
+        StorageFailureReason.QuotaExceeded => quotaExceeded(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a StorageFailureReason value."),
+    };
+}
+
 /// <summary>A single localStorage call is atomic, so there is no dispatched-but-uncertain case. Success.value is null when a key was absent or the operation was set/remove.</summary>
+[global::Limen.Contract.ClosedUnion]
 public abstract record StorageOutcome
 {
     private StorageOutcome() { }
@@ -92,6 +133,7 @@ public abstract record StorageOutcome
 }
 
 /// <summary>denied is usually recoverable by another user gesture; unavailable never is in this browser.</summary>
+[global::Limen.Contract.ClosedUnion]
 public enum ClipboardFailureReason
 {
     Denied,
@@ -99,6 +141,19 @@ public enum ClipboardFailureReason
     Unknown,
 }
 
+/// <summary>Exhaustive handling of ClipboardFailureReason: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class ClipboardFailureReasonMatch
+{
+    public static TResult Match<TResult>(this ClipboardFailureReason value, global::System.Func<TResult> denied, global::System.Func<TResult> unavailable, global::System.Func<TResult> unknown) => value switch
+    {
+        ClipboardFailureReason.Denied => denied(),
+        ClipboardFailureReason.Unavailable => unavailable(),
+        ClipboardFailureReason.Unknown => unknown(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a ClipboardFailureReason value."),
+    };
+}
+
+[global::Limen.Contract.ClosedUnion]
 public abstract record ClipboardOutcome
 {
     private ClipboardOutcome() { }
@@ -115,13 +170,26 @@ public abstract record ClipboardOutcome
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public enum NavigationFailureReason
 {
     Unavailable,
     NotSameOrigin,
 }
 
+/// <summary>Exhaustive handling of NavigationFailureReason: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class NavigationFailureReasonMatch
+{
+    public static TResult Match<TResult>(this NavigationFailureReason value, global::System.Func<TResult> unavailable, global::System.Func<TResult> notSameOrigin) => value switch
+    {
+        NavigationFailureReason.Unavailable => unavailable(),
+        NavigationFailureReason.NotSameOrigin => notSameOrigin(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a NavigationFailureReason value."),
+    };
+}
+
 /// <summary>Dispatched is not a weaker Success: back/forward only ask the browser to move, and the move arrives later as LocationChanged, or never.</summary>
+[global::Limen.Contract.ClosedUnion]
 public abstract record NavigationOutcome
 {
     private NavigationOutcome() { }
@@ -143,18 +211,42 @@ public abstract record NavigationOutcome
 /// <summary>The identity of an optional capability pack, e.g. limen.focus. Chosen by the pack's own contract unit; Core never interprets it beyond equality.</summary>
 public readonly record struct CapabilityId(string Value);
 
+[global::Limen.Contract.ClosedUnion]
 public enum CapabilityUnsupportedReason
 {
     NotNegotiated,
     VersionUnsupported,
 }
 
+/// <summary>Exhaustive handling of CapabilityUnsupportedReason: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class CapabilityUnsupportedReasonMatch
+{
+    public static TResult Match<TResult>(this CapabilityUnsupportedReason value, global::System.Func<TResult> notNegotiated, global::System.Func<TResult> versionUnsupported) => value switch
+    {
+        CapabilityUnsupportedReason.NotNegotiated => notNegotiated(),
+        CapabilityUnsupportedReason.VersionUnsupported => versionUnsupported(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a CapabilityUnsupportedReason value."),
+    };
+}
+
+[global::Limen.Contract.ClosedUnion]
 public enum CapabilityRejectedReason
 {
     MalformedRequest,
 }
 
+/// <summary>Exhaustive handling of CapabilityRejectedReason: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class CapabilityRejectedReasonMatch
+{
+    public static TResult Match<TResult>(this CapabilityRejectedReason value, global::System.Func<TResult> malformedRequest) => value switch
+    {
+        CapabilityRejectedReason.MalformedRequest => malformedRequest(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a CapabilityRejectedReason value."),
+    };
+}
+
 /// <summary>How Core answers a capability effect. Completed carries the capability's own closed outcome, which is where its success, failure, cancellation and unknown variants live. Unsupported and Rejected are compatibility facts, never effect outcomes: they mean the request was not executed.</summary>
+[global::Limen.Contract.ClosedUnion]
 public abstract record CapabilityOutcome
 {
     private CapabilityOutcome() { }
@@ -173,6 +265,7 @@ public abstract record CapabilityOutcome
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record EffectResult
 {
     private EffectResult() { }
@@ -206,6 +299,7 @@ public sealed record CapabilityOffer(global::Limen.Contract.Core.CapabilityId Id
 public sealed record HostHandshake(global::Limen.Contract.Core.ProtocolRevision Protocol, global::Limen.Contract.Core.ContractIdentity Contract, global::System.Collections.Generic.IReadOnlyList<global::Limen.Contract.Core.CapabilityOffer> Capabilities);
 
 /// <summary>Why an engine refused the host. Protocol incompatibility is a compatibility state, never an effect OutcomeUnknown.</summary>
+[global::Limen.Contract.ClosedUnion]
 public abstract record HandshakeRejection
 {
     private HandshakeRejection() { }
@@ -226,6 +320,7 @@ public abstract record HandshakeRejection
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record EngineHandshake
 {
     private EngineHandshake() { }
@@ -242,6 +337,7 @@ public abstract record EngineHandshake
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record BrowserToEngineMessage
 {
     private BrowserToEngineMessage() { }
@@ -267,6 +363,7 @@ public abstract record BrowserToEngineMessage
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record ViewPrimitive
 {
     private ViewPrimitive() { }
@@ -285,6 +382,7 @@ public abstract record ViewPrimitive
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record ViewValue
 {
     private ViewValue() { }
@@ -305,6 +403,7 @@ public abstract record ViewValue
     };
 }
 
+[global::Limen.Contract.ClosedUnion]
 public enum HttpMethod
 {
     Get,
@@ -314,8 +413,23 @@ public enum HttpMethod
     Delete,
 }
 
+/// <summary>Exhaustive handling of HttpMethod: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class HttpMethodMatch
+{
+    public static TResult Match<TResult>(this HttpMethod value, global::System.Func<TResult> get, global::System.Func<TResult> put, global::System.Func<TResult> post, global::System.Func<TResult> patch, global::System.Func<TResult> delete) => value switch
+    {
+        HttpMethod.Get => get(),
+        HttpMethod.Put => put(),
+        HttpMethod.Post => post(),
+        HttpMethod.Patch => patch(),
+        HttpMethod.Delete => delete(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpMethod value."),
+    };
+}
+
 public sealed record HttpEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, global::Limen.Contract.Core.HttpMethod Method, string Url, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers, string? Body, long TimeoutMs);
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record StorageEffectRequest
 {
     private StorageEffectRequest() { }
@@ -338,6 +452,7 @@ public abstract record StorageEffectRequest
 public sealed record ClipboardEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, string Text);
 
 /// <summary>url is same-origin and root-relative; the kernel refuses anything else.</summary>
+[global::Limen.Contract.ClosedUnion]
 public abstract record NavigationEffectRequest
 {
     private NavigationEffectRequest() { }
@@ -361,6 +476,7 @@ public abstract record NavigationEffectRequest
 /// <summary>A request to a negotiated optional capability. request is encoded by that capability's generated binding; Core routes it by capability and never interprets it.</summary>
 public sealed record CapabilityEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, global::Limen.Contract.Core.CapabilityId Capability, long Version, global::Limen.Contract.RawJson Request);
 
+[global::Limen.Contract.ClosedUnion]
 public abstract record EffectRequest
 {
     private EffectRequest() { }

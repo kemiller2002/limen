@@ -4,7 +4,7 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:4b1dc4e720c9a7a24e45e916ed29dcfff6bf329e5eb0e0415dd45897de2019dd
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:a0f591f90f9fd80dc9a6595dc8e51231368a54734f6ff61076ebbdce2728455b
+// content-hash: sha256:47306501efb51c1e3525095909c16fa9257d0a9f28d5d4d79e5bb88c7790bcd5
 // </auto-generated>
 //! The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.
 
@@ -1103,6 +1103,366 @@ pub fn encode_effect_request(value: &EffectRequest) -> Value {
 
 pub fn encode_engine_to_browser_message(value: &EngineToBrowserMessage) -> Value {
     wire::of_object(vec![Some(("view", encode_view_state(&value.view))), Some(("effects", wire::of_list(&value.effects, |x0| encode_effect_request(x0)))), Some(("cancellations", wire::of_list(&value.cancellations, |x0| encode_correlation_id(x0)))), (&value.handshake).as_ref().map(|x0| ("handshake", encode_engine_handshake(x0)))])
+}
+
+/// Parses untrusted JSON text into a CorrelationId, or says where and why it is not one.
+pub fn parse_correlation_id(json: &str) -> Result<CorrelationId, DecodeError> {
+    wire::parse(json, decode_correlation_id)
+}
+
+/// Serializes a CorrelationId to wire JSON text.
+pub fn serialize_correlation_id(value: &CorrelationId) -> String {
+    encode_correlation_id(value).to_string()
+}
+
+/// Parses untrusted JSON text into a Capability, or says where and why it is not one.
+pub fn parse_capability(json: &str) -> Result<Capability, DecodeError> {
+    wire::parse(json, decode_capability)
+}
+
+/// Serializes a Capability to wire JSON text.
+pub fn serialize_capability(value: &Capability) -> String {
+    encode_capability(value).to_string()
+}
+
+/// Parses untrusted JSON text into a SemanticEvent, or says where and why it is not one.
+pub fn parse_semantic_event(json: &str) -> Result<SemanticEvent, DecodeError> {
+    wire::parse(json, decode_semantic_event)
+}
+
+/// Serializes a SemanticEvent to wire JSON text.
+pub fn serialize_semantic_event(value: &SemanticEvent) -> String {
+    encode_semantic_event(value).to_string()
+}
+
+/// Parses untrusted JSON text into a BrowserLocation, or says where and why it is not one.
+pub fn parse_browser_location(json: &str) -> Result<BrowserLocation, DecodeError> {
+    wire::parse(json, decode_browser_location)
+}
+
+/// Serializes a BrowserLocation to wire JSON text.
+pub fn serialize_browser_location(value: &BrowserLocation) -> String {
+    encode_browser_location(value).to_string()
+}
+
+/// Parses untrusted JSON text into a HttpFailureReason, or says where and why it is not one.
+pub fn parse_http_failure_reason(json: &str) -> Result<HttpFailureReason, DecodeError> {
+    wire::parse(json, decode_http_failure_reason)
+}
+
+/// Serializes a HttpFailureReason to wire JSON text.
+pub fn serialize_http_failure_reason(value: &HttpFailureReason) -> String {
+    encode_http_failure_reason(value).to_string()
+}
+
+/// Parses untrusted JSON text into a EffectOutcome, or says where and why it is not one.
+pub fn parse_effect_outcome(json: &str) -> Result<EffectOutcome, DecodeError> {
+    wire::parse(json, decode_effect_outcome)
+}
+
+/// Serializes a EffectOutcome to wire JSON text.
+pub fn serialize_effect_outcome(value: &EffectOutcome) -> String {
+    encode_effect_outcome(value).to_string()
+}
+
+/// Parses untrusted JSON text into a StorageFailureReason, or says where and why it is not one.
+pub fn parse_storage_failure_reason(json: &str) -> Result<StorageFailureReason, DecodeError> {
+    wire::parse(json, decode_storage_failure_reason)
+}
+
+/// Serializes a StorageFailureReason to wire JSON text.
+pub fn serialize_storage_failure_reason(value: &StorageFailureReason) -> String {
+    encode_storage_failure_reason(value).to_string()
+}
+
+/// Parses untrusted JSON text into a StorageOutcome, or says where and why it is not one.
+pub fn parse_storage_outcome(json: &str) -> Result<StorageOutcome, DecodeError> {
+    wire::parse(json, decode_storage_outcome)
+}
+
+/// Serializes a StorageOutcome to wire JSON text.
+pub fn serialize_storage_outcome(value: &StorageOutcome) -> String {
+    encode_storage_outcome(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ClipboardFailureReason, or says where and why it is not one.
+pub fn parse_clipboard_failure_reason(json: &str) -> Result<ClipboardFailureReason, DecodeError> {
+    wire::parse(json, decode_clipboard_failure_reason)
+}
+
+/// Serializes a ClipboardFailureReason to wire JSON text.
+pub fn serialize_clipboard_failure_reason(value: &ClipboardFailureReason) -> String {
+    encode_clipboard_failure_reason(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ClipboardOutcome, or says where and why it is not one.
+pub fn parse_clipboard_outcome(json: &str) -> Result<ClipboardOutcome, DecodeError> {
+    wire::parse(json, decode_clipboard_outcome)
+}
+
+/// Serializes a ClipboardOutcome to wire JSON text.
+pub fn serialize_clipboard_outcome(value: &ClipboardOutcome) -> String {
+    encode_clipboard_outcome(value).to_string()
+}
+
+/// Parses untrusted JSON text into a NavigationFailureReason, or says where and why it is not one.
+pub fn parse_navigation_failure_reason(json: &str) -> Result<NavigationFailureReason, DecodeError> {
+    wire::parse(json, decode_navigation_failure_reason)
+}
+
+/// Serializes a NavigationFailureReason to wire JSON text.
+pub fn serialize_navigation_failure_reason(value: &NavigationFailureReason) -> String {
+    encode_navigation_failure_reason(value).to_string()
+}
+
+/// Parses untrusted JSON text into a NavigationOutcome, or says where and why it is not one.
+pub fn parse_navigation_outcome(json: &str) -> Result<NavigationOutcome, DecodeError> {
+    wire::parse(json, decode_navigation_outcome)
+}
+
+/// Serializes a NavigationOutcome to wire JSON text.
+pub fn serialize_navigation_outcome(value: &NavigationOutcome) -> String {
+    encode_navigation_outcome(value).to_string()
+}
+
+/// Parses untrusted JSON text into a CapabilityId, or says where and why it is not one.
+pub fn parse_capability_id(json: &str) -> Result<CapabilityId, DecodeError> {
+    wire::parse(json, decode_capability_id)
+}
+
+/// Serializes a CapabilityId to wire JSON text.
+pub fn serialize_capability_id(value: &CapabilityId) -> String {
+    encode_capability_id(value).to_string()
+}
+
+/// Parses untrusted JSON text into a CapabilityUnsupportedReason, or says where and why it is not one.
+pub fn parse_capability_unsupported_reason(json: &str) -> Result<CapabilityUnsupportedReason, DecodeError> {
+    wire::parse(json, decode_capability_unsupported_reason)
+}
+
+/// Serializes a CapabilityUnsupportedReason to wire JSON text.
+pub fn serialize_capability_unsupported_reason(value: &CapabilityUnsupportedReason) -> String {
+    encode_capability_unsupported_reason(value).to_string()
+}
+
+/// Parses untrusted JSON text into a CapabilityRejectedReason, or says where and why it is not one.
+pub fn parse_capability_rejected_reason(json: &str) -> Result<CapabilityRejectedReason, DecodeError> {
+    wire::parse(json, decode_capability_rejected_reason)
+}
+
+/// Serializes a CapabilityRejectedReason to wire JSON text.
+pub fn serialize_capability_rejected_reason(value: &CapabilityRejectedReason) -> String {
+    encode_capability_rejected_reason(value).to_string()
+}
+
+/// Parses untrusted JSON text into a CapabilityOutcome, or says where and why it is not one.
+pub fn parse_capability_outcome(json: &str) -> Result<CapabilityOutcome, DecodeError> {
+    wire::parse(json, decode_capability_outcome)
+}
+
+/// Serializes a CapabilityOutcome to wire JSON text.
+pub fn serialize_capability_outcome(value: &CapabilityOutcome) -> String {
+    encode_capability_outcome(value).to_string()
+}
+
+/// Parses untrusted JSON text into a EffectResult, or says where and why it is not one.
+pub fn parse_effect_result(json: &str) -> Result<EffectResult, DecodeError> {
+    wire::parse(json, decode_effect_result)
+}
+
+/// Serializes a EffectResult to wire JSON text.
+pub fn serialize_effect_result(value: &EffectResult) -> String {
+    encode_effect_result(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ProtocolRevision, or says where and why it is not one.
+pub fn parse_protocol_revision(json: &str) -> Result<ProtocolRevision, DecodeError> {
+    wire::parse(json, decode_protocol_revision)
+}
+
+/// Serializes a ProtocolRevision to wire JSON text.
+pub fn serialize_protocol_revision(value: &ProtocolRevision) -> String {
+    encode_protocol_revision(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ContractIdentity, or says where and why it is not one.
+pub fn parse_contract_identity(json: &str) -> Result<ContractIdentity, DecodeError> {
+    wire::parse(json, decode_contract_identity)
+}
+
+/// Serializes a ContractIdentity to wire JSON text.
+pub fn serialize_contract_identity(value: &ContractIdentity) -> String {
+    encode_contract_identity(value).to_string()
+}
+
+/// Parses untrusted JSON text into a CapabilityOffer, or says where and why it is not one.
+pub fn parse_capability_offer(json: &str) -> Result<CapabilityOffer, DecodeError> {
+    wire::parse(json, decode_capability_offer)
+}
+
+/// Serializes a CapabilityOffer to wire JSON text.
+pub fn serialize_capability_offer(value: &CapabilityOffer) -> String {
+    encode_capability_offer(value).to_string()
+}
+
+/// Parses untrusted JSON text into a HostHandshake, or says where and why it is not one.
+pub fn parse_host_handshake(json: &str) -> Result<HostHandshake, DecodeError> {
+    wire::parse(json, decode_host_handshake)
+}
+
+/// Serializes a HostHandshake to wire JSON text.
+pub fn serialize_host_handshake(value: &HostHandshake) -> String {
+    encode_host_handshake(value).to_string()
+}
+
+/// Parses untrusted JSON text into a HandshakeRejection, or says where and why it is not one.
+pub fn parse_handshake_rejection(json: &str) -> Result<HandshakeRejection, DecodeError> {
+    wire::parse(json, decode_handshake_rejection)
+}
+
+/// Serializes a HandshakeRejection to wire JSON text.
+pub fn serialize_handshake_rejection(value: &HandshakeRejection) -> String {
+    encode_handshake_rejection(value).to_string()
+}
+
+/// Parses untrusted JSON text into a EngineHandshake, or says where and why it is not one.
+pub fn parse_engine_handshake(json: &str) -> Result<EngineHandshake, DecodeError> {
+    wire::parse(json, decode_engine_handshake)
+}
+
+/// Serializes a EngineHandshake to wire JSON text.
+pub fn serialize_engine_handshake(value: &EngineHandshake) -> String {
+    encode_engine_handshake(value).to_string()
+}
+
+/// Parses untrusted JSON text into a BrowserToEngineMessage, or says where and why it is not one.
+pub fn parse_browser_to_engine_message(json: &str) -> Result<BrowserToEngineMessage, DecodeError> {
+    wire::parse(json, decode_browser_to_engine_message)
+}
+
+/// Serializes a BrowserToEngineMessage to wire JSON text.
+pub fn serialize_browser_to_engine_message(value: &BrowserToEngineMessage) -> String {
+    encode_browser_to_engine_message(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ViewPrimitive, or says where and why it is not one.
+pub fn parse_view_primitive(json: &str) -> Result<ViewPrimitive, DecodeError> {
+    wire::parse(json, decode_view_primitive)
+}
+
+/// Serializes a ViewPrimitive to wire JSON text.
+pub fn serialize_view_primitive(value: &ViewPrimitive) -> String {
+    encode_view_primitive(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ViewItem, or says where and why it is not one.
+pub fn parse_view_item(json: &str) -> Result<ViewItem, DecodeError> {
+    wire::parse(json, decode_view_item)
+}
+
+/// Serializes a ViewItem to wire JSON text.
+pub fn serialize_view_item(value: &ViewItem) -> String {
+    encode_view_item(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ViewValue, or says where and why it is not one.
+pub fn parse_view_value(json: &str) -> Result<ViewValue, DecodeError> {
+    wire::parse(json, decode_view_value)
+}
+
+/// Serializes a ViewValue to wire JSON text.
+pub fn serialize_view_value(value: &ViewValue) -> String {
+    encode_view_value(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ViewState, or says where and why it is not one.
+pub fn parse_view_state(json: &str) -> Result<ViewState, DecodeError> {
+    wire::parse(json, decode_view_state)
+}
+
+/// Serializes a ViewState to wire JSON text.
+pub fn serialize_view_state(value: &ViewState) -> String {
+    encode_view_state(value).to_string()
+}
+
+/// Parses untrusted JSON text into a HttpMethod, or says where and why it is not one.
+pub fn parse_http_method(json: &str) -> Result<HttpMethod, DecodeError> {
+    wire::parse(json, decode_http_method)
+}
+
+/// Serializes a HttpMethod to wire JSON text.
+pub fn serialize_http_method(value: &HttpMethod) -> String {
+    encode_http_method(value).to_string()
+}
+
+/// Parses untrusted JSON text into a HttpEffectRequest, or says where and why it is not one.
+pub fn parse_http_effect_request(json: &str) -> Result<HttpEffectRequest, DecodeError> {
+    wire::parse(json, decode_http_effect_request)
+}
+
+/// Serializes a HttpEffectRequest to wire JSON text.
+pub fn serialize_http_effect_request(value: &HttpEffectRequest) -> String {
+    encode_http_effect_request(value).to_string()
+}
+
+/// Parses untrusted JSON text into a StorageEffectRequest, or says where and why it is not one.
+pub fn parse_storage_effect_request(json: &str) -> Result<StorageEffectRequest, DecodeError> {
+    wire::parse(json, decode_storage_effect_request)
+}
+
+/// Serializes a StorageEffectRequest to wire JSON text.
+pub fn serialize_storage_effect_request(value: &StorageEffectRequest) -> String {
+    encode_storage_effect_request(value).to_string()
+}
+
+/// Parses untrusted JSON text into a ClipboardEffectRequest, or says where and why it is not one.
+pub fn parse_clipboard_effect_request(json: &str) -> Result<ClipboardEffectRequest, DecodeError> {
+    wire::parse(json, decode_clipboard_effect_request)
+}
+
+/// Serializes a ClipboardEffectRequest to wire JSON text.
+pub fn serialize_clipboard_effect_request(value: &ClipboardEffectRequest) -> String {
+    encode_clipboard_effect_request(value).to_string()
+}
+
+/// Parses untrusted JSON text into a NavigationEffectRequest, or says where and why it is not one.
+pub fn parse_navigation_effect_request(json: &str) -> Result<NavigationEffectRequest, DecodeError> {
+    wire::parse(json, decode_navigation_effect_request)
+}
+
+/// Serializes a NavigationEffectRequest to wire JSON text.
+pub fn serialize_navigation_effect_request(value: &NavigationEffectRequest) -> String {
+    encode_navigation_effect_request(value).to_string()
+}
+
+/// Parses untrusted JSON text into a CapabilityEffectRequest, or says where and why it is not one.
+pub fn parse_capability_effect_request(json: &str) -> Result<CapabilityEffectRequest, DecodeError> {
+    wire::parse(json, decode_capability_effect_request)
+}
+
+/// Serializes a CapabilityEffectRequest to wire JSON text.
+pub fn serialize_capability_effect_request(value: &CapabilityEffectRequest) -> String {
+    encode_capability_effect_request(value).to_string()
+}
+
+/// Parses untrusted JSON text into a EffectRequest, or says where and why it is not one.
+pub fn parse_effect_request(json: &str) -> Result<EffectRequest, DecodeError> {
+    wire::parse(json, decode_effect_request)
+}
+
+/// Serializes a EffectRequest to wire JSON text.
+pub fn serialize_effect_request(value: &EffectRequest) -> String {
+    encode_effect_request(value).to_string()
+}
+
+/// Parses untrusted JSON text into a EngineToBrowserMessage, or says where and why it is not one.
+pub fn parse_engine_to_browser_message(json: &str) -> Result<EngineToBrowserMessage, DecodeError> {
+    wire::parse(json, decode_engine_to_browser_message)
+}
+
+/// Serializes a EngineToBrowserMessage to wire JSON text.
+pub fn serialize_engine_to_browser_message(value: &EngineToBrowserMessage) -> String {
+    encode_engine_to_browser_message(value).to_string()
 }
 
 /// Decode-then-encode by type name. Used only by the shared conformance runner.

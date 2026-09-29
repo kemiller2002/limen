@@ -81,6 +81,14 @@ exhaustive lists.
   generated decoder instead of asserting it. Pre-existing debt in the
   federated transport is a count-exact ratchet tied to WI-0030.
 
+- **Guest compiler enforcement (#55).** A Roslyn analyzer for C# guests
+  (`LIMEN001` no `switch` over contract unions/enums — use the generated
+  `Match`; `LIMEN002` no `dynamic`/object dictionaries; `LIMEN003` no direct
+  wire plumbing), generated enum `Match`, typed Rust `parse_*`/`serialize_*`,
+  and `npm run test:guests:pressure`: adding a contract variant makes the
+  F#, C# and Rust reference consumers fail to compile, each with its own
+  compiler error.
+
 ### Changed — compile-time pressure, by design
 
 - `EffectRequest`, `EffectResult` and `BrowserToEngineMessage` each gained a
