@@ -1,0 +1,106 @@
+{
+  "doc": "Language-neutral semantics for the offline outbox (kemiller2002/limen#40, LCP-034). conformance/outbox/README.md states the rules; these scenarios are the rules as data. Each scenario starts from an empty outbox (offline). Each step applies one command and states the resulting snapshot (compared as a subset: an operation's version is present only for a conflict), plus exactly what it emitted and, if it changed nothing, why. The F# reference library runs them in conformance/outbox/fsharp/, and the offline reference page's engine in test/outbox-reference.test.ts.",
+  "scenarios": [
+    {
+      "name": "offline intents wait; coming online sends the head, one at a time, in order",
+      "steps": [
+        { "enqueue": { "id": "a", "kind": "rename", "payload": "Alpha" }, "expect": { "online": false, "operations": [ { "id": "a", "status": "queued" } ] } },
+        { "enqueue": { "id": "b", "kind": "rename", "payload": "Beta" }, "expect": { "operations": [ { "id": "a", "status": "queued" }, { "id": "b", "status": "queued" } ] } },
+        { "connectivity": { "online": true }, "expect": { "online": true, "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ], "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "Alpha" } } ] } },
+        { "enqueue": { "id": "c", "kind": "delete", "payload": "x" }, "expect": { "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" }, { "id": "c", "status": "queued" } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [ { "id": "b", "status": "sending" }, { "id": "c", "status": "queued" } ], "emitted": [ { "send": { "id": "b", "kind": "rename", "payload": "Beta" } } ] } },
+        { "result": { "id": "b", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [ { "id": "c", "status": "sending" } ], "emitted": [ { "send": { "id": "c", "kind": "delete", "payload": "x" } } ] } },
+        { "result": { "id": "c", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [], "notices": [] } }
+      ]
+    },
+    {
+      "name": "online: an intent is sent at once; going offline cancels nothing in flight",
+      "steps": [
+        { "connectivity": { "online": true }, "expect": { "online": true, "operations": [] } },
+        { "enqueue": { "id": "a", "kind": "rename", "payload": "Alpha" }, "expect": { "operations": [ { "id": "a", "status": "sending" } ], "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "Alpha" } } ] } },
+        { "enqueue": { "id": "b", "kind": "rename", "payload": "Beta" }, "expect": { "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ] } },
+        { "connectivity": { "online": false }, "expect": { "online": false, "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [ { "id": "b", "status": "queued" } ] } },
+        { "connectivity": { "online": true }, "expect": { "operations": [ { "id": "b", "status": "sending" } ], "emitted": [ { "send": { "id": "b", "kind": "rename", "payload": "Beta" } } ] } }
+      ]
+    },
+    {
+      "name": "a rejection removes the intent with a notice, and the queue moves on",
+      "steps": [
+        { "connectivity": { "online": true }, "expect": { "online": true } },
+        { "enqueue": { "id": "a", "kind": "rename", "payload": "" }, "expect": { "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "" } } ] } },
+        { "enqueue": { "id": "b", "kind": "rename", "payload": "Beta" }, "expect": { "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "rejected", "reason": "empty-name" } }, "expect": { "operations": [ { "id": "b", "status": "sending" } ], "notices": [ { "id": "a", "reason": "empty-name" } ], "emitted": [ { "send": { "id": "b", "kind": "rename", "payload": "Beta" } } ] } },
+        { "dismiss": { "id": "a" }, "expect": { "notices": [] } }
+      ]
+    },
+    {
+      "name": "a failure (known not applied) requeues the intent and holds the queue until the engine flushes or the network returns",
+      "steps": [
+        { "connectivity": { "online": true }, "expect": { "online": true } },
+        { "enqueue": { "id": "a", "kind": "rename", "payload": "Alpha" }, "expect": { "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "Alpha" } } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "failed" } }, "expect": { "held": true, "operations": [ { "id": "a", "status": "queued" } ] } },
+        { "enqueue": { "id": "b", "kind": "rename", "payload": "Beta" }, "expect": { "held": true, "operations": [ { "id": "a", "status": "queued" }, { "id": "b", "status": "queued" } ] } },
+        { "flush": {}, "expect": { "held": false, "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ], "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "Alpha" } } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "failed" } }, "expect": { "held": true, "operations": [ { "id": "a", "status": "queued" }, { "id": "b", "status": "queued" } ] } },
+        { "connectivity": { "online": false }, "expect": { "online": false, "held": true } },
+        { "flush": {}, "expect": { "held": true }, "ignored": "offline" },
+        { "connectivity": { "online": true }, "expect": { "held": false, "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ], "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "Alpha" } } ] } }
+      ]
+    },
+    {
+      "name": "a conflict stops the queue until the engine resolves it: replace sends the rebased payload with the same id; discard drops it with a notice",
+      "steps": [
+        { "connectivity": { "online": true }, "expect": { "online": true } },
+        { "enqueue": { "id": "a", "kind": "rename", "payload": "Alpha" }, "expect": { "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "Alpha" } } ] } },
+        { "enqueue": { "id": "b", "kind": "rename", "payload": "Beta" }, "expect": { "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "conflict", "version": "v7" } }, "expect": { "operations": [ { "id": "a", "status": "conflict", "version": "v7" }, { "id": "b", "status": "queued" } ] } },
+        { "flush": {}, "expect": { "operations": [ { "id": "a", "status": "conflict" }, { "id": "b", "status": "queued" } ] } },
+        { "connectivity": { "online": true }, "expect": { "operations": [ { "id": "a", "status": "conflict" }, { "id": "b", "status": "queued" } ] } },
+        { "resolve": { "id": "b", "resolution": { "kind": "discard" } }, "expect": { "operations": [ { "id": "a", "status": "conflict" }, { "id": "b", "status": "queued" } ] }, "ignored": "not-conflict" },
+        { "resolve": { "id": "a", "resolution": { "kind": "replace", "payload": "Alpha (rebased on v7)" } }, "expect": { "operations": [ { "id": "a", "status": "sending", "payload": "Alpha (rebased on v7)" }, { "id": "b", "status": "queued" } ], "emitted": [ { "send": { "id": "a", "kind": "rename", "payload": "Alpha (rebased on v7)" } } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "conflict", "version": "v8" } }, "expect": { "operations": [ { "id": "a", "status": "conflict", "version": "v8" }, { "id": "b", "status": "queued" } ] } },
+        { "resolve": { "id": "a", "resolution": { "kind": "discard" } }, "expect": { "operations": [ { "id": "b", "status": "sending" } ], "notices": [ { "id": "a", "reason": "discarded" } ], "emitted": [ { "send": { "id": "b", "kind": "rename", "payload": "Beta" } } ] } }
+      ]
+    },
+    {
+      "name": "an unknown outcome is never resent on its own and never a failure: it blocks until the engine reconciles",
+      "steps": [
+        { "connectivity": { "online": true }, "expect": { "online": true } },
+        { "enqueue": { "id": "a", "kind": "pay", "payload": "10.00" }, "expect": { "emitted": [ { "send": { "id": "a", "kind": "pay", "payload": "10.00" } } ] } },
+        { "enqueue": { "id": "b", "kind": "pay", "payload": "5.00" }, "expect": { "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "unknown" } }, "expect": { "held": false, "operations": [ { "id": "a", "status": "unknown" }, { "id": "b", "status": "queued" } ], "notices": [] } },
+        { "flush": {}, "expect": { "operations": [ { "id": "a", "status": "unknown" }, { "id": "b", "status": "queued" } ] } },
+        { "connectivity": { "online": false }, "expect": { "online": false } },
+        { "connectivity": { "online": true }, "expect": { "operations": [ { "id": "a", "status": "unknown" }, { "id": "b", "status": "queued" } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [ { "id": "a", "status": "unknown" }, { "id": "b", "status": "queued" } ] }, "ignored": "not-sending" },
+        { "reconcile": { "id": "b", "applied": true }, "expect": { "operations": [ { "id": "a", "status": "unknown" }, { "id": "b", "status": "queued" } ] }, "ignored": "not-unknown" },
+        { "reconcile": { "id": "a", "applied": false }, "expect": { "operations": [ { "id": "a", "status": "sending" }, { "id": "b", "status": "queued" } ], "emitted": [ { "send": { "id": "a", "kind": "pay", "payload": "10.00" } } ] } },
+        { "result": { "id": "a", "outcome": { "kind": "unknown" } }, "expect": { "operations": [ { "id": "a", "status": "unknown" }, { "id": "b", "status": "queued" } ] } },
+        { "reconcile": { "id": "a", "applied": true }, "expect": { "operations": [ { "id": "b", "status": "sending" } ], "notices": [], "emitted": [ { "send": { "id": "b", "kind": "pay", "payload": "5.00" } } ] } }
+      ]
+    },
+    {
+      "name": "after a reload: the restored outbox starts offline, and what was in flight is unknown",
+      "steps": [
+        { "restore": { "operations": [ { "id": "a", "kind": "pay", "payload": "10.00", "status": "sending" }, { "id": "b", "kind": "rename", "payload": "Beta", "status": "queued" }, { "id": "c", "kind": "rename", "payload": "Gamma", "status": "conflict", "version": "v3" } ] }, "expect": { "online": false, "held": false, "operations": [ { "id": "a", "status": "unknown", "payload": "10.00" }, { "id": "b", "status": "queued" }, { "id": "c", "status": "conflict", "version": "v3" } ], "notices": [] } },
+        { "connectivity": { "online": true }, "expect": { "online": true, "operations": [ { "id": "a", "status": "unknown" }, { "id": "b", "status": "queued" }, { "id": "c", "status": "conflict" } ] } },
+        { "reconcile": { "id": "a", "applied": true }, "expect": { "operations": [ { "id": "b", "status": "queued" }, { "id": "c", "status": "conflict" } ] } },
+        { "resolve": { "id": "c", "resolution": { "kind": "replace", "payload": "Gamma 2" } }, "expect": { "operations": [ { "id": "b", "status": "sending" }, { "id": "c", "status": "queued", "payload": "Gamma 2" } ], "emitted": [ { "send": { "id": "b", "kind": "rename", "payload": "Beta" } } ] } },
+        { "result": { "id": "b", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [ { "id": "c", "status": "sending" } ], "emitted": [ { "send": { "id": "c", "kind": "rename", "payload": "Gamma 2" } } ] } }
+      ]
+    },
+    {
+      "name": "commands that change nothing say why",
+      "steps": [
+        { "enqueue": { "id": "a", "kind": "rename", "payload": "Alpha" }, "expect": { "operations": [ { "id": "a", "status": "queued" } ] } },
+        { "enqueue": { "id": "a", "kind": "rename", "payload": "Again" }, "expect": { "operations": [ { "id": "a", "status": "queued", "payload": "Alpha" } ] }, "ignored": "duplicate-operation" },
+        { "result": { "id": "zz", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [ { "id": "a", "status": "queued" } ] }, "ignored": "unknown-operation" },
+        { "result": { "id": "a", "outcome": { "kind": "confirmed" } }, "expect": { "operations": [ { "id": "a", "status": "queued" } ] }, "ignored": "not-sending" },
+        { "reconcile": { "id": "zz", "applied": false }, "expect": {}, "ignored": "not-unknown" },
+        { "resolve": { "id": "zz", "resolution": { "kind": "discard" } }, "expect": {}, "ignored": "not-conflict" },
+        { "flush": {}, "expect": {}, "ignored": "offline" }
+      ]
+    }
+  ]
+}

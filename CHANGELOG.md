@@ -59,6 +59,14 @@ exhaustive lists.
     reset); anything else reloads the page;
   - a dev server that streams file changes.
   Development only; nothing in Core imports it.
+- **Offline outbox engine library (#40).** `conformance/outbox/` (61 steps)
+  and `libraries/fsharp/Limen.Outbox`:
+  - pending domain operations in order, each with an engine-chosen
+    idempotency id, sent one at a time and only while online;
+  - a conflict or an unknown outcome stops the queue until the engine
+    resolves or reconciles it; nothing is resent on its own, and an unknown
+    outcome is never a failure;
+  - a restored outbox starts offline, and what was in flight becomes unknown.
 - **Page, connectivity and lifecycle evidence pack (#43).**
   `./capabilities/lifecycle` (`lifecycleCapability()`, contract unit
   `limen.lifecycle`, with bindings for TypeScript, F#, C# and Rust):
