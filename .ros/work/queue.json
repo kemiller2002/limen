@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 124,
+  "nextSeq": 125,
   "items": [
     {
       "id": "WI-0001",
@@ -1850,6 +1850,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T16:18:56.896Z",
       "updatedAt": "2026-09-29T16:57:41Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0124",
+      "title": "Reconcile the frozen Core boundary with kemiller2002/limen#15, #16, #18, #19, #47, #51, #53 (kemiller2002/limen#59): docs/ROADMAP.md stops listing optional capability breadth as deferred kernel responsibility and records where each related issue now stands against the manifest, budget and admission rule",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T16:58:14.326Z",
+      "updatedAt": "2026-09-29T16:58:23Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
