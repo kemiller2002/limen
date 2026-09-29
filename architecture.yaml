@@ -8,7 +8,27 @@
 # contract.* is machine-checked by `npm run contract:check` (generated bindings
 # byte-identical to what the contract produces) and by test/handshake.test.ts
 # (no view or effect is applied before the handshake verdict).
+# core.* points at architecture/core.json, the machine-readable Core manifest
+# (kemiller2002/limen#60), which scripts/check-architecture.ts reads and
+# enforces through tools/guardrails/core.ts: exact Core files, every runtime
+# file in exactly one layer, Core importing only Core, optional layers
+# importing only public Core files, six binding primitives, four built-in
+# capability families, zero runtime dependencies, approved root export
+# families, seven canonical concepts.
 architecture:
+  core:
+    manifest: architecture/core.json
+    version: 1.0.0
+    layers: [core-contract, core-kernel]
+    optional_groups: [package-facade, reference-demo, federation, capability-packs, hosts-renderers, tooling-conformance]
+    core_imports_optional: forbidden
+    optional_imports_private_core: forbidden
+    unclassified_runtime_path: forbidden
+    binding_primitives: 6
+    builtin_capability_families: 4
+    runtime_dependencies: 0
+    canonical_concepts: 7
+    growth: core_admission_required
   contract:
     source_of_truth: contract/core.contract.json
     generated_bindings_read_only: true

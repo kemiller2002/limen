@@ -30,7 +30,7 @@ definite answer nearly every time.
 | Reading/writing `localStorage` | **kernel** | already implemented — request a `Storage` effect |
 | Writing to the clipboard | **kernel** | already implemented — request a `Clipboard` effect |
 | `history.pushState` / `popstate` | **kernel** | already implemented — request a `Navigation` effect |
-| A browser API Limen does not expose | **kernel**, as a new capability | protocol change + kernel branch + tests; see [recipes](https://github.com/kemiller2002/limen/blob/main/docs/15-recipes.md) |
+| A browser API Limen does not expose | an **optional capability pack** (`src/capabilities/<name>/`), never the kernel | Core's four built-in families are frozen; a pack has its own contract unit and reaches the engine through the generic `Capability` seam ([docs/24](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md)) |
 | Application logic in JavaScript outside the engine | **nowhere** | this is the mistake the whole architecture exists to prevent |
 
 ## The decision tree
@@ -45,8 +45,9 @@ I need to add behavior.
 │     ├─ Http, Storage, Clipboard or Navigation?
 │     │     → ENGINE requests the effect. The kernel already performs it.
 │     └─ Something else (files, timers, focus, geolocation)?
-│           → A new capability: protocol type + kernel branch + outcome + tests.
-│             Not a one-off call from application code.
+│           → An optional capability pack (its own contract unit, provider,
+│             outcomes, tests). Never a fifth built-in family in the kernel,
+│             never a one-off call from application code.
 │
 ├─ Is it document structure?          → HTML
 ├─ Is it presentation?                → CSS
@@ -168,6 +169,31 @@ with a bare `setTimeout` in page JavaScript puts a decision outside the engine.
 It owns its own internals — that is what you are buying. Treat it like the
 browser: mount it in the kernel layer, and let it send `SemanticEvent`s in and
 receive projected values out. Do not let it hold application state.
+
+## The layers, by name
+
+These are the names in [`architecture/layers.json`](https://github.com/kemiller2002/limen/blob/main/architecture/layers.json)
+and the Core manifest [`architecture/core.json`](https://github.com/kemiller2002/limen/blob/main/architecture/core.json);
+`npm run check:architecture` fails if a file under `src/` is in none of them, or
+in two.
+
+| Layer | Paths | Core? |
+| --- | --- | --- |
+| `core-contract` | `src/protocol.ts`, `src/generated/**`, `src/guest/**` | **Core** |
+| `core-kernel` | `src/kernel/**` | **Core** |
+| `package-facade` | `src/index.ts` | optional group `package-facade` (the root entrypoint re-exports Core) |
+| `reference-engine` | `src/engine/**` | optional group `reference-demo` |
+| `reference-demo` | `src/main.ts`, `src/styles.css` | optional group `reference-demo` |
+| `federation-host` | `src/federation.ts` | optional group `federation` |
+| `capability-pack` | `src/capabilities/<name>/**` | optional group `capability-packs` |
+| `capability-support` | `src/capability-support/**` | optional group `capability-packs` |
+| `host-adapter` | `src/hosts/**` | optional group `hosts-renderers` |
+| `renderer` | `src/renderer/**` | optional group `hosts-renderers` |
+| `tooling` | `src/tooling/**` | optional group `tooling-conformance` |
+
+Core is exactly the files the manifest lists. A new file in a Core directory
+fails the check; Core imports only Core; an optional layer imports only the
+Core files the manifest marks `public`.
 
 ## Before you change Limen itself
 

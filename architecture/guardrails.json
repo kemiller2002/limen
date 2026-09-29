@@ -3,6 +3,8 @@
   "paths": [
     "architecture/layers.json",
     "architecture/guardrails.json",
+    "architecture/core.json",
+    "test/core-boundary.test.ts",
     "tools/guardrails/**",
     "tools/contract-gen/**",
     "scripts/check-*.ts",

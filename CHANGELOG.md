@@ -16,6 +16,27 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Architecture
+
+- **Core has a machine-readable manifest (#60).**
+  - `architecture/core.json` names the architecture version (1.0.0), the exact
+    Core files, their public extension points, the approved root export
+    families (each mapped to one of the seven canonical concepts), the six
+    binding primitives, the four built-in capability families and the
+    zero-runtime-dependency limit.
+  - `npm run check:architecture` reads it and fails when:
+    - a runtime file is in no layer, or in two;
+    - Core gains an unlisted file;
+    - Core imports any optional layer;
+    - an optional layer imports a private Core file;
+    - the kernel reads an undeclared `data-*` attribute;
+    - the contract gains a fifth built-in family;
+    - a runtime dependency appears;
+    - the root exports an unapproved name.
+  - Each rule has a failing fixture in `test/core-boundary.test.ts`.
+  - The demo composition root (`src/main.ts`, `src/styles.css`) is now its own
+    `reference-demo` layer.
+
 ### Changed
 
 - **`<head>` is bound, and page metadata is a projection (#38).**

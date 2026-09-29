@@ -47,15 +47,27 @@
     },
     {
       "name": "package-facade",
-      "doc": "The npm package's root exports and demo entry point. Capability packs are exported from their own subpaths, never from here.",
+      "doc": "The npm package's root entrypoint. Capability packs, federation and the reference engine are exported from their own subpaths, never from here.",
       "paths": [
-        "src/index.ts",
-        "src/main.ts"
+        "src/index.ts"
       ],
       "mayImport": [
         "core-contract",
         "core-kernel",
         "federation-host",
+        "reference-engine"
+      ]
+    },
+    {
+      "name": "reference-demo",
+      "doc": "The repository's own demo page (index.html): its composition root and stylesheet. Not published (package.json files excludes dist/main.*); composes the kernel with the reference engine.",
+      "paths": [
+        "src/main.ts",
+        "src/styles.css"
+      ],
+      "mayImport": [
+        "core-contract",
+        "core-kernel",
         "reference-engine"
       ]
     },

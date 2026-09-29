@@ -37,6 +37,15 @@ separate work, capture it with `./ros add` and do it under its own item.
 | Rule | Fails when | Do instead |
 | --- | --- | --- |
 | `layer-direction` | a layer imports one it may not (e.g. `src/kernel/**` → `src/capabilities/**` or `src/engine/**`) | register packs at the composition root with `new BrowserKernel(…, { capabilities })`; keep application code out of Core |
+| `unclassified-path` / `ambiguous-path` | a file under `src/` matches no layer, or more than one, in `architecture/layers.json` | place it under a declared layer (see [where code goes](where-code-goes.md)); a new layer is a guardrail item |
+| `core-file-undeclared` | a new file appears in a Core layer (`core-contract`, `core-kernel`) that [`architecture/core.json`](../architecture/core.json) does not list | put it in an optional layer; Core grows only through Core Admission |
+| `core-imports-optional` | a Core file imports any non-Core layer: federation, reference engine, capability pack or support, host, renderer, tooling, facade | invert it: the optional layer imports a public Core extension point, composed at the host root |
+| `private-core-import` | an optional layer imports a Core file the manifest marks `private` | depend only on `public` Core files |
+| `binding-primitive-undeclared` / `binding-primitive-limit` | Core reads a `data-*` attribute that is not one of the six primitives (or the `data-key` modifier), or the manifest lists a seventh | an existing primitive, a projected value, or an optional capability |
+| `capability-family-added` / `capability-family-limit` | the contract's `EffectRequest` or `Capability` enum gains a fifth built-in family | an optional capability pack through the `Capability` seam |
+| `runtime-dependency` | `package.json` declares any `dependencies`, `peerDependencies`, `optionalDependencies` or bundled dependency | implement it in-repo; devDependencies are fine |
+| `root-export-unapproved` | `src/index.ts` exports a name in no approved export family of the Core manifest | export it from its own optional subpath |
+| `concept-limit` | the manifest lists an eighth canonical Core concept | compose beneath the seven; Core Admission otherwise |
 | `capability-pack-cross-import` | `src/capabilities/a/**` imports `src/capabilities/b/**` | compose both in the engine or at the host root |
 | `external-dependency` | anything in the published package imports a bare or `node:` module | implement it in-repo; a dependency needs its own justified work item |
 | `unresolvable-import` | a computed `import(…)` in a layered file | import a fixed path |
@@ -72,7 +81,7 @@ count that drops fails until the entry is lowered. Debt only shrinks.
 ## What is guardrail-owned
 
 [`architecture/guardrails.json`](../architecture/guardrails.json) is the list:
-the layer map, the guardrail registry itself, `tools/guardrails/**`,
+the layer map, the Core manifest (`architecture/core.json`), the guardrail registry itself, `tools/guardrails/**`,
 `tools/contract-gen/**`, `scripts/check-*.ts`, CI workflows, `CODEOWNERS`,
 `tsconfig*.json`, `contract/targets.json`, guest project files and strictness
 attributes, and the guardrail tests. The same paths are in
@@ -81,6 +90,7 @@ attributes, and the guardrail tests. The same paths are in
 ## Commands
 
 ```sh
+npm run check:architecture # the Core manifest: paths, imports, primitives, families, dependencies, root exports
 npm run check:layers    # dependency directions (part of npm test)
 npm run check:typescript # restricted handwritten TypeScript (part of npm test)
 npm run check:scope     # this branch's commits against their scopes (needs origin/main fetched)

@@ -123,7 +123,17 @@ revision, selected optional capabilities) before applying anything from it.
 Optional capabilities are packs registered with the kernel and reached through
 one generic `Capability` effect; Core never learns what a pack means.
 
-The kernel implements four capabilities, announced in `Initialize`:
+**Core is a fixed list of files.** [`architecture/core.json`](architecture/core.json)
+is the machine-readable Core manifest: the layers `core-contract` and
+`core-kernel`, the exact files in them, the six binding primitives, the four
+built-in capability families, zero runtime dependencies, the approved root
+export families and the seven canonical concepts. `npm run check:architecture`
+enforces it; every other layer ([where code goes](docs/where-code-goes.md#the-layers-by-name))
+is optional and may import only Core's public files. Growing Core is a Core
+Admission decision, never a side effect of feature work.
+
+The kernel implements four capabilities — frozen at v1; a new browser
+capability is an optional pack — announced in `Initialize`:
 
 | Capability | Operations | Outcomes |
 | --- | --- | --- |
