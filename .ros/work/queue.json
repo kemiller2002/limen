@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 98,
+  "nextSeq": 99,
   "items": [
     {
       "id": "WI-0001",
@@ -1486,6 +1486,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T11:06:29Z",
       "updatedAt": "2026-09-29T11:11:56Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0098",
+      "title": "State-safe hot reload and fast edit loop: CSS swap in place, HTML remount, engine replacement restored only from an exactly compatible versioned snapshot, otherwise reset or full reload; dev server change stream (GH-36)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:12:49Z",
+      "updatedAt": "2026-09-29T11:12:50Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
