@@ -950,10 +950,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T07:17:58Z",
-      "updatedAt": "2026-09-29T07:17:58Z",
+      "updatedAt": "2026-09-29T07:25:18Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
