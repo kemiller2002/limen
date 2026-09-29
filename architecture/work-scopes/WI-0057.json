@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0057",
+  "reference": "kemiller2002/limen#23",
+  "placement": "Guardrail — contract/targets.json and the guest projects (fsproj, lib.rs) are guardrail-owned. Registers the limen.focus capability unit and includes its generated bindings; generated files are read-only output of tools/contract-gen.",
+  "guardrail": true,
+  "paths": ["contract/targets.json", "src/capabilities/focus/generated/**", "guests/fsharp/Limen.Contract/**", "guests/csharp/Limen.Contract/**", "guests/rust/limen-contract/**"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
