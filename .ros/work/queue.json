@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 27,
+  "nextSeq": 28,
   "items": [
     {
       "id": "WI-0001",
@@ -465,6 +465,22 @@
       "createdBy": "agent:chatgpt",
       "source": "agent-recommendation",
       "sourceReference": "post-federation-production-hardening-2026-09-26"
+    },
+    {
+      "id": "WI-0027",
+      "title": "Ignore federation WASM publish outputs so ros validate passes after a build",
+      "description": null,
+      "tags": [
+        "build,mechanical"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T04:30:49.260Z",
+      "updatedAt": "2026-09-29T04:31:02Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }

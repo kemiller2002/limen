@@ -29,6 +29,8 @@ release/
 site/fsharp/**/bin/
 site/fsharp/**/obj/
 site/fsharp/publish/
+# Each federation WASM module publishes beside its project (see build:site:wasm).
+site/fsharp/federation/*/publish/
 
 # BEGIN echelon:visual-engineering
 # Installed Visual Engineering context. Refresh it with:

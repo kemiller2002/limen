@@ -30,3 +30,4 @@
 | WI-0024 | Complete GitHub repository rename from typescript-wasm-kernel to Limen | complete | limen, rename, repository, documentation, pages | high |
 | WI-0025 | Demonstrate federation with two independent F# WebAssembly modules | complete | limen, wasm, federation, fsharp, existence-proof | high |
 | WI-0026 | Add federation failure isolation and diagnostics | complete | limen, wasm, federation, diagnostics, resilience | high |
+| WI-0027 | Ignore federation WASM publish outputs so ros validate passes after a build | ready | build,mechanical | medium |

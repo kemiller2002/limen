@@ -1,0 +1,1678 @@
+{
+  "schemaVersion": "1.0.0",
+  "executionId": "EXE-20260929T043103048Z-6fa34fc7",
+  "workItemId": "WI-0027",
+  "status": "active",
+  "startedAt": "2026-09-29T04:31:03.048Z",
+  "finalizedAt": null,
+  "identity": {
+    "provider": "anthropic",
+    "model": null,
+    "modelVersion": null,
+    "runtime": "claude-code",
+    "runtimeVersion": null,
+    "sessionId": "bf873a92-acfc-5c8d-ab14-25350b817272",
+    "conversationId": null,
+    "runId": null,
+    "agentId": null,
+    "subagentId": null,
+    "parentExecutionId": null,
+    "orchestration": {}
+  },
+  "provenance": {
+    "collector": "ros",
+    "collectorVersion": "1.0.0",
+    "discoveredAt": "2026-09-29T04:31:03.048Z",
+    "sources": [
+      {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      },
+      {
+        "type": "ros-git",
+        "name": "git",
+        "mechanism": "repository-baseline"
+      }
+    ]
+  },
+  "classification": {
+    "types": [
+      "administrative-process"
+    ],
+    "rationale": null,
+    "evidence": [],
+    "rd": null
+  },
+  "capabilities": [
+    {
+      "metricId": "tokens.input",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tokens.output",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tokens.cached_input",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tokens.cache_read",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tokens.cache_write",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tokens.reasoning",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tokens.tool",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tokens.total",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "context.window_size",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "context.utilization",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "context.current_input_tokens",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "context.current_output_tokens",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "context.current_cache_read_tokens",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "context.current_cache_write_tokens",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "context.compactions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "session.tokens.cumulative",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "cost.input",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "cost.output",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "cost.reasoning",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "cost.cache",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "cost.tool_api",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "cost.execution_total",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "cost.session_cumulative",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.wall_ms",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.active_ms",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.tool_ms",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.model_ms",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.waiting_ms",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.blocked_ms",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.human_interruption_ms",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.retry_ms",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "time.first_token_ms",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.turns",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.reasoning_cycles",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.retries",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.self_corrections",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.failed_approaches",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.context_resets",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.handoffs",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.subagents_spawned",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.parallel_executions_peak",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.interruptions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.resumes",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.human_escalations",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.clarifications",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.plan_revisions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.scope_revisions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.approvals_requested",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "agent.approvals_denied",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "model.requests",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "model.request_failures",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.calls",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.failures",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.retries",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.duration_ms",
+      "status": "supported-unavailable",
+      "reason": "runtime family can expose this metric, but no observation has been ingested for this execution",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.cost",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.shell_commands",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.file_reads",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.file_writes",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.searches",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.web_activity",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.repository_operations",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.api_operations",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.build_executions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.test_executions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.deployments",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.database_operations",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tool.external_service_calls",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.baseline_dirty_files",
+      "status": "derived",
+      "reason": "normalized measurement recorded",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "ros-git",
+        "name": "git-status",
+        "mechanism": "porcelain-v1"
+      },
+      "lastAssessedAt": "2026-09-29T04:31:03.048Z",
+      "recordedAt": "2026-09-29T04:31:03.048Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-09-29T04:31:03.048Z",
+          "lastAssessedAt": "2026-09-29T04:31:03.048Z",
+          "recordedAt": "2026-09-29T04:31:03.048Z"
+        }
+      ]
+    },
+    {
+      "metricId": "git.ending_dirty_files",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.commits_created",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.files_added",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.files_modified",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.files_deleted",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.files_renamed",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.binary_files_changed",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.lines_added",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "git.lines_deleted",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.added",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.modified",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.removed",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.count_before",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.count_after",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.executions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.passed",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.failed",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "tests.skipped",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "build.executions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "build.failures",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "compiler.errors",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "lint.errors",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "lint.warnings",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "static_analysis.errors",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "architecture_check.failures",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "requirements.affected",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "requirements.satisfied",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "acceptance_criteria.affected",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "acceptance_criteria.satisfied",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "defects.discovered",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "defects.corrected",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "regressions.found",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "work.new_items",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "blockers.discovered",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "dependencies.discovered",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "architecture.findings",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "documentation.files_changed",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "quality.false_leads",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "quality.disproven_hypotheses",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "quality.silent_omissions",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "quality.invalid_transitions_prevented",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "telemetry.redactions",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "telemetry.unknown_fields",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "telemetry.raw_snapshots_omitted",
+      "status": "derived",
+      "reason": "ROS can derive this metric when its preconditions hold",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "runtime.memory_peak_bytes",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    },
+    {
+      "metricId": "runtime.cpu_utilization",
+      "status": "unknown",
+      "reason": "runtime capability not reported or mapped",
+      "discoveredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "environment",
+        "name": "runtime-identity",
+        "mechanism": "whitelisted-claude-environment"
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "measurementId": "MEAS-4e22f378a816448b18d41b7c",
+      "id": "git.baseline_dirty_files",
+      "value": 280,
+      "unit": "count",
+      "currency": null,
+      "quality": "derived",
+      "confidence": null,
+      "scope": "execution",
+      "aggregation": "maximum",
+      "dimensions": {},
+      "pricing": null,
+      "source": {
+        "type": "ros-git",
+        "name": "git-status",
+        "mechanism": "porcelain-v1"
+      },
+      "collectedAt": "2026-09-29T04:31:03.048Z",
+      "schemaVersion": "1.0.0"
+    }
+  ],
+  "rawTelemetry": [],
+  "events": [
+    {
+      "type": "execution.started",
+      "occurredAt": "2026-09-29T04:31:03.048Z",
+      "source": {
+        "type": "ros-clock",
+        "name": "ros",
+        "mechanism": "work-lifecycle"
+      }
+    }
+  ],
+  "repository": {
+    "start": {
+      "available": true,
+      "repository": "limen",
+      "branch": "claude/limen-capability-parity-2dcmlo",
+      "commit": "c470ba43685495289488d1af2c898fa9dcf48321",
+      "dirty": true,
+      "dirtyPaths": [
+        ".ros/locks/2921c8d62ba4f1cb83aeb7993a7611f756c5c97b99b6fb22e515932c36f43f6a.lock",
+        ".ros/locks/57e6cb7412f4ae8ac889c97935eafdeb577425154fe81507a9ba201537ef403e.lock",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/Limen.Federation.Source.Wasm.runtimeconfig.json",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/web.config",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/FSharp.Core.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/FSharp.Core.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/FSharp.Core.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Engine.pdb.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Engine.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Engine.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Engine.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Wasm.pdb.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Wasm.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Wasm.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/Limen.Federation.Source.Wasm.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Collections.Concurrent.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Collections.Concurrent.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Collections.Concurrent.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Collections.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Collections.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Collections.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.ComponentModel.EventBasedAsync.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.ComponentModel.EventBasedAsync.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.ComponentModel.EventBasedAsync.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.ComponentModel.Primitives.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.ComponentModel.Primitives.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.ComponentModel.Primitives.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Console.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Console.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Console.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.Expressions.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.Expressions.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.Expressions.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.Queryable.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.Queryable.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.Queryable.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Linq.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Memory.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Memory.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Memory.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Net.Requests.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Net.Requests.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Net.Requests.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Net.WebClient.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Net.WebClient.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Net.WebClient.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Private.CoreLib.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Private.CoreLib.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Private.CoreLib.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Private.Uri.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Private.Uri.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Private.Uri.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.InteropServices.JavaScript.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.InteropServices.JavaScript.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.InteropServices.JavaScript.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.Numerics.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.Numerics.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.Numerics.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Runtime.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.Encodings.Web.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.Encodings.Web.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.Encodings.Web.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.Json.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.Json.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.Json.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.RegularExpressions.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.RegularExpressions.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Text.RegularExpressions.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Threading.Tasks.Parallel.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Threading.Tasks.Parallel.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/System.Threading.Tasks.Parallel.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/blazor.boot.json",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/blazor.boot.json.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/blazor.boot.json.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/cs/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/cs/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/cs/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/de/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/de/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/de/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.js",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.js.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.js.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.native.8.0.31.qimrsh9476.js",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.native.8.0.31.qimrsh9476.js.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.native.8.0.31.qimrsh9476.js.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.native.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.native.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.native.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.runtime.8.0.31.65vf1lry2c.js",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.runtime.8.0.31.65vf1lry2c.js.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/dotnet.runtime.8.0.31.65vf1lry2c.js.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/es/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/es/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/es/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/fr/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/fr/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/fr/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_CJK.dat",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_CJK.dat.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_CJK.dat.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_EFIGS.dat",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_EFIGS.dat.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_EFIGS.dat.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_no_CJK.dat",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_no_CJK.dat.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/icudt_no_CJK.dat.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/it/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/it/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/it/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ja/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ja/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ja/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ko/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ko/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ko/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/netstandard.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/netstandard.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/netstandard.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/pl/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/pl/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/pl/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/pt-BR/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/pt-BR/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/pt-BR/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ru/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ru/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/ru/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/tr/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/tr/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/tr/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/zh-Hans/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/zh-Hans/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/zh-Hans/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/zh-Hant/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/zh-Hant/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Source.Wasm/publish/wwwroot/_framework/zh-Hant/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/Limen.Federation.Target.Wasm.runtimeconfig.json",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/web.config",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/FSharp.Core.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/FSharp.Core.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/FSharp.Core.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Engine.pdb.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Engine.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Engine.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Engine.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Wasm.pdb.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Wasm.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Wasm.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/Limen.Federation.Target.Wasm.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Collections.Concurrent.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Collections.Concurrent.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Collections.Concurrent.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Collections.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Collections.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Collections.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.ComponentModel.EventBasedAsync.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.ComponentModel.EventBasedAsync.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.ComponentModel.EventBasedAsync.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.ComponentModel.Primitives.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.ComponentModel.Primitives.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.ComponentModel.Primitives.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Console.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Console.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Console.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.Expressions.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.Expressions.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.Expressions.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.Queryable.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.Queryable.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.Queryable.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Linq.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Memory.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Memory.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Memory.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Net.Requests.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Net.Requests.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Net.Requests.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Net.WebClient.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Net.WebClient.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Net.WebClient.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Private.CoreLib.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Private.CoreLib.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Private.CoreLib.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Private.Uri.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Private.Uri.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Private.Uri.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.InteropServices.JavaScript.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.InteropServices.JavaScript.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.InteropServices.JavaScript.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.Numerics.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.Numerics.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.Numerics.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Runtime.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.Encodings.Web.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.Encodings.Web.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.Encodings.Web.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.Json.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.Json.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.Json.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.RegularExpressions.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.RegularExpressions.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Text.RegularExpressions.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Threading.Tasks.Parallel.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Threading.Tasks.Parallel.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/System.Threading.Tasks.Parallel.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/blazor.boot.json",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/blazor.boot.json.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/blazor.boot.json.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/cs/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/cs/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/cs/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/de/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/de/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/de/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.js",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.js.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.js.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.native.8.0.31.qimrsh9476.js",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.native.8.0.31.qimrsh9476.js.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.native.8.0.31.qimrsh9476.js.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.native.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.native.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.native.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.runtime.8.0.31.65vf1lry2c.js",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.runtime.8.0.31.65vf1lry2c.js.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/dotnet.runtime.8.0.31.65vf1lry2c.js.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/es/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/es/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/es/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/fr/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/fr/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/fr/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_CJK.dat",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_CJK.dat.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_CJK.dat.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_EFIGS.dat",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_EFIGS.dat.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_EFIGS.dat.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_no_CJK.dat",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_no_CJK.dat.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/icudt_no_CJK.dat.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/it/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/it/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/it/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ja/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ja/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ja/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ko/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ko/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ko/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/netstandard.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/netstandard.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/netstandard.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/pl/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/pl/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/pl/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/pt-BR/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/pt-BR/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/pt-BR/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ru/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ru/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/ru/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/tr/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/tr/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/tr/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/zh-Hans/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/zh-Hans/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/zh-Hans/FSharp.Core.resources.wasm.gz",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/zh-Hant/FSharp.Core.resources.wasm",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/zh-Hant/FSharp.Core.resources.wasm.br",
+        "site/fsharp/federation/Limen.Federation.Target.Wasm/publish/wwwroot/_framework/zh-Hant/FSharp.Core.resources.wasm.gz"
+      ]
+    },
+    "end": null,
+    "changeSummary": null
+  },
+  "scope": {
+    "initial": {},
+    "actual": {}
+  },
+  "qualitySignals": [],
+  "links": {
+    "workItemId": "WI-0027",
+    "parentWorkItemId": null,
+    "requirements": [],
+    "acceptanceCriteria": [],
+    "commits": [
+      "c470ba43685495289488d1af2c898fa9dcf48321"
+    ],
+    "pullRequests": [],
+    "experiments": [],
+    "researchQuestions": [],
+    "decisions": [],
+    "defects": [],
+    "dependencies": [],
+    "evidence": []
+  }
+}

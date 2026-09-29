@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
   "repository": "limen",
-  "actor": "agent:chatgpt",
+  "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-26T07:42:00.000Z",
+  "updatedAt": "2026-09-29T04:31:02Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -528,6 +528,17 @@
       ],
       "updatedAt": "2026-09-26T07:42:00.000Z",
       "completedAt": "2026-09-26T07:42:00.000Z"
+    },
+    {
+      "id": "WI-0027",
+      "type": "mechanical",
+      "state": "active",
+      "semanticState": "active",
+      "evidence": [],
+      "updatedAt": "2026-09-29T04:31:02Z",
+      "telemetryExecutionIds": [
+        "EXE-20260929T043103048Z-6fa34fc7"
+      ]
     }
   ]
 }
