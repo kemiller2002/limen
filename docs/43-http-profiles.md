@@ -163,6 +163,31 @@ cannot report upload progress. `XMLHttpRequest` always sends same-origin
 cookies and cannot omit them, so `credentials: "omit"` is refused as
 `InvalidRequest` rather than silently ignored. Core Http honours it.
 
+## Engine-side policy: interception and composition
+
+Retry, caching, auth-header injection, polling and request transformation
+are **application policy**. The kernel never decides whether a request is
+retried, served from a cache, or given a token. They are pure functions the
+engine applies to its own requests and to the outcomes it receives. The
+semantics are defined once, in any language, in
+[`conformance/http/`](../conformance/http/README.md): 42 cases.
+[`libraries/fsharp/Limen.Http`](../libraries/fsharp/Limen.Http/Http.fs) is
+the F# reference.
+
+| Policy | Function | Rule worth knowing |
+| --- | --- | --- |
+| Interceptors | `intercept(request, [header, bearer, timeout, expose, base])` | applied in order; a later one wins; the bearer token is engine state |
+| Retry | `decide(policy, request, attempt, outcome)` → `done`, `retry { delayMs }`, `reconcile` or `giveUp` | **an unknown outcome on a non-idempotent request is `reconcile`, never a retry.** An `idempotency-key` header makes a `POST` retryable. `Retry-After` is honoured when it was asked for. |
+| Revalidation | `prepare` / `absorb` over an ETag cache | a 304 is recognised whether it arrives as `Success { 304 }` or as `Failure { invalid-response, 304 }`; a successful write invalidates its URL |
+| Polling | `next(policy, failures, outcome, stop)` | an unknown poll only slows down; the engine's own condition stops it |
+
+Each function returns a value, never a side effect. The engine turns
+`retry { delayMs }` into a scheduling request ([34](34-scheduling.md)) and
+then an `Http` effect. That is the composition pattern the issue asks for:
+reusable, testable in any language, and entirely outside the bridge. A
+mutation check confirmed the vectors are not vacuous: making an unknown
+`POST` retry fails the two `reconcile` cases.
+
 ## Evidence
 
 | Evidence | Where |
@@ -170,4 +195,5 @@ cookies and cannot omit them, so `credentials: "omit"` is refused as
 | JSON regression; text; base64 bytes; none for HEAD, 204 and OPTIONS; too-large read incrementally and abandoned; exact response headers only when asked; each credentials mode passed exactly; XSRF same-origin, absolute same-origin, cross-origin refused, missing cookie, and no secret in diagnostics or outcomes; OutcomeUnknown in every representation | [`test/http-profile.test.ts`](../test/http-profile.test.ts) |
 | Transfer: no listener without progress; throttled progress per direction with the final value; a picked file by id and as multipart (FormData built inside the pack, the file's own name unless given, cross-realm files); the files pack's accessor and release; text, base64, none, invalid-response, network, cancel, OutcomeUnknown; validation, including `omit` refused; conformance suite | [`test/transfer.test.ts`](../test/transfer.test.ts) |
 | The same against real `fetch` in Chromium, including real response headers (and `Set-Cookie` withheld by the browser), real cookies with `omit` against the default, and the XSRF header checked by the server | [`test/browser/packs/core-http/`](../test/browser/packs/core-http/), [`test/browser/servers/http.ts`](../test/browser/servers/http.ts), `npm run smoke:packs` |
+| Engine-side policy: 42 language-neutral cases (interceptor order, retry by idempotency and outcome, Retry-After, revalidation, invalidation, polling backoff), run against the F# reference in `npm run test:libraries` | [`conformance/http/`](../conformance/http/), [`libraries/fsharp/Limen.Http`](../libraries/fsharp/Limen.Http/) |
 | Transfer in Chromium: a real picked 4 MiB file uploaded by id with real progress to the total; multipart parts seen by the server; no progress facts when not asked; throttled download progress to a known total; an unknown id; OutcomeUnknown after a timeout | [`test/browser/packs/transfer/`](../test/browser/packs/transfer/), `npm run smoke:packs` |

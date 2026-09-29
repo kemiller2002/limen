@@ -48,6 +48,11 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **HTTP engine library and semantics (#47).** `conformance/http/` defines
+  interceptor composition, retry decisions, ETag revalidation and polling as
+  pure, language-neutral rules (42 cases). `libraries/fsharp/Limen.Http` is
+  the F# reference. An unknown outcome on a non-idempotent request is
+  `reconcile`, never a blind retry. None of this is in the kernel.
 - **HTTP transfer profile pack (#47).** `./capabilities/transfer`
   (`transferCapability({ files })`, contract unit `limen.transfer`, with
   bindings for TypeScript, F#, C# and Rust):
