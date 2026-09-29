@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0126",
+  "reference": "kemiller2002/limen#59",
+  "placement": "Architecture / Governance — the verification record for the hard Core boundary: docs/architecture/core-boundary-v1.md maps every #59 acceptance criterion and negative test to the check or test that enforces it, names the one open owner decision (CA-0001), and tells a successor how to resume. Documentation only.",
+  "guardrail": false,
+  "paths": ["docs/architecture/**", "docs/README.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
