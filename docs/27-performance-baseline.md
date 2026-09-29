@@ -125,9 +125,11 @@ and the kernel closure (below) is identical whichever guest runs.
 | `kernel-with-raw-host` | 8 | 88,750 | 18,676 | 16,981 |
 
 These are the 2026-09-29 measurements. The current budgets, and why each
-changed, are in [`bench/budgets.json`](../bench/budgets.json) (`history`): the
-binding security policy (#18) re-baselined every kernel profile by about
-2.1 KB gzip.
+changed, are in [`bench/budgets.json`](../bench/budgets.json) (`history`):
+- the binding security policy (#18) re-baselined every kernel profile by about
+  2.1 KB gzip;
+- the Core HTTP profile (protocol 1.3, #47) added about 1.7 KB gzip more;
+- each optional capability pack has its own `kernel-with-<pack>` profile.
 
 `test/bench-size.test.ts` proves that no module under `capability-support/`,
 `capabilities/`, `tooling/` or `hosts/` is in the minimal consumer. Optional

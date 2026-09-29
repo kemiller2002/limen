@@ -44,6 +44,10 @@
     {
       "workItem": "WI-0081",
       "change": "Added kernel-with-adapters (kemiller2002/limen#30): the adapter host pack, with the shared handle table and target resolver, adds 7419 bytes gzip over the kernel, and only to applications that register it; the reference Web Component adapter is a separate module and is not in this profile. Earlier kernel-with-* profiles now also forbid dist/capabilities/adapters/."
+    },
+    {
+      "workItem": "WI-0085",
+      "change": "Re-baselined every profile after the Core HTTP profile, protocol 1.3 (kemiller2002/limen#47): Core's generated codec gained the new request and outcome types, and the kernel's Http path gained the response representations, header selection and the XSRF binding. Measured on kernel-with-overlay before and after: +1729 bytes gzip (+6640 raw), on every profile that loads the kernel. kernel-only, minimal-consumer, kernel-with-handles, the two host profiles and kernel-with-focus exceeded their budgets; the rest are re-baselined by the same rule so every budget keeps 10% headroom over what ships. The remaining growth since WI-0053 on the older profiles (about 0.9 KB gzip on kernel-only) is protocol 1.2 form-control state, IME handling and boolean attributes, which had stayed within budget."
     }
   ],
   "profiles": [
@@ -60,12 +64,12 @@
         "dist/capabilities/"
       ],
       "baseline": {
-        "rawBytes": 119535,
-        "gzipBytesBundled": 24052
+        "rawBytes": 129877,
+        "gzipBytesBundled": 26764
       },
       "budget": {
-        "rawBytes": 132096,
-        "gzipBytesBundled": 26624
+        "rawBytes": 143360,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -83,12 +87,12 @@
         "dist/federation.js"
       ],
       "baseline": {
-        "rawBytes": 89918,
-        "gzipBytesBundled": 17479
+        "rawBytes": 100260,
+        "gzipBytesBundled": 20149
       },
       "budget": {
-        "rawBytes": 99328,
-        "gzipBytesBundled": 19456
+        "rawBytes": 110592,
+        "gzipBytesBundled": 22528
       }
     },
     {
@@ -110,12 +114,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 92602,
-        "gzipBytesBundled": 18510
+        "rawBytes": 103024,
+        "gzipBytesBundled": 21200
       },
       "budget": {
-        "rawBytes": 102400,
-        "gzipBytesBundled": 20480
+        "rawBytes": 113664,
+        "gzipBytesBundled": 23552
       }
     },
     {
@@ -138,12 +142,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 92470,
-        "gzipBytesBundled": 18262
+        "rawBytes": 102812,
+        "gzipBytesBundled": 20967
       },
       "budget": {
-        "rawBytes": 102400,
-        "gzipBytesBundled": 20480
+        "rawBytes": 113664,
+        "gzipBytesBundled": 23552
       }
     },
     {
@@ -166,12 +170,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 95578,
-        "gzipBytesBundled": 19140
+        "rawBytes": 105920,
+        "gzipBytesBundled": 21780
       },
       "budget": {
-        "rawBytes": 105472,
-        "gzipBytesBundled": 21504
+        "rawBytes": 116736,
+        "gzipBytesBundled": 24576
       }
     },
     {
@@ -194,12 +198,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 112426,
-        "gzipBytesBundled": 21355
+        "rawBytes": 122768,
+        "gzipBytesBundled": 24028
       },
       "budget": {
-        "rawBytes": 123904,
-        "gzipBytesBundled": 23552
+        "rawBytes": 135168,
+        "gzipBytesBundled": 26624
       }
     },
     {
@@ -223,12 +227,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 107508,
-        "gzipBytesBundled": 20758
+        "rawBytes": 115285,
+        "gzipBytesBundled": 22850
       },
       "budget": {
-        "rawBytes": 118784,
-        "gzipBytesBundled": 23552
+        "rawBytes": 126976,
+        "gzipBytesBundled": 25600
       }
     },
     {
@@ -252,12 +256,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 124360,
-        "gzipBytesBundled": 23674
+        "rawBytes": 132137,
+        "gzipBytesBundled": 25765
       },
       "budget": {
-        "rawBytes": 137216,
-        "gzipBytesBundled": 26624
+        "rawBytes": 145408,
+        "gzipBytesBundled": 28672
       }
     },
     {
@@ -283,12 +287,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 123906,
-        "gzipBytesBundled": 24424
+        "rawBytes": 132375,
+        "gzipBytesBundled": 26679
       },
       "budget": {
-        "rawBytes": 137216,
-        "gzipBytesBundled": 27648
+        "rawBytes": 146432,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -313,12 +317,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 125294,
-        "gzipBytesBundled": 24040
+        "rawBytes": 131934,
+        "gzipBytesBundled": 25769
       },
       "budget": {
-        "rawBytes": 138240,
-        "gzipBytesBundled": 26624
+        "rawBytes": 145408,
+        "gzipBytesBundled": 28672
       }
     },
     {
@@ -343,12 +347,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 126374,
-        "gzipBytesBundled": 24267
+        "rawBytes": 133014,
+        "gzipBytesBundled": 25994
       },
       "budget": {
-        "rawBytes": 139264,
-        "gzipBytesBundled": 27648
+        "rawBytes": 146432,
+        "gzipBytesBundled": 28672
       }
     },
     {
@@ -373,12 +377,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 127390,
-        "gzipBytesBundled": 24774
+        "rawBytes": 134030,
+        "gzipBytesBundled": 26528
       },
       "budget": {
-        "rawBytes": 140288,
-        "gzipBytesBundled": 27648
+        "rawBytes": 147456,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -404,12 +408,12 @@
         "dist/capabilities/adapters/"
       ],
       "baseline": {
-        "rawBytes": 144576,
-        "gzipBytesBundled": 27882
+        "rawBytes": 151216,
+        "gzipBytesBundled": 29607
       },
       "budget": {
-        "rawBytes": 159744,
-        "gzipBytesBundled": 30720
+        "rawBytes": 166912,
+        "gzipBytesBundled": 32768
       }
     },
     {
@@ -435,12 +439,12 @@
         "dist/capabilities/store/"
       ],
       "baseline": {
-        "rawBytes": 130717,
-        "gzipBytesBundled": 25845
+        "rawBytes": 137357,
+        "gzipBytesBundled": 27612
       },
       "budget": {
-        "rawBytes": 144384,
-        "gzipBytesBundled": 28672
+        "rawBytes": 151552,
+        "gzipBytesBundled": 30720
       }
     }
   ]
