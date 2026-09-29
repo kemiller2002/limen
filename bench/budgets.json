@@ -88,6 +88,10 @@
     {
       "workItem": "WI-0114",
       "change": "Added kernel-with-coordination (kemiller2002/limen#46): the cross-context coordination pack adds 6841 bytes gzip over the kernel as it ships now, and only to applications that register it. Earlier kernel-with-* capability profiles now also forbid dist/capabilities/coordination/."
+    },
+    {
+      "workItem": "WI-0117",
+      "change": "Re-baselined kernel-with-handles after WI-0116 (kemiller2002/limen#38): binding <head> and allowing the inert page-metadata forms add about 450 bytes gzip to every profile that loads the kernel, which put this profile 9 bytes over. Also corrected the baselines recorded for minimal-consumer (WI-0105) and the profiles added in WI-0100, WI-0106, WI-0108, WI-0110 and WI-0114: they were measured with a relative root, which orders the bundled modules differently from test/bench-size.test.ts and changes the bundled gzip size by a few hundred bytes (raw bytes are identical). They are now measured exactly as the test measures them, and their budgets follow from the same 10% rule; the new baselines also include the kernel growth since each was recorded (protocol 1.4, WI-0103, where it came after them, and WI-0116), so none of the differences is the capability packs themselves growing."
     }
   ],
   "profiles": [
@@ -104,12 +108,12 @@
         "dist/capabilities/"
       ],
       "baseline": {
-        "rawBytes": 143076,
-        "gzipBytesBundled": 29776
+        "rawBytes": 144579,
+        "gzipBytesBundled": 30286
       },
       "budget": {
-        "rawBytes": 157696,
-        "gzipBytesBundled": 32768
+        "rawBytes": 159744,
+        "gzipBytesBundled": 33792
       }
     },
     {
@@ -162,12 +166,12 @@
         "dist/capabilities/coordination/"
       ],
       "baseline": {
-        "rawBytes": 103024,
-        "gzipBytesBundled": 21200
+        "rawBytes": 112498,
+        "gzipBytesBundled": 23561
       },
       "budget": {
-        "rawBytes": 113664,
-        "gzipBytesBundled": 23552
+        "rawBytes": 123904,
+        "gzipBytesBundled": 26624
       }
     },
     {
@@ -271,12 +275,12 @@
         "dist/capabilities/coordination/"
       ],
       "baseline": {
-        "rawBytes": 115953,
-        "gzipBytesBundled": 23929
+        "rawBytes": 117456,
+        "gzipBytesBundled": 24619
       },
       "budget": {
-        "rawBytes": 128000,
-        "gzipBytesBundled": 26624
+        "rawBytes": 130048,
+        "gzipBytesBundled": 27648
       }
     },
     {
@@ -784,12 +788,12 @@
         "dist/capabilities/environment/"
       ],
       "baseline": {
-        "rawBytes": 135626,
-        "gzipBytesBundled": 25884
+        "rawBytes": 138815,
+        "gzipBytesBundled": 26916
       },
       "budget": {
-        "rawBytes": 149504,
-        "gzipBytesBundled": 28672
+        "rawBytes": 153600,
+        "gzipBytesBundled": 29696
       }
     },
     {
@@ -820,11 +824,11 @@
         "dist/capabilities/lifecycle/"
       ],
       "baseline": {
-        "rawBytes": 136600,
-        "gzipBytesBundled": 26244
+        "rawBytes": 138103,
+        "gzipBytesBundled": 26831
       },
       "budget": {
-        "rawBytes": 150528,
+        "rawBytes": 152576,
         "gzipBytesBundled": 29696
       }
     },
@@ -859,12 +863,12 @@
         "dist/capabilities/coordination/"
       ],
       "baseline": {
-        "rawBytes": 135347,
-        "gzipBytesBundled": 26921
+        "rawBytes": 136850,
+        "gzipBytesBundled": 27434
       },
       "budget": {
-        "rawBytes": 149504,
-        "gzipBytesBundled": 29696
+        "rawBytes": 151552,
+        "gzipBytesBundled": 30720
       }
     },
     {
@@ -898,12 +902,12 @@
         "dist/capabilities/coordination/"
       ],
       "baseline": {
-        "rawBytes": 144183,
-        "gzipBytesBundled": 28635
+        "rawBytes": 145686,
+        "gzipBytesBundled": 29804
       },
       "budget": {
-        "rawBytes": 158720,
-        "gzipBytesBundled": 31744
+        "rawBytes": 160768,
+        "gzipBytesBundled": 33792
       }
     },
     {
@@ -935,12 +939,12 @@
         "dist/capabilities/offline/"
       ],
       "baseline": {
-        "rawBytes": 151903,
-        "gzipBytesBundled": 28634
+        "rawBytes": 153406,
+        "gzipBytesBundled": 29992
       },
       "budget": {
-        "rawBytes": 167936,
-        "gzipBytesBundled": 31744
+        "rawBytes": 168960,
+        "gzipBytesBundled": 33792
       }
     }
   ]
