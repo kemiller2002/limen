@@ -43,6 +43,10 @@
       "types": "./dist/tooling/provider-conformance.d.ts",
       "import": "./dist/tooling/provider-conformance.js"
     },
+    "./testing/views": {
+      "types": "./dist/tooling/view-contract.d.ts",
+      "import": "./dist/tooling/view-contract.js"
+    },
     "./trace": {
       "types": "./dist/tooling/trace.d.ts",
       "import": "./dist/tooling/trace.js"

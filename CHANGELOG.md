@@ -26,6 +26,16 @@ exhaustive lists.
 
 ### Added
 
+- **View contracts (#48).** A page may carry a language-neutral
+  `*.view.json` beside it, stating what the engine projects and which events
+  it accepts. `npm run check:views` (in `npm test`) checks every page's
+  bindings against it with no browser: missing keys, list item fields and
+  `data-key`, undeclared events, and value kinds a binding cannot use. The
+  diagnostics name the file, line, element and expectation. The same
+  contracts are held against real engines: the TypeScript examples, the
+  reference engine, the F#, C# and Rust minimal engines through the shared
+  session, and the F# site engine in its own tests. Exported as
+  `./testing/views`. Runtime Core is unchanged.
 - **Performance baseline and payload budgets (#19).** `npm run bench` drives
   the real kernel in Chromium (event, forms-100, list-1k/10k, routes,
   serialization, federation, directly and through the WebAssembly JSON

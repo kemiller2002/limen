@@ -1,0 +1,22 @@
+{
+  "doc": "What examples/04-save-data/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "text": "string",
+    "editorDisabled": "boolean",
+    "saveDisabled": "boolean",
+    "statusText": "string",
+    "canRetry": "boolean",
+    "needsReconciliation": "boolean",
+    "saved": "boolean",
+    "busy": "boolean",
+    "dirty": "boolean"
+  },
+  "events": {
+    "textChanged": {
+      "value": true
+    },
+    "save": {},
+    "retrySave": {},
+    "resumeEditing": {}
+  }
+}

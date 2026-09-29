@@ -1,0 +1,21 @@
+{
+  "doc": "What examples/03-fetch-data/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "loadDisabled": "boolean",
+    "statusText": "string",
+    "canRetry": "boolean",
+    "hasCustomers": "boolean",
+    "customers": {
+      "list": {
+        "id": "string",
+        "name": "string",
+        "email": "string"
+      }
+    },
+    "busy": "boolean"
+  },
+  "events": {
+    "load": {},
+    "retry": {}
+  }
+}

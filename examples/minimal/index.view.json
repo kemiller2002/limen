@@ -1,0 +1,11 @@
+{
+  "doc": "The shipped minimal counter. Checked against its HTML statically and against engine.js in test/view-contracts.test.ts.",
+  "view": {
+    "resetDisabled": "boolean",
+    "count": "number"
+  },
+  "events": {
+    "increment": {},
+    "reset": {}
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "doc": "The minimal engine (conformance/sessions/minimal-engine.md), identical for the F#, C# and Rust guests. Every expected view and event in conformance/sessions/minimal.session.json is checked against it, so each language engine is held to it through the shared session.",
+  "view": {
+    "status": "string",
+    "count": "number",
+    "log": {
+      "list": {
+        "id": "string",
+        "text": "string"
+      }
+    }
+  },
+  "events": {
+    "http-ok": {},
+    "http-missing": {},
+    "storage-set": {},
+    "storage-get": {},
+    "clipboard": {},
+    "nav-push": {},
+    "nav-away": {}
+  }
+}

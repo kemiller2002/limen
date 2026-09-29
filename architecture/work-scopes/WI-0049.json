@@ -1,9 +1,28 @@
 {
   "workItem": "WI-0049",
   "reference": "kemiller2002/limen#48 (LCP-042)",
-  "placement": "Tooling / Conformance — a pure checker in src/tooling, adjacent *.view.json contracts beside each page, a repository check script; no Core change",
+  "placement": "Tooling / Conformance \u2014 a pure checker in src/tooling, adjacent *.view.json contracts beside each page, a repository check script; no Core change",
   "guardrail": false,
-  "paths": ["src/tooling/**", "scripts/check-views.ts", "package.json", "architecture/typescript-boundary.json", "**/*.view.json", "test/**", "docs/**", "examples/**/README.md", "CHANGELOG.md", "CLAUDE.md", "AGENTS.md"],
-  "expansions": [],
+  "paths": [
+    "src/tooling/**",
+    "scripts/check-views.ts",
+    "package.json",
+    "architecture/typescript-boundary.json",
+    "**/*.view.json",
+    "test/**",
+    "docs/**",
+    "examples/**/README.md",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "AGENTS.md"
+  ],
+  "expansions": [
+    {
+      "paths": [
+        "site/fsharp/tests/**"
+      ],
+      "reason": "Issue #48 requires F# to consume the same view contract: the site engine's F# tests (already run by build:site) check its serialized projections against site/pages/*.view.json. Test code only; no engine change."
+    }
+  ],
   "recordedAfterCompletion": false
 }

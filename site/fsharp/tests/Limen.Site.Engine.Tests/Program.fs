@@ -124,6 +124,61 @@ let effects = deployResponse.["effects"].AsArray()
 equal "serialized deploy emits one effect" 1 effects.Count
 equal "serialized deploy effect is HTTP" "Http" (effects.[0].AsObject().["kind"].GetValue<string>())
 
+// View contracts (kemiller2002/limen#48): the same language-neutral
+// site/pages/*.view.json that the static checker holds the HTML to also holds
+// this engine's serialized projections. One engine serves several pages, so
+// each page's contract must be present in the view with the declared kinds;
+// keys other pages bind are allowed.
+let kindOf (node: JsonNode) =
+    match node.GetValueKind() with
+    | System.Text.Json.JsonValueKind.String -> "string"
+    | System.Text.Json.JsonValueKind.Number -> "number"
+    | System.Text.Json.JsonValueKind.True
+    | System.Text.Json.JsonValueKind.False -> "boolean"
+    | System.Text.Json.JsonValueKind.Array -> "list"
+    | other -> string other
+
+let kindMatches (expected: string) (actual: string) =
+    expected = actual || (expected = "scalar" && List.contains actual [ "string"; "number"; "boolean" ])
+
+let checkAgainst (page: string) (contract: JsonObject) (label: string) (view: JsonObject) =
+    for entry in contract.["view"].AsObject() do
+        let where = $"{page} contract, {label}: view.{entry.Key}"
+        match view.[entry.Key] with
+        | null -> fail where "present" "absent"
+        | value ->
+            match entry.Value.GetValueKind() with
+            | System.Text.Json.JsonValueKind.String ->
+                let expected = entry.Value.GetValue<string>()
+                if not (kindMatches expected (kindOf value)) then fail where expected (kindOf value)
+            | _ ->
+                if kindOf value <> "list" then fail where "list" (kindOf value)
+                else
+                    for item in value.AsArray() do
+                        for field in entry.Value.AsObject().["list"].AsObject() do
+                            match item.AsObject().[field.Key] with
+                            | null -> fail $"{where}[].{field.Key}" "present" "absent"
+                            | fieldValue ->
+                                let expected = field.Value.GetValue<string>()
+                                if not (kindMatches expected (kindOf fieldValue)) then fail $"{where}[].{field.Key}" expected (kindOf fieldValue)
+
+let pagesDirectory = IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "..", "..", "pages")
+let viewContracts =
+    IO.Directory.GetFiles(pagesDirectory, "*.view.json")
+    |> Array.sort
+    |> Array.map (fun path -> IO.Path.GetFileName path, JsonNode.Parse(IO.File.ReadAllText path).AsObject())
+
+ok "site pages publish view contracts" (viewContracts.Length > 0)
+
+let projectedViews =
+    [ "initialize", initialJsonView
+      "approved", approvedResponse.["view"].AsObject()
+      "deploying", deployResponse.["view"].AsObject() ]
+
+for (page, contract) in viewContracts do
+    for (label, view) in projectedViews do
+        checkAgainst page contract label view
+
 if failures = 0 then
     printfn "Limen F# site engine tests passed."
 else

@@ -1,0 +1,20 @@
+<main>
+  <h1 data-text="title"></h1>
+  <p>Count: <span data-text="count"></span></p>
+  <button data-event="add" data-bind-disabled="busy">Add</button>
+  <input data-event="rename" data-bind-value="title">
+  <input data-event="rename" data-on="input" data-bind-value="title">
+  <template data-if="busy"><p>Working…</p></template>
+  <ul>
+    <template data-each="rows" data-key="id">
+      <li>
+        <input type="checkbox" data-bind-checked="done">
+        <span data-text="label"></span>
+        <button data-event="remove">Remove</button>
+        <template data-if="done"><em>done</em></template>
+      </li>
+    </template>
+  </ul>
+  <!-- <span data-text="notInTheContract"> inside a comment is not a binding -->
+  <script>const markup = "<span data-text=\"alsoNotABinding\">";</script>
+</main>

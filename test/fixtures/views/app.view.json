@@ -1,0 +1,15 @@
+{
+  "doc": "The contract every fixture page in this directory is checked against (test/view-contracts.test.ts).",
+  "view": {
+    "title": "string",
+    "count": "number",
+    "busy": "boolean",
+    "flag": "string",
+    "rows": { "list": { "id": "string", "label": "string", "done": "boolean" } }
+  },
+  "events": {
+    "add": {},
+    "rename": { "value": true },
+    "remove": { "item": "rows" }
+  }
+}

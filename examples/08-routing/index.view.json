@@ -1,0 +1,34 @@
+{
+  "doc": "What examples/08-routing/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "currentUrl": "string",
+    "copyDisabled": "boolean",
+    "showCopyStatus": "boolean",
+    "copyStatus": "string",
+    "urlOutOfSync": "boolean",
+    "onHome": "boolean",
+    "onInvoices": "boolean",
+    "invoices": {
+      "list": {
+        "id": "string",
+        "customer": "string",
+        "total": "string"
+      }
+    },
+    "onInvoice": "boolean",
+    "invoiceId": "string",
+    "invoiceCustomer": "string",
+    "invoiceTotal": "string",
+    "onNotFound": "boolean",
+    "unknownPath": "string"
+  },
+  "events": {
+    "goHome": {},
+    "goInvoices": {},
+    "goBack": {},
+    "copyLink": {},
+    "openInvoice": {
+      "item": "invoices"
+    }
+  }
+}

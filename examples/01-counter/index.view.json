@@ -1,0 +1,11 @@
+{
+  "doc": "What examples/01-counter/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "resetDisabled": "boolean",
+    "count": "number"
+  },
+  "events": {
+    "increment": {},
+    "reset": {}
+  }
+}

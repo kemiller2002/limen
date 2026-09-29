@@ -21,6 +21,7 @@ import test from "node:test";
 import { BrowserKernel } from "../dist/kernel/browser-kernel.js";
 import type { CorrelationId } from "../dist/protocol.js";
 import { exampleBody, withClipboard, withDom, withFetch } from "./dom-helpers.ts";
+import { conforming, assertEveryProjectionConformed } from "./view-conformance.ts";
 
 import { createCounterTransport } from "../examples/01-counter/engine.ts";
 import { createFormTransport, transition as formTransition, initialState as formInitial } from "../examples/02-form/engine.ts";
@@ -121,7 +122,7 @@ const cid = (value: string): CorrelationId => value as CorrelationId;
 
 test("01-counter: the initial projection renders before any interaction", async () => {
   await withDom(await exampleBody("01-counter"), async (document) => {
-    await new BrowserKernel(createCounterTransport(), document).start();
+    await new BrowserKernel(conforming("01-counter", createCounterTransport()), document).start();
     assert.equal(text(document, "[data-text='count']"), "0");
     assert.equal(isDisabled(document, "[data-event='reset']"), true, "Reset starts unavailable");
   });
@@ -129,7 +130,7 @@ test("01-counter: the initial projection renders before any interaction", async 
 
 test("01-counter: clicking increment transitions state and re-projects", async () => {
   await withDom(await exampleBody("01-counter"), async (document) => {
-    await new BrowserKernel(createCounterTransport(), document).start();
+    await new BrowserKernel(conforming("01-counter", createCounterTransport()), document).start();
     await click(document, "[data-event='increment']");
     assert.equal(text(document, "[data-text='count']"), "1");
     await click(document, "[data-event='increment']");
@@ -139,7 +140,7 @@ test("01-counter: clicking increment transitions state and re-projects", async (
 
 test("01-counter: the engine projects Reset's availability; the DOM never derives it", async () => {
   await withDom(await exampleBody("01-counter"), async (document) => {
-    await new BrowserKernel(createCounterTransport(), document).start();
+    await new BrowserKernel(conforming("01-counter", createCounterTransport()), document).start();
     await click(document, "[data-event='increment']");
     assert.equal(isDisabled(document, "[data-event='reset']"), false);
     await click(document, "[data-event='reset']");
@@ -154,7 +155,7 @@ test("01-counter: the engine projects Reset's availability; the DOM never derive
 
 test("02-form: submit is unavailable until the whole draft validates", async () => {
   await withDom(await exampleBody("02-form"), async (document) => {
-    await new BrowserKernel(createFormTransport(), document).start();
+    await new BrowserKernel(conforming("02-form", createFormTransport()), document).start();
     assert.equal(isDisabled(document, "button[type='submit']"), true);
 
     await type(document, "#name", "Ada");
@@ -167,7 +168,7 @@ test("02-form: submit is unavailable until the whole draft validates", async () 
 
 test("02-form: a validation message mounts only once a field is wrong, not while empty", async () => {
   await withDom(await exampleBody("02-form"), async (document) => {
-    await new BrowserKernel(createFormTransport(), document).start();
+    await new BrowserKernel(conforming("02-form", createFormTransport()), document).start();
     assert.equal(present(document, "[data-text='emailError']"), false, "no scolding before typing");
 
     await type(document, "#email", "nope");
@@ -180,7 +181,7 @@ test("02-form: a validation message mounts only once a field is wrong, not while
 
 test("02-form: submitting a valid draft mounts the confirmation and locks the fields", async () => {
   await withDom(await exampleBody("02-form"), async (document) => {
-    await new BrowserKernel(createFormTransport(), document).start();
+    await new BrowserKernel(conforming("02-form", createFormTransport()), document).start();
     await type(document, "#name", "Ada");
     await type(document, "#email", "ada@example.com");
     await submit(document, "form");
@@ -225,7 +226,7 @@ test("03-fetch-data: a successful load renders one row per item via data-each", 
   const { impl, calls } = stubFetch(() => ({ status: 200, body: CUSTOMERS }));
   await withFetch(impl, async () => {
     await withDom(await exampleBody("03-fetch-data"), async (document) => {
-      await new BrowserKernel(createFetchTransport(), document).start();
+      await new BrowserKernel(conforming("03-fetch-data", createFetchTransport()), document).start();
       assert.equal(text(document, "[data-text='statusText']"), "Nothing loaded yet.");
 
       await click(document, "[data-event='load']");
@@ -244,7 +245,7 @@ test("03-fetch-data: a network failure becomes a retryable state, not an excepti
   const { impl } = stubFetch(() => "network-error");
   await withFetch(impl, async () => {
     await withDom(await exampleBody("03-fetch-data"), async (document) => {
-      await new BrowserKernel(createFetchTransport(), document).start();
+      await new BrowserKernel(conforming("03-fetch-data", createFetchTransport()), document).start();
       await click(document, "[data-event='load']");
       assert.equal(text(document, "[data-text='statusText']"), "Could not reach the server.");
       assert.equal(present(document, "[data-event='retry']"), true);
@@ -256,7 +257,7 @@ test("03-fetch-data: a well-formed response with the wrong shape is a non-retrya
   const { impl } = stubFetch(() => ({ status: 200, body: { oops: true } }));
   await withFetch(impl, async () => {
     await withDom(await exampleBody("03-fetch-data"), async (document) => {
-      await new BrowserKernel(createFetchTransport(), document).start();
+      await new BrowserKernel(conforming("03-fetch-data", createFetchTransport()), document).start();
       await click(document, "[data-event='load']");
       assert.equal(text(document, "[data-text='statusText']"), "The server sent something unexpected.");
       assert.equal(present(document, "[data-event='retry']"), false, "retrying cannot fix a schema mismatch");
@@ -297,7 +298,7 @@ test("04-save-data: startup reads the saved draft through a Storage effect", asy
   await withFetch(impl, async () => {
     await withDom(await exampleBody("04-save-data"), async (document) => {
       window.localStorage.setItem("example-04-draft", "restored text");
-      await new BrowserKernel(createSaveTransport(), document).start();
+      await new BrowserKernel(conforming("04-save-data", createSaveTransport()), document).start();
       await flush();
       assert.equal(find<HTMLTextAreaElement>(document, "#note").value, "restored text");
       window.localStorage.clear();
@@ -310,7 +311,7 @@ test("04-save-data: typing persists a draft, and a successful save clears it", a
   await withFetch(impl, async () => {
     await withDom(await exampleBody("04-save-data"), async (document) => {
       window.localStorage.clear();
-      await new BrowserKernel(createSaveTransport(), document).start();
+      await new BrowserKernel(conforming("04-save-data", createSaveTransport()), document).start();
       await flush();
 
       await type(document, "#note", "hello world");
@@ -357,7 +358,7 @@ test("04-save-data: a timed-out POST offers reconciliation, never a blind retry"
 
 test("05-multi-screen: exactly one screen is mounted at a time", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await new BrowserKernel(conforming("05-multi-screen", createMultiScreenTransport()), document).start();
     assert.equal(text(document, "[data-text='greeting']"), "Hello, Guest.");
     assert.equal(present(document, "#filter"), false, "the Customers screen is not mounted");
     assert.equal(present(document, "#display-name"), false, "the Settings screen is not mounted");
@@ -367,7 +368,7 @@ test("05-multi-screen: exactly one screen is mounted at a time", async () => {
 
 test("05-multi-screen: a nav click carries the screen name as the item key", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await new BrowserKernel(conforming("05-multi-screen", createMultiScreenTransport()), document).start();
     const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"));
     assert.deepEqual(buttons.map((b) => b.textContent), ["Home", "Customers", "Settings"]);
 
@@ -381,7 +382,7 @@ test("05-multi-screen: a nav click carries the screen name as the item key", asy
 
 test("05-multi-screen: filtering is done by the engine, not the DOM", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await new BrowserKernel(conforming("05-multi-screen", createMultiScreenTransport()), document).start();
     Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[1]!.click();
     await flush();
 
@@ -396,7 +397,7 @@ test("05-multi-screen: filtering is done by the engine, not the DOM", async () =
 
 test("05-multi-screen: shared state survives navigation; screen-local state does not", async () => {
   await withDom(await exampleBody("05-multi-screen"), async (document) => {
-    await new BrowserKernel(createMultiScreenTransport(), document).start();
+    await new BrowserKernel(conforming("05-multi-screen", createMultiScreenTransport()), document).start();
     const nav = (index: number): HTMLButtonElement =>
       Array.from(document.querySelectorAll<HTMLButtonElement>(".nav button"))[index]!;
 
@@ -436,7 +437,7 @@ test("06-time-entries: the list loads on startup without any user interaction", 
   const { impl, calls } = stubFetch(() => ({ status: 200, body: asJson([ENTRY]) }));
   await withFetch(impl, async () => {
     await withDom(await exampleBody("06-time-entries"), async (document) => {
-      await new BrowserKernel(createTimeEntriesTransport(), document).start();
+      await new BrowserKernel(conforming("06-time-entries", createTimeEntriesTransport()), document).start();
       await flush();
       assert.equal(calls[0]?.url, "/api/time-entries");
       assert.equal(document.querySelectorAll(".list li").length, 1);
@@ -455,7 +456,7 @@ test("06-time-entries: adding an entry POSTs the validated draft, then re-reads 
 
   await withFetch(impl, async () => {
     await withDom(await exampleBody("06-time-entries"), async (document) => {
-      await new BrowserKernel(createTimeEntriesTransport(), document).start();
+      await new BrowserKernel(conforming("06-time-entries", createTimeEntriesTransport()), document).start();
       await flush();
 
       assert.equal(isDisabled(document, "form button[type='submit']"), true, "an empty draft cannot be added");
@@ -487,7 +488,7 @@ test("06-time-entries: marking a row processed PATCHes that row's id", async () 
 
   await withFetch(impl, async () => {
     await withDom(await exampleBody("06-time-entries"), async (document) => {
-      await new BrowserKernel(createTimeEntriesTransport(), document).start();
+      await new BrowserKernel(conforming("06-time-entries", createTimeEntriesTransport()), document).start();
       await flush();
       assert.equal(isDisabled(document, ".list li [data-event='markProcessed']"), false);
 
@@ -565,7 +566,7 @@ test("07-clipboard: clicking Copy sends the projected URL to the clipboard and s
   const body = await exampleBody("07-clipboard");
   await withDom(body, async (document) => {
     await withClipboard(async (text) => { written.push(text); }, async () => {
-      await new BrowserKernel(createClipboardTransport(), document).start();
+      await new BrowserKernel(conforming("07-clipboard", createClipboardTransport()), document).start();
       await flush();
 
       // The URL copied is the same value the page displays — both come from
@@ -585,7 +586,7 @@ test("07-clipboard: a browser that refuses the write produces advice, not a cras
   const body = await exampleBody("07-clipboard");
   await withDom(body, async (document) => {
     await withClipboard(async () => { throw new window.DOMException("blocked", "NotAllowedError"); }, async () => {
-      await new BrowserKernel(createClipboardTransport(), document).start();
+      await new BrowserKernel(conforming("07-clipboard", createClipboardTransport()), document).start();
       await flush();
       await click(document, ".list li button[data-event='copy']");
       await flush();
@@ -603,7 +604,7 @@ test("07-clipboard: a browser with no Clipboard API is told to copy manually, an
   // browser. Nothing is stubbed here on purpose.
   const body = await exampleBody("07-clipboard");
   await withDom(body, async (document) => {
-    await new BrowserKernel(createClipboardTransport(), document).start();
+    await new BrowserKernel(conforming("07-clipboard", createClipboardTransport()), document).start();
     await flush();
     await click(document, ".list li button[data-event='copy']");
     await flush();
@@ -659,7 +660,7 @@ test("08-routing: the first screen comes from the address bar, not from a defaul
   const body = await exampleBody("08-routing");
   await withDom(body, async (document) => {
     window.history.replaceState(null, "", "/?route=%2Finvoices%2F1002");
-    await new BrowserKernel(createRoutingTransport(), document).start();
+    await new BrowserKernel(conforming("08-routing", createRoutingTransport()), document).start();
     await flush();
     // Home never flashes: Initialize carries the location.
     assert.equal(present(document, "section h2"), true);
@@ -672,7 +673,7 @@ test("08-routing: the first screen comes from the address bar, not from a defaul
 test("08-routing: clicking a row changes the screen and the URL together", async () => {
   const body = await exampleBody("08-routing");
   await withDom(body, async (document) => {
-    await new BrowserKernel(createRoutingTransport(), document).start();
+    await new BrowserKernel(conforming("08-routing", createRoutingTransport()), document).start();
     await flush();
     await click(document, "[data-event='goInvoices']");
     assert.equal(text(document, "section h2"), "Invoices");
@@ -687,7 +688,7 @@ test("08-routing: clicking a row changes the screen and the URL together", async
 test("08-routing: the browser's own Back button moves the screen back", async () => {
   const body = await exampleBody("08-routing");
   await withDom(body, async (document) => {
-    await new BrowserKernel(createRoutingTransport(), document).start();
+    await new BrowserKernel(conforming("08-routing", createRoutingTransport()), document).start();
     await flush();
     await click(document, "[data-event='goInvoices']");
     assert.equal(text(document, "section h2"), "Invoices");
@@ -731,7 +732,7 @@ test("08-routing: Copy link puts the ABSOLUTE url of the current screen on the c
   const body = await exampleBody("08-routing");
   await withDom(body, async (document) => {
     await withClipboard(async (copied) => { written.push(copied); }, async () => {
-      await new BrowserKernel(createRoutingTransport(), document).start();
+      await new BrowserKernel(conforming("08-routing", createRoutingTransport()), document).start();
       await flush();
       await click(document, "[data-event='goInvoices']");
       const shown = text(document, "code[data-text='currentUrl']");
@@ -753,7 +754,7 @@ test("08-routing: a clipboard the browser refuses is admitted; the link stays on
   const body = await exampleBody("08-routing");
   await withDom(body, async (document) => {
     // jsdom has no Clipboard API at all, which is exactly an insecure context.
-    await new BrowserKernel(createRoutingTransport(), document).start();
+    await new BrowserKernel(conforming("08-routing", createRoutingTransport()), document).start();
     await flush();
     await click(document, "[data-event='copyLink']");
     await flush();
@@ -782,4 +783,10 @@ test("08-routing: a navigation the kernel could not perform is admitted, not hid
   assert.deepEqual(failed.state.route, { kind: "Invoices" });
   assert.equal(routeProject(failed.state)["urlOutOfSync"], true);
   assert.equal(routeProject(failed.state)["onInvoices"], true);
+});
+
+// Runs last: every projection and every event any test above produced matched
+// its example's view contract (examples/*/index.view.json).
+test("every example's projections and events matched its view contract", () => {
+  assertEveryProjectionConformed(["01-counter", "02-form", "03-fetch-data", "04-save-data", "05-multi-screen", "06-time-entries", "07-clipboard", "08-routing"]);
 });

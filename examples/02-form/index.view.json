@@ -1,0 +1,26 @@
+{
+  "doc": "What examples/02-form/engine.ts projects and accepts. Checked against index.html by npm run check:views, and every projection and event in test/examples.test.ts is checked against it.",
+  "view": {
+    "name": "string",
+    "fieldsDisabled": "boolean",
+    "nameErrorVisible": "boolean",
+    "nameError": "string",
+    "email": "string",
+    "emailErrorVisible": "boolean",
+    "emailError": "string",
+    "submitDisabled": "boolean",
+    "formMessage": "string",
+    "submitted": "boolean",
+    "confirmation": "string"
+  },
+  "events": {
+    "submit": {},
+    "nameChanged": {
+      "value": true
+    },
+    "emailChanged": {
+      "value": true
+    },
+    "startOver": {}
+  }
+}

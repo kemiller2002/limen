@@ -66,6 +66,7 @@ Then, for depth:
 | 23 | [WASM federation](23-wasm-federation.md) | How do multiple independently loaded engines exchange typed transitions without sharing state? |
 | 26 | [Fake host, traces and replay](https://github.com/kemiller2002/limen/blob/main/docs/26-fake-host-trace-replay.md) | How do I test an engine deterministically without a browser, and see or replay what crossed the boundary? |
 | 27 | [Performance baseline](https://github.com/kemiller2002/limen/blob/main/docs/27-performance-baseline.md) | What does Limen cost today — round trips, lists, forms, guest engines, payload — and where is the evidence for any optimization? |
+| 28 | [View contracts](https://github.com/kemiller2002/limen/blob/main/docs/28-view-contracts.md) | How do I check a page's bindings and events against what the engine projects and accepts, before anything runs? |
 | 25 | [Guardrails](https://github.com/kemiller2002/limen/blob/main/docs/25-guardrails.md) | What does the repository enforce — layers, work-item scope, guardrail ownership — and how do I work inside it? |
 | 24 | [Contract, handshake and capabilities](https://github.com/kemiller2002/limen/blob/main/docs/24-contract-and-capabilities.md) | Where is the wire contract defined, how are bindings generated, and how is an optional capability added without changing Core? |
 
@@ -114,7 +115,7 @@ so they cannot silently stop working.
 | [06-time-entries](https://github.com/kemiller2002/limen/tree/main/examples/06-time-entries) | A realistic feature: load, validate, add, mutate, refresh |
 | [07-clipboard](https://github.com/kemiller2002/limen/tree/main/examples/07-clipboard) | The Clipboard capability: three failure reasons, only one worth retrying |
 | [08-routing](https://github.com/kemiller2002/limen/tree/main/examples/08-routing) | The Navigation capability: typed routes, deep links, Back and Forward |
-| [minimal](../examples/minimal/) | The copy shipped inside the npm package: four files, no build step |
+| [minimal](../examples/minimal/) | The copy shipped inside the npm package: four files, no build step, plus an optional view contract |
 | [kitchen-sink](https://github.com/kemiller2002/limen/blob/main/examples/kitchen-sink.html) | Every bridge primitive and every effect outcome, interactively |
 
 Every example has its own README covering its state model, event and effect
