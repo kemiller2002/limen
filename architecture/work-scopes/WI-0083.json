@@ -1,0 +1,32 @@
+{
+  "workItem": "WI-0083",
+  "reference": "kemiller2002/limen#47 (LCP-041, Core HTTP profile)",
+  "placement": "Core (kernel mechanism + contract, protocol 1.3 additive) — the representation of a response, which response headers are returned, the credentials mode and a same-origin XSRF cookie-to-header binding are properties of the one fetch call the Http effect already makes; no pack could supply them without a second, competing Http path. All are optional request fields with the current behaviour as the default, so the JSON path is unchanged and a 1.2 engine never sees a new field. Retry, caching, auth policy and polling stay out of the kernel (engine library, separate item); progress and binary uploads are an optional profile pack (separate item).",
+  "guardrail": false,
+  "paths": [
+    "contract/core.contract.json",
+    "src/**",
+    "test/**",
+    "conformance/**",
+    "guests/fsharp/Limen.Contract/Generated/**",
+    "guests/csharp/Limen.Contract/Generated/**",
+    "guests/rust/limen-contract/src/limen_core.rs",
+    "guests/**/*.fs",
+    "guests/**/*.cs",
+    "guests/**/*.rs",
+    "site/fsharp/**/*.fs",
+    "site/app/**",
+    "site/pages/**",
+    "examples/**",
+    "scripts/smoke-packs.ts",
+    "docs/**",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "architecture.yaml",
+    "bench/budgets.json",
+    "research/**"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
