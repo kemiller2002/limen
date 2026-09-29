@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 102,
+  "nextSeq": 103,
   "items": [
     {
       "id": "WI-0001",
@@ -1542,6 +1542,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T11:20:14Z",
       "updatedAt": "2026-09-29T11:35:27Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0102",
+      "title": "Offline outbox engine library: persisted pending operations, connectivity-gated ordered dispatch, conflict and OutcomeUnknown requiring engine reconciliation, reload makes in-flight unknown; language-neutral vectors and F# reference (GH-40)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T11:37:58Z",
+      "updatedAt": "2026-09-29T11:37:58Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
