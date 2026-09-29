@@ -48,6 +48,11 @@ exhaustive lists.
   and are reference proofs for the Forma project, which owns reusable
   patterns. The events capability gains a `direction` fact group and the
   `Space` key alias.
+- **Virtualization evidence gate (#37): not met, and nothing is built.** The
+  #19 baseline attributes the cost of large-list updates to rewriting
+  unchanged bindings and to strict decoding (WI-0043, WI-0045), not to list
+  size. The conclusion, and the re-measurement that would reopen it, are in
+  DF-LIMEN-2026-0004.
 - **State-safe hot reload (#36).** `./tooling/hot-reload` and `npm run dev`:
   - a pure reload plan: CSS swaps in place, HTML remounts, and an engine is
     restored only from a snapshot with exactly its version (otherwise it is

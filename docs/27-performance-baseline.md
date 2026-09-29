@@ -174,6 +174,14 @@ acted on here.
    core codec to decode one handshake. A bundler would tree-shake both;
    unbundled ES modules, as `examples/minimal` ships, cannot.
 
+**Virtualization (#37) is not warranted by this evidence.** A one-row update
+of 10,000 rows makes 10,000 mutations, the same as an unchanged
+re-projection. The cost is the rewriting of unchanged values (item 1) plus
+decoding (item 3), not the size of the list. The decision, and the
+re-measurement that would reopen it, are recorded in
+[DF-LIMEN-2026-0004](../research/decisions/DF-LIMEN-2026-0004--virtualization-evidence-gate.md).
+No runtime change was made.
+
 ## Budgets
 
 Size budgets are the measured baseline plus 10%, rounded up to a whole KiB.
