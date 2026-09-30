@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0143",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Guardrail — the F# WebAssembly guest publishes trimmed (WI-0046). tools/contract-gen/emit-fsharp.ts stops emitting interpolated strings and sprintf in the generated F# runtime (they compile to F# printf, which the trimmer cannot analyze); the minimal F# engine does the same; the F# guest projects compile with --reflectionfree; Limen.Minimal.Wasm.csproj publishes with PublishTrimmed, TrimMode full and FSharp.Core 9.0.303. The one exception, approved by the owner on 2026-09-30 (kemiller2002/limen#19): WarningsNotAsErrors IL2040 in that project only, for FSharp.Core's own trimming file naming resources the assembly does not contain. architecture/guardrails.json declares it and test/guardrails.test.ts refuses any undeclared or broader one; every trim-analysis warning stays an error.",
+  "guardrail": true,
+  "paths": ["tools/contract-gen/emit-fsharp.ts", "guests/fsharp/Limen.Contract/Generated/Runtime.fs", "guests/fsharp/Limen.Contract/Limen.Contract.fsproj", "guests/fsharp/Limen.Guest/Limen.Guest.fsproj", "guests/minimal/fsharp/Limen.Minimal.Engine/**", "guests/minimal/fsharp/Limen.Minimal.Wasm/Limen.Minimal.Wasm.csproj", "architecture/guardrails.json", "test/guardrails.test.ts", "bench/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
