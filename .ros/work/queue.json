@@ -2145,10 +2145,10 @@
         "wasm"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-30T21:00:20.360Z",
-      "updatedAt": "2026-09-30T21:00:40.000Z",
+      "updatedAt": "2026-09-30T21:06:45.000Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
