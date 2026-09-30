@@ -2070,10 +2070,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-30T07:40:09.308Z",
-      "updatedAt": "2026-09-30T07:40:09Z",
+      "updatedAt": "2026-09-30T07:40:48Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
