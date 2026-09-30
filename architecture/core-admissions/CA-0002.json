@@ -20,5 +20,5 @@
   "compatibilityImpact": "Additive. A page without markers behaves exactly as today; markers only appear in renderer output. A page with markers whose projection differs is corrected by the projection, as any projection corrects the DOM, and the difference is reported. No protocol or contract change, so no guest language or fingerprint change.",
   "negativeBoundaryTests": "test/core-boundary.test.ts continues to reject any undeclared data-* attribute read by Core (a third marker would fail), Core importing the renderer, and a new Core file; test/core-budget.test.ts holds the growth under review; the kernel tests would cover adoption of matching markup, keyed identity across adoption, discard of stale rows, and that a page without markers is untouched.",
   "guestLanguageImpact": "None: the contract, the fingerprint and every F#, C# and Rust binding are unchanged. Guest engines already produce the projection the renderer writes.",
-  "decision": { "outcome": "pending", "by": "", "date": "", "evidence": "" }
+  "decision": { "outcome": "approved", "by": "kemiller2002", "date": "2026-09-29", "evidence": "https://github.com/kemiller2002/limen/pull/64#issuecomment-5899965004" }
 }

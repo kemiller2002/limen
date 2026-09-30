@@ -249,7 +249,7 @@
       "workItem": "WI-0122",
       "kind": "governance",
       "admission": "CA-0001",
-      "note": "The freeze point: Core as it stands after #60 and #61, before any further capability work. It is 99% more handwritten raw lines (675 -> 1341), 112% more handwritten code lines (435 -> 922) and 231% more emitted gzip (7112 -> 23540, of which the generated codec is the largest part) than the #59 reference. That growth happened on this branch before the boundary was frozen: the contract-fingerprint handshake (#52), the generic optional-capability seam (#16), the binding security policy (#18), protocol 1.2-1.4 Http and form-control semantics (#47) and head binding (#38). CA-0001 records it for the repository owner to ratify or reject; until then this baseline freezes Core where it is, so nothing grows further without an admission."
+      "note": "The freeze point: Core as it stands after #60 and #61, before any further capability work. It is 99% more handwritten raw lines (675 -> 1341), 112% more handwritten code lines (435 -> 922) and 231% more emitted gzip (7112 -> 23540, of which the generated codec is the largest part) than the #59 reference. That growth happened on this branch before the boundary was frozen: the contract-fingerprint handshake (#52), the generic optional-capability seam (#16), the binding security policy (#18), protocol 1.2-1.4 Http and form-control semantics (#47) and head binding (#38). CA-0001 records it; the repository owner ratified it on 2026-09-29. This baseline freezes Core where it is, so nothing grows further without an admission."
     },
     "report": {
       "architectureVersion": "1.0.0",

@@ -5,11 +5,12 @@ record maps each acceptance criterion and negative test to the check that
 enforces it, so a successor can verify the boundary without the conversation
 that built it.
 
-**Status:** every criterion is enforced in `npm test` and CI. One decision
-belongs to the repository owner and is open: whether to ratify the Core
-growth that predates the freeze (`architecture/core-admissions/CA-0001.json`,
-outcome `pending`). Until then, `npm run check:core-budget` prints a NOTICE
-and freezes Core where it stands.
+**Status:** every criterion is enforced in `npm test` and CI. The repository
+owner ratified the Core growth that predates the freeze on 2026-09-29
+(`architecture/core-admissions/CA-0001.json`, outcome `approved`), so the
+approved baseline rests on an accepted admission. While an admission is
+pending, `npm run check:core-budget` prints a NOTICE and freezes Core where it
+stands.
 
 ## Where the boundary lives
 
