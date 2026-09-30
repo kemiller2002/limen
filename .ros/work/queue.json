@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 140,
+  "nextSeq": 141,
   "items": [
     {
       "id": "WI-0001",
@@ -2074,6 +2074,20 @@
       "attachments": [],
       "createdAt": "2026-09-30T07:40:09.308Z",
       "updatedAt": "2026-09-30T07:40:48Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0140",
+      "title": "Record why the F# guest cannot be trimmed without suppression yet (WI-0046 findings, GH-19)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:48:11.526Z",
+      "updatedAt": "2026-09-30T07:48:11Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
