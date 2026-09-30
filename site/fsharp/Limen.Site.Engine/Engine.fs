@@ -56,9 +56,19 @@ module Engine =
           To: string
           Effect: string }
 
+    type MissionFilter =
+        | AllMissions
+        | CrewedMissions
+        | UncrewedMissions
+
+    type MissionBrowserState =
+        { Filter: MissionFilter
+          SelectedId: string }
+
     type State =
         { Release: ReleaseState
           Policy: PolicyState
+          MissionBrowser: MissionBrowserState
           TaskIndex: int
           Picked: Placement option
           Answered: int
@@ -83,6 +93,8 @@ module Engine =
         | DeliverPolicyA
         | DeliverPolicyB
         | ResetPolicy
+        | SetMissionFilter of MissionFilter
+        | SelectMission of string
         | Pick of Placement
         | NextTask
         | ClearTrace
@@ -150,6 +162,9 @@ module Engine =
               DeliveredA = false
               DeliveredB = false
               StaleDiscarded = 0 }
+          MissionBrowser =
+            { Filter = AllMissions
+              SelectedId = "apollo-11" }
           TaskIndex = 0
           Picked = None
           Answered = 0
@@ -218,8 +233,52 @@ module Engine =
         let accepted = policy.AcceptedResult |> Option.defaultValue "none"
         $"latest={latest} accepted={accepted} stale={policy.StaleDiscarded}"
 
+    let private missionFilterId = function
+        | AllMissions -> "all"
+        | CrewedMissions -> "crewed"
+        | UncrewedMissions -> "uncrewed"
+
+    let private missionFilterLabel = function
+        | AllMissions -> "All"
+        | CrewedMissions -> "Crewed"
+        | UncrewedMissions -> "Uncrewed"
+
+    let private parseMissionFilter = function
+        | "all" -> AllMissions
+        | "crewed" -> CrewedMissions
+        | "uncrewed" -> UncrewedMissions
+        | other -> failwithf "Unknown mission filter '%s'." other
+
+    let private missionMatchesFilter (filter: MissionFilter) (mission: Mission.Mission) =
+        match filter with
+        | AllMissions -> true
+        | CrewedMissions -> mission.Crewed
+        | UncrewedMissions -> not mission.Crewed
+
+    let private visibleMissions browser =
+        Mission.all |> List.filter (missionMatchesFilter browser.Filter)
+
+    let private normalizeMissionSelection filter selectedId =
+        let visible = Mission.all |> List.filter (missionMatchesFilter filter)
+
+        match visible with
+        | [] -> None
+        | first :: _ ->
+            let selected =
+                if visible |> List.exists (fun mission -> mission.Id = selectedId) then
+                    selectedId
+                else
+                    first.Id
+
+            Some
+                { Filter = filter
+                  SelectedId = selected }
+
+    let private describeMissionBrowser browser =
+        $"filter={missionFilterId browser.Filter} selected={browser.SelectedId}"
+
     let describe state =
-        $"release[{describeRelease state.Release}] policy[{describePolicy state.Policy}]"
+        $"release[{describeRelease state.Release}] policy[{describePolicy state.Policy}] mission[{describeMissionBrowser state.MissionBrowser}]"
 
     let eventToCommand correlationId event =
         match event.Name with
@@ -239,6 +298,8 @@ module Engine =
         | "deliverPolicyA" -> DeliverPolicyA
         | "deliverPolicyB" -> DeliverPolicyB
         | "resetPolicy" -> ResetPolicy
+        | "filterMission" -> SetMissionFilter(parseMissionFilter (event.Key |> Option.defaultValue ""))
+        | "selectMission" -> SelectMission(event.Key |> Option.defaultValue "")
         | "nextTask" -> NextTask
         | "clearTrace" -> ClearTrace
         | "pick" -> Pick(parsePlacement (event.Key |> Option.defaultValue ""))
@@ -279,6 +340,8 @@ module Engine =
         | DeliverPolicyA -> "DeliverPolicyA"
         | DeliverPolicyB -> "DeliverPolicyB"
         | ResetPolicy -> "ResetPolicy"
+        | SetMissionFilter filter -> $"SetMissionFilter({missionFilterId filter})"
+        | SelectMission id -> $"SelectMission({id})"
         | Pick placement -> $"Pick({placementId placement})"
         | NextTask -> "NextTask"
         | ClearTrace -> "ClearTrace"
@@ -447,6 +510,21 @@ module Engine =
         | ResetPolicy ->
             step state command { state with Policy = initialState.Policy } "—"
 
+        | SetMissionFilter filter ->
+            match normalizeMissionSelection filter state.MissionBrowser.SelectedId with
+            | Some browser when browser <> state.MissionBrowser ->
+                step state command { state with MissionBrowser = browser } "—"
+            | _ ->
+                noChange state
+
+        | SelectMission id ->
+            match Mission.tryFind id with
+            | Some mission when missionMatchesFilter state.MissionBrowser.Filter mission && id <> state.MissionBrowser.SelectedId ->
+                let browser = { state.MissionBrowser with SelectedId = id }
+                step state command { state with MissionBrowser = browser } "—"
+            | _ ->
+                noChange state
+
         | Pick placement when Option.isNone state.Picked ->
             let task = placementTasks.[state.TaskIndex]
             let right = placement = task.Answer
@@ -525,6 +603,9 @@ module Engine =
     let project state =
         let release = state.Release
         let policy = state.Policy
+        let missionBrowser = state.MissionBrowser
+        let missionVisible = visibleMissions missionBrowser
+        let selectedMission = Mission.find missionBrowser.SelectedId
         let task = placementTasks.[state.TaskIndex]
         let revealed = state.Picked.IsSome
         let right = state.Picked = Some task.Answer
@@ -555,6 +636,35 @@ module Engine =
                     [ "id", ViewPrimitive.Text(placementId placement)
                       "label", ViewPrimitive.Text(placementLabel placement)
                       "pressed", ViewPrimitive.Flag(state.Picked = Some placement) ])
+
+        let missionFilters =
+            [ AllMissions; CrewedMissions; UncrewedMissions ]
+            |> List.map (fun filter ->
+                Map.ofList
+                    [ "id", ViewPrimitive.Text(missionFilterId filter)
+                      "label", ViewPrimitive.Text(missionFilterLabel filter)
+                      "pressed", ViewPrimitive.Flag(missionBrowser.Filter = filter) ])
+
+        let missionRows =
+            missionVisible
+            |> List.map (fun mission ->
+                let crew =
+                    if mission.Crewed then
+                        $"{mission.Crew.Length} crew"
+                    else
+                        "Uncrewed"
+
+                Map.ofList
+                    [ "id", ViewPrimitive.Text mission.Id
+                      "name", ViewPrimitive.Text mission.Name
+                      "meta", ViewPrimitive.Text $"{mission.Program} · {mission.LaunchDate} · {crew}"
+                      "selected", ViewPrimitive.Flag(mission.Id = missionBrowser.SelectedId) ])
+
+        let selectedMissionCrew =
+            if selectedMission.Crewed then
+                String.concat ", " selectedMission.Crew
+            else
+                "Uncrewed"
 
         let verdict =
             if not revealed then
@@ -590,6 +700,20 @@ module Engine =
               "policyDiscarded", ViewValue.Number(float policy.StaleDiscarded)
               "policyStateText", ViewValue.Text(policyStateText policy)
               "policyExplanation", ViewValue.Text(policyExplanation policy)
+              "missionFilters", ViewValue.Items missionFilters
+              "missionRows", ViewValue.Items missionRows
+              "missionCount", ViewValue.Number(float missionVisible.Length)
+              "selectedMissionName", ViewValue.Text selectedMission.Name
+              "selectedMissionProgram", ViewValue.Text selectedMission.Program
+              "selectedMissionType", ViewValue.Text selectedMission.MissionType
+              "selectedMissionDates", ViewValue.Text $"{selectedMission.LaunchDate} to {selectedMission.ReturnDate}"
+              "selectedMissionCrew", ViewValue.Text selectedMissionCrew
+              "selectedMissionSpacecraft", ViewValue.Text selectedMission.Spacecraft
+              "selectedMissionVehicle", ViewValue.Text selectedMission.LaunchVehicle
+              "selectedMissionDestination", ViewValue.Text selectedMission.Destination
+              "selectedMissionStatus", ViewValue.Text selectedMission.Status
+              "selectedMissionHighlight", ViewValue.Text selectedMission.Highlight
+              "selectedMissionSource", ViewValue.Text selectedMission.SourceUrl
               "canStartPolicyA", ViewValue.Flag(not policy.StartedA)
               "canStartPolicyB", ViewValue.Flag(policy.StartedA && not policy.StartedB)
               "canDeliverPolicyA", ViewValue.Flag(policy.StartedA && not policy.DeliveredA)
