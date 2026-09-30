@@ -27,9 +27,9 @@
   "negativeBoundaryTests": "test/core-boundary.test.ts keeps rejecting a Core file not listed in architecture/core.json, and Core importing a host, pack, renderer or tooling; test/core-budget.test.ts's list of generated Core files would name the new file; test/contract.test.ts would prove the roots output contains exactly the reachable decoders, rejects an unknown root, and decodes the shared handshake vectors identically to the full codec.",
   "guestLanguageImpact": "None. The contract, its fingerprint and the F#, C# and Rust bindings are unchanged; roots applies to typescript-codec outputs only.",
   "decision": {
-    "outcome": "pending",
-    "by": "",
-    "date": "",
-    "evidence": ""
+    "outcome": "approved",
+    "by": "kemiller2002",
+    "date": "2026-09-30",
+    "evidence": "https://github.com/kemiller2002/limen/issues/19#issuecomment-5908331827"
   }
 }
