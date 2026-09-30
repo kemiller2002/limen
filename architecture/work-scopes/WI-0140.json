@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0140",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Documentation — records in docs/27 what WI-0046 (the untrimmed F# guest) measured: full trim mode shrinks FSharp.Core from 3.2 MB to 247 KB, but every FSharp.Core version tried (8.0.102 to 10.0.112) raises IL2040 on its own embedded trimming file, so the guest cannot publish trimmed without suppressing warnings, which guest projects may not do. No project, generator or guardrail change.",
+  "guardrail": false,
+  "paths": ["docs/27-performance-baseline.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

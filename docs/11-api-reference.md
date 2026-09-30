@@ -234,7 +234,9 @@ await federation.exchange({
 ### `FEDERATION_PROTOCOL_VERSION`
 
 Currently `1`. It versions the federation envelope/lifecycle contract and is
-independent of the browser/engine `PROTOCOL_VERSION`.
+independent of the browser/engine `PROTOCOL_VERSION`. Like the wire types
+below, it is generated from `contract/federation.contract.json`, which also
+generates the F#, C# and Rust bindings.
 
 ### `ModuleManifest`
 
@@ -269,7 +271,10 @@ or how the module should recover.
 A JSON-safe, versioned cross-module message. It carries source/optional target,
 correlation and optional causation/idempotency information, message kind,
 contract/version, optional expected state version, capabilities, evidence and
-payload.
+payload. It is the contract's `FederationEnvelope`, generated: the payload is
+`unknown` until the receiving module narrows it by the contract the envelope
+names. The generated strict decoder is `decodeFederationEnvelope`, in
+`dist/federation/generated/federation.codec.js`.
 
 Only `DomainEvent` may omit `target`. Untargeted domain events fan out to
 active compatible consumers. Other kinds require an explicit target.
@@ -608,7 +613,8 @@ interface DiagnosticsSink { report(event: DiagnosticEvent): void; }
 type DiagnosticEvent =
   | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect" | "protocol"; detail: string }
   | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number }
-  | { kind: "Handshake";    verdict: HandshakeVerdict };   // reported once, after Initialize
+  | { kind: "Handshake";    verdict: HandshakeVerdict }    // reported once, after Initialize
+  | { kind: "Hydration";    binding: string; adopted: number; discarded: readonly string[] };  // once per binding with server-rendered markup (docs/54)
 
 const noopDiagnostics: DiagnosticsSink;   // the default
 ```

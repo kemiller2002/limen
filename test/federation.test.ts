@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+// From dist, not src: federation.ts has a runtime import of its generated
+// wire module (WI-0030), which resolves only once built. `pretest` builds.
 import {
   FEDERATION_PROTOCOL_VERSION,
   FederationError,
@@ -14,7 +16,7 @@ import {
   type ModuleId,
   type ModuleInitialization,
   type ModuleManifest,
-} from "../src/federation.ts";
+} from "../dist/federation.js";
 
 const moduleId = (value: string): ModuleId => value as ModuleId;
 const contractId = (value: string): ContractId => value as ContractId;

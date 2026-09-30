@@ -32,5 +32,6 @@
     <Compile Include="Generated/Coordination.fs" />
     <Compile Include="Generated/Media.fs" />
     <Compile Include="Generated/Peer.fs" />
+    <Compile Include="Generated/Federation.fs" />
   </ItemGroup>
 </Project>

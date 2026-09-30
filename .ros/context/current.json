@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-30T06:02:41Z",
+  "updatedAt": "2026-09-30T07:57:27Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3061,6 +3061,90 @@
         "EXE-20260929T221701739Z-577ce0e1"
       ],
       "completedAt": "2026-09-30T06:02:41Z"
+    },
+    {
+      "id": "WI-0138",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/kernel/browser-kernel.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/kernel.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-30T07:35:01Z",
+      "telemetryExecutionIds": [
+        "EXE-20260930T072555230Z-fba05663"
+      ],
+      "completedAt": "2026-09-30T07:35:01Z"
+    },
+    {
+      "id": "WI-0139",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "architecture/core-admissions/CA-0003.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/core-admission.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-30T07:40:48Z",
+      "telemetryExecutionIds": [
+        "EXE-20260930T074010203Z-2fce243c"
+      ],
+      "completedAt": "2026-09-30T07:40:48Z"
+    },
+    {
+      "id": "WI-0140",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/27-performance-baseline.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-09-30T07:48:32Z",
+      "telemetryExecutionIds": [
+        "EXE-20260930T074812432Z-eb957b34"
+      ],
+      "completedAt": "2026-09-30T07:48:32Z"
+    },
+    {
+      "id": "WI-0030",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "contract/federation.contract.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/federation-contract.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-30T07:57:27Z",
+      "telemetryExecutionIds": [
+        "EXE-20260930T075026165Z-40db391b"
+      ],
+      "completedAt": "2026-09-30T07:57:27Z"
     }
   ]
 }

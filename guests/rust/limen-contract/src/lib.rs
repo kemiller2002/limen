@@ -37,6 +37,7 @@ pub mod limen_credentials;
 pub mod limen_coordination;
 pub mod limen_media;
 pub mod limen_peer;
+pub mod limen_federation;
 
 /// A test-only capability unit, compiled only for the conformance tests.
 #[cfg(test)]

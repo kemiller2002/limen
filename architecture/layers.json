@@ -26,12 +26,14 @@
     },
     {
       "name": "federation-host",
-      "doc": "Optional host: multi-engine federation runtime.",
+      "doc": "Optional host: multi-engine federation runtime, and its wire protocol generated from contract/federation.contract.json.",
       "paths": [
-        "src/federation.ts"
+        "src/federation.ts",
+        "src/federation/**"
       ],
       "mayImport": [
-        "core-contract"
+        "core-contract",
+        "federation-host"
       ]
     },
     {

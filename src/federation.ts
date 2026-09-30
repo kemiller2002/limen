@@ -1,79 +1,18 @@
-export const FEDERATION_PROTOCOL_VERSION = 1 as const;
+// The wire protocol is generated from contract/federation.contract.json
+// (WI-0030), like every other boundary: F#, C# and Rust modules get the same
+// types from the same file. A payload is the contract's JSON: unknown until
+// the receiving module narrows it by the contract the envelope names.
+import { FEDERATION_PROTOCOL_VERSION } from "./federation/generated/federation.js";
+import type { ModuleId, ContractId, FederationCorrelationId, FederationMessageKind, ContractRange, ModuleManifest, ModulePeer, ModuleInitialization, FederationEnvelope, ModuleDispatchResult } from "./federation/generated/federation.js";
+
+export { FEDERATION_PROTOCOL_VERSION };
+export type { ModuleId, ContractId, FederationCorrelationId, FederationMessageKind, ContractRange, ModuleManifest, ModulePeer, ModuleInitialization, FederationEnvelope, ModuleDispatchResult };
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
   | JsonPrimitive
   | readonly JsonValue[]
   | { readonly [key: string]: JsonValue };
-
-export type ModuleId = string & { readonly __moduleId: unique symbol };
-export type ContractId = string & { readonly __contractId: unique symbol };
-export type FederationCorrelationId = string & {
-  readonly __federationCorrelationId: unique symbol;
-};
-
-export type FederationMessageKind =
-  | "TransitionRequest"
-  | "TransitionAccepted"
-  | "TransitionRejected"
-  | "AdditionalInformationRequired"
-  | "DomainEvent"
-  | "Query"
-  | "Projection"
-  | "EffectRequest"
-  | "EffectResult";
-
-export type ContractRange = {
-  readonly contract: ContractId;
-  readonly minVersion: number;
-  readonly maxVersion: number;
-};
-
-export type ModuleManifest = {
-  readonly id: ModuleId;
-  readonly version: string;
-  readonly federationProtocolVersion: typeof FEDERATION_PROTOCOL_VERSION;
-  readonly accepts: readonly ContractRange[];
-  readonly emits: readonly ContractRange[];
-  readonly capabilitiesRequired: readonly string[];
-  readonly dependencies: readonly ModuleId[];
-  readonly routes: readonly string[];
-};
-
-export type FederationEnvelope = {
-  readonly protocolVersion: typeof FEDERATION_PROTOCOL_VERSION;
-  readonly source: ModuleId;
-  readonly target?: ModuleId;
-  readonly correlationId: FederationCorrelationId;
-  readonly causationId?: FederationCorrelationId;
-  readonly idempotencyKey?: string;
-  readonly kind: FederationMessageKind;
-  readonly contract: ContractId;
-  readonly contractVersion: number;
-  readonly expectedStateVersion?: number;
-  readonly capabilities: readonly string[];
-  readonly evidence: readonly string[];
-  readonly payload: JsonValue;
-};
-
-export type ModulePeer = {
-  readonly id: ModuleId;
-  readonly version: string;
-  readonly accepts: readonly ContractRange[];
-  readonly emits: readonly ContractRange[];
-  readonly routes: readonly string[];
-};
-
-export type ModuleInitialization = {
-  readonly federationProtocolVersion: typeof FEDERATION_PROTOCOL_VERSION;
-  readonly moduleId: ModuleId;
-  readonly peers: readonly ModulePeer[];
-  readonly availableCapabilities: readonly string[];
-};
-
-export type ModuleDispatchResult = {
-  readonly emitted: readonly FederationEnvelope[];
-};
 
 export interface FederatedModuleTransport {
   readonly manifest: ModuleManifest;

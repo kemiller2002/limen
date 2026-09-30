@@ -83,6 +83,15 @@ test("flattening a union with the same tag as its parent is rejected", () => {
   ]), /different tag/);
 });
 
+test("a protocol unit is accepted and offers no capability; an unknown role is rejected (WI-0030)", async () => {
+  const { emitTypeScriptTypes } = await import("../tools/contract-gen/emit-typescript.ts");
+  const parsed = parseUnit({ unit: "limen.test", role: "protocol", version: 1, types: [{ name: "Id", kind: "brand", of: "string" }] }, "test");
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  assert.doesNotMatch(emitTypeScriptTypes(parsed.value), /CAPABILITY_OFFER/);
+  rejects({ unit: "limen.test", role: "plugin", version: 1, types: [] }, /role must be "core", "capability" or "protocol"/);
+});
+
 test("a unit without a role is rejected", () => {
   rejects({ unit: "limen.test", version: 1, types: [] }, /role must be/);
 });

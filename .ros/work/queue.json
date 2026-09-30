@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 138,
+  "nextSeq": 142,
   "items": [
     {
       "id": "WI-0001",
@@ -522,10 +522,10 @@
         "carried-obligation"
       ],
       "priority": "medium",
-      "status": "captured",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T04:55:49Z",
-      "updatedAt": "2026-09-29T04:55:49Z",
+      "updatedAt": "2026-09-30T07:57:27Z",
       "createdBy": "claude-code",
       "source": "manual",
       "sourceReference": null
@@ -2046,6 +2046,62 @@
       "attachments": [],
       "createdAt": "2026-09-29T22:16:43.468Z",
       "updatedAt": "2026-09-30T06:02:41Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0138",
+      "title": "Kernel adopts server-rendered data-limen-if / data-limen-key markup on first mount (CA-0002, GH-39)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:25:49.710Z",
+      "updatedAt": "2026-09-30T07:35:01Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0139",
+      "title": "Core Admission CA-0003 (pending): generate the handshake decoders as their own Core codec module so the kernel stops loading the whole core codec (WI-0047 codec half, GH-19)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:40:09.308Z",
+      "updatedAt": "2026-09-30T07:40:48Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0140",
+      "title": "Record why the F# guest cannot be trimmed without suppression yet (WI-0046 findings, GH-19)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:48:11.526Z",
+      "updatedAt": "2026-09-30T07:48:32Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0141",
+      "title": "Federation host decodes module output with the generated codec, and the site's F# federation modules use the generated F# bindings instead of hand-built JSON (follow-up to WI-0030; needs the site's WebAssembly build)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:57:26.959Z",
+      "updatedAt": "2026-09-30T07:57:26.959Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

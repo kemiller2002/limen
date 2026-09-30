@@ -123,12 +123,15 @@ test("the round budget bounds an engine that never stops asking: rendered as it 
 
 // scripts/smoke-packs.ts loads this page in Chromium. It is the renderer's
 // output, not a hand-written copy: LIMEN_WRITE_RENDERED=1 regenerates it.
-test("the browser page for the renderer is renderRoute's current output for /", async () => {
-  const committed = new URL("./browser/packs/renderer/index.html", import.meta.url);
+// The hydration page (CA-0002) starts a kernel on the same output.
+test("the browser pages for the renderer and for hydration are renderRoute's current output for /", async () => {
   const { html, settled } = await renderRoute({ page: PAGE, engine: createCatalogueTransport(), url: `${ORIGIN}/`, fetch: catalogueFetch });
   assert.equal(settled, true);
-  if (process.env.LIMEN_WRITE_RENDERED === "1") await writeFile(committed, html);
-  assert.equal(await readFile(committed, "utf8"), html, "regenerate with LIMEN_WRITE_RENDERED=1");
+  await Promise.all(["renderer", "hydration"].map(async (pack) => {
+    const committed = new URL(`./browser/packs/${pack}/index.html`, import.meta.url);
+    if (process.env.LIMEN_WRITE_RENDERED === "1") await writeFile(committed, html);
+    assert.equal(await readFile(committed, "utf8"), html, `regenerate ${pack} with LIMEN_WRITE_RENDERED=1`);
+  }));
 });
 
 test("static generation renders every route, and the output reads without JavaScript", async () => {

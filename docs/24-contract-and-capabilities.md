@@ -188,6 +188,22 @@ The engine's half is a pure function, `answerHandshake(offer, requirements)`
 old kernel ignores the answer, but the engine's own typed state now says why it
 is inert.
 
+## Contract units and their roles
+
+Every unit in `contract/targets.json` has a role:
+
+| Role | Unit | What it adds |
+| --- | --- | --- |
+| `core` | `limen.core` | The browser/engine envelope and the handshake. |
+| `capability` | one per optional pack | A `CAPABILITY_OFFER` for the handshake. |
+| `protocol` | `limen.federation` | Nothing: a wire protocol between optional hosts or engines, neither Core nor a capability. |
+
+The federation protocol (`contract/federation.contract.json`, WI-0030) covers
+module manifests, initialization, envelopes and dispatch results. Its
+TypeScript types and codec are generated into `src/federation/generated/`, and
+`…/federation` takes its wire types from there. F#, C# and Rust modules get the
+same types from the same file.
+
 ## Optional capabilities
 
 A capability pack is its own contract unit with `"role": "capability"`. Its

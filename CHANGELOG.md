@@ -103,6 +103,32 @@ exhaustive lists.
 
 ### Added
 
+- **The federation protocol is a language-neutral contract (WI-0030).**
+  - `contract/federation.contract.json` (`limen.federation`, the new unit role
+    `protocol`) defines module manifests, initialization, envelopes and
+    dispatch results.
+  - `…/federation` exports the generated wire types and
+    `FEDERATION_PROTOCOL_VERSION`. Every exported name is unchanged.
+  - **Breaking, for TypeScript only:** `FederationEnvelope.payload` is typed
+    `unknown`, the contract's JSON, instead of `JsonValue`. Narrow it by the
+    envelope's contract before use. `JsonValue` is still exported. The wire
+    format is unchanged.
+  - F#, C# and Rust bindings are generated with the other units. The site's F#
+    federation modules still build their JSON by hand; moving them to the
+    bindings, and decoding strictly in the host, come next.
+
+- **The kernel adopts server-rendered markup (#39, CA-0002).**
+  - The first projection adopts a `data-if` root marked `data-limen-if` and
+    each `data-each` row marked `data-limen-key`, as the #38 renderer writes
+    them, instead of building a copy beside them. Nodes, focus and selection
+    survive the start.
+  - Rendered markup the first projection does not show is removed, and a
+    `Hydration` diagnostic reports, per binding, what was adopted and removed.
+  - Measured by `check:core-budget`: handwritten Core code lines 927 → 960;
+    emitted Core gzip 23,972 → 24,765 bytes. Binding primitives stay at six;
+    `data-limen-if` and `data-limen-key` are declared modifiers.
+  - Early events are not replayed yet.
+
 - **WebRTC peer connection pack (#44), `…/capabilities/peer`.**
   - Connections are opaque ids.
   - Offers, answers and ICE candidates are data the engine relays: signaling

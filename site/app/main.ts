@@ -8,6 +8,7 @@ const diagnostics: DiagnosticsSink = {
       case "BridgeError": console.error(`[limen:${event.phase}]`, event.detail); return;
       case "EffectTiming": console.debug(`[limen:effect] ${event.correlationId} ${event.durationMs.toFixed(1)}ms`); return;
       case "Handshake": console.debug("[limen:handshake]", event.verdict); return;
+      case "Hydration": console.debug(`[limen:hydration] ${event.binding}: adopted ${event.adopted}, removed ${event.discarded.length}`); return;
     }
   },
 };

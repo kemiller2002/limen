@@ -42,7 +42,9 @@ export type Constant = { readonly name: string; readonly type: "int" | "string";
 
 // A core unit defines the envelope. A capability unit defines one optional
 // pack's request/result/fact types; its identity is the capability's identity.
-export type UnitRole = "core" | "capability";
+// A protocol unit defines a wire protocol between optional hosts or engines
+// (federation): neither Core nor a capability, so it offers nothing.
+export type UnitRole = "core" | "capability" | "protocol";
 
 export type ContractUnit = {
   readonly unit: string;
@@ -303,7 +305,7 @@ export const parseUnit = (raw: unknown, source: string, forbiddenTypeNames: read
   if (!isRecord(raw)) return fail(`${source}: a contract unit must be a JSON object`);
   if (typeof raw.unit !== "string" || !/^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$/.test(raw.unit)) return fail(`${source}: unit must be a dotted lower-case identity such as limen.core`);
   if (typeof raw.version !== "number" || !Number.isInteger(raw.version) || raw.version < 1) return fail(`${source}: version must be a positive integer`);
-  if (raw.role !== "core" && raw.role !== "capability") return fail(`${source}: role must be "core" or "capability"`);
+  if (raw.role !== "core" && raw.role !== "capability" && raw.role !== "protocol") return fail(`${source}: role must be "core", "capability" or "protocol"`);
   const role: UnitRole = raw.role;
   const constants = Array.isArray(raw.constants ?? []) ? collect(((raw.constants ?? []) as unknown[]).map((constant, index) => parseConstant(constant, `${source}.constants[${index}]`))) : fail<readonly Constant[]>(`${source}: constants must be an array`);
   const types = Array.isArray(raw.types) ? collect(raw.types.map((decl, index) => parseDecl(decl, `${source}.types[${index}]`))) : fail<readonly TypeDecl[]>(`${source}: types must be an array`);

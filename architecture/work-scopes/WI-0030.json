@@ -1,0 +1,31 @@
+{
+  "workItem": "WI-0030",
+  "reference": "kemiller2002/limen#16",
+  "placement": "Guardrail — the federation envelope protocol becomes a language-neutral contract unit, contract/federation.contract.json (limen.federation, a new unit role \"protocol\": a wire protocol that is neither Core nor a capability, so it has no capability offer). Its TypeScript types and codec are generated into src/federation/generated/, which architecture/layers.json adds to the federation-host layer; F#, C# and Rust bindings are generated into the guest contract projects. src/federation.ts takes its wire types and FEDERATION_PROTOCOL_VERSION from the generated module instead of defining them, keeping every exported name and refining only payload to JsonValue. Runtime strict decoding in the host and migrating the F# site modules to the generated bindings are left to a follow-up, because the site's WebAssembly build cannot run in this sandbox.",
+  "guardrail": true,
+  "paths": [
+    "contract/federation.contract.json",
+    "contract/targets.json",
+    "tools/contract-gen/model.ts",
+    "architecture/layers.json",
+    "src/federation.ts",
+    "src/federation/generated/**",
+    "guests/fsharp/Limen.Contract/Limen.Contract.fsproj",
+    "guests/fsharp/Limen.Contract/Generated/Federation.fs",
+    "guests/csharp/Limen.Contract/Generated/Federation.cs",
+    "guests/rust/limen-contract/src/lib.rs",
+    "guests/rust/limen-contract/src/limen_federation.rs",
+    "test/**",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [
+    {
+      "paths": [
+        "research/decisions/DF-LIMEN-2026-0001--neutral-contract-and-capability-extension.md"
+      ],
+      "reason": "The decision record named the federation envelope as the open follow-up this work item closes; its note now says WI-0030 brought it under the neutral contract."
+    }
+  ],
+  "recordedAfterCompletion": false
+}

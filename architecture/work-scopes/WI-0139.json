@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0139",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Architecture / Governance (guardrail) — a Core Admission record only: architecture/core-admissions/CA-0003.json proposes a handshake-only generated codec module in Core (a new generated Core file) so src/kernel/handshake.ts stops importing the whole core codec (WI-0047, codec half). Outcome pending: the owner decides. docs/27 records the measured prototype and that the item waits on CA-0003. No kernel, manifest, generator or baseline change.",
+  "guardrail": true,
+  "paths": ["architecture/core-admissions/CA-0003.json", "docs/27-performance-baseline.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

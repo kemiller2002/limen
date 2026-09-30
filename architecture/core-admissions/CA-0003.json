@@ -1,0 +1,35 @@
+{
+  "id": "CA-0003",
+  "title": "A handshake-only generated codec module in Core, so the kernel no longer loads the whole core codec to decode one handshake (kemiller2002/limen#19, WI-0047)",
+  "workItem": "WI-0139",
+  "kind": "core-file",
+  "proposedAddition": "One generated Core file, src/generated/core.handshake.codec.ts, public, emitted by tools/contract-gen from contract/core.contract.json with a new optional target field roots: [\"EngineHandshake\"] that limits a typescript-codec output to the decoders reachable from those types (EngineHandshake, ProtocolRevision, ContractIdentity, CapabilityOffer, CapabilityId, HandshakeRejection) plus the codec runtime. src/kernel/handshake.ts imports decodeEngineHandshake and DecodeError from it instead of src/generated/core.codec.ts. The full codec stays a public Core file and the ./contract subpath is unchanged; hosts keep importing it. Preferred shape: core.codec.ts imports and re-exports the handshake decoders from the new module, so no decoder is emitted twice (generated Core lines roughly unchanged). Simpler alternative: the new module duplicates those six decoders and the runtime (+222 generated source lines, about +26% generated Core lines). No handwritten line, primitive, family, root export, dependency or concept changes.",
+  "invariantOrUseCase": "correlation-compatibility: every kernel verifies the engine's contract fingerprint before anything reaches the page, so every page decodes one EngineHandshake. Today that one decode loads the whole generated core codec. An unbundled consumer (examples/minimal ships as plain ES modules, and so does any page without a bundler) pays for every decoder in the contract on every load. Measured on 2026-09-29: the full codec emits 52,149 bytes (5,851 gzip); a handshake-only codec emits 11,031 bytes (2,214 gzip). The kernel-only profile would fall from 114,254 to about 73,136 raw bytes (-36%), about -3.6 KB gzip per module.",
+  "whyNotHtmlCss": "This is which JavaScript module the kernel imports; markup and styles cannot change it.",
+  "whyNotEngineLibrary": "The decode runs in the kernel, on the host side, before any engine output is trusted; an engine library cannot change what the host loads.",
+  "whyNotCapabilityPack": "The handshake is what negotiates packs, so it runs before any pack exists; and it is Core's own correlation-compatibility concept, not a browser capability.",
+  "whyNotForma": "Forma owns interaction and presentation primitives, not the kernel's module graph. (Forma was not consulted from this session: access was not granted.)",
+  "whyNotGovernedAdapter": "An adapter wraps a third-party surface; it has no part in how the kernel verifies an engine.",
+  "whyNotTooling": "Tooling runs in development and CI. A bundler would tree-shake the unused decoders, but Limen is meant to work as unbundled ES modules (examples/minimal), where nothing does. The tooling part (roots in contract-gen) is proposed alongside, but its output is imported by Core.",
+  "whyNotHostRenderer": "Every host needs the kernel to verify the handshake; moving verification into a host would let a page run without it, which the handshake exists to prevent. Hand-writing a smaller decoder in the kernel would break the rule that wire decoding is generated from the contract.",
+  "consumerEvidence": [
+    {
+      "consumer": "examples/minimal, shipped in the npm package as unbundled ES modules",
+      "evidence": "bench/budgets.json profiles minimal-consumer and kernel-only: dist/generated/core.codec.js is their largest module"
+    },
+    {
+      "consumer": "Every kernel-loading payload profile (the capability packs and hosts)",
+      "evidence": "npm run bench, docs/27-performance-baseline.md item 5: the kernel loads the whole generated core codec to decode one handshake"
+    }
+  ],
+  "complexityDelta": "Measured by prototype on 2026-09-30, to be re-measured by npm run check:core-budget when implemented. Core files 9 -> 10 (the new file is generated). Preferred shape: generated Core lines about 854 -> 870 (import and re-export lines only); emitted Core bytes about unchanged. Duplicating alternative: generated Core lines 854 -> about 1076 (+26%), emitted Core bytes +11,031 (+9.4%), emitted Core gzip +2,214 (+8.9%). Either way: handwritten Core lines, handwritten normalized bytes, root exports (59), root export families (6), binding primitives (6), capability families (4), runtime dependencies (0) and concepts (7) unchanged. Consumer payload: kernel-only and every kernel-loading profile about -41 KB raw, about -3.6 KB gzip per module; a consumer that also imports a host loads both modules.",
+  "compatibilityImpact": "Additive. The full codec and its ./contract subpath stay, with the same exports. The new module is an extra public generated file; nothing that imports the full codec changes. No protocol or contract change, so no fingerprint change and no guest change.",
+  "negativeBoundaryTests": "test/core-boundary.test.ts keeps rejecting a Core file not listed in architecture/core.json, and Core importing a host, pack, renderer or tooling; test/core-budget.test.ts's list of generated Core files would name the new file; test/contract.test.ts would prove the roots output contains exactly the reachable decoders, rejects an unknown root, and decodes the shared handshake vectors identically to the full codec.",
+  "guestLanguageImpact": "None. The contract, its fingerprint and the F#, C# and Rust bindings are unchanged; roots applies to typescript-codec outputs only.",
+  "decision": {
+    "outcome": "pending",
+    "by": "",
+    "date": "",
+    "evidence": ""
+  }
+}

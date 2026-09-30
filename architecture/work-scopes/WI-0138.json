@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0138",
+  "reference": "kemiller2002/limen#39",
+  "placement": "Core (guardrail) — implements CA-0002, approved by the owner on 2026-09-29: src/kernel/browser-kernel.ts #applyIf and #applyEach adopt a server-rendered data-if root marked data-limen-if and data-each rows marked data-limen-key on the first projection only, instead of cloning the template, and remove marked markup the first projection does not show. src/kernel/diagnostics.ts gains a Hydration DiagnosticEvent variant. architecture/core.json declares the two markers as binding modifiers; the six primitives, four families, root exports and concepts are unchanged. Tested in test/kernel.test.ts, proven in Chromium (test/browser/packs/hydration, pinned to renderRoute output by test/renderer.test.ts); the site's diagnostics sink logs the new kind.",
+  "guardrail": true,
+  "paths": ["src/kernel/browser-kernel.ts", "src/kernel/diagnostics.ts", "architecture/core.json", "site/app/main.ts", "test/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

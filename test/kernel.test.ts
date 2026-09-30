@@ -420,6 +420,101 @@ test("an unchanged projection writes nothing to the DOM, and a node changed outs
   });
 });
 
+// ---------------------------------------------------------------------------
+// Adopting server-rendered markup (CA-0002, kemiller2002/limen#39)
+// ---------------------------------------------------------------------------
+
+// What the #38 renderer writes: the mounted root and each row right after
+// their <template>, marked. Nested lists are inside the adopted root.
+const RENDERED = `<button data-event="tick">t</button>` +
+  `<template data-if="open"><section id="panel"><h2 data-text="title">x</h2><ul><template data-each="rows" data-key="id"><li><button data-event="pick" data-text="name">n</button></li></template></ul></section></template>` +
+  `<section id="panel" data-limen-if="open"><h2 data-text="title">Fruit</h2><ul><template data-each="rows" data-key="id"><li><button data-event="pick" data-text="name">n</button></li></template>` +
+  `<li data-limen-key="a"><button data-event="pick" data-text="name">Apple</button></li><li data-limen-key="b"><button data-event="pick" data-text="name">Banana</button></li></ul></section>`;
+
+test("matching server-rendered markup is adopted in place: the same nodes, no copy, only the markers removed", async () => {
+  const transport = new ScriptedTransport(() => respond({ view: { open: true, title: "Fruit", rows: [{ id: "a", name: "Apple" }, { id: "b", name: "Banana" }] } }));
+  const diagnostics = collectDiagnostics();
+  await withDom(RENDERED, async (document) => {
+    const panel = document.querySelector("#panel")!;
+    const rows = Array.from(document.querySelectorAll("li"));
+    const records: MutationRecord[] = [];
+    const observer = new window.MutationObserver((batch) => { records.push(...batch); });
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+    await new BrowserKernel(transport, document, diagnostics.sink).start();
+    await flush();
+    observer.disconnect();
+    assert.equal(document.querySelectorAll("#panel").length, 1);
+    assert.equal(document.querySelector("#panel"), panel, "the rendered section is the mounted one");
+    assert.deepEqual(Array.from(document.querySelectorAll("li")), rows, "every rendered row is its keyed instance");
+    assert.equal(document.querySelectorAll("[data-limen-if], [data-limen-key]").length, 0);
+    // Binding replaces each <template> with its anchor comment, as on any page;
+    // beyond that, adoption only removes the markers.
+    const added = records.flatMap((record) => Array.from(record.addedNodes)).filter((node) => node.nodeType === 1);
+    const removed = records.flatMap((record) => Array.from(record.removedNodes)).filter((node) => node.nodeName !== "TEMPLATE");
+    assert.deepEqual(added, []);
+    assert.deepEqual(removed, []);
+    assert.deepEqual([...new Set(records.filter((record) => record.type !== "childList").map((record) => record.attributeName))].sort(), ["data-limen-if", "data-limen-key"]);
+    assert.deepEqual(diagnostics.events.filter((event) => event.kind === "Hydration"), [
+      { kind: "Hydration", binding: "if:open", adopted: 1, discarded: [] },
+      { kind: "Hydration", binding: "each:rows", adopted: 2, discarded: [] },
+    ]);
+    // An adopted row is bound like any other: its event carries its key.
+    rows[1]!.querySelector("button")!.dispatchEvent(new window.Event("click", { bubbles: true }));
+    const last = transport.calls.at(-1);
+    assert.equal(last?.kind === "Event" && last.event.name === "pick" && last.event.key, "b");
+  });
+});
+
+test("rendered markup the first projection does not show is removed, stale and duplicate rows too, and the difference is reported", async () => {
+  let view: Record<string, unknown> = { open: true, title: "Fruit", rows: [{ id: "b", name: "Blueberry" }, { id: "c", name: "Cherry" }] };
+  const transport = new ScriptedTransport(() => respond({ view }));
+  const diagnostics = collectDiagnostics();
+  const withDuplicate = `${RENDERED.slice(0, -"</ul></section>".length)}<li data-limen-key="b"><button data-event="pick" data-text="name">Banana again</button></li></ul></section>`;
+  await withDom(withDuplicate, async (document) => {
+    const banana = document.querySelector('[data-limen-key="b"]')!;
+    await new BrowserKernel(transport, document, diagnostics.sink).start();
+    await flush();
+    assert.deepEqual(Array.from(document.querySelectorAll("li"), (row) => row.textContent), ["Blueberry", "Cherry"], "the projection corrects the text and adds the missing row");
+    assert.equal(document.querySelector("li"), banana, "the first row with a listed key is adopted");
+    assert.deepEqual(diagnostics.events.filter((event) => event.kind === "Hydration"), [
+      { kind: "Hydration", binding: "if:open", adopted: 1, discarded: [] },
+      { kind: "Hydration", binding: "each:rows", adopted: 1, discarded: ["a", "b"] },
+    ]);
+  });
+  view = { open: false, title: "", rows: [] };
+  const hidden = collectDiagnostics();
+  await withDom(RENDERED, async (document) => {
+    await new BrowserKernel(transport, document, hidden.sink).start();
+    await flush();
+    assert.equal(document.querySelector("#panel"), null, "a section the projection hides is not left behind");
+    assert.deepEqual(hidden.events.filter((event) => event.kind === "Hydration"), [{ kind: "Hydration", binding: "if:open", adopted: 0, discarded: ["open"] }]);
+  });
+});
+
+test("adoption happens on the first projection only; later mounts clone the template, and an unmarked page reports nothing", async () => {
+  let view: Record<string, unknown> = { open: true, title: "Fruit", rows: [{ id: "a", name: "Apple" }] };
+  const transport = new ScriptedTransport(() => respond({ view }));
+  await withDom(RENDERED, async (document) => {
+    const panel = document.querySelector("#panel")!;
+    await new BrowserKernel(transport, document).start();
+    await flush();
+    view = { ...view, open: false };
+    await tick(document);
+    assert.equal(document.querySelector("#panel"), null);
+    view = { ...view, open: true };
+    await tick(document);
+    assert.notEqual(document.querySelector("#panel"), panel, "a later mount is a fresh clone");
+    assert.equal(document.querySelectorAll("#panel").length, 1);
+  });
+  const plain = collectDiagnostics();
+  await withDom(`<button data-event="tick">t</button><template data-if="open"><section id="panel"></section></template><section id="panel">authored, not rendered</section>`, async (document) => {
+    await new BrowserKernel(transport, document, plain.sink).start();
+    await flush();
+    assert.equal(document.querySelectorAll("#panel").length, 2, "an unmarked element is never adopted");
+    assert.deepEqual(plain.events.filter((event) => event.kind === "Hydration"), []);
+  });
+});
+
 test("data-bind-value only writes when the value actually differs, preserving caret position", async () => {
   let view: Record<string, unknown> = { draft: "hello" };
   const transport = new ScriptedTransport(() => respond({ view }));
