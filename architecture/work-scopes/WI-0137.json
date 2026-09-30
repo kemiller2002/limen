@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0137",
+  "reference": "kemiller2002/limen#63",
+  "placement": "Governance (guardrail) — records the repository owner's decisions, made on 2026-09-29 and linked from PR #64: CA-0001 (Core growth before the v1 freeze) and CA-0002 (the kernel may adopt server-rendered data-limen-if / data-limen-key nodes, #39) are approved by kemiller2002. No rule changes: test/core-admission.test.ts now expects the approved outcome and no notice, and keeps the pending-notice behaviour covered with a fixture. The baseline's note, docs and CHANGELOG stop saying pending. The kernel is unchanged; CA-0002's implementation is later work.",
+  "guardrail": true,
+  "paths": ["architecture/core-admissions/CA-0001.json", "architecture/core-admissions/CA-0002.json", "architecture/core-baseline.json", "test/core-admission.test.ts", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

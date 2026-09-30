@@ -56,8 +56,8 @@ exhaustive lists.
   - The baseline records the #59 reference (9a835cc) as measured from Git,
     which CI re-verifies: 675 handwritten lines in 3 files.
   - The freeze point it approves is 1341 lines in 7 files (plus 1031
-    generated). That growth predates the freeze and is recorded for the
-    owner's decision in CA-0001.
+    generated). That growth predates the freeze and is recorded in CA-0001,
+    which the owner approved on 2026-09-29.
 
 - **Core Admission and the minimal-agent learning contract (#63).**
   - `docs/core-mental-model.md` is the one canonical Core document: the seven
@@ -76,7 +76,11 @@ exhaustive lists.
       consumers.
     - A decision must name a person and link where it was made.
     - `npm run check:core-budget` validates every record.
-  - CA-0001 records the growth that predates the freeze, pending the owner.
+  - CA-0001 records the growth that predates the freeze. The owner approved
+    it on 2026-09-29.
+  - CA-0002 lets the kernel adopt a server-rendered `data-limen-if` root or
+    `data-limen-key` row instead of cloning its template (#39). The owner
+    approved it on 2026-09-29. The kernel change is not built yet.
 
 ### Breaking
 

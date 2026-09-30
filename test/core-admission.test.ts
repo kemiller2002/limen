@@ -28,11 +28,17 @@ const variant = (changes: Record<string, unknown>, file = "architecture/core-adm
   parseAdmission(file, { ...ca0001.raw, id: /(CA-\d{4})/.exec(file)?.[1], ...changes });
 const approvedBy = { outcome: "approved", by: "kemiller2002", date: "2026-09-30", evidence: "https://github.com/kemiller2002/limen/issues/63#issuecomment-1" };
 
-test("every recorded admission is valid, and the baseline rests on CA-0001, pending the owner", () => {
+test("every recorded admission is valid, and the baseline rests on CA-0001, approved by the owner", () => {
   const report = checkAdmissions(records, scopes, authority);
   assert.deepEqual(report.violations, []);
-  assert.equal(ca0001.outcome, "pending");
-  assert.deepEqual(report.notices.length, 1);
+  assert.equal(ca0001.outcome, "approved");
+  assert.deepEqual(report.notices, []);
+});
+
+test("a baseline resting on a pending admission is reported, not failed", () => {
+  const pending = records.map((record) => (record.id === "CA-0001" ? parseAdmission(record.file, { ...record.raw, decision: { outcome: "pending", by: "", date: "", evidence: "" } }) : record));
+  const report = checkAdmissions(pending, scopes, authority);
+  assert.deepEqual(report.violations, []);
   assert.match(report.notices[0] ?? "", /CA-0001 .* pending the repository owner's decision/);
 });
 
