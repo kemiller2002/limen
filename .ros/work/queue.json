@@ -522,10 +522,10 @@
         "carried-obligation"
       ],
       "priority": "medium",
-      "status": "captured",
+      "status": "ready",
       "attachments": [],
       "createdAt": "2026-09-29T04:55:49Z",
-      "updatedAt": "2026-09-29T04:55:49Z",
+      "updatedAt": "2026-09-30T07:50:25Z",
       "createdBy": "claude-code",
       "source": "manual",
       "sourceReference": null
