@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 139,
+  "nextSeq": 140,
   "items": [
     {
       "id": "WI-0001",
@@ -2060,6 +2060,20 @@
       "attachments": [],
       "createdAt": "2026-09-30T07:25:49.710Z",
       "updatedAt": "2026-09-30T07:35:01Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0139",
+      "title": "Core Admission CA-0003 (pending): generate the handshake decoders as their own Core codec module so the kernel stops loading the whole core codec (WI-0047 codec half, GH-19)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:40:09.308Z",
+      "updatedAt": "2026-09-30T07:40:09Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
