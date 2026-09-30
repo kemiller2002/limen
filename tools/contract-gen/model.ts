@@ -224,6 +224,17 @@ const declReferences = (decl: TypeDecl): readonly string[] => {
   }
 };
 
+// Every type a set of roots needs, the roots included: what a codec split
+// out with `roots` must decode (CA-0003).
+export const reachableFrom = (types: readonly TypeDecl[], roots: readonly string[]): ReadonlySet<string> => {
+  const byName = new Map(types.map((decl) => [decl.name, decl] as const));
+  const visit = (seen: ReadonlySet<string>, name: string): ReadonlySet<string> => {
+    const decl = byName.get(name);
+    return seen.has(name) || decl === undefined ? seen : declReferences(decl).reduce(visit, new Set([...seen, name]));
+  };
+  return roots.reduce(visit, new Set<string>());
+};
+
 export const inheritedTags = (types: readonly TypeDecl[]): ReadonlyMap<string, Inherited> =>
   new Map(types.flatMap((decl) =>
     decl.kind === "union"

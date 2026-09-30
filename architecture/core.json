@@ -33,6 +33,7 @@
       { "path": "src/protocol.ts", "visibility": "public", "generated": false },
       { "path": "src/generated/core.ts", "visibility": "public", "generated": true },
       { "path": "src/generated/core.codec.ts", "visibility": "public", "generated": true },
+      { "path": "src/generated/core.handshake.codec.ts", "visibility": "public", "generated": true },
       { "path": "src/guest/handshake.ts", "visibility": "public", "generated": false },
       { "path": "src/kernel/browser-kernel.ts", "visibility": "public", "generated": false },
       { "path": "src/kernel/binding-policy.ts", "visibility": "public", "generated": false },

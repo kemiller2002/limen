@@ -29,7 +29,7 @@ type Emitter =
 // target validation, and adding an emitter is a code change reviewed here.
 const EMITTERS: Readonly<Record<OutputKind, Emitter>> = {
   "typescript-types": { needs: "unit", emit: (unit) => emitTypeScriptTypes(unit) },
-  "typescript-codec": { needs: "unit", emit: (unit, target) => emitTypeScriptCodec(unit, target.typesModule ?? "./types.js") },
+  "typescript-codec": { needs: "unit", emit: (unit, target) => emitTypeScriptCodec(unit, target.typesModule ?? "./types.js", { roots: target.roots, shared: target.shared }) },
   "fsharp-runtime": { needs: "nothing", emit: () => FSHARP_RUNTIME },
   "fsharp-unit": { needs: "unit", emit: (unit) => emitFSharpUnit(unit) },
   "csharp-runtime": { needs: "nothing", emit: () => CSHARP_RUNTIME },

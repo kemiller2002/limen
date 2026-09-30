@@ -4,103 +4,17 @@
 // unit: limen.core@1
 // contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:c287d9fefce08b9ac1ff8ddac74b1395f779edb451fda4b162e97d839529ccc4
+// content-hash: sha256:d5ecc12a5be69d7f40d52760233455b608ea52eb5b78c0b116c9f2a510d62909
 // </auto-generated>
-import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, OutcomeUnknownReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityId, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, ProtocolRevision, ContractIdentity, CapabilityOffer, HostHandshake, HandshakeRejection, EngineHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
+import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, OutcomeUnknownReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, HostHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
 
-/** Where decoding stopped, and what the contract expected there. */
-export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
-export type Decoded<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: DecodeError };
+import { codecRuntime, decodeCapabilityId, decodeProtocolRevision, decodeContractIdentity, decodeCapabilityOffer, decodeHandshakeRejection, decodeEngineHandshake } from "./core.handshake.codec.js";
+import type { DecodeError, Decoded, Path } from "./core.handshake.codec.js";
 
-/**
- * Where a value sits in the message. A path is rendered only when decoding
- * fails there, so a successful decode never builds one: building every path
- * eagerly cost more than all the checks together.
- */
-export type Path = string | (() => string);
+export type { DecodeError, Decoded, Path };
+export { decodeCapabilityId, decodeProtocolRevision, decodeContractIdentity, decodeCapabilityOffer, decodeHandshakeRejection, decodeEngineHandshake };
 
-const render = (path: Path): string => (typeof path === "string" ? path : path());
-
-const at = (path: Path, suffix: string): Path => () => render(path) + suffix;
-
-const ok = <T>(value: T): Decoded<T> => ({ ok: true, value });
-
-const jsonKind = (value: unknown): string =>
-  value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
-
-const mismatch = <T>(path: Path, expected: string, value: unknown): Decoded<T> =>
-  ({ ok: false, error: { path: render(path), expected, found: jsonKind(value) } });
-
-const unknownVariant = <T>(path: Path, variants: readonly string[], found: unknown): Decoded<T> =>
-  ({ ok: false, error: { path: render(path), expected: `one of ${variants.join(" | ")}`, found: typeof found === "string" ? JSON.stringify(found) : jsonKind(found) } });
-
-const stringValue = (value: unknown, path: Path): Decoded<string> =>
-  typeof value === "string" ? ok(value) : mismatch(path, "string", value);
-
-const intValue = (value: unknown, path: Path): Decoded<number> =>
-  typeof value === "number" && Number.isSafeInteger(value) ? ok(value) : mismatch(path, "integer", value);
-
-const numberValue = (value: unknown, path: Path): Decoded<number> =>
-  typeof value === "number" && Number.isFinite(value) ? ok(value) : mismatch(path, "finite number", value);
-
-const boolValue = (value: unknown, path: Path): Decoded<boolean> =>
-  typeof value === "boolean" ? ok(value) : mismatch(path, "boolean", value);
-
-const jsonValue = (value: unknown, path: Path): Decoded<unknown> =>
-  value === undefined ? mismatch(path, "a JSON value", value) : ok(value);
-
-const literalValue = <T extends string | number>(value: unknown, path: Path, expected: T): Decoded<T> =>
-  value === expected ? ok(expected) : mismatch(path, JSON.stringify(expected), value);
-
-const enumValue = <T extends string>(value: unknown, path: Path, values: readonly T[]): Decoded<T> => {
-  const found = values.find((candidate) => candidate === value);
-  return found === undefined ? unknownVariant(path, values, value) : ok(found);
-};
-
-// The one sanctioned assertion: a decoded primitive becomes its brand.
-const brand = <B>(decoded: Decoded<string> | Decoded<number>): Decoded<B> =>
-  decoded.ok ? ok(decoded.value as unknown as B) : decoded;
-
-const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-// A closed key set: an unexpected field is corrupted or mismatched wire data,
-// never silently ignored. `null` means the caller dispatches on a tag first.
-const objectValue = (value: unknown, path: Path, keys: readonly string[] | null): Decoded<Readonly<Record<string, unknown>>> => {
-  if (!isPlainObject(value)) return mismatch(path, "object", value);
-  // Sorted, so every language reports the same first unexpected field.
-  const unexpected = keys === null ? undefined : Object.keys(value).sort().find((key) => !keys.includes(key));
-  return unexpected === undefined ? ok(value) : { ok: false, error: { path: `${render(path)}.${unexpected}`, expected: "no such field", found: "unexpected field" } };
-};
-
-// One pass that stops at the first failure: the same failure a decode of
-// every entry would report first. The accumulator is created here and never
-// escapes until it is complete, so the function stays pure.
-const listOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<readonly T[]> => {
-  if (!Array.isArray(value)) return mismatch(path, "array", value);
-  return value.reduce<Decoded<T[]>>((decoded, entry, index) => {
-    if (!decoded.ok) return decoded;
-    const next = item(entry, () => `${render(path)}[${index}]`);
-    return next.ok ? (decoded.value.push(next.value), decoded) : next;
-  }, ok<T[]>([]));
-};
-
-// An own property even for "__proto__", as JSON.parse made it: plain
-// assignment would set the prototype instead.
-const own = <T>(target: Record<string, T>, key: string, value: T): Record<string, T> =>
-  key === "__proto__"
-    ? Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
-    : ((target[key] = value), target);
-
-const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path) => Decoded<T>): Decoded<Readonly<Record<string, T>>> => {
-  if (!isPlainObject(value)) return mismatch(path, "object", value);
-  // Sorted, so every language reports the same first failing entry.
-  return Object.keys(value).sort().reduce<Decoded<Record<string, T>>>((decoded, key) => {
-    if (!decoded.ok) return decoded;
-    const next = item(value[key], () => `${render(path)}[${JSON.stringify(key)}]`);
-    return next.ok ? (own(decoded.value, key, next.value), decoded) : next;
-  }, ok<Record<string, T>>({}));
-};
+const { render, at, ok, jsonKind, mismatch, unknownVariant, stringValue, intValue, numberValue, boolValue, jsonValue, literalValue, enumValue, brand, isPlainObject, objectValue, listOf, own, mapOf } = codecRuntime;
 
 export const decodeCorrelationId = (value: unknown, path: Path = "$"): Decoded<CorrelationId> => brand<CorrelationId>(stringValue(value, path));
 
@@ -307,8 +221,6 @@ const decodeNavigationOutcome_Failure = (value: unknown, path: Path): Decoded<Na
   return ok<NavigationOutcome>({ kind: "Failure", reason: field_reason.value });
 };
 
-export const decodeCapabilityId = (value: unknown, path: Path = "$"): Decoded<CapabilityId> => brand<CapabilityId>(stringValue(value, path));
-
 export const decodeCapabilityUnsupportedReason = (value: unknown, path: Path = "$"): Decoded<CapabilityUnsupportedReason> => enumValue(value, path, ["not-negotiated","version-unsupported"] as const);
 
 export const decodeCapabilityRejectedReason = (value: unknown, path: Path = "$"): Decoded<CapabilityRejectedReason> => enumValue(value, path, ["malformed-request"] as const);
@@ -433,40 +345,6 @@ const decodeEffectResult_CapabilityResult = (value: unknown, path: Path): Decode
   return ok<EffectResult>({ kind: "CapabilityResult", correlationId: field_correlationId.value, capability: field_capability.value, version: field_version.value, outcome: field_outcome.value });
 };
 
-export const decodeProtocolRevision = (value: unknown, path: Path = "$"): Decoded<ProtocolRevision> => {
-  const object = objectValue(value, path, ["major","minor"]);
-  if (!object.ok) return object;
-  const field_major = intValue(object.value["major"], at(path, ".major"));
-  if (!field_major.ok) return field_major;
-  const field_minor = intValue(object.value["minor"], at(path, ".minor"));
-  if (!field_minor.ok) return field_minor;
-  return ok<ProtocolRevision>({ major: field_major.value, minor: field_minor.value });
-};
-
-export const decodeContractIdentity = (value: unknown, path: Path = "$"): Decoded<ContractIdentity> => {
-  const object = objectValue(value, path, ["unit","version","fingerprint"]);
-  if (!object.ok) return object;
-  const field_unit = stringValue(object.value["unit"], at(path, ".unit"));
-  if (!field_unit.ok) return field_unit;
-  const field_version = intValue(object.value["version"], at(path, ".version"));
-  if (!field_version.ok) return field_version;
-  const field_fingerprint = stringValue(object.value["fingerprint"], at(path, ".fingerprint"));
-  if (!field_fingerprint.ok) return field_fingerprint;
-  return ok<ContractIdentity>({ unit: field_unit.value, version: field_version.value, fingerprint: field_fingerprint.value });
-};
-
-export const decodeCapabilityOffer = (value: unknown, path: Path = "$"): Decoded<CapabilityOffer> => {
-  const object = objectValue(value, path, ["id","version","fingerprint"]);
-  if (!object.ok) return object;
-  const field_id = decodeCapabilityId(object.value["id"], at(path, ".id"));
-  if (!field_id.ok) return field_id;
-  const field_version = intValue(object.value["version"], at(path, ".version"));
-  if (!field_version.ok) return field_version;
-  const field_fingerprint = stringValue(object.value["fingerprint"], at(path, ".fingerprint"));
-  if (!field_fingerprint.ok) return field_fingerprint;
-  return ok<CapabilityOffer>({ id: field_id.value, version: field_version.value, fingerprint: field_fingerprint.value });
-};
-
 export const decodeHostHandshake = (value: unknown, path: Path = "$"): Decoded<HostHandshake> => {
   const object = objectValue(value, path, ["protocol","contract","capabilities"]);
   if (!object.ok) return object;
@@ -477,96 +355,6 @@ export const decodeHostHandshake = (value: unknown, path: Path = "$"): Decoded<H
   const field_capabilities = listOf(object.value["capabilities"], at(path, ".capabilities"), (item, at) => decodeCapabilityOffer(item, at));
   if (!field_capabilities.ok) return field_capabilities;
   return ok<HostHandshake>({ protocol: field_protocol.value, contract: field_contract.value, capabilities: field_capabilities.value });
-};
-
-export const decodeHandshakeRejection = (value: unknown, path: Path = "$"): Decoded<HandshakeRejection> => {
-  const object = objectValue(value, path, null);
-  if (!object.ok) return object;
-  const tag = object.value["kind"];
-  switch (tag) {
-    case "ProtocolUnsupported": return decodeHandshakeRejection_ProtocolUnsupported(value, path);
-    case "ContractMismatch": return decodeHandshakeRejection_ContractMismatch(value, path);
-    case "CapabilityUnavailable": return decodeHandshakeRejection_CapabilityUnavailable(value, path);
-    case "HandshakeMissing": return decodeHandshakeRejection_HandshakeMissing(value, path);
-    default: return unknownVariant(at(path, ".kind"), ["ProtocolUnsupported","ContractMismatch","CapabilityUnavailable","HandshakeMissing"], tag);
-  }
-};
-
-const decodeHandshakeRejection_ProtocolUnsupported = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
-  const object = objectValue(value, path, ["kind","offered"]);
-  if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ProtocolUnsupported");
-  if (!kindTag.ok) return kindTag;
-  const field_offered = decodeProtocolRevision(object.value["offered"], at(path, ".offered"));
-  if (!field_offered.ok) return field_offered;
-  return ok<HandshakeRejection>({ kind: "ProtocolUnsupported", offered: field_offered.value });
-};
-
-const decodeHandshakeRejection_ContractMismatch = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
-  const object = objectValue(value, path, ["kind","expected","offered"]);
-  if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ContractMismatch");
-  if (!kindTag.ok) return kindTag;
-  const field_expected = decodeContractIdentity(object.value["expected"], at(path, ".expected"));
-  if (!field_expected.ok) return field_expected;
-  const field_offered = decodeContractIdentity(object.value["offered"], at(path, ".offered"));
-  if (!field_offered.ok) return field_offered;
-  return ok<HandshakeRejection>({ kind: "ContractMismatch", expected: field_expected.value, offered: field_offered.value });
-};
-
-const decodeHandshakeRejection_CapabilityUnavailable = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
-  const object = objectValue(value, path, ["kind","id","version"]);
-  if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "CapabilityUnavailable");
-  if (!kindTag.ok) return kindTag;
-  const field_id = decodeCapabilityId(object.value["id"], at(path, ".id"));
-  if (!field_id.ok) return field_id;
-  const field_version = intValue(object.value["version"], at(path, ".version"));
-  if (!field_version.ok) return field_version;
-  return ok<HandshakeRejection>({ kind: "CapabilityUnavailable", id: field_id.value, version: field_version.value });
-};
-
-const decodeHandshakeRejection_HandshakeMissing = (value: unknown, path: Path): Decoded<HandshakeRejection> => {
-  const object = objectValue(value, path, ["kind"]);
-  if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "HandshakeMissing");
-  if (!kindTag.ok) return kindTag;
-  return ok<HandshakeRejection>({ kind: "HandshakeMissing" });
-};
-
-export const decodeEngineHandshake = (value: unknown, path: Path = "$"): Decoded<EngineHandshake> => {
-  const object = objectValue(value, path, null);
-  if (!object.ok) return object;
-  const tag = object.value["kind"];
-  switch (tag) {
-    case "Accepted": return decodeEngineHandshake_Accepted(value, path);
-    case "Rejected": return decodeEngineHandshake_Rejected(value, path);
-    default: return unknownVariant(at(path, ".kind"), ["Accepted","Rejected"], tag);
-  }
-};
-
-const decodeEngineHandshake_Accepted = (value: unknown, path: Path): Decoded<EngineHandshake> => {
-  const object = objectValue(value, path, ["kind","protocol","contract","capabilities"]);
-  if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Accepted");
-  if (!kindTag.ok) return kindTag;
-  const field_protocol = decodeProtocolRevision(object.value["protocol"], at(path, ".protocol"));
-  if (!field_protocol.ok) return field_protocol;
-  const field_contract = decodeContractIdentity(object.value["contract"], at(path, ".contract"));
-  if (!field_contract.ok) return field_contract;
-  const field_capabilities = listOf(object.value["capabilities"], at(path, ".capabilities"), (item, at) => decodeCapabilityOffer(item, at));
-  if (!field_capabilities.ok) return field_capabilities;
-  return ok<EngineHandshake>({ kind: "Accepted", protocol: field_protocol.value, contract: field_contract.value, capabilities: field_capabilities.value });
-};
-
-const decodeEngineHandshake_Rejected = (value: unknown, path: Path): Decoded<EngineHandshake> => {
-  const object = objectValue(value, path, ["kind","reason"]);
-  if (!object.ok) return object;
-  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Rejected");
-  if (!kindTag.ok) return kindTag;
-  const field_reason = decodeHandshakeRejection(object.value["reason"], at(path, ".reason"));
-  if (!field_reason.ok) return field_reason;
-  return ok<EngineHandshake>({ kind: "Rejected", reason: field_reason.value });
 };
 
 export const decodeBrowserToEngineMessage = (value: unknown, path: Path = "$"): Decoded<BrowserToEngineMessage> => {

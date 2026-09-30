@@ -204,6 +204,20 @@ TypeScript types and codec are generated into `src/federation/generated/`, and
 `…/federation` takes its wire types from there. F#, C# and Rust modules get the
 same types from the same file.
 
+### Splitting a codec
+
+A `typescript-codec` target may be split (CA-0003):
+
+- `roots` emits only the decoders reachable from the named types, and exports
+  the codec runtime.
+- `shared: { module, roots }` imports those decoders and the runtime from that
+  module and re-exports them, so no decoder is emitted twice and the exports
+  are the same as unsplit.
+
+Core uses it once. `src/generated/core.handshake.codec.ts` holds what
+`EngineHandshake` needs, and is what the kernel imports. `core.codec.ts` shares
+it.
+
 ## Optional capabilities
 
 A capability pack is its own contract unit with `"role": "capability"`. Its

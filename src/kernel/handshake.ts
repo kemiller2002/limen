@@ -5,7 +5,7 @@
 //
 // See research/decisions/DF-LIMEN-2026-0001 for the state model.
 
-import { decodeEngineHandshake, type DecodeError } from "../generated/core.codec.js";
+import { decodeEngineHandshake, type DecodeError } from "../generated/core.handshake.codec.js";
 import type { CapabilityId, CapabilityOffer, ContractIdentity, HandshakeRejection, HostHandshake, ProtocolRevision } from "../protocol.js";
 
 export type Negotiation =

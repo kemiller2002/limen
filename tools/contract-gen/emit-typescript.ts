@@ -2,7 +2,8 @@
 // generated decoder for every type. The decoder is the only sanctioned way to
 // turn untrusted wire JSON into a contract value in handwritten host code.
 
-import { inheritedTags, jsonKindOf, type ContractUnit, type Field, type Inherited, type TypeDecl, type TypeExpr, type Variant } from "./model.ts";
+import { inheritedTags, jsonKindOf, reachableFrom, type ContractUnit, type Field, type Inherited, type TypeDecl, type TypeExpr, type Variant } from "./model.ts";
+import type { SharedCodec } from "./targets.ts";
 
 const lines = (...parts: readonly (string | readonly string[])[]): string => parts.flat().join("\n");
 
@@ -285,15 +286,48 @@ const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path)
   }, ok<Record<string, T>>({}));
 };`;
 
-export const emitTypeScriptCodec = (unit: ContractUnit, typesModule: string): string => {
+const RUNTIME_NAMES = ["render", "at", "ok", "jsonKind", "mismatch", "unknownVariant", "stringValue", "intValue", "numberValue", "boolValue", "jsonValue", "literalValue", "enumValue", "brand", "isPlainObject", "objectValue", "listOf", "own", "mapOf"] as const;
+
+// A codec split out with `roots` exports its runtime once, for the codec that
+// shares it.
+const EXPORTED_RUNTIME = `${CODEC_RUNTIME}
+
+/** The codec runtime, for the codec generated to share this one (CA-0003). */
+export const codecRuntime = { ${RUNTIME_NAMES.join(", ")} } as const;`;
+
+// A codec generated with `shared` imports the runtime and the shared
+// decoders instead of emitting them, and re-exports the decoders, so its
+// exports are what they would be unsplit.
+const sharedRuntime = (module: string, borrowed: readonly TypeDecl[]): string => {
+  const decoders = borrowed.map((decl) => decoderName(decl.name)).join(", ");
+  return lines(
+    `import { codecRuntime, ${decoders} } from ${JSON.stringify(module)};`,
+    `import type { DecodeError, Decoded, Path } from ${JSON.stringify(module)};`,
+    "",
+    `export type { DecodeError, Decoded, Path };`,
+    `export { ${decoders} };`,
+    "",
+    `const { ${RUNTIME_NAMES.join(", ")} } = codecRuntime;`,
+  );
+};
+
+export type CodecSplit = { readonly roots?: readonly string[]; readonly shared?: SharedCodec };
+
+export const emitTypeScriptCodec = (unit: ContractUnit, typesModule: string, split: CodecSplit = {}): string => {
   const inherited = inheritedTags(unit.types);
   const decls = new Map(unit.types.map((decl) => [decl.name, decl] as const));
+  const named = [...(split.roots ?? []), ...(split.shared?.roots ?? [])];
+  const unknown = named.filter((name) => !decls.has(name));
+  if (unknown.length > 0) throw new Error(`${unit.unit}: codec roots name no type of the unit: ${unknown.join(", ")}`);
+  const kept = split.roots === undefined ? undefined : reachableFrom(unit.types, split.roots);
+  const borrowed = split.shared === undefined ? new Set<string>() : reachableFrom(unit.types, split.shared.roots);
+  const emitted = unit.types.filter((decl) => (kept === undefined || kept.has(decl.name)) && !borrowed.has(decl.name));
   return lines(
-    `import type { ${unit.types.map((decl) => decl.name).join(", ")} } from ${JSON.stringify(typesModule)};`,
+    `import type { ${emitted.map((decl) => decl.name).join(", ")} } from ${JSON.stringify(typesModule)};`,
     "",
-    CODEC_RUNTIME,
+    split.shared !== undefined ? sharedRuntime(split.shared.module, unit.types.filter((decl) => borrowed.has(decl.name))) : kept !== undefined ? EXPORTED_RUNTIME : CODEC_RUNTIME,
     "",
-    unit.types.map((decl) => emitDecoder(decl, inherited, decls)).join("\n\n"),
+    emitted.map((decl) => emitDecoder(decl, inherited, decls)).join("\n\n"),
     "",
   );
 };

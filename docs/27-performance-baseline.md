@@ -234,12 +234,20 @@ acted on here.
    the root by kemiller2002/limen#61:* the
    root no longer loads the reference engine or federation (the
    `minimal-consumer` profile in `bench/budgets.json` forbids both); the
-   codec cost remains. Removing it needs a new generated Core file (a
-   handshake-only codec), which only a Core Admission can allow. It is proposed
-   as CA-0003 (`architecture/core-admissions/CA-0003.json`), pending the
-   owner's decision. A prototype measured the handshake-only codec at 11,031
-   bytes (2,214 gzip) against the full codec's 52,149 (5,851). The kernel-only
-   payload would fall by about 41 KB raw.
+   codec cost remains. Removing it needed a new generated Core file, which only
+   a Core Admission can allow: CA-0003, approved by the owner on 2026-09-30.
+   *Done in WI-0142:* the kernel imports `core.handshake.codec.js`, which holds
+   only the six decoders `EngineHandshake` needs. The full codec imports and
+   re-exports them, so no decoder is emitted twice. Measured on 2026-09-30:
+
+   | Profile | Before | After |
+   | --- | --- | --- |
+   | `kernel-only`, raw bytes | 114,254 | 73,495 |
+   | `kernel-only`, gzip bundled | 23,719 | 20,209 |
+   | `minimal-consumer`, gzip bundled | 25,040 | 21,533 |
+
+   A consumer that also imports a host still loads the full codec, which it
+   needs.
 
 **Virtualization (#37) is not warranted by this evidence.** A one-row update
 of 10,000 rows makes 10,000 mutations, the same as an unchanged

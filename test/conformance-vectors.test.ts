@@ -5,7 +5,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import * as codec from "../src/generated/core.codec.ts";
+// From dist: the core codec imports its handshake half at runtime (CA-0003).
+import * as codec from "../dist/generated/core.codec.js";
 import { CONTRACT_IDENTITY } from "../src/generated/core.ts";
 import { fingerprintOf } from "../tools/contract-gen/model.ts";
 

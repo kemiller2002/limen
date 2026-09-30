@@ -10,7 +10,7 @@ export const SHELL = [
   ...[
     "capabilities/lifecycle/generated/lifecycle.codec.js", "capabilities/lifecycle/generated/lifecycle.js", "capabilities/lifecycle/index.js",
     "capabilities/offline/generated/offline.codec.js", "capabilities/offline/generated/offline.js", "capabilities/offline/index.js",
-    "generated/core.codec.js", "generated/core.js",
+    "generated/core.handshake.codec.js", "generated/core.js",
     "kernel/binding-policy.js", "kernel/browser-kernel.js", "kernel/capabilities.js", "kernel/diagnostics.js", "kernel/handshake.js",
     "protocol.js",
   ].map((module) => `/dist/${module}`),
