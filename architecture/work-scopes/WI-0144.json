@@ -1,0 +1,16 @@
+{
+  "workItem": "WI-0144",
+  "reference": "kemiller2002/limen#72",
+  "placement": "Application / product-site F# engine integration demonstrating Forma presentation through Limen with authoritative F# state. Not a Core change: no file under src/, contract/ or any guardrail-owned path. The site's F# engine gains a stable NASA reference-mission collection mirroring Forma's canonical mission ids, typed MissionFilter/MissionBrowserState with legal filter and selection transitions, and their projection through the existing view contract; the demos page renders it through the existing F#/.NET WebAssembly host. TypeScript stays mechanical. Rebuilds the final state of draft PR #73 (head f524870) under proper attribution.",
+  "guardrail": false,
+  "paths": [
+    "site/fsharp/Limen.Site.Engine/Mission.fs",
+    "site/fsharp/Limen.Site.Engine/Engine.fs",
+    "site/fsharp/Limen.Site.Engine/Limen.Site.Engine.fsproj",
+    "site/fsharp/tests/Limen.Site.Engine.Tests/Program.fs",
+    "site/pages/demos.html",
+    "site/pages/demos.view.json"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
