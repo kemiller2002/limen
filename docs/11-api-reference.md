@@ -608,7 +608,8 @@ interface DiagnosticsSink { report(event: DiagnosticEvent): void; }
 type DiagnosticEvent =
   | { kind: "BridgeError";  phase: "dispatch" | "binding" | "projection" | "effect" | "protocol"; detail: string }
   | { kind: "EffectTiming"; correlationId: CorrelationId; durationMs: number }
-  | { kind: "Handshake";    verdict: HandshakeVerdict };   // reported once, after Initialize
+  | { kind: "Handshake";    verdict: HandshakeVerdict }    // reported once, after Initialize
+  | { kind: "Hydration";    binding: string; adopted: number; discarded: readonly string[] };  // once per binding with server-rendered markup (docs/54)
 
 const noopDiagnostics: DiagnosticsSink;   // the default
 ```

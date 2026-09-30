@@ -103,6 +103,18 @@ exhaustive lists.
 
 ### Added
 
+- **The kernel adopts server-rendered markup (#39, CA-0002).**
+  - The first projection adopts a `data-if` root marked `data-limen-if` and
+    each `data-each` row marked `data-limen-key`, as the #38 renderer writes
+    them, instead of building a copy beside them. Nodes, focus and selection
+    survive the start.
+  - Rendered markup the first projection does not show is removed, and a
+    `Hydration` diagnostic reports, per binding, what was adopted and removed.
+  - Measured by `check:core-budget`: handwritten Core code lines 927 → 960;
+    emitted Core gzip 23,972 → 24,765 bytes. Binding primitives stay at six;
+    `data-limen-if` and `data-limen-key` are declared modifiers.
+  - Early events are not replayed yet.
+
 - **WebRTC peer connection pack (#44), `…/capabilities/peer`.**
   - Connections are opaque ids.
   - Offers, answers and ICE candidates are data the engine relays: signaling

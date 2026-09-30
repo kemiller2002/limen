@@ -69,6 +69,8 @@ type IfBinding = {
   readonly key: string;
   readonly itemKey: string | undefined;
   mounted: { readonly root: HTMLElement; readonly scope: Scope } | null;
+  // Server-rendered markup waiting for the first projection (CA-0002).
+  rendered: HTMLElement | null;
 };
 type EachBinding = {
   readonly anchor: Comment;
@@ -76,6 +78,7 @@ type EachBinding = {
   readonly listKey: string;
   readonly itemKey: string;
   readonly instances: Map<string, { readonly root: HTMLElement; readonly scope: Scope }>;
+  rendered: readonly HTMLElement[];
 };
 type Scope = {
   readonly texts: TextBinding[];
@@ -86,6 +89,19 @@ type Scope = {
 
 function emptyScope(): Scope {
   return { texts: [], attrs: [], ifs: [], eachs: [] };
+}
+
+// The server renderer (#38) writes a mounted data-if root, and each data-each
+// row, right after its <template>, marked with data-limen-if or data-limen-key.
+// These are the marked elements that follow, skipping whitespace between them.
+function renderedAfter(node: Node, marker: string): readonly HTMLElement[] {
+  const found: HTMLElement[] = [];
+  for (let next = node.nextSibling; next !== null; next = next.nextSibling) {
+    if (next.nodeType === 3 && (next.textContent ?? "").trim() === "") continue;
+    if (!(next instanceof HTMLElement) || !next.hasAttribute(marker)) break;
+    found.push(next);
+  }
+  return found;
 }
 
 // --- Projection validation --------------------------------------------------
@@ -274,6 +290,8 @@ export class BrowserKernel {
   // data-if that closed, a data-each row removed) can be pruned at flush time.
   readonly #flushable = new Map<HTMLFormElement, Array<{ readonly element: HTMLElement; readonly fire: () => Promise<void> }>>();
   readonly #root: Scope = emptyScope();
+  // Rendered markup a binding will adopt or remove: never bound where it stands.
+  readonly #awaitingAdoption = new WeakSet<Element>();
   readonly #diagnostics: DiagnosticsSink;
   readonly #providers: ReadonlyMap<CapabilityId, CapabilityProvider>;
   readonly #requireHandshake: boolean;
@@ -418,7 +436,9 @@ export class BrowserKernel {
   // may itself carry data-text/data-event/etc.), call #bindElement on it
   // directly instead of this.
   #bind(root: Element | DocumentFragment, scope: Scope, itemKey: string | undefined): void {
-    for (const child of Array.from(root.children)) this.#bindElement(child as HTMLElement, scope, itemKey);
+    for (const child of Array.from(root.children)) {
+      if (!this.#awaitingAdoption.has(child)) this.#bindElement(child as HTMLElement, scope, itemKey);
+    }
   }
 
   #bindElement(el: HTMLElement, scope: Scope, itemKey: string | undefined): void {
@@ -426,7 +446,10 @@ export class BrowserKernel {
       const key = el.getAttribute("data-if")!;
       const anchor = this.document.createComment(`if:${key}`);
       el.replaceWith(anchor);
-      scope.ifs.push({ anchor, template: el, key, itemKey, mounted: null });
+      const [next] = renderedAfter(anchor, "data-limen-if");
+      const rendered = next?.getAttribute("data-limen-if") === key ? next : null;
+      if (rendered !== null) this.#awaitingAdoption.add(rendered);
+      scope.ifs.push({ anchor, template: el, key, itemKey, mounted: null, rendered });
       return;
     }
     if (el instanceof HTMLTemplateElement && el.hasAttribute("data-each")) {
@@ -435,7 +458,9 @@ export class BrowserKernel {
       if (!field) throw new Error(`data-each="${listKey}" requires data-key`);
       const anchor = this.document.createComment(`each:${listKey}`);
       el.replaceWith(anchor);
-      scope.eachs.push({ anchor, template: el, listKey, itemKey: field, instances: new Map() });
+      const rendered = renderedAfter(anchor, "data-limen-key");
+      for (const row of rendered) this.#awaitingAdoption.add(row);
+      scope.eachs.push({ anchor, template: el, listKey, itemKey: field, instances: new Map(), rendered });
       return;
     }
     // data-if/data-each mount and unmount a <template>'s *content*, so they are
@@ -572,22 +597,31 @@ export class BrowserKernel {
     ];
   }
 
+  #reportHydration(binding: string, adopted: number, discarded: readonly string[]): void {
+    this.#diagnostics.report({ kind: "Hydration", binding, adopted, discarded });
+  }
+
   #applyIf(binding: IfBinding, view: ViewState): readonly string[] {
     const present = Boolean(view[binding.key]);
     if (binding.mounted) {
       if (!present) { binding.mounted.root.remove(); binding.mounted = null; return []; }
       return this.#applyScope(binding.mounted.scope, view);
     }
-    if (!present) return [];
-    const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
-    const root = fragment.firstElementChild;
+    // Server-rendered markup is adopted by the first projection that shows it,
+    // or removed by the first that does not: never duplicated (CA-0002).
+    const rendered = binding.rendered;
+    binding.rendered = null;
+    if (rendered !== null) this.#reportHydration(`if:${binding.key}`, present ? 1 : 0, present ? [] : [binding.key]);
+    if (!present) { rendered?.remove(); return []; }
+    const root = rendered ?? (binding.template.content.cloneNode(true) as DocumentFragment).firstElementChild;
     if (!(root instanceof HTMLElement)) throw new Error(`data-if="${binding.key}" template must contain exactly one root element`);
     // Insert BEFORE binding. An element only has a `.form` owner once it is in
     // the document, and #bindEvent reads that to register the pending-field
     // flush — binding a detached clone skipped the registration silently, so a
     // conditionally-shown field edited without blurring never reached the
     // engine on submit.
-    binding.anchor.after(root);
+    if (rendered === null) binding.anchor.after(root);
+    else root.removeAttribute("data-limen-if");
     const scope = emptyScope();
     this.#bindElement(root, scope, binding.itemKey);
     binding.mounted = { root, scope };
@@ -611,18 +645,27 @@ export class BrowserKernel {
     for (const [key, instance] of binding.instances) {
       if (!seen.has(key)) { instance.root.remove(); binding.instances.delete(key); }
     }
+    // Server-rendered rows (CA-0002): the first projection adopts the first row
+    // for each key it lists and removes every other, before the loop below.
+    const markedKey = (row: HTMLElement): string => row.getAttribute("data-limen-key") ?? "";
+    const adoptable = new Map([...binding.rendered].reverse().map((row) => [markedKey(row), row] as const));
+    const discarded = binding.rendered.filter((row) => !seen.has(markedKey(row)) || adoptable.get(markedKey(row)) !== row);
+    for (const row of discarded) row.remove();
+    if (binding.rendered.length > 0) this.#reportHydration(`each:${binding.listKey}`, binding.rendered.length - discarded.length, discarded.map(markedKey));
+    binding.rendered = [];
     const refusals: string[] = [];
     let cursor: ChildNode = binding.anchor;
     for (const item of items) {
       const key = keyOf(item);
       let instance = binding.instances.get(key);
       if (!instance) {
-        const fragment = binding.template.content.cloneNode(true) as DocumentFragment;
-        const root = fragment.firstElementChild;
+        const adopted = adoptable.get(key);
+        const root = adopted ?? (binding.template.content.cloneNode(true) as DocumentFragment).firstElementChild;
         if (!(root instanceof HTMLElement)) throw new Error(`data-each="${binding.listKey}" template must contain exactly one root element`);
         // Insert before binding, for the reason given in #applyIf. The reorder
         // below is then a no-op for this freshly placed item.
-        parent.insertBefore(root, cursor.nextSibling);
+        if (adopted === undefined) parent.insertBefore(root, cursor.nextSibling);
+        else root.removeAttribute("data-limen-key");
         const scope = emptyScope();
         this.#bindElement(root, scope, key);
         instance = { root, scope };

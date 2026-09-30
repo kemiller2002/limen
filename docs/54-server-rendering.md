@@ -64,13 +64,41 @@ server ever reads a browser global.
 
 ## Output for the browser
 
-The renderer adds two attributes for hydration (kemiller2002/limen#39) to adopt:
+The renderer adds two attributes so the kernel can adopt its output
+(kemiller2002/limen#39):
 
 - a mounted `data-if` root carries `data-limen-if="<key>"`;
 - each `data-each` row carries `data-limen-key="<key>"`.
 
 The `<template>` elements stay, inert, so the kernel can still mount and
 unmount in the browser.
+
+## Starting the kernel on rendered output
+
+Start the kernel on the renderer's output as on any page. Its first projection
+adopts the rendered markup instead of rebuilding it (CA-0002):
+
+- A marked element right after its `<template>` becomes the mounted section, or
+  the row for its key. It keeps its node, so focus, selection, scroll position
+  and media playback survive the start. Only the markers are removed.
+- A marked element the first projection does not show is removed: a section it
+  hides, a row whose key it does not list, and every row after the first with
+  the same key. The projection is the truth, as everywhere else.
+- Each binding with rendered markup reports once through the diagnostics sink:
+  `{ kind: "Hydration", binding: "each:items", adopted: 3, discarded: [] }`.
+  A non-empty `discarded` means the page and the first projection disagreed.
+- Only the first projection adopts. A section shown again later is a fresh copy
+  of its template.
+
+For nothing to be discarded, the engine's first projection must be the one the
+server rendered. An engine that starts in a loading state removes the rendered
+list, and puts its own back when its data arrives.
+
+Verified in Chromium, under a strict CSP and Trusted Types (`npm run
+smoke:packs`, page `hydration`). With a link focused before the kernel starts,
+starting it keeps the list and every row as the same nodes and keeps the focus.
+The only DOM writes are the removal of the markers, and the next projection
+updates the adopted rows in place.
 
 Static output reads without JavaScript. In Chromium, a page that is
 `renderRoute`'s output — no Limen code runs on it — shows the route's title,
@@ -93,13 +121,8 @@ escaped.
 
 - **Streaming output.** No measured use case yet, as #38 requires before
   building it.
-- **Hydration.** Adopting rendered markup without recreating it, and replaying
-  early events, is #39. Adoption needs the kernel to take a marked element
-  instead of cloning its template. The owner approved that Core change on
-  2026-09-29 (CA-0002, `architecture/core-admissions/CA-0002.json`), but it
-  is not built yet. Until it is, start the kernel on a page built for the
-  client, not on renderer output: the kernel would mount its own copy beside
-  every rendered section.
+- **Replaying early events.** A click on rendered markup before the kernel has
+  started is not replayed (the rest of #39).
 
 ## Size
 

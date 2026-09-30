@@ -92,9 +92,9 @@
     "legacy": []
   },
   "bindingPrimitives": {
-    "doc": "The DOM binding primitives the kernel reads. data-key is a required modifier of data-each, not a primitive. Any other data-* attribute a Core file reads is an undeclared primitive.",
+    "doc": "The DOM binding primitives the kernel reads. data-key is a required modifier of data-each, not a primitive. data-limen-if and data-limen-key mark server-rendered markup the first projection adopts (CA-0002). Any other data-* attribute a Core file reads is an undeclared primitive.",
     "primitives": ["data-event", "data-on", "data-text", "data-bind-*", "data-if", "data-each"],
-    "modifiers": ["data-key"]
+    "modifiers": ["data-key", "data-limen-if", "data-limen-key"]
   },
   "capabilityFamilies": {
     "doc": "The built-in browser capability families, grandfathered at v1. They are the EffectRequest variants of contract/core.contract.json other than the generic optional-capability seam, and the values of its Capability enum. A new browser capability is an optional pack (docs/24-contract-and-capabilities.md).",

@@ -1,0 +1,27 @@
+{
+  "doc": "Adoption of server-rendered markup in Chromium (CA-0002, #39; scripts/smoke-packs.ts): the same renderRoute output as the renderer page, kept current by test/renderer.test.ts, with a kernel started on it. Its view is the fixture engine's projection.",
+  "view": {
+    "title": "string",
+    "description": "string",
+    "robots": "string",
+    "canonical": "string",
+    "heading": "string",
+    "status": "string",
+    "showList": "boolean",
+    "items": {
+      "list": {
+        "id": "string",
+        "name": "string",
+        "href": "string",
+        "price": "string"
+      }
+    },
+    "showDetail": "boolean",
+    "detailName": "string",
+    "detailText": "string",
+    "recent": "string"
+  },
+  "events": {
+    "refresh": {}
+  }
+}
