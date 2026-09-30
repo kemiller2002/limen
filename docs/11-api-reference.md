@@ -276,6 +276,12 @@ payload. It is the contract's `FederationEnvelope`, generated: the payload is
 names. The generated strict decoder is `decodeFederationEnvelope`, in
 `dist/federation/generated/federation.codec.js`.
 
+The host decodes everything a module returns with the generated codec before
+routing any of it. Output outside the contract is
+`FederationError { code: "InvalidEnvelope" }`, and its message names the path,
+for example `$.emitted[0].extra`. A manifest outside the contract is
+`InvalidManifest`, and a wrong protocol version is still `ProtocolMismatch`.
+
 Only `DomainEvent` may omit `target`. Untargeted domain events fan out to
 active compatible consumers. Other kinds require an explicit target.
 

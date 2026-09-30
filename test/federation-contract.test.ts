@@ -71,3 +71,37 @@ test("the decoders refuse what the contract does not allow, and pass any JSON pa
   assert.equal(decodeFederationEnvelope({ ...valid, payload: undefined }).ok, false, "a payload is required");
   assert.deepEqual(decodeModuleDispatchResult({ emitted: [valid, { ...valid, contractVersion: 1.5 }] }), { ok: false, error: { path: "$.emitted[1].contractVersion", expected: "integer", found: "number" } });
 });
+
+// WI-0141: the host decodes what a module returns, and every manifest it
+// registers, before any of it is trusted.
+test("module output outside the contract is refused with its path, before anything is routed", async () => {
+  const answering = manifest(id("answering"), [ping], [pong]);
+  const asking = manifest(id("asking"), [pong], [ping]);
+  const returning = (output: unknown): FederatedModuleTransport => ({
+    ...recordingModule(answering, { initialization: [], envelopes: [] }),
+    dispatch: async () => output as ModuleDispatchResult,
+  });
+  const reply = { protocolVersion: 1, source: answering.id, target: asking.id, correlationId: "r", kind: "EffectResult", contract: pong, contractVersion: 1, capabilities: [], evidence: [], payload: null };
+  const outcome = async (output: unknown): Promise<{ readonly code: string; readonly message: string }> => {
+    const federation = new ModuleFederation([returning(output), recordingModule(asking, { initialization: [], envelopes: [] })]);
+    await federation.start(answering.id, null);
+    await federation.start(asking.id, null);
+    try {
+      await federation.exchange({ protocolVersion: 1, source: asking.id, target: answering.id, correlationId: "q" as FederationCorrelationId, kind: "Query", contract: ping, contractVersion: 1, capabilities: [], evidence: [], payload: {} });
+      return { code: "none", message: "" };
+    } catch (error) {
+      return { code: String((error as { code?: unknown }).code), message: String((error as Error).message) };
+    }
+  };
+  assert.deepEqual(await outcome({ emitted: [{ ...reply, extra: true }] }), { code: "InvalidEnvelope", message: "output of module answering is outside the federation contract at $.emitted[0].extra: expected no such field, found unexpected field" });
+  assert.deepEqual(await outcome({ emitted: [{ ...reply, kind: "Gossip" }] }).then((result) => result.code), "InvalidEnvelope");
+  assert.deepEqual(await outcome({ emitted: "none" }).then((result) => result.code), "InvalidEnvelope");
+  assert.deepEqual(await outcome({ emitted: [{ ...reply, protocolVersion: 2 }] }).then((result) => result.code), "ProtocolMismatch");
+  assert.deepEqual(await outcome({ emitted: [reply] }).then((result) => result.code), "none", "a well-formed reply is delivered");
+});
+
+test("a manifest outside the contract cannot be registered", () => {
+  const bad = { ...manifest(id("odd"), [], []), extra: 1 } as unknown as ModuleManifest;
+  assert.throws(() => new ModuleFederation([recordingModule(bad, { initialization: [], envelopes: [] })]), (error: unknown) =>
+    (error as { code?: unknown }).code === "InvalidManifest" && /\$\.extra: expected no such field/.test((error as Error).message));
+});

@@ -77,6 +77,30 @@ let sourceManifest = JsonNode.Parse(Source.manifestJson()).AsObject()
 let targetManifest = JsonNode.Parse(Target.manifestJson()).AsObject()
 ok "module identities are independent" (sourceManifest["id"].GetValue<string>() <> targetManifest["id"].GetValue<string>())
 
+// WI-0141: the modules speak the generated federation contract. What they
+// write decodes strictly, and what the contract forbids is refused.
+let decodes decoder json = Limen.Contract.Wire.parse decoder json |> Result.isOk
+ok "the source manifest is the contract's" (decodes Limen.Contract.Federation.Codec.decodeModuleManifest (Source.manifestJson ()))
+ok "the target manifest is the contract's" (decodes Limen.Contract.Federation.Codec.decodeModuleManifest (Target.manifestJson ()))
+ok "the request is the contract's envelope" (decodes Limen.Contract.Federation.Codec.decodeFederationEnvelope requestJson)
+
+let refuses name (action: unit -> string) =
+    match (try Ok(action ()) with error -> Error error.Message) with
+    | Error message when message.Contains "outside the federation contract" -> ()
+    | other -> fail name "a refusal naming the federation contract" other
+
+let edited (edit: JsonObject -> unit) =
+    let root = JsonNode.Parse(requestJson).AsObject()
+    edit root
+    root.ToJsonString()
+
+refuses "another federation protocol version is refused" (fun () -> Target.dispatch (edited (fun root -> root["protocolVersion"] <- JsonValue.Create(2))))
+refuses "an unknown envelope field is refused" (fun () -> Target.dispatch (edited (fun root -> root["extra"] <- JsonValue.Create(true))))
+refuses "an envelope without a payload is refused" (fun () -> Target.dispatch (edited (fun root -> root.Remove("payload") |> ignore)))
+refuses "an initialization for another protocol is refused" (fun () ->
+    Target.initialize "{\"federationProtocolVersion\":2,\"moduleId\":\"limen.proof.target\",\"peers\":[],\"availableCapabilities\":[]}"
+    "")
+
 Source.suspend ()
 Target.suspend ()
 

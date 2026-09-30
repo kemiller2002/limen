@@ -136,9 +136,14 @@ exhaustive lists.
     `unknown`, the contract's JSON, instead of `JsonValue`. Narrow it by the
     envelope's contract before use. `JsonValue` is still exported. The wire
     format is unchanged.
-  - F#, C# and Rust bindings are generated with the other units. The site's F#
-    federation modules still build their JSON by hand; moving them to the
-    bindings, and decoding strictly in the host, come next.
+  - F#, C# and Rust bindings are generated with the other units.
+  - **WI-0141:** the host decodes every manifest it registers, and everything
+    a module returns, with the generated strict codec. Output outside the
+    contract is a new `InvalidEnvelope` error naming the path, and a manifest
+    outside it is `InvalidManifest`. A wrong protocol version is still
+    `ProtocolMismatch`. The site's F# federation modules use the generated F#
+    bindings instead of hand-built JSON, and refuse envelopes outside the
+    contract.
 
 - **The kernel adopts server-rendered markup (#39, CA-0002).**
   - The first projection adopts a `data-if` root marked `data-limen-if` and
