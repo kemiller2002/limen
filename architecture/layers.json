@@ -32,7 +32,8 @@
         "src/federation/**"
       ],
       "mayImport": [
-        "core-contract"
+        "core-contract",
+        "federation-host"
       ]
     },
     {
