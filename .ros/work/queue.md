@@ -142,4 +142,4 @@
 | WI-0135 | Re-baseline the kernel-only payload budget after WI-0043 (compare-before-write, +80 B gzip) put it 56 bytes over (GH-19) | complete |  | medium |
 | WI-0136 | Re-baseline every kernel-loading payload profile after WI-0043/WI-0044 put kernel-with-files 31 bytes over a budget recorded before ~3 KB of in-budget kernel growth (GH-19) | complete |  | medium |
 | WI-0137 | Record the owner's decisions: CA-0001 and CA-0002 approved (GH-63, GH-39) | complete |  | medium |
-| WI-0138 | Kernel adopts server-rendered data-limen-if / data-limen-key markup on first mount (CA-0002, GH-39) | ready |  | medium |
+| WI-0138 | Kernel adopts server-rendered data-limen-if / data-limen-key markup on first mount (CA-0002, GH-39) | complete |  | medium |
