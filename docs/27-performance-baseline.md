@@ -211,6 +211,21 @@ acted on here.
    [24](24-contract-and-capabilities.md)). That is 1.6s to a cold handshake,
    against 0.5s. Suppressing the trim warnings is forbidden, so the fix is a
    trim-clean path.
+   *Investigated in WI-0140, not fixed.* Measured on 2026-09-30 with the
+   sandbox's .NET SDK 8.0.1xx, publishing `Limen.Minimal.Wasm`:
+
+   | Attempt | Result |
+   | --- | --- |
+   | `PublishTrimmed`, default (partial) trim mode | Fails: FSharp.Core is kept whole and analyzed whole, raising warnings in code the engine never calls (LINQ queries, quotations). |
+   | Full trim mode (`TrimMode=full`) | FSharp.Core 3.2 MB → 247 KB; `_framework` 23 MB → 14 MB. Still fails on the warnings below. |
+   | Plus `--reflectionfree` and no `sprintf` in the generated F# runtime | Printf and F# reflection are still reachable from somewhere not yet traced, and they warn. |
+   | FSharp.Core 8.0.102, 8.0.403, 9.0.303, 10.0.112 | Every version raises IL2040 on its own embedded trimming file, which names resources the assembly does not contain. 10.0.112 fixes the IL2008 that 8.0.x raises, but not IL2040. |
+
+   So a trimmed F# guest is blocked upstream while `TreatWarningsAsErrors`
+   holds and suppression stays forbidden. What would unblock it: an FSharp.Core
+   whose embedded trimming file matches its resources, plus full trim mode,
+   `--reflectionfree` and tracing the remaining printf root. Allowing the IL2040
+   warnings specifically would be a guardrail change, and is the owner's call.
 5. **The minimal consumer loads code it never runs** (WI-0047). Importing
    the package root loads the reference email engine and federation, 30 KB
    raw and 6.5 KB gzipped. The kernel also loads the whole 47.5 KB generated
