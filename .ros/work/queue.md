@@ -144,4 +144,4 @@
 | WI-0137 | Record the owner's decisions: CA-0001 and CA-0002 approved (GH-63, GH-39) | complete |  | medium |
 | WI-0138 | Kernel adopts server-rendered data-limen-if / data-limen-key markup on first mount (CA-0002, GH-39) | complete |  | medium |
 | WI-0139 | Core Admission CA-0003 (pending): generate the handshake decoders as their own Core codec module so the kernel stops loading the whole core codec (WI-0047 codec half, GH-19) | complete |  | medium |
-| WI-0140 | Record why the F# guest cannot be trimmed without suppression yet (WI-0046 findings, GH-19) | ready |  | medium |
+| WI-0140 | Record why the F# guest cannot be trimmed without suppression yet (WI-0046 findings, GH-19) | complete |  | medium |

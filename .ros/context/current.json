@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-30T07:48:11Z",
+  "updatedAt": "2026-09-30T07:48:32Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3107,13 +3107,23 @@
     {
       "id": "WI-0140",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-30T07:48:11Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/27-performance-baseline.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-09-30T07:48:32Z",
       "telemetryExecutionIds": [
         "EXE-20260930T074812432Z-eb957b34"
-      ]
+      ],
+      "completedAt": "2026-09-30T07:48:32Z"
     }
   ]
 }
