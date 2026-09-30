@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0142",
+  "reference": "kemiller2002/limen#19",
+  "placement": "Core (guardrail) — implements CA-0003, approved by the owner on 2026-09-30 (kemiller2002/limen#19): records the decision, then tools/contract-gen gains two typescript-codec target options, roots (emit only the decoders reachable from those types, plus the codec runtime) and shared (import the runtime and those decoders from another codec module and re-export them instead of emitting them). contract/targets.json adds src/generated/core.handshake.codec.ts (roots: EngineHandshake) and has core.codec.ts share it, so no decoder is emitted twice. src/kernel/handshake.ts imports the handshake codec; architecture/core.json lists the new generated public Core file. The ./contract subpath and every exported name of core.codec.ts are unchanged.",
+  "guardrail": true,
+  "paths": ["architecture/core-admissions/CA-0003.json", "architecture/core.json", "architecture/core-baseline.json", "contract/targets.json", "tools/contract-gen/**", "src/generated/**", "src/kernel/handshake.ts", "test/**", "bench/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
