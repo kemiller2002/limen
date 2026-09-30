@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 141,
+  "nextSeq": 142,
   "items": [
     {
       "id": "WI-0001",
@@ -522,10 +522,10 @@
         "carried-obligation"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-29T04:55:49Z",
-      "updatedAt": "2026-09-30T07:50:25Z",
+      "updatedAt": "2026-09-30T07:57:27Z",
       "createdBy": "claude-code",
       "source": "manual",
       "sourceReference": null
@@ -2088,6 +2088,20 @@
       "attachments": [],
       "createdAt": "2026-09-30T07:48:11.526Z",
       "updatedAt": "2026-09-30T07:48:32Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0141",
+      "title": "Federation host decodes module output with the generated codec, and the site's F# federation modules use the generated F# bindings instead of hand-built JSON (follow-up to WI-0030; needs the site's WebAssembly build)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:57:26.959Z",
+      "updatedAt": "2026-09-30T07:57:26.959Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

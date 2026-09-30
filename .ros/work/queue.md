@@ -34,7 +34,7 @@
 | WI-0027 | Ignore federation WASM publish outputs so ros validate passes after a build | complete | build,mechanical | medium |
 | WI-0028 | GH-16 LCP-002: versioned capability extension architecture (neutral contract source, TS generation, fingerprint handshake, generic capability envelope) | complete | limen,gh-16,lcp-002,core,contract | high |
 | WI-0029 | Repair ROS validation findings from WI-0028: DF identifier format and invalid telemetry classification | complete | ros,mechanical | medium |
-| WI-0030 | Bring the federation envelope protocol (src/federation.ts) under the language-neutral contract; it is a second wire protocol defined only in TypeScript (carried from GH-16 / DF-LIMEN-2026-0001) | ready | carried-obligation | medium |
+| WI-0030 | Bring the federation envelope protocol (src/federation.ts) under the language-neutral contract; it is a second wire protocol defined only in TypeScript (carried from GH-16 / DF-LIMEN-2026-0001) | complete | carried-obligation | medium |
 | WI-0031 | Duplicate in-flight correlation id overwrites the kernel's AbortController (Http and Capability effects); add a negative conformance vector and a defined outcome (GH-32) | complete | carried-obligation | medium |
 | WI-0032 | ROS 3.1.3 'work start --classification' accepts values that 'validate' rejects (e.g. boundary-change); report upstream to repository-operating-system | captured | carried-obligation | medium |
 | WI-0033 | GH-52: deterministic F#/C#/Rust contract generation, cross-language fingerprint agreement, shared semantic vectors | complete | limen,gh-52,contract,guardrail | high |
@@ -145,3 +145,4 @@
 | WI-0138 | Kernel adopts server-rendered data-limen-if / data-limen-key markup on first mount (CA-0002, GH-39) | complete |  | medium |
 | WI-0139 | Core Admission CA-0003 (pending): generate the handshake decoders as their own Core codec module so the kernel stops loading the whole core codec (WI-0047 codec half, GH-19) | complete |  | medium |
 | WI-0140 | Record why the F# guest cannot be trimmed without suppression yet (WI-0046 findings, GH-19) | complete |  | medium |
+| WI-0141 | Federation host decodes module output with the generated codec, and the site's F# federation modules use the generated F# bindings instead of hand-built JSON (follow-up to WI-0030; needs the site's WebAssembly build) | captured |  | medium |
