@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 137,
+  "nextSeq": 138,
   "items": [
     {
       "id": "WI-0001",
@@ -2032,6 +2032,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T19:40:12.697Z",
       "updatedAt": "2026-09-29T19:43:23Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0137",
+      "title": "Record the owner's decisions: CA-0001 and CA-0002 approved (GH-63, GH-39)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-29T22:16:43.468Z",
+      "updatedAt": "2026-09-29T22:17:01Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
