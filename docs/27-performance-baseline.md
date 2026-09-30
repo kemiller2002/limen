@@ -219,7 +219,12 @@ acted on here.
    the root by kemiller2002/limen#61:* the
    root no longer loads the reference engine or federation (the
    `minimal-consumer` profile in `bench/budgets.json` forbids both); the
-   codec cost remains.
+   codec cost remains. Removing it needs a new generated Core file (a
+   handshake-only codec), which only a Core Admission can allow. It is proposed
+   as CA-0003 (`architecture/core-admissions/CA-0003.json`), pending the
+   owner's decision. A prototype measured the handshake-only codec at 11,031
+   bytes (2,214 gzip) against the full codec's 52,149 (5,851). The kernel-only
+   payload would fall by about 41 KB raw.
 
 **Virtualization (#37) is not warranted by this evidence.** A one-row update
 of 10,000 rows makes 10,000 mutations, the same as an unchanged
