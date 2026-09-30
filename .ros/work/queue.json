@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 144,
+  "nextSeq": 145,
   "items": [
     {
       "id": "WI-0001",
@@ -2130,6 +2130,25 @@
       "attachments": [],
       "createdAt": "2026-09-30T09:48:50.506Z",
       "updatedAt": "2026-09-30T09:56:25Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0144",
+      "title": "GH-72: Add Forma NASA F# WASM integration proof",
+      "description": "Capture of kemiller2002/limen#72. Rebuilds the final implementation of draft PR #73 (head f524870) from main under a properly attributed work item; complements kemiller2002/forma PR #90.",
+      "tags": [
+        "forma",
+        "nasa",
+        "fsharp",
+        "wasm"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-30T21:00:20.360Z",
+      "updatedAt": "2026-09-30T21:00:40.000Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
