@@ -121,9 +121,10 @@ offer. Decoding uses the generated decoder; a malformed handshake is
 - F#, C# and Rust emitters, deterministic regeneration checks in CI, and
   cross-language fingerprint agreement: #52.
 - Migrating the site's handwritten `Protocol.fs` to generated bindings: #17.
-- The federation envelope (`src/federation.ts`) is a second wire protocol still
-  defined only in TypeScript; bringing it under the neutral contract is tracked
-  as a separate work item rather than silently widening #16.
+- The federation envelope (`src/federation.ts`) was a second wire protocol
+  defined only in TypeScript. It was tracked as a separate work item rather
+  than silently widening #16, and WI-0030 brought it under the neutral contract
+  as `contract/federation.contract.json`.
 
 **Stale results.** Correlation ids remain the stale-result mechanism for
 capability effects exactly as for Http; cancellation of a capability effect

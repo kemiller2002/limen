@@ -234,7 +234,9 @@ await federation.exchange({
 ### `FEDERATION_PROTOCOL_VERSION`
 
 Currently `1`. It versions the federation envelope/lifecycle contract and is
-independent of the browser/engine `PROTOCOL_VERSION`.
+independent of the browser/engine `PROTOCOL_VERSION`. Like the wire types
+below, it is generated from `contract/federation.contract.json`, which also
+generates the F#, C# and Rust bindings.
 
 ### `ModuleManifest`
 
@@ -269,7 +271,9 @@ or how the module should recover.
 A JSON-safe, versioned cross-module message. It carries source/optional target,
 correlation and optional causation/idempotency information, message kind,
 contract/version, optional expected state version, capabilities, evidence and
-payload.
+payload. Its shape is the contract's `FederationEnvelope`, with the payload
+typed as `JsonValue`. The generated strict decoder is
+`decodeFederationEnvelope`, in `dist/federation/generated/federation.codec.js`.
 
 Only `DomainEvent` may omit `target`. Untargeted domain events fan out to
 active compatible consumers. Other kinds require an explicit target.

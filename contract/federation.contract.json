@@ -1,0 +1,263 @@
+{
+  "unit": "limen.federation",
+  "role": "protocol",
+  "version": 1,
+  "doc": "The federation wire protocol: how independently built engine modules are described and how they exchange envelopes through a federation host (docs/11, `…/federation`). A module's manifest, the initialization it receives, the envelopes it accepts and emits. A payload is plain JSON whose meaning belongs to the contract the envelope names. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.",
+  "constants": [
+    {
+      "name": "FEDERATION_PROTOCOL_VERSION",
+      "type": "int",
+      "value": 1,
+      "doc": "The federation envelope and lifecycle protocol version."
+    }
+  ],
+  "types": [
+    {
+      "name": "ModuleId",
+      "kind": "brand",
+      "of": "string",
+      "doc": "A federated module's identity, unique within one federation."
+    },
+    {
+      "name": "ContractId",
+      "kind": "brand",
+      "of": "string",
+      "doc": "The name of a contract between modules. Its versions are integers."
+    },
+    {
+      "name": "FederationCorrelationId",
+      "kind": "brand",
+      "of": "string",
+      "doc": "Correlates an envelope with the one it answers or was caused by."
+    },
+    {
+      "name": "FederationMessageKind",
+      "kind": "enum",
+      "values": [
+        "TransitionRequest",
+        "TransitionAccepted",
+        "TransitionRejected",
+        "AdditionalInformationRequired",
+        "DomainEvent",
+        "Query",
+        "Projection",
+        "EffectRequest",
+        "EffectResult"
+      ]
+    },
+    {
+      "name": "ContractRange",
+      "kind": "record",
+      "doc": "The versions of one contract a module accepts or emits, inclusive.",
+      "fields": [
+        {
+          "name": "contract",
+          "type": "ContractId"
+        },
+        {
+          "name": "minVersion",
+          "type": "int"
+        },
+        {
+          "name": "maxVersion",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "name": "ModuleManifest",
+      "kind": "record",
+      "doc": "What a module declares before it is loaded.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ModuleId"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "federationProtocolVersion",
+          "type": {
+            "literal": 1
+          }
+        },
+        {
+          "name": "accepts",
+          "type": {
+            "list": "ContractRange"
+          }
+        },
+        {
+          "name": "emits",
+          "type": {
+            "list": "ContractRange"
+          }
+        },
+        {
+          "name": "capabilitiesRequired",
+          "type": {
+            "list": "string"
+          }
+        },
+        {
+          "name": "dependencies",
+          "type": {
+            "list": "ModuleId"
+          }
+        },
+        {
+          "name": "routes",
+          "type": {
+            "list": "string"
+          }
+        }
+      ]
+    },
+    {
+      "name": "FederationEnvelope",
+      "kind": "record",
+      "doc": "One message between modules. The host routes it by contract and version and never reads the payload.",
+      "fields": [
+        {
+          "name": "protocolVersion",
+          "type": {
+            "literal": 1
+          }
+        },
+        {
+          "name": "source",
+          "type": "ModuleId"
+        },
+        {
+          "name": "target",
+          "type": "ModuleId",
+          "optional": true
+        },
+        {
+          "name": "correlationId",
+          "type": "FederationCorrelationId"
+        },
+        {
+          "name": "causationId",
+          "type": "FederationCorrelationId",
+          "optional": true
+        },
+        {
+          "name": "idempotencyKey",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "kind",
+          "type": "FederationMessageKind"
+        },
+        {
+          "name": "contract",
+          "type": "ContractId"
+        },
+        {
+          "name": "contractVersion",
+          "type": "int"
+        },
+        {
+          "name": "expectedStateVersion",
+          "type": "int",
+          "optional": true
+        },
+        {
+          "name": "capabilities",
+          "type": {
+            "list": "string"
+          }
+        },
+        {
+          "name": "evidence",
+          "type": {
+            "list": "string"
+          }
+        },
+        {
+          "name": "payload",
+          "type": "json"
+        }
+      ]
+    },
+    {
+      "name": "ModulePeer",
+      "kind": "record",
+      "doc": "What a module is told about another module in the federation.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ModuleId"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "accepts",
+          "type": {
+            "list": "ContractRange"
+          }
+        },
+        {
+          "name": "emits",
+          "type": {
+            "list": "ContractRange"
+          }
+        },
+        {
+          "name": "routes",
+          "type": {
+            "list": "string"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ModuleInitialization",
+      "kind": "record",
+      "doc": "What a module receives when it is initialized.",
+      "fields": [
+        {
+          "name": "federationProtocolVersion",
+          "type": {
+            "literal": 1
+          }
+        },
+        {
+          "name": "moduleId",
+          "type": "ModuleId"
+        },
+        {
+          "name": "peers",
+          "type": {
+            "list": "ModulePeer"
+          }
+        },
+        {
+          "name": "availableCapabilities",
+          "type": {
+            "list": "string"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ModuleDispatchResult",
+      "kind": "record",
+      "doc": "What a module returns from one dispatched envelope: the envelopes it emits.",
+      "fields": [
+        {
+          "name": "emitted",
+          "type": {
+            "list": "FederationEnvelope"
+          }
+        }
+      ]
+    }
+  ]
+}
