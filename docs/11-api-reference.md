@@ -271,9 +271,10 @@ or how the module should recover.
 A JSON-safe, versioned cross-module message. It carries source/optional target,
 correlation and optional causation/idempotency information, message kind,
 contract/version, optional expected state version, capabilities, evidence and
-payload. Its shape is the contract's `FederationEnvelope`, with the payload
-typed as `JsonValue`. The generated strict decoder is
-`decodeFederationEnvelope`, in `dist/federation/generated/federation.codec.js`.
+payload. It is the contract's `FederationEnvelope`, generated: the payload is
+`unknown` until the receiving module narrows it by the contract the envelope
+names. The generated strict decoder is `decodeFederationEnvelope`, in
+`dist/federation/generated/federation.codec.js`.
 
 Only `DomainEvent` may omit `target`. Untargeted domain events fan out to
 active compatible consumers. Other kinds require an explicit target.

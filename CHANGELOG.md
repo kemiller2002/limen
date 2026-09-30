@@ -107,9 +107,12 @@ exhaustive lists.
   - `contract/federation.contract.json` (`limen.federation`, the new unit role
     `protocol`) defines module manifests, initialization, envelopes and
     dispatch results.
-  - `…/federation` takes its wire types and `FEDERATION_PROTOCOL_VERSION` from
-    the generated TypeScript. Every exported name is unchanged, and the payload
-    stays `JsonValue`.
+  - `…/federation` exports the generated wire types and
+    `FEDERATION_PROTOCOL_VERSION`. Every exported name is unchanged.
+  - **Breaking, for TypeScript only:** `FederationEnvelope.payload` is typed
+    `unknown`, the contract's JSON, instead of `JsonValue`. Narrow it by the
+    envelope's contract before use. `JsonValue` is still exported. The wire
+    format is unchanged.
   - F#, C# and Rust bindings are generated with the other units. The site's F#
     federation modules still build their JSON by hand; moving them to the
     bindings, and decoding strictly in the host, come next.
