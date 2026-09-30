@@ -261,14 +261,18 @@ module Engine =
     let private normalizeMissionSelection filter selectedId =
         let visible = Mission.all |> List.filter (missionMatchesFilter filter)
 
-        let selected =
-            if visible |> List.exists (fun mission -> mission.Id = selectedId) then
-                selectedId
-            else
-                visible.Head.Id
+        match visible with
+        | [] -> None
+        | first :: _ ->
+            let selected =
+                if visible |> List.exists (fun mission -> mission.Id = selectedId) then
+                    selectedId
+                else
+                    first.Id
 
-        { Filter = filter
-          SelectedId = selected }
+            Some
+                { Filter = filter
+                  SelectedId = selected }
 
     let private describeMissionBrowser browser =
         $"filter={missionFilterId browser.Filter} selected={browser.SelectedId}"
@@ -507,12 +511,11 @@ module Engine =
             step state command { state with Policy = initialState.Policy } "—"
 
         | SetMissionFilter filter ->
-            let browser = normalizeMissionSelection filter state.MissionBrowser.SelectedId
-
-            if browser = state.MissionBrowser then
-                noChange state
-            else
+            match normalizeMissionSelection filter state.MissionBrowser.SelectedId with
+            | Some browser when browser <> state.MissionBrowser ->
                 step state command { state with MissionBrowser = browser } "—"
+            | _ ->
+                noChange state
 
         | SelectMission id ->
             match Mission.tryFind id with
