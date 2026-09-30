@@ -159,6 +159,59 @@
 
     <section>
       <div class="section-heading">
+        <div><p class="eyebrow">Challenge 04</p><h2>One mission collection, typed application state.</h2></div>
+        <p class="section-note">Forma presents. Limen carries. F# decides what state is legal.</p>
+      </div>
+
+      <div class="demo">
+        <div class="demo-head">
+          <h3>NASA reference mission browser</h3>
+          <span class="note"><span data-text="missionCount">8</span> visible</span>
+        </div>
+        <div class="demo-body">
+          <div class="choices" aria-label="Mission filters">
+            <template data-each="missionFilters" data-key="id">
+              <button class="button" data-event="filterMission" data-text="label" data-bind-aria-pressed="pressed"></button>
+            </template>
+          </div>
+
+          <div class="choices" aria-label="Visible missions">
+            <template data-each="missionRows" data-key="id">
+              <button class="button ghost" data-event="selectMission" data-bind-aria-pressed="selected">
+                <strong data-text="name"></strong>
+                <span data-text="meta"></span>
+              </button>
+            </template>
+          </div>
+
+          <div class="readout" aria-live="polite">
+            <div><span class="label">Mission</span><span class="value small" data-text="selectedMissionName">Apollo 11</span></div>
+            <div><span class="label">Program</span><span class="value small" data-text="selectedMissionProgram">Apollo</span></div>
+            <div><span class="label">Type</span><span class="value small" data-text="selectedMissionType">Lunar Landing</span></div>
+            <div><span class="label">Dates</span><span class="value small" data-text="selectedMissionDates">1969-07-16 to 1969-07-24</span></div>
+            <div><span class="label">Crew</span><span class="value small" data-text="selectedMissionCrew">Neil Armstrong, Edwin E. “Buzz” Aldrin Jr., Michael Collins</span></div>
+            <div><span class="label">Spacecraft</span><span class="value small" data-text="selectedMissionSpacecraft">Columbia and Eagle</span></div>
+            <div><span class="label">Launch vehicle</span><span class="value small" data-text="selectedMissionVehicle">Saturn V</span></div>
+            <div><span class="label">Destination</span><span class="value small" data-text="selectedMissionDestination">Sea of Tranquility, Moon</span></div>
+            <div><span class="label">Status</span><span class="value small" data-text="selectedMissionStatus">Complete</span></div>
+          </div>
+          <p class="verdict" data-text="selectedMissionHighlight">First crewed lunar landing</p>
+          <p><span class="label">Official NASA source</span> <span data-text="selectedMissionSource">https://www.nasa.gov/mission/apollo-11/</span></p>
+        </div>
+      </div>
+
+      <p class="prose">
+        The list, filter, selected record, and detail projection are all F# state
+        compiled to .NET WebAssembly. Changing to <strong>Uncrewed</strong>
+        automatically moves selection to Artemis I because a selected hidden record
+        is not a legal state. A later request to select Apollo 11 while that filter
+        is active is rejected by the F# transition. TypeScript does not know what a
+        mission, crew, filter, or valid selection means.
+      </p>
+    </section>
+
+    <section>
+      <div class="section-heading">
         <div><p class="eyebrow">Trace</p><h2>The engine can explain what changed.</h2></div>
         <p class="section-note">Newest first. This is projected application state, not a hidden kernel log.</p>
       </div>

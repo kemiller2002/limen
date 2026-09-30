@@ -60,6 +60,26 @@ equal "older policy result is counted as stale" 1 oldArrives.Policy.StaleDiscard
 let newArrives = transitionState oldArrives DeliverPolicyB
 equal "newest policy result is accepted" (Some "policy-b → Review required") newArrives.Policy.AcceptedResult
 
+// Forma NASA integration: state-directed filters keep illegal selections
+// unrepresentable. Mission facts are data; filter/selection legality is F#.
+let uncrewedMissions = transitionState initialState (SetMissionFilter UncrewedMissions)
+equal "uncrewed filter selects the only visible uncrewed mission" "artemis-i" uncrewedMissions.MissionBrowser.SelectedId
+equal "uncrewed filter is recorded in state" UncrewedMissions uncrewedMissions.MissionBrowser.Filter
+
+let hiddenApolloSelection = transitionState uncrewedMissions (SelectMission "apollo-11")
+equal "a mission hidden by the active filter cannot become selected" "artemis-i" hiddenApolloSelection.MissionBrowser.SelectedId
+
+let allMissions = transitionState uncrewedMissions (SetMissionFilter AllMissions)
+let selectedShuttle = transitionState allMissions (SelectMission "sts-31")
+equal "visible mission selection is legal" "sts-31" selectedShuttle.MissionBrowser.SelectedId
+
+let unknownMission = transitionState selectedShuttle (SelectMission "apollo-99")
+equal "unknown mission ids cannot enter state" "sts-31" unknownMission.MissionBrowser.SelectedId
+
+let missionView = project uncrewedMissions
+equal "uncrewed projection has one visible reference mission" (Some(ViewValue.Number 1.0)) (Map.tryFind "missionCount" missionView)
+equal "uncrewed projection identifies Artemis I" (Some(ViewValue.Text "Artemis I")) (Map.tryFind "selectedMissionName" missionView)
+
 // Placement challenge should be difficult enough to expose the boundary.
 ok "placement challenge has at least ten tasks" (placementTasks.Length >= 10)
 ok "placement challenge includes protocol-change answers" (placementTasks |> Array.exists (fun task -> task.Answer = ProtocolChange))
@@ -107,6 +127,20 @@ let outsideContract =
 equal "a message outside the contract is refused, not interpreted" true outsideContract
 let initialJsonView = initialized.["view"].AsObject()
 equal "initialize projects tests state" "Unverified" (initialJsonView.["testsStatus"].GetValue<string>())
+
+let filterUncrewedMessage =
+    """{"kind":"Event","event":{"kind":"Event","name":"filterMission","key":"uncrewed"}}"""
+
+let filterUncrewedResponse = JsonNode.Parse(Dispatch.handle filterUncrewedMessage).AsObject()
+let filteredView = filterUncrewedResponse.["view"].AsObject()
+equal "serialized mission filter is handled by F# state" "Artemis I" (filteredView.["selectedMissionName"].GetValue<string>())
+equal "serialized mission filter projects one visible mission" 1.0 (filteredView.["missionCount"].GetValue<double>())
+
+let illegalHiddenSelectionMessage =
+    """{"kind":"Event","event":{"kind":"Event","name":"selectMission","key":"apollo-11"}}"""
+
+let illegalHiddenSelectionResponse = JsonNode.Parse(Dispatch.handle illegalHiddenSelectionMessage).AsObject()
+equal "serialized hidden mission selection is rejected" "Artemis I" (illegalHiddenSelectionResponse.["view"].AsObject().["selectedMissionName"].GetValue<string>())
 
 let passTestsMessage =
     """{"kind":"Event","event":{"kind":"Event","name":"testsPass"}}"""

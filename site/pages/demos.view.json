@@ -56,7 +56,34 @@
         "command": "string",
         "effect": "string"
       }
-    }
+    },
+    "missionFilters": {
+      "list": {
+        "id": "string",
+        "label": "string",
+        "pressed": "boolean"
+      }
+    },
+    "missionRows": {
+      "list": {
+        "id": "string",
+        "name": "string",
+        "meta": "string",
+        "selected": "boolean"
+      }
+    },
+    "missionCount": "number",
+    "selectedMissionName": "string",
+    "selectedMissionProgram": "string",
+    "selectedMissionType": "string",
+    "selectedMissionDates": "string",
+    "selectedMissionCrew": "string",
+    "selectedMissionSpacecraft": "string",
+    "selectedMissionVehicle": "string",
+    "selectedMissionDestination": "string",
+    "selectedMissionStatus": "string",
+    "selectedMissionHighlight": "string",
+    "selectedMissionSource": "string"
   },
   "events": {
     "testsPass": {},
@@ -79,6 +106,12 @@
       "item": "choices"
     },
     "nextTask": {},
-    "clearTrace": {}
+    "clearTrace": {},
+    "filterMission": {
+      "item": "missionFilters"
+    },
+    "selectMission": {
+      "item": "missionRows"
+    }
   }
 }
