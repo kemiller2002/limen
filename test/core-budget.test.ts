@@ -57,7 +57,7 @@ test("the repository is within its approved Core budget", () => {
 
 test("the report covers every required dimension, generated code apart", () => {
   assert.equal(current.architectureVersion, "1.0.0");
-  assert.deepEqual(current.core.perFile.filter((file) => file.generated).map((file) => file.path), ["src/generated/core.codec.ts", "src/generated/core.ts"]);
+  assert.deepEqual(current.core.perFile.filter((file) => file.generated).map((file) => file.path), ["src/generated/core.codec.ts", "src/generated/core.handshake.codec.ts", "src/generated/core.ts"]);
   assert.equal(current.core.handwritten.files + current.core.generated.files, manifest.files.length);
   assert.ok(current.core.emitted !== null && current.core.emitted.gzipBytes > 0);
   assert.equal(current.rootExports.unassigned.length, 0);

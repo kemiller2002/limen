@@ -33,8 +33,23 @@
     {
       "unit": "limen.core",
       "kind": "typescript-codec",
+      "path": "src/generated/core.handshake.codec.ts",
+      "typesModule": "./core.js",
+      "roots": [
+        "EngineHandshake"
+      ]
+    },
+    {
+      "unit": "limen.core",
+      "kind": "typescript-codec",
       "path": "src/generated/core.codec.ts",
-      "typesModule": "./core.js"
+      "typesModule": "./core.js",
+      "shared": {
+        "module": "./core.handshake.codec.js",
+        "roots": [
+          "EngineHandshake"
+        ]
+      }
     },
     {
       "unit": "limen.fixture.echo",

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { canonicalize, fingerprintOf, parseUnit } from "../tools/contract-gen/model.ts";
 import { check, classify, render, withHeader } from "../tools/contract-gen/main.ts";
-import { decodeBrowserToEngineMessage, decodeEffectRequest, decodeEngineHandshake, decodeEngineToBrowserMessage, decodeViewState } from "../src/generated/core.codec.ts";
+import { decodeBrowserToEngineMessage, decodeEffectRequest, decodeEngineHandshake, decodeEngineToBrowserMessage, decodeViewState } from "../dist/generated/core.codec.js";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const coreRaw = JSON.parse(await readFile(new URL("../contract/core.contract.json", import.meta.url), "utf8")) as Record<string, unknown>;
@@ -250,6 +250,7 @@ test("changing the contract without regenerating makes every binding of that uni
       "guests/fsharp/Limen.Contract/Generated/Core.fs",
       "guests/rust/limen-contract/src/limen_core.rs",
       "src/generated/core.codec.ts",
+      "src/generated/core.handshake.codec.ts",
       "src/generated/core.ts",
     ]);
     assert.equal(findings.length, stale.length, "only the changed unit's bindings are affected");
@@ -287,4 +288,41 @@ test("every guest binding carries the same contract fingerprint as the TypeScrip
     assert.ok(source.includes(`contract-fingerprint: ${fingerprint}`), `${path} header`);
     assert.ok(source.includes(`"${fingerprint}"`), `${path} constant`);
   }
+});
+
+// CA-0003: a codec target can be split. The handshake codec holds only what
+// EngineHandshake needs; the full codec shares it instead of emitting it twice.
+test("a split codec emits only the reachable decoders, and the sharing codec re-exports them", async () => {
+  const { emitTypeScriptCodec } = await import("../tools/contract-gen/emit-typescript.ts");
+  const parsed = parseUnit(JSON.parse(await readFile(new URL("../contract/core.contract.json", import.meta.url), "utf8")), "core");
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const exported = (source: string): readonly string[] => [...source.matchAll(/^export const (decode\w+)/gm)].map((match) => match[1] ?? "").sort();
+  const handshake = emitTypeScriptCodec(parsed.value, "./core.js", { roots: ["EngineHandshake"] });
+  assert.deepEqual(exported(handshake), ["decodeCapabilityId", "decodeCapabilityOffer", "decodeContractIdentity", "decodeEngineHandshake", "decodeHandshakeRejection", "decodeProtocolRevision"]);
+  assert.match(handshake, /^export const codecRuntime = /m);
+  const whole = emitTypeScriptCodec(parsed.value, "./core.js");
+  const shared = emitTypeScriptCodec(parsed.value, "./core.js", { shared: { module: "./core.handshake.codec.js", roots: ["EngineHandshake"] } });
+  assert.deepEqual([...exported(shared), ...exported(handshake)].sort(), exported(whole), "together they emit every decoder exactly once");
+  assert.match(shared, /^export \{ decodeCapabilityId, decodeProtocolRevision, decodeContractIdentity, decodeCapabilityOffer, decodeHandshakeRejection, decodeEngineHandshake \};$/m);
+  assert.throws(() => emitTypeScriptCodec(parsed.value, "./core.js", { roots: ["NoSuchType"] }), /codec roots name no type of the unit: NoSuchType/);
+});
+
+test("roots and shared are refused outside a typescript-codec target, and together", async () => {
+  const { parseTargets } = await import("../tools/contract-gen/targets.ts");
+  const refused = (output: Record<string, unknown>): readonly string[] => {
+    const parsed = parseTargets({ units: [], outputs: [output] });
+    return parsed.ok ? [] : parsed.errors;
+  };
+  assert.match(refused({ unit: "limen.core", kind: "typescript-types", path: "a.ts", roots: ["EngineHandshake"] }).join("\n"), /typescript-codec targets only/);
+  assert.match(refused({ unit: "limen.core", kind: "typescript-codec", path: "a.ts", roots: ["A"], shared: { module: "./b.js", roots: ["A"] } }).join("\n"), /not both/);
+  assert.match(refused({ unit: "limen.core", kind: "typescript-codec", path: "a.ts", roots: [] }).join("\n"), /non-empty array/);
+});
+
+test("the kernel's handshake codec decodes exactly as the full codec does", async () => {
+  const handshake = await import("../dist/generated/core.handshake.codec.js");
+  const accepted = { kind: "Accepted", protocol: { major: 1, minor: 4 }, contract: { unit: "limen.core", version: 1, fingerprint: "f" }, capabilities: [{ id: "x", version: 1, fingerprint: "g" }] };
+  const inputs: readonly unknown[] = [accepted, { ...accepted, protocol: { major: 1.5, minor: 1 } }, { ...accepted, extra: 1 }, { kind: "Rejected", reason: { kind: "ContractMismatch" } }, null];
+  assert.deepEqual(inputs.map((input) => handshake.decodeEngineHandshake(input)), inputs.map((input) => decodeEngineHandshake(input)));
+  assert.equal(handshake.decodeEngineHandshake, decodeEngineHandshake, "the full codec re-exports the same function");
 });

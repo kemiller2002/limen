@@ -103,6 +103,16 @@ exhaustive lists.
 
 ### Added
 
+- **The kernel loads only the handshake decoders (CA-0003, #19).**
+  - A generated handshake-only codec, `src/generated/core.handshake.codec.ts`,
+    is the one new Core file the owner approved. The kernel imports it instead
+    of the whole core codec.
+  - `core.codec.ts` shares it, so no decoder is emitted twice, and its exports
+    and the `./contract` subpath are unchanged.
+  - The unbundled `kernel-only` payload fell from 114,254 to 73,495 raw bytes
+    (gzip bundled 23,719 → 20,209).
+  - `tools/contract-gen` gained the `roots` and `shared` codec target options.
+
 - **The federation protocol is a language-neutral contract (WI-0030).**
   - `contract/federation.contract.json` (`limen.federation`, the new unit role
     `protocol`) defines module manifests, initialization, envelopes and
