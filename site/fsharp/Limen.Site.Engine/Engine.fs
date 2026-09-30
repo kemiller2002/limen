@@ -249,7 +249,7 @@ module Engine =
         | "uncrewed" -> UncrewedMissions
         | other -> failwithf "Unknown mission filter '%s'." other
 
-    let private missionMatchesFilter filter mission =
+    let private missionMatchesFilter (filter: MissionFilter) (mission: Mission.Mission) =
         match filter with
         | AllMissions -> true
         | CrewedMissions -> mission.Crewed
