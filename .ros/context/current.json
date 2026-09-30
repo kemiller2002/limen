@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-29T22:17:01Z",
+  "updatedAt": "2026-09-30T06:02:41Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3044,13 +3044,23 @@
     {
       "id": "WI-0137",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-29T22:17:01Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "architecture/core-admissions/CA-0001.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/core-admission.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-30T06:02:41Z",
       "telemetryExecutionIds": [
         "EXE-20260929T221701739Z-577ce0e1"
-      ]
+      ],
+      "completedAt": "2026-09-30T06:02:41Z"
     }
   ]
 }
