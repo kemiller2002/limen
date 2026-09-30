@@ -11,14 +11,24 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Limen.Minimal.Wasm</RootNamespace>
-    <!-- FSharp.Core 8.0.102's own ILLink descriptors raise IL2104/IL2008/IL2040
-         under trimming; our generated code is trim-clean. Guest projects may
-         not suppress warnings (test/guardrails.test.ts), so this host
-         publishes untrimmed and the size cost is recorded, not hidden. -->
-    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Trimmed in full mode (WI-0143): only reachable code is kept and
+         analyzed. The F# projects compile with no printf and with
+         reflection-free formatting, so every trim-analysis warning stays an
+         error and none is raised.
+         IL2040 alone is not an error. It is FSharp.Core's own trimming file
+         naming resources the assembly does not contain, in every version from
+         8.0.102 to 10.0.112 (docs/27). The owner approved this one exception
+         (kemiller2002/limen#19), and architecture/guardrails.json declares
+         it, so test/guardrails.test.ts refuses any other. It still prints.
+         FSharp.Core 9.0.303 is the first version tried whose trimming file
+         raises no IL2008. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    <WarningsNotAsErrors>IL2040</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Limen.Minimal.Engine/Limen.Minimal.Engine.fsproj" />
     <SupportedPlatform Include="browser" />
+    <PackageReference Include="FSharp.Core" Version="9.0.303" />
   </ItemGroup>
 </Project>

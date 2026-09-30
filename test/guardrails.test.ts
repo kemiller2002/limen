@@ -19,6 +19,21 @@ type Gates = {
   readonly csprojProperties: Readonly<Record<string, string>>;
   readonly rustLibAttributes: readonly string[];
   readonly unsafeAbiCrates: { readonly paths: readonly string[] };
+  readonly warningsNotAsErrors: { readonly entries: readonly Sanctioned[] };
+};
+
+type Sanctioned = { readonly project: string; readonly warnings: readonly string[]; readonly decision: string; readonly reason: string };
+
+// A guest project may keep a warning from failing its build only exactly as
+// architecture/guardrails.json declares, and may never hide one.
+const warningViolations = (project: string, source: string, sanctioned: readonly Sanctioned[]): readonly string[] => {
+  const declared = sanctioned.find((entry) => entry.project === project);
+  const kept = [...source.matchAll(/<WarningsNotAsErrors>([^<]*)<\/WarningsNotAsErrors>/g)].flatMap((match) => (match[1] ?? "").split(";").map((id) => id.trim()).filter((id) => id !== ""));
+  const expected = [...(declared?.warnings ?? [])].sort();
+  return [
+    ...(/<NoWarn>|--nowarn/.test(source) ? [`${project}: hiding warnings (NoWarn, --nowarn) is not allowed`] : []),
+    ...(JSON.stringify([...kept].sort()) === JSON.stringify(expected) ? [] : [`${project}: WarningsNotAsErrors is [${kept.join(", ")}], but architecture/guardrails.json declares [${expected.join(", ")}]`]),
+  ];
 };
 
 const gates = (JSON.parse(await read("architecture/guardrails.json")) as { requiredGates: Gates }).requiredGates;
@@ -70,8 +85,26 @@ test("every F# and C# guest project keeps its strict settings", async () => {
     for (const [property, value] of Object.entries(required)) {
       assert.ok(source.includes(`<${property}>${value}</${property}>`), `${project}: <${property}>${value}</${property}> is required`);
     }
-    assert.doesNotMatch(source, /<NoWarn>|--nowarn|WarningsNotAsErrors/, `${project}: suppressing warnings is a guardrail change`);
+    assert.deepEqual(warningViolations(project, source, gates.warningsNotAsErrors.entries), [], `${project}: suppressing warnings is a guardrail change`);
   }
+});
+
+test("a warning kept from failing the build is declared exactly, with the owner's decision and a reason", async () => {
+  const entries = gates.warningsNotAsErrors.entries;
+  const projects = [...await findFiles("guests", ".fsproj"), ...await findFiles("guests", ".csproj")];
+  for (const entry of entries) {
+    assert.ok(projects.includes(entry.project), `${entry.project}: a declared exception names a project that does not exist`);
+    assert.ok(entry.warnings.length > 0 && entry.warnings.every((id) => /^[A-Z]+[0-9]+$/.test(id)), `${entry.project}: exceptions are exact warning ids`);
+    assert.match(entry.decision, /^https:\/\/github\.com\//, `${entry.project}: an exception links the owner's decision`);
+    assert.ok(entry.reason.length >= 40, `${entry.project}: an exception says why`);
+  }
+  const project = "guests/example/Example.csproj";
+  const only = [{ project, warnings: ["IL2040"], decision: "https://github.com/x", reason: "r" }];
+  assert.deepEqual(warningViolations(project, "<WarningsNotAsErrors>IL2040</WarningsNotAsErrors>", only), []);
+  assert.equal(warningViolations(project, "<WarningsNotAsErrors>IL2040;IL2026</WarningsNotAsErrors>", only).length, 1, "a broader list is refused");
+  assert.equal(warningViolations("guests/other/Other.csproj", "<WarningsNotAsErrors>IL2040</WarningsNotAsErrors>", only).length, 1, "an undeclared project is refused");
+  assert.equal(warningViolations(project, "<NoWarn>IL2040</NoWarn><WarningsNotAsErrors>IL2040</WarningsNotAsErrors>", only).length, 1, "hiding is refused even when declared");
+  assert.equal(warningViolations(project, "", only).length, 1, "a declared exception that is no longer used must be removed");
 });
 
 test("every Rust guest crate forbids unsafe code and denies warnings, except the sanctioned ABI shims", async () => {

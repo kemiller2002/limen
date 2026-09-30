@@ -53,31 +53,31 @@ let private request (label: string) (correlationId: CorrelationId) : EffectReque
 
 let private failureWithStatus (reason: string) (status: int64 option) =
     match status with
-    | Some code -> $"failure {reason} {code}"
-    | None -> $"failure {reason}"
+    | Some code -> "failure " + reason + " " + string code
+    | None -> "failure " + reason
 
 let describe (result: EffectResult) : string =
     match result with
     | EffectResult.HttpResult(_, outcome) ->
         match outcome with
-        | EffectOutcome.Success(status, _, _) -> $"success {status}"
+        | EffectOutcome.Success(status, _, _) -> "success " + string status
         | EffectOutcome.Failure(reason, status) -> failureWithStatus (Codec.wireHttpFailureReason reason) status
         | EffectOutcome.Cancelled -> "cancelled"
         | EffectOutcome.OutcomeUnknown _ -> "unknown"
     | EffectResult.StorageResult(_, outcome) ->
         match outcome with
-        | StorageOutcome.Success(Some value) -> $"success {value}"
+        | StorageOutcome.Success(Some value) -> "success " + value
         | StorageOutcome.Success None -> "success null"
-        | StorageOutcome.Failure reason -> $"failure {Codec.wireStorageFailureReason reason}"
+        | StorageOutcome.Failure reason -> "failure " + Codec.wireStorageFailureReason reason
     | EffectResult.ClipboardResult(_, outcome) ->
         match outcome with
         | ClipboardOutcome.Success -> "success"
-        | ClipboardOutcome.Failure reason -> $"failure {Codec.wireClipboardFailureReason reason}"
+        | ClipboardOutcome.Failure reason -> "failure " + Codec.wireClipboardFailureReason reason
     | EffectResult.NavigationResult(_, outcome) ->
         match outcome with
-        | NavigationOutcome.Success location -> $"success {location.Path}{location.Query}"
+        | NavigationOutcome.Success location -> "success " + location.Path + location.Query
         | NavigationOutcome.Dispatched -> "dispatched"
-        | NavigationOutcome.Failure reason -> $"failure {Codec.wireNavigationFailureReason reason}"
+        | NavigationOutcome.Failure reason -> "failure " + Codec.wireNavigationFailureReason reason
     | EffectResult.CapabilityResult _ -> "unexpected capability result"
 
 let private correlationOf (result: EffectResult) =
@@ -102,20 +102,20 @@ let handle (state: State) (message: BrowserToEngineMessage) : State * EngineToBr
             | EngineHandshake.Accepted _ as accepted -> respond (record "ready" state) [] (Some accepted)
             | EngineHandshake.Rejected _ as rejected -> respond Incompatible [] (Some rejected)
         | BrowserToEngineMessage.Event semanticEvent ->
-            let correlationId = $"c{next}"
+            let correlationId = "c" + string next
             match request semanticEvent.Name (CorrelationId correlationId) with
-            | None -> respond (record $"ignored {semanticEvent.Name}" state) [] None
+            | None -> respond (record ("ignored " + semanticEvent.Name) state) [] None
             | Some effect ->
-                match record $"requested {semanticEvent.Name}" state with
+                match record ("requested " + semanticEvent.Name) state with
                 | Ready(log, lastId, _, _) -> respond (Ready(log, lastId, next + 1, pending.Add(correlationId, semanticEvent.Name))) [ effect ] None
                 | Incompatible -> respond Incompatible [] None
         | BrowserToEngineMessage.EffectResult result ->
             let correlationId = correlationOf result
             match pending.TryFind correlationId with
-            | None -> respond (record $"stale {correlationId}" state) [] None
+            | None -> respond (record ("stale " + correlationId) state) [] None
             | Some label ->
-                match record $"{label}: {describe result}" state with
+                match record (label + ": " + describe result) state with
                 | Ready(log, lastId, next, pending) -> respond (Ready(log, lastId, next, pending.Remove correlationId)) [] None
                 | Incompatible -> respond Incompatible [] None
-        | BrowserToEngineMessage.LocationChanged location -> respond (record $"location {location.Path}{location.Query}" state) [] None
-        | BrowserToEngineMessage.CapabilityFact(CapabilityId capability, _, _) -> respond (record $"unexpected fact {capability}" state) [] None
+        | BrowserToEngineMessage.LocationChanged location -> respond (record ("location " + location.Path + location.Query) state) [] None
+        | BrowserToEngineMessage.CapabilityFact(CapabilityId capability, _, _) -> respond (record ("unexpected fact " + capability) state) [] None

@@ -103,6 +103,19 @@ exhaustive lists.
 
 ### Added
 
+- **The F# WebAssembly guest publishes trimmed (WI-0046, WI-0143).**
+  - Cold download fell from 26.0 MB in 188 requests to 5.5 MB in 29. The cold
+    handshake fell from 1,581 ms to 521 ms.
+  - Neither the generated F# runtime nor the minimal engine uses interpolated
+    strings or `sprintf` any more, so F# printf is not kept. The F# guest
+    projects compile with `--reflectionfree`.
+  - The host trims in full mode with FSharp.Core 9.0.303. Every trim-analysis
+    warning is still an error.
+  - The one exception, approved by the owner: IL2040, FSharp.Core's own
+    trimming file naming resources it does not contain, is not an error in that
+    project. `architecture/guardrails.json` declares it, and the guardrail test
+    refuses any other.
+
 - **The kernel loads only the handshake decoders (CA-0003, #19).**
   - A generated handshake-only codec, `src/generated/core.handshake.codec.ts`,
     is the one new Core file the owner approved. The kernel imports it instead

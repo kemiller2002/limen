@@ -115,6 +115,7 @@ trip" is event → engine → Storage effect → result → engine → projectio
 | Guest | Cold download | Requests | Cold handshake | Warm handshake | Round trip |
 | --- | --- | --- | --- | --- | --- |
 | F# (.NET WebAssembly, untrimmed) | **26.0 MB** | 188 | **1,581** | 349 | 1.53 (4.84) |
+| F# (.NET WebAssembly, trimmed, WI-0143) | 5.5 MB | 29 | 521 | 166 | 1.40 (3.82) |
 | C# (.NET WebAssembly, trimmed) | 5.4 MB | 28 | 534 | 175 | 1.69 (4.63) |
 | Rust (raw `wasm32`) | 0.27 MB | 10 | 83 | 25 | 0.48 (1.39) |
 
@@ -226,6 +227,27 @@ acted on here.
    whose embedded trimming file matches its resources, plus full trim mode,
    `--reflectionfree` and tracing the remaining printf root. Allowing the IL2040
    warnings specifically would be a guardrail change, and is the owner's call.
+   *Done in WI-0143.* The remaining printf root was F# interpolated strings
+   (`$"..."`), which compile to `sprintf`: the generated F# runtime used them
+   for error paths, and the minimal engine for its log lines. Both now
+   concatenate. The F# guest projects compile with `--reflectionfree`, and the
+   host publishes with `TrimMode=full` and FSharp.Core 9.0.303, the first
+   version tried without IL2008. With those changes no trim-analysis warning is
+   raised, and every one would still fail the build. The owner approved the one
+   remaining exception (kemiller2002/limen#19): IL2040 is not an error in that
+   host project. `architecture/guardrails.json` declares it, and
+   `test/guardrails.test.ts` refuses any other exception, or a broader one.
+   Measured on 2026-09-30 (`npm run bench -- --only guests`, 3 runs):
+
+   | F# guest | Untrimmed | Trimmed |
+   | --- | --- | --- |
+   | Cold download | 26.0 MB | 5.5 MB |
+   | Requests | 188 | 29 |
+   | Cold handshake | 1,581 ms | 521 ms |
+   | Warm handshake | 349 ms | 166 ms |
+
+   The F# guest is now smaller than the C# guest (6.7 MB in the same run), and
+   `npm run smoke:guests` passes all 67 checks, in the page and in a worker.
 5. **The minimal consumer loads code it never runs** (WI-0047). Importing
    the package root loads the reference email engine and federation, 30 KB
    raw and 6.5 KB gzipped. The kernel also loads the whole 47.5 KB generated
