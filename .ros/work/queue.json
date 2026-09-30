@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 138,
+  "nextSeq": 139,
   "items": [
     {
       "id": "WI-0001",
@@ -2046,6 +2046,20 @@
       "attachments": [],
       "createdAt": "2026-09-29T22:16:43.468Z",
       "updatedAt": "2026-09-30T06:02:41Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0138",
+      "title": "Kernel adopts server-rendered data-limen-if / data-limen-key markup on first mount (CA-0002, GH-39)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-09-30T07:25:49.710Z",
+      "updatedAt": "2026-09-30T07:25:54Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
