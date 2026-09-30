@@ -5,7 +5,7 @@
     <WarningLevel>5</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Engine.fs" />
+    <Compile Include="Mission.fs" />\n    <Compile Include="Engine.fs" />
     <Compile Include="Dispatch.fs" />
   </ItemGroup>
   <ItemGroup>
