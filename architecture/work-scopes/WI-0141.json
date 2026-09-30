@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0141",
+  "reference": "kemiller2002/limen#16",
+  "placement": "Federation host and site modules — follow-up to WI-0030, approved by the owner on 2026-09-30 (kemiller2002/limen#19). src/federation.ts decodes every manifest it registers and every dispatch result a module returns with the generated strict codec, so malformed module output is an InvalidEnvelope or InvalidManifest error naming the path instead of reaching routing. The site's F# federation modules (site/fsharp/federation/*) use the generated F# bindings (guests/fsharp/Limen.Contract) for manifests, initialization, envelopes and dispatch results instead of hand-built JSON; their own payloads and snapshots stay theirs.",
+  "guardrail": false,
+  "paths": ["src/federation.ts", "site/fsharp/federation/**", "test/**", "docs/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

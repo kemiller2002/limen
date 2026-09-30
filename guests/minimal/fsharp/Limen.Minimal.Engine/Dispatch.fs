@@ -9,7 +9,7 @@ let mutable private state = Engine.initial
 let private incompatibleWireData (error: Limen.Contract.DecodeError) =
     // A message outside the contract is a compatibility failure, not an
     // application event: the engine does not transition on it.
-    failwith $"Browser message outside the Limen contract at {error.Path}: expected {error.Expected}, found {error.Found}"
+    failwith ("Browser message outside the Limen contract at " + error.Path + ": expected " + error.Expected + ", found " + error.Found)
 
 let handle (json: string) : string =
     match Codec.parseBrowserToEngineMessage json with

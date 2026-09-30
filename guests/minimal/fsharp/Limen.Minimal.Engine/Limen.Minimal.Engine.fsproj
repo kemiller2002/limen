@@ -5,7 +5,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
-    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25</OtherFlags>
+    <!-- The reflectionfree flag: no %A formatting and no reflection-generated ToString,
+         so a trimmed WebAssembly host keeps no F# printf (WI-0143). -->
+    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25 --reflectionfree</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Engine.fs" />

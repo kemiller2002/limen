@@ -97,6 +97,17 @@
       "paths": [
         "guests/minimal/rust/limen-minimal-wasm/src/lib.rs"
       ]
+    },
+    "warningsNotAsErrors": {
+      "doc": "The only warnings a guest project may keep from failing its build. Each entry names one project and exact warning ids, links the owner's decision, and says why. Guest projects may not use NoWarn or --nowarn at all, and may use WarningsNotAsErrors only exactly as listed here; a listed warning still prints. Checked by test/guardrails.test.ts.",
+      "entries": [
+        {
+          "project": "guests/minimal/fsharp/Limen.Minimal.Wasm/Limen.Minimal.Wasm.csproj",
+          "warnings": ["IL2040"],
+          "decision": "https://github.com/kemiller2002/limen/issues/19#issuecomment-5908530279",
+          "reason": "FSharp.Core's own embedded trimming file asks the trimmer to remove resources the assembly does not contain, in every version from 8.0.102 to 10.0.112 (docs/27). It is a packaging fault in FSharp.Core, not a trim-safety finding; every trim-analysis warning stays an error."
+        }
+      ]
     }
   }
 }

@@ -7,7 +7,9 @@
     <WarningLevel>5</WarningLevel>
     <!-- 25: incomplete matches, 1182: unused variables, 3370: deprecated
          syntax. Incomplete pattern handling at a Limen boundary is an error. -->
-    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25</OtherFlags>
+    <!-- The reflectionfree flag: no %A formatting and no reflection-generated ToString,
+         so a trimmed WebAssembly host keeps no F# printf (WI-0143). -->
+    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25 --reflectionfree</OtherFlags>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>

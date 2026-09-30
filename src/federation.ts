@@ -3,6 +3,7 @@
 // types from the same file. A payload is the contract's JSON: unknown until
 // the receiving module narrows it by the contract the envelope names.
 import { FEDERATION_PROTOCOL_VERSION } from "./federation/generated/federation.js";
+import { decodeModuleDispatchResult, decodeModuleManifest, type DecodeError } from "./federation/generated/federation.codec.js";
 import type { ModuleId, ContractId, FederationCorrelationId, FederationMessageKind, ContractRange, ModuleManifest, ModulePeer, ModuleInitialization, FederationEnvelope, ModuleDispatchResult } from "./federation/generated/federation.js";
 
 export { FEDERATION_PROTOCOL_VERSION };
@@ -127,6 +128,7 @@ export type FederationErrorCode =
   | "ContractNotAccepted"
   | "TargetRequired"
   | "InvalidEnvelopeSource"
+  | "InvalidEnvelope"
   | "DeliveryLimitExceeded"
   | "TransportFailure";
 
@@ -172,6 +174,10 @@ const supportsContract = (
       version <= range.maxVersion,
   );
 
+// Where a module's output left the federation contract (WI-0141).
+const outsideContract = (what: string, error: DecodeError): string =>
+  what + " is outside the federation contract at " + error.path + ": expected " + error.expected + ", found " + error.found;
+
 const assertManifest = (manifest: ModuleManifest): void => {
   if (manifest.federationProtocolVersion !== FEDERATION_PROTOCOL_VERSION) {
     throw new FederationError(
@@ -180,6 +186,12 @@ const assertManifest = (manifest: ModuleManifest): void => {
         manifest.federationProtocolVersion + ", expected " +
         FEDERATION_PROTOCOL_VERSION,
     );
+  }
+
+  // A manifest is the module's own claim; decoded strictly, like any wire data.
+  const decoded = decodeModuleManifest(manifest);
+  if (!decoded.ok) {
+    throw new FederationError("InvalidManifest", outsideContract("module manifest", decoded.error));
   }
 
   if (!manifest.id || !manifest.version) {
@@ -746,12 +758,22 @@ export class ModuleFederation {
       );
     }
 
-    const result = await this.#invokeTransport(
+    const returned = await this.#invokeTransport(
       targetId,
       "dispatch",
       () => target.transport.dispatch(envelope),
       envelope,
     );
+    // What a module returns is untrusted output, decoded strictly before any
+    // of it is routed. A wrong protocol version is still ProtocolMismatch.
+    const decoded = decodeModuleDispatchResult(returned);
+    if (!decoded.ok) {
+      throw new FederationError(
+        decoded.error.path.endsWith(".protocolVersion") ? "ProtocolMismatch" : "InvalidEnvelope",
+        outsideContract("output of module " + targetId, decoded.error),
+      );
+    }
+    const result = decoded.value;
     for (const emitted of result.emitted) {
       if (emitted.source !== targetId) {
         throw new FederationError(

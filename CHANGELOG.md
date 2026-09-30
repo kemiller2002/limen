@@ -103,6 +103,20 @@ exhaustive lists.
 
 ### Added
 
+- **The F# WebAssembly guest publishes trimmed (WI-0046, WI-0143).**
+  - Cold download fell from 26.0 MB in 188 requests to 5.5 MB in 29. The cold
+    handshake fell from 1,581 ms to 521 ms.
+  - Neither the generated F# runtime nor the minimal engine uses interpolated
+    strings or `sprintf` any more, so F# printf is not kept. The F# guest
+    projects compile with `--reflectionfree`.
+  - The host trims in full mode with the SDK's FSharp.Core (9.0 or later; 8.0.x
+    also raises IL2008). Every trim-analysis
+    warning is still an error.
+  - The one exception, approved by the owner: IL2040, FSharp.Core's own
+    trimming file naming resources it does not contain, is not an error in that
+    project. `architecture/guardrails.json` declares it, and the guardrail test
+    refuses any other.
+
 - **The kernel loads only the handshake decoders (CA-0003, #19).**
   - A generated handshake-only codec, `src/generated/core.handshake.codec.ts`,
     is the one new Core file the owner approved. The kernel imports it instead
@@ -123,9 +137,14 @@ exhaustive lists.
     `unknown`, the contract's JSON, instead of `JsonValue`. Narrow it by the
     envelope's contract before use. `JsonValue` is still exported. The wire
     format is unchanged.
-  - F#, C# and Rust bindings are generated with the other units. The site's F#
-    federation modules still build their JSON by hand; moving them to the
-    bindings, and decoding strictly in the host, come next.
+  - F#, C# and Rust bindings are generated with the other units.
+  - **WI-0141:** the host decodes every manifest it registers, and everything
+    a module returns, with the generated strict codec. Output outside the
+    contract is a new `InvalidEnvelope` error naming the path, and a manifest
+    outside it is `InvalidManifest`. A wrong protocol version is still
+    `ProtocolMismatch`. The site's F# federation modules use the generated F#
+    bindings instead of hand-built JSON, and refuse envelopes outside the
+    contract.
 
 - **The kernel adopts server-rendered markup (#39, CA-0002).**
   - The first projection adopts a `data-if` root marked `data-limen-if` and

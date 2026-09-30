@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 143,
+  "nextSeq": 144,
   "items": [
     {
       "id": "WI-0001",
@@ -2098,10 +2098,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "captured",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-30T07:57:26.959Z",
-      "updatedAt": "2026-09-30T07:57:26.959Z",
+      "updatedAt": "2026-09-30T10:03:22Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -2116,6 +2116,20 @@
       "attachments": [],
       "createdAt": "2026-09-30T09:29:34.207Z",
       "updatedAt": "2026-09-30T09:35:58Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0143",
+      "title": "Trimmed F# guest: reflection-free, printf-free F#, full trim mode, and the owner-approved IL2040 exception declared in guardrails (WI-0046, GH-19)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-30T09:48:50.506Z",
+      "updatedAt": "2026-09-30T09:56:25Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

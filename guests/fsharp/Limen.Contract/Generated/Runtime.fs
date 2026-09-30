@@ -4,7 +4,7 @@
 // unit: (runtime: shared by every unit)
 // contract-fingerprint: (none)
 // generator: limen-contract-gen/1 (fsharp-runtime)
-// content-hash: sha256:bf02b43969363b0b211590a085a751508c552a362a1597e44760aa01c1e033e3
+// content-hash: sha256:1a3979e73e1e981c6c6cdcd2d853ee9050cdc356163ec0a556e6dbdd03295b75
 // </auto-generated>
 namespace Limen.Contract
 
@@ -105,7 +105,7 @@ module Wire =
     let literalInt (expected: int64) (path: string) (element: JsonElement) =
         match int path element with
         | Ok value when value = expected -> Ok()
-        | _ -> mismatch (sprintf "%d" expected) path element
+        | _ -> mismatch (expected.ToString(System.Globalization.CultureInfo.InvariantCulture)) path element
 
     let enumeration (cases: (string * 'a) list) (path: string) (element: JsonElement) : Result<'a, DecodeError> =
         if element.ValueKind = JsonValueKind.String then
@@ -128,7 +128,7 @@ module Wire =
 
     let list (decoder: string -> JsonElement -> Result<'a, DecodeError>) (path: string) (element: JsonElement) =
         if element.ValueKind = JsonValueKind.Array then
-            element.EnumerateArray() |> Seq.mapi (fun index item -> decoder $"{path}[{index}]" item) |> Seq.toList |> firstError
+            element.EnumerateArray() |> Seq.mapi (fun index item -> decoder (path + "[" + index.ToString(System.Globalization.CultureInfo.InvariantCulture) + "]") item) |> Seq.toList |> firstError
         else
             mismatch "array" path element
 
@@ -146,7 +146,7 @@ module Wire =
             properties
             |> Map.keys
             |> ordinal
-            |> Seq.map (fun key -> decoder $"{path}[{quote key}]" properties[key] |> Result.map (fun value -> key, value))
+            |> Seq.map (fun key -> decoder (path + "[" + quote key + "]") properties[key] |> Result.map (fun value -> key, value))
             |> Seq.toList
             |> firstError
             |> Result.map Map.ofList)
@@ -156,17 +156,17 @@ module Wire =
     // language names the same field.
     let closed (keys: string list) (path: string) (properties: Map<string, JsonElement>) =
         match properties |> Map.keys |> ordinal |> Seq.tryFind (fun key -> not (List.contains key keys)) with
-        | Some key -> Error { Path = $"{path}.{key}"; Expected = "no such field"; Found = "unexpected field" }
+        | Some key -> Error { Path = (path + "." + key); Expected = "no such field"; Found = "unexpected field" }
         | None -> Ok properties
 
     let required (name: string) (decoder: string -> JsonElement -> Result<'a, DecodeError>) (path: string) (properties: Map<string, JsonElement>) =
         match properties.TryFind name with
-        | Some element -> decoder $"{path}.{name}" element
-        | None -> missing $"{path}.{name}"
+        | Some element -> decoder (path + "." + name) element
+        | None -> missing (path + "." + name)
 
     let optional (name: string) (decoder: string -> JsonElement -> Result<'a, DecodeError>) (path: string) (properties: Map<string, JsonElement>) =
         match properties.TryFind name with
-        | Some element -> decoder $"{path}.{name}" element |> Result.map Some
+        | Some element -> decoder (path + "." + name) element |> Result.map Some
         | None -> Ok None
 
     let tag (name: string) (path: string) (element: JsonElement) : Result<string, DecodeError> =
@@ -175,8 +175,8 @@ module Wire =
         else
             match element.TryGetProperty name with
             | true, value when value.ValueKind = JsonValueKind.String -> Ok(value.GetString())
-            | true, value -> mismatch "a known variant" $"{path}.{name}" value
-            | _ -> missing $"{path}.{name}"
+            | true, value -> mismatch "a known variant" (path + "." + name) value
+            | _ -> missing (path + "." + name)
 
     let parse (decoder: string -> JsonElement -> Result<'a, DecodeError>) (json: string) : Result<'a, DecodeError> =
         try

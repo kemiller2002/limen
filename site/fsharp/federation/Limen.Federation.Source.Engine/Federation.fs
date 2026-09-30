@@ -2,8 +2,17 @@ namespace Limen.Federation.Source.Engine
 
 open System
 open System.Text.Json.Nodes
+open Limen.Contract
 
+// The federation wire protocol comes from contract/federation.contract.json,
+// through the generated F# bindings (WI-0141): the manifest, initialization,
+// envelopes and results are the contract's types, decoded strictly and
+// encoded by the generated codec. This module's own payloads and snapshot
+// are its own.
 module SourceModule =
+
+    module F = Limen.Contract.Federation.Types
+    module Codec = Limen.Contract.Federation.Codec
 
     [<Literal>]
     let ModuleId = "limen.proof.source"
@@ -54,45 +63,35 @@ module SourceModule =
     let private intNode (value: int) =
         JsonValue.Create(value) :> JsonNode
 
-    let private strings (values: seq<string>) =
-        let array = JsonArray()
-        values |> Seq.iter (fun value -> array.Add(JsonValue.Create(value)))
-        array :> JsonNode
+    let private text (node: JsonNode) = node.ToJsonString()
 
-    let private contractRange (contract: string) =
-        let item = JsonObject()
-        item["contract"] <- stringNode contract
-        item["minVersion"] <- intNode 1
-        item["maxVersion"] <- intNode 1
-        item :> JsonNode
+    let private decodeOrFail what decoder json =
+        match Limen.Contract.Wire.parse decoder json with
+        | Ok value -> value
+        | Error (error: DecodeError) ->
+            failwith (what + " is outside the federation contract at " + error.Path + ": expected " + error.Expected + ", found " + error.Found + ".")
 
-    let private contractRanges (contracts: seq<string>) =
-        let array = JsonArray()
-        contracts |> Seq.iter (fun contract -> array.Add(contractRange contract))
-        array :> JsonNode
+    let private range contract : F.ContractRange =
+        { Contract = F.ContractId contract; MinVersion = 1L; MaxVersion = 1L }
 
-    let manifestJson () =
-        let root = JsonObject()
-        root["id"] <- stringNode ModuleId
-        root["version"] <- stringNode "1.0.0"
-        root["federationProtocolVersion"] <- intNode FederationProtocolVersion
-        root["accepts"] <- contractRanges [ ResultContract ]
-        root["emits"] <- contractRanges [ RequestContract ]
-        root["capabilitiesRequired"] <- strings []
-        root["dependencies"] <- strings [ TargetModuleId ]
-        root["routes"] <- strings [ "/federation/source" ]
-        root.ToJsonString()
+    let manifest : F.ModuleManifest =
+        { Id = F.ModuleId ModuleId
+          Version = "1.0.0"
+          Accepts = [ range ResultContract ]
+          Emits = [ range RequestContract ]
+          CapabilitiesRequired = []
+          Dependencies = [ F.ModuleId TargetModuleId ]
+          Routes = [ "/federation/source" ] }
 
+    let manifestJson () = text (Codec.encodeModuleManifest manifest)
+
+    // The decoder refuses any other federation protocol version.
     let initialize (contextJson: string) =
-        let root = JsonNode.Parse(contextJson).AsObject()
-        let version = root["federationProtocolVersion"].GetValue<int>()
-        let moduleId = root["moduleId"].GetValue<string>()
-
-        if version <> FederationProtocolVersion then
-            failwithf "Federation protocol %d is unsupported; expected %d." version FederationProtocolVersion
+        let context = decodeOrFail "Initialization" Codec.decodeModuleInitialization contextJson
+        let (F.ModuleId moduleId) = context.ModuleId
 
         if moduleId <> ModuleId then
-            failwithf "Initialization module id '%s' does not match '%s'." moduleId ModuleId
+            failwith ("Initialization module id '" + moduleId + "' does not match '" + ModuleId + "'.")
 
         initialized <- true
         active <- false
@@ -172,7 +171,7 @@ module SourceModule =
             failwith "A transition is already awaiting a response."
         | _ ->
             let sequence = state.Sequence + 1
-            let correlationId = $"proof-{sequence}"
+            let correlationId = "proof-" + string sequence
 
             state <-
                 { state with
@@ -182,20 +181,21 @@ module SourceModule =
             let payload = JsonObject()
             payload["value"] <- intNode 41
 
-            let root = JsonObject()
-            root["protocolVersion"] <- intNode FederationProtocolVersion
-            root["source"] <- stringNode ModuleId
-            root["target"] <- stringNode TargetModuleId
-            root["correlationId"] <- stringNode correlationId
-            root["idempotencyKey"] <- stringNode $"source-{sequence}"
-            root["kind"] <- stringNode "TransitionRequest"
-            root["contract"] <- stringNode RequestContract
-            root["contractVersion"] <- intNode 1
-            root["expectedStateVersion"] <- intNode state.TargetStateVersion
-            root["capabilities"] <- strings []
-            root["evidence"] <- strings [ "source-state-owned-by-fsharp" ]
-            root["payload"] <- payload
-            root.ToJsonString()
+            let request : F.FederationEnvelope =
+                { Source = F.ModuleId ModuleId
+                  Target = Some(F.ModuleId TargetModuleId)
+                  CorrelationId = F.FederationCorrelationId correlationId
+                  CausationId = None
+                  IdempotencyKey = Some("source-" + string sequence)
+                  Kind = F.FederationMessageKind.TransitionRequest
+                  Contract = F.ContractId RequestContract
+                  ContractVersion = 1L
+                  ExpectedStateVersion = Some(int64 state.TargetStateVersion)
+                  Capabilities = []
+                  Evidence = [ "source-state-owned-by-fsharp" ]
+                  Payload = RawJson(payload.ToJsonString()) }
+
+            text (Codec.encodeFederationEnvelope request)
 
     let private parseAcceptedPayload (payload: JsonObject) =
         { AcceptedValue = payload["acceptedValue"].GetValue<int>()
@@ -208,47 +208,45 @@ module SourceModule =
     let dispatch (envelopeJson: string) =
         assertActive ()
 
-        let root = JsonNode.Parse(envelopeJson).AsObject()
+        let envelope = decodeOrFail "Envelope" Codec.decodeFederationEnvelope envelopeJson
 
-        if root["protocolVersion"].GetValue<int>() <> FederationProtocolVersion then
-            failwith "Source received an incompatible federation protocol."
-
-        if root["target"].GetValue<string>() <> ModuleId then
+        if envelope.Target <> Some(F.ModuleId ModuleId) then
             failwith "Source received an envelope addressed to another module."
 
-        if root["contract"].GetValue<string>() <> ResultContract then
+        if envelope.Contract <> F.ContractId ResultContract then
             failwith "Source received an unsupported result contract."
 
-        if root["contractVersion"].GetValue<int>() <> 1 then
+        if envelope.ContractVersion <> 1L then
             failwith "Source received an unsupported result contract version."
 
-        let correlationId = root["correlationId"].GetValue<string>()
+        let (F.FederationCorrelationId correlationId) = envelope.CorrelationId
 
         match state.Status with
         | Awaiting expected when expected = correlationId ->
-            let payload = root["payload"].AsObject()
+            let (RawJson payloadText) = envelope.Payload
+            let payload = JsonNode.Parse(payloadText).AsObject()
 
-            match root["kind"].GetValue<string>() with
-            | "TransitionAccepted" ->
+            match envelope.Kind with
+            | F.FederationMessageKind.TransitionAccepted ->
                 let decoded = parseAcceptedPayload payload
                 state <-
                     { state with
                         Status = Completed decoded.AcceptedValue
                         TargetStateVersion = decoded.StateVersion }
-            | "TransitionRejected" ->
+            | F.FederationMessageKind.TransitionRejected ->
                 let decoded = parseRejectedPayload payload
                 state <-
                     { state with
                         Status = Rejected decoded.Reason
                         TargetStateVersion = decoded.CurrentStateVersion }
-            | other ->
-                failwithf "Source received unsupported result kind '%s'." other
+            | _ ->
+                failwith "Source received an unsupported result kind."
         | Awaiting expected ->
-            failwithf "Source rejected stale correlation '%s'; expected '%s'." correlationId expected
+            failwith ("Source rejected stale correlation '" + correlationId + "'; expected '" + expected + "'.")
         | _ ->
             failwith "Source received a result without an outstanding transition."
 
-        """{"emitted":[]}"""
+        text (Codec.encodeModuleDispatchResult { Emitted = [] })
 
     let resetForTests () =
         state <- initialState
