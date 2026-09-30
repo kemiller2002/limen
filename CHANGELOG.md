@@ -109,7 +109,8 @@ exhaustive lists.
   - Neither the generated F# runtime nor the minimal engine uses interpolated
     strings or `sprintf` any more, so F# printf is not kept. The F# guest
     projects compile with `--reflectionfree`.
-  - The host trims in full mode with FSharp.Core 9.0.303. Every trim-analysis
+  - The host trims in full mode with the SDK's FSharp.Core (9.0 or later; 8.0.x
+    also raises IL2008). Every trim-analysis
     warning is still an error.
   - The one exception, approved by the owner: IL2040, FSharp.Core's own
     trimming file naming resources it does not contain, is not an error in that

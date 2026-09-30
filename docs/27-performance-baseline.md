@@ -231,8 +231,10 @@ acted on here.
    (`$"..."`), which compile to `sprintf`: the generated F# runtime used them
    for error paths, and the minimal engine for its log lines. Both now
    concatenate. The F# guest projects compile with `--reflectionfree`, and the
-   host publishes with `TrimMode=full` and FSharp.Core 9.0.303, the first
-   version tried without IL2008. With those changes no trim-analysis warning is
+   host publishes with `TrimMode=full`. It uses the SDK's own FSharp.Core,
+   because pinning one is a downgrade (NU1605) whenever the SDK ships a newer
+   one. FSharp.Core 8.0.x also raises IL2008, so this needs FSharp.Core 9.0 or
+   later, as CI's SDK (10.1) provides. With those changes no trim-analysis warning is
    raised, and every one would still fail the build. The owner approved the one
    remaining exception (kemiller2002/limen#19): IL2040 is not an error in that
    host project. `architecture/guardrails.json` declares it, and
