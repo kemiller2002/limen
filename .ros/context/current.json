@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-09-30T09:48:50Z",
+  "updatedAt": "2026-09-30T09:56:25Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3170,13 +3170,23 @@
     {
       "id": "WI-0143",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-09-30T09:48:50Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "guests/minimal/fsharp/Limen.Minimal.Wasm/Limen.Minimal.Wasm.csproj"
+        },
+        {
+          "type": "tests",
+          "path": "test/guardrails.test.ts"
+        }
+      ],
+      "updatedAt": "2026-09-30T09:56:25Z",
       "telemetryExecutionIds": [
         "EXE-20260930T094851361Z-2322dbfd"
-      ]
+      ],
+      "completedAt": "2026-09-30T09:56:25Z"
     }
   ]
 }

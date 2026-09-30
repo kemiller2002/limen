@@ -147,4 +147,4 @@
 | WI-0140 | Record why the F# guest cannot be trimmed without suppression yet (WI-0046 findings, GH-19) | complete |  | medium |
 | WI-0141 | Federation host decodes module output with the generated codec, and the site's F# federation modules use the generated F# bindings instead of hand-built JSON (follow-up to WI-0030; needs the site's WebAssembly build) | captured |  | medium |
 | WI-0142 | Implement CA-0003 (approved): a handshake-only generated Core codec, so the kernel stops loading the whole core codec (WI-0047 codec half, GH-19) | complete |  | medium |
-| WI-0143 | Trimmed F# guest: reflection-free, printf-free F#, full trim mode, and the owner-approved IL2040 exception declared in guardrails (WI-0046, GH-19) | ready |  | medium |
+| WI-0143 | Trimmed F# guest: reflection-free, printf-free F#, full trim mode, and the owner-approved IL2040 exception declared in guardrails (WI-0046, GH-19) | complete |  | medium |
