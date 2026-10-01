@@ -10,8 +10,9 @@ on:
       - "v*.*.*"
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
+  attestations: write
 
 jobs:
   publish:
@@ -68,6 +69,8 @@ jobs:
         run: |
           mkdir -p release
           npm pack --pack-destination ./release
+          (cd release && sha256sum *.tgz > checksums.txt)
+          cat release/checksums.txt
 
       - name: Verify the packed archive contains every platform binary
         shell: bash
@@ -119,5 +122,55 @@ jobs:
         shell: bash
         run: npm run check:clean-room -- --tarball "$(ls ./release/*.tgz)"
 
+      - name: Resolve Echelon release version
+        id: release-version
+        shell: bash
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Generate shared Echelon release manifest
+        uses: kemiller2002/echelon-registry/actions/release-contract@d615f2d0a3dee428aa072c92a5a2de8062b373ed
+        with:
+          release-input: release/echelon.release-input.json
+          artifact-dir: release
+          output: release/echelon-release.json
+          version: ${{ steps.release-version.outputs.version }}
+          tag: ${{ github.ref_name }}
+          commit: ${{ github.sha }}
+          release-stage: stable
+
+      - name: Attest package release bytes
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            release/*.tgz
+            release/checksums.txt
+            release/echelon-release.json
+
       - name: Publish to npm
         run: npm publish --access public ./release/*.tgz
+
+      - name: Publish immutable GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            tmp="$(mktemp -d)"
+            if gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern checksums.txt --dir "$tmp" >/dev/null 2>&1; then
+              cmp "$tmp/checksums.txt" release/checksums.txt
+              echo "$tag already exists with identical package bytes."
+            else
+              gh release upload "$tag" release/*.tgz release/checksums.txt release/echelon-release.json --repo "$GITHUB_REPOSITORY"
+            fi
+          else
+            gh release create "$tag" \
+              release/*.tgz \
+              release/checksums.txt \
+              release/echelon-release.json \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "Limen $tag" \
+              --notes "Limen $tag: immutable npm package bytes with Echelon release metadata and provenance."
+          fi

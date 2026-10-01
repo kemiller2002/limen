@@ -2133,6 +2133,24 @@
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "WI-0144",
+      "title": "Adopt Echelon release contract for Conditor distribution",
+      "description": null,
+      "tags": [
+        "distribution",
+        "registry",
+        "conditor"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-10-01T05:47:38.902Z",
+      "updatedAt": "2026-10-01T05:47:39.000Z",
+      "createdBy": "agent:openai-chatgpt",
+      "source": "github-issue",
+      "sourceReference": "https://github.com/kemiller2002/limen/issues/71"
     }
   ]
 }
