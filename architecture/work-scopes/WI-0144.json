@@ -1,0 +1,12 @@
+{
+  "workItem": "WI-0144",
+  "reference": "kemiller2002/limen#71",
+  "placement": "Guardrail-scoped release distribution work: publish exact Limen package bytes through the shared Echelon release contract without changing runtime behavior.",
+  "guardrail": true,
+  "paths": [
+    ".github/workflows/publish.yml",
+    "release/echelon.release-input.json"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
