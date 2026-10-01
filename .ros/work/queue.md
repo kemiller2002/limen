@@ -149,3 +149,4 @@
 | WI-0142 | Implement CA-0003 (approved): a handshake-only generated Core codec, so the kernel stops loading the whole core codec (WI-0047 codec half, GH-19) | complete |  | medium |
 | WI-0143 | Trimmed F# guest: reflection-free, printf-free F#, full trim mode, and the owner-approved IL2040 exception declared in guardrails (WI-0046, GH-19) | complete |  | medium |
 | WI-0144 | Adopt Echelon release contract for Conditor distribution | complete | distribution, registry, conditor | high |
+| WI-0145 | Add Limen Echelon release input declaration | complete | distribution, registry, conditor | high |

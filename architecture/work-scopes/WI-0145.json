@@ -1,0 +1,11 @@
+{
+  "workItem": "WI-0145",
+  "reference": "kemiller2002/limen#71",
+  "placement": "Release declaration only: describe the exact Limen package artifact consumed by the shared Echelon release contract.",
+  "guardrail": false,
+  "paths": [
+    "release/echelon.release-input.json"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
