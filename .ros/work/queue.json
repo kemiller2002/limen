@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 148,
+  "nextSeq": 149,
   "items": [
     {
       "id": "WI-0001",
@@ -2158,6 +2158,20 @@
       "attachments": [],
       "createdAt": "2026-10-05T12:39:21.659Z",
       "updatedAt": "2026-10-05T12:46:32Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0148",
+      "title": "Pages smoke waits for the F# WASM DOM marker on the wall clock: headless Chrome's virtual-time budget expires while the .NET runtime is still compiling off the main thread on a slow runner (release 0.7.0 Pages failure)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-05T13:52:00.061Z",
+      "updatedAt": "2026-10-05T13:52:06Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

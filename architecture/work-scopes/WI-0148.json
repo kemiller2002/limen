@@ -1,0 +1,11 @@
+{
+  "workItem": "WI-0148",
+  "reference": "kemiller2002/limen#78",
+  "placement": "Build tooling only — the real-browser F# WebAssembly site smoke (scripts/smoke-site-wasm.sh) and a dependency-free helper it calls (scripts/wait-for-dom-marker.ts) that waits for the same DOM markers on the wall clock instead of headless Chrome's virtual-time budget, plus its CHANGELOG line. Same markers, same three bounded attempts, same 20-second bound per attempt; no site, engine, guardrail or workflow change.",
+  "guardrail": false,
+  "paths": [
+    "scripts/smoke-site-wasm.sh",
+    "scripts/wait-for-dom-marker.ts",
+    "CHANGELOG.md"
+  ]
+}
