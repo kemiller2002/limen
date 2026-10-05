@@ -28,6 +28,7 @@ let problemPath (problem: InstallationProblem) =
     | ManagedArtifactModified path
     | BoundaryViolation (path, _)
     | ConfiguredPathMissing path -> Some path
+    | BoundaryNotConfigured _ -> Some Paths.configuration
     | InstalledVersionOutdated _ -> None
 
 /// One problem, rendered through `doctor`'s explanation so that every command
@@ -89,11 +90,26 @@ let private optionalInt value =
     | Some number -> JInt number
     | None -> JNull
 
+/// The verdict fields every verification rendering carries.
+let private verdictFields (verification: VerificationResult) =
+    [ "verdict", JString(Verdict.name verification.Verdict)
+      "rationale",
+      (match verification.Verdict with
+       | NotApplicable rationale -> JString rationale
+       | _ -> JNull)
+      "checked",
+      JObject
+          [ "engineFiles", JInt verification.EngineFilesChecked
+            "kernelFiles", JInt verification.KernelFilesChecked ]
+      "ruleSet", JObject [ "schemaVersion", JInt (Boundary.rules ()).SchemaVersion; "sha256", JString(Boundary.ruleSetSha256 ()) ] ]
+
 let verificationToJson (verification: VerificationResult) =
-    JObject
+    JObject(
         [ "ok", JBool verification.Ok
-          "strict", JBool verification.Strict
-          "problems", verification.Problems |> List.map problemToJson |> JArray ]
+          "strict", JBool verification.Strict ]
+        @ verdictFields verification
+        @ [ "problems", verification.Problems |> List.map problemToJson |> JArray ]
+    )
 
 // ------------------------------------------------------------------ status --
 
@@ -127,8 +143,12 @@ let statusToText (report: StatusReport) (verbose: bool) =
 
     let verificationLine =
         match report.Verification with
-        | Some verification when verification.Ok -> "passed"
-        | Some verification -> sprintf "failed (%d problem(s))" (List.length verification.Problems)
+        | Some verification ->
+            match verification.Verdict with
+            | Passed -> "passed"
+            | NotApplicable _ -> "not applicable (declared)"
+            | NotConfigured -> "not configured (nothing checked)"
+            | Failed -> sprintf "failed (%d problem(s))" (List.length verification.Problems)
         | None -> "not run"
 
     let lines =
@@ -167,20 +187,33 @@ let statusToText (report: StatusReport) (verbose: bool) =
 // ------------------------------------------------------------------ verify --
 
 let verifyToJson (verification: VerificationResult) =
-    JObject
+    JObject(
         [ "schemaVersion", JInt outputSchemaVersion
           "command", JString "verify"
           "ok", JBool verification.Ok
-          "strict", JBool verification.Strict
-          "problems", verification.Problems |> List.map problemToJson |> JArray ]
+          "strict", JBool verification.Strict ]
+        @ verdictFields verification
+        @ [ "problems", verification.Problems |> List.map problemToJson |> JArray ]
+    )
 
 let verifyToText (verification: VerificationResult) (verbose: bool) =
-    if verification.Ok then
-        let mode = if verification.Strict then " (strict)" else ""
-        sprintf "Limen verification passed%s." mode
-    else
+    let mode = if verification.Strict then " (strict)" else ""
+
+    match verification.Verdict with
+    | Passed ->
+        sprintf
+            "Limen verification passed%s: %d engine and %d kernel source file(s) checked."
+            mode
+            verification.EngineFilesChecked
+            verification.KernelFilesChecked
+    | NotApplicable rationale ->
+        sprintf "Limen verification not applicable%s: this repository declares no Limen boundary (%s)." mode rationale
+    | NotConfigured
+    | Failed ->
         let header =
-            sprintf "Limen verification failed: %d problem(s)." (List.length verification.Problems)
+            match verification.Verdict with
+            | NotConfigured -> "Limen verification not configured: no engine code was checked, which is not a pass."
+            | _ -> sprintf "Limen verification failed: %d problem(s)." (List.length verification.Problems)
 
         let details =
             verification.Problems
@@ -332,10 +365,16 @@ let lifecycleToText (command: string) (dryRun: bool) (verbose: bool) (result: Op
 
         let verification =
             match result.Verification with
-            | Some verification when verification.Ok -> [ ""; "Verification passed." ]
+            | Some verification when verification.Verdict = Passed -> [ ""; "Verification passed." ]
+            | Some verification when verification.Ok -> [ ""; "Verification: not applicable (this repository declares no Limen boundary)." ]
             | Some verification ->
                 [ ""
-                  sprintf "Verification failed: %d problem(s). Run `limen doctor`." (List.length verification.Problems)
+                  (match verification.Verdict with
+                   | NotConfigured ->
+                       sprintf
+                           "Verification: not configured — no engine code is checked yet. Name your engine paths in %s, or declare the boundary not applicable. Run `limen doctor`."
+                           Paths.configuration
+                   | _ -> sprintf "Verification failed: %d problem(s). Run `limen doctor`." (List.length verification.Problems))
                   if verbose then
                       yield!
                           verification.Problems

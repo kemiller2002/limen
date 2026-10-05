@@ -98,10 +98,21 @@ type BoundaryConfig =
     { Engine: string list
       Kernel: string list }
 
+/// What a repository says about its Limen boundary.
+///
+/// A repository either declares where its engine and kernel live, or states —
+/// with a reason a reviewer can read — that it has no Limen boundary at all.
+/// There is no third, silent option: an empty declaration is not "nothing to
+/// check", it is "not configured", and `verify` says so.
+type BoundaryDeclaration =
+    | Declared of BoundaryConfig
+    /// `"boundary": { "notApplicable": { "rationale": "…" } }`.
+    | NoBoundary of rationale: string
+
 /// The user-owned configuration: `limen.config.json`.
 type Configuration =
     { ConfigurationVersion: int
-      Boundary: BoundaryConfig }
+      Boundary: BoundaryDeclaration }
 
 /// Everything that can be wrong with an installation.
 ///
@@ -121,6 +132,11 @@ type InstallationProblem =
     /// Reported by `verify --strict` only: the installation is healthy but
     /// older than the CLI running against it.
     | InstalledVersionOutdated of installed: string * available: string
+    /// The configuration declares a boundary that checks nothing: no engine
+    /// path, or engine paths holding no source file. Not a pass — `verify`
+    /// reports the verdict `not-configured` — unless the repository declares
+    /// the boundary not applicable instead.
+    | BoundaryNotConfigured of reason: string
 
 type InstalledVersion = InstalledVersion of string
 type AvailableVersion = AvailableVersion of string
@@ -216,10 +232,45 @@ type Diagnosis =
       Detail: string
       Remedy: string option }
 
-/// The result of `verify`: a yes/no plus every reason it was no.
+/// What `verify` concluded, as one of four mutually exclusive verdicts.
+///
+/// `Passed` means engine code was actually checked and nothing was wrong.
+/// `NotApplicable` means the repository declared, with a rationale, that it has
+/// no Limen boundary. `NotConfigured` means nothing was checked and nobody said
+/// why — the case that used to pass vacuously. `Failed` is everything else.
+type Verdict =
+    | Passed
+    | Failed
+    | NotConfigured
+    | NotApplicable of rationale: string
+
+module Verdict =
+    let name =
+        function
+        | Passed -> "passed"
+        | Failed -> "failed"
+        | NotConfigured -> "not-configured"
+        | NotApplicable _ -> "not-applicable"
+
+    /// Whether a CI gate may treat the verdict as success.
+    let isAcceptable =
+        function
+        | Passed
+        | NotApplicable _ -> true
+        | Failed
+        | NotConfigured -> false
+
+/// The result of `verify`: a verdict plus every reason it was not a pass.
+///
+/// `Ok` is `Verdict.isAcceptable Verdict`, kept as a field because it is part
+/// of the public JSON shape.
 type VerificationResult =
     { Ok: bool
       Strict: bool
+      Verdict: Verdict
+      /// How many engine-side and kernel-side source files were checked.
+      EngineFilesChecked: int
+      KernelFilesChecked: int
       Problems: InstallationProblem list }
 
 /// What `status` reports. Read-only by construction — there is no way to build

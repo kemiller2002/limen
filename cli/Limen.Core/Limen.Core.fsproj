@@ -37,4 +37,12 @@
     <Compile Include="Operations.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The one engine-authority rule set, shared with the repository's own
+         guardrails (tools/guardrails/boundary.ts). Embedded rather than copied
+         so a published single-file CLI carries exactly the rules it was built
+         from, and `verify` in JSON mode reports their SHA-256. -->
+    <EmbeddedResource Include="../../architecture/boundary-rules.json" LogicalName="Limen.Core.boundary-rules.json" />
+  </ItemGroup>
+
 </Project>

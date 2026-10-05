@@ -1,5 +1,5 @@
 {
-  "doc": "Which layer owns which paths, and which layers each may import. Checked by scripts/check-layers.ts (npm test). Guardrail-owned: change only under a guardrail-scoped work item (architecture/guardrails.json).",
+  "doc": "Which layer owns which paths, and which layers each may import. Checked by scripts/check-layers.ts (npm test). Guardrail-owned: change only under a guardrail-scoped work item (architecture/guardrails.json). Engine authority (what engine-side code, including libraries/**, may not name) is not here: it is architecture/boundary-rules.json, applied by scripts/check-architecture.ts to the engine paths in limen.config.json and shipped to consumers in `limen verify`.",
   "layers": [
     {
       "name": "core-contract",
@@ -135,62 +135,6 @@
   "externalImports": {
     "doc": "Every layer above is in the published package, which has zero runtime dependencies: a bare or node: specifier is a violation.",
     "allowed": []
-  },
-  "engineLibraries": {
-    "doc": "Pure application-side libraries in any guest language. They may not acquire browser, JavaScript-interop, network, filesystem or process authority. A library that genuinely needs one is a host adapter and belongs elsewhere.",
-    "paths": [
-      "libraries/**"
-    ],
-    "forbidden": {
-      ".fs": [
-        "System.Runtime.InteropServices.JavaScript",
-        "Microsoft.JSInterop",
-        "Fable.Core",
-        "Browser.Dom",
-        "JSImport",
-        "JSExport",
-        "JSHost",
-        "JSObject",
-        "System.Net.Http",
-        "HttpClient",
-        "System.IO",
-        "System.Diagnostics.Process",
-        "System.Net.WebSockets"
-      ],
-      ".cs": [
-        "System.Runtime.InteropServices.JavaScript",
-        "Microsoft.JSInterop",
-        "JSImport",
-        "JSExport",
-        "JSHost",
-        "JSObject",
-        "System.Net.Http",
-        "HttpClient",
-        "System.IO",
-        "System.Diagnostics.Process",
-        "System.Net.WebSockets"
-      ],
-      ".rs": [
-        "wasm_bindgen",
-        "web_sys",
-        "js_sys",
-        "std::fs",
-        "std::net",
-        "std::process",
-        "std::env"
-      ],
-      ".ts": [
-        "document",
-        "window",
-        "fetch(",
-        "localStorage",
-        "sessionStorage",
-        "navigator",
-        "XMLHttpRequest",
-        "WebSocket",
-        "node:"
-      ]
-    }
   },
   "protocolForbiddenTypes": {
     "doc": "Browser runtime objects never cross the boundary. No contract type may take one of these names, and no core-contract source may mention one.",

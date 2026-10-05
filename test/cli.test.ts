@@ -211,6 +211,51 @@ describe("the packaged CLI", { skip: built ? false : "the CLI has not been built
     }
   });
 
+  test("an empty boundary is not-configured (exit 8), never a vacuous pass", () => {
+    const root = newRepository();
+    try {
+      limen(["init", "--root", root]);
+      writeFileSync(join(root, "limen.config.json"), JSON.stringify({ configurationVersion: 1, boundary: { engine: [], kernel: [] } }));
+
+      for (const args of [["verify", "--root", root], ["verify", "--root", root, "--strict"]]) {
+        const result = limen([...args, "--json"]);
+        assert.equal(result.status, 8, `${args.join(" ")} should exit 8`);
+        assert.equal(JSON.parse(result.stdout).verdict, "not-configured");
+      }
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test("a declared absence of boundary is not-applicable (exit 0), with its rationale", () => {
+    const root = newRepository();
+    try {
+      limen(["init", "--root", root]);
+      writeFileSync(join(root, "limen.config.json"), JSON.stringify({ configurationVersion: 1, boundary: { notApplicable: { rationale: "Documentation only." } } }));
+
+      const result = limen(["verify", "--root", root, "--strict", "--json"]);
+      assert.equal(result.status, 0);
+      const report = JSON.parse(result.stdout);
+      assert.equal(report.verdict, "not-applicable");
+      assert.equal(report.rationale, "Documentation only.");
+    } finally {
+      cleanup(root);
+    }
+  });
+
+  test("verify names the rule set it ran: architecture/boundary-rules.json, byte for byte", () => {
+    const root = newRepository();
+    try {
+      limen(["init", "--root", root]);
+      const report = JSON.parse(limen(["verify", "--root", root, "--json"]).stdout);
+      const expected = createHash("sha256").update(readFileSync("architecture/boundary-rules.json")).digest("hex");
+      assert.equal(report.ruleSet.sha256, expected);
+      assert.equal(report.verdict, "passed");
+    } finally {
+      cleanup(root);
+    }
+  });
+
   test("doctor explains a damaged installation and exits 3", () => {
     const root = newRepository();
     try {

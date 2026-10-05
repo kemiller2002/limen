@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 144,
+  "nextSeq": 147,
   "items": [
     {
       "id": "WI-0001",
@@ -2130,6 +2130,20 @@
       "attachments": [],
       "createdAt": "2026-09-30T09:48:50.506Z",
       "updatedAt": "2026-09-30T09:56:25Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0146",
+      "title": "Consumer verify integrity: explicit not-configured verdict, rule parity with Limen's own guardrails, one browser-token source, in-repo self-verify version, pinned consumer invocation, handwritten TS and federation engine coverage",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-10-05T09:21:35.958Z",
+      "updatedAt": "2026-10-05T09:48:00Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

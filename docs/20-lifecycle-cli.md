@@ -108,17 +108,56 @@ Always checked:
 
 - the manifest and configuration exist, parse, and are versions this CLI understands;
 - every file the manifest records still exists;
-- engine code does not name a browser capability (`document`, `window`, `fetch(`,
-  `localStorage`, `sessionStorage`) or use a dynamic type escape (`any`, `dynamic`);
-- no code on either side uses an escape hatch (`eval`, `SetInnerHtml`, `ExecuteScript`).
+- engine code does not acquire browser, JavaScript-interop, network,
+  filesystem or process authority, per language — for example `document`,
+  `window`, `globalThis`, `navigator`, `fetch(`, `import(` and `node:` imports in
+  TypeScript; `System.Runtime.InteropServices.JavaScript`, `JSImport`,
+  `Browser.Dom`, `HttpClient`, `System.IO` and `System.Diagnostics.Process` in
+  F# and C#; `web_sys`, `wasm_bindgen`, `std::fs` and `std::net` in Rust — and
+  uses no dynamic type escape (`any` in TypeScript, `dynamic` in C#);
+- no code on either side uses an escape hatch (`eval`, `SetInnerHtml`, `ExecuteScript`);
+- the boundary checks *something*: at least one engine path is declared and
+  holds source (see [Verdicts](#verdicts)).
+
+The token lists are not written in the CLI. They are
+[`architecture/boundary-rules.json`](../architecture/boundary-rules.json) — the
+same rule set Limen's own repository guardrails apply to Limen — embedded into
+the binary at build time. `verify --json` reports its SHA-256 as
+`ruleSet.sha256`. Which of Limen's repository checks consumers do *not* get, and
+why, is recorded in
+[`architecture/verify-parity.json`](../architecture/verify-parity.json) and
+enforced by a test.
 
 `--strict` additionally requires:
 
 - tool-owned files to be byte-identical to what Limen wrote;
-- every configured boundary directory to exist;
+- every configured boundary path to exist;
 - the installed version to match the CLI.
 
-Exits `0` when valid and `3` when not, listing every reason.
+#### Verdicts
+
+`verify` reaches exactly one verdict, reported as `verdict` in JSON:
+
+| Verdict | Meaning | Exit |
+| --- | --- | --- |
+| `passed` | engine code was checked and nothing was wrong | `0` |
+| `not-applicable` | the configuration declares that this repository has no Limen boundary, with a rationale | `0` |
+| `not-configured` | no engine path is declared, or the engine paths hold no source file — **nothing was checked**, which is not a pass (`LIMEN012`) | `8` |
+| `failed` | anything else; every reason is listed | `3` |
+
+Before 0.7, an empty boundary (`"engine": [], "kernel": []`) reported
+"passed (strict)" while checking nothing. A repository with no browser
+application says so explicitly instead:
+
+```json
+{
+  "configurationVersion": 1,
+  "boundary": { "notApplicable": { "rationale": "Documentation site; no browser application." } }
+}
+```
+
+The rationale must be non-empty, and `notApplicable` cannot be combined with
+`engine` or `kernel` paths.
 
 > **What this check can and cannot do.** It is lexical, not type-aware. It
 > reads source text with comments and string literals removed, so it catches the
@@ -206,6 +245,7 @@ reused for a different meaning.
 | `5` | upgrade blocked by a local change — **nothing was written** |
 | `6` | prerequisite failure (for example, the repository is not writable) |
 | `7` | unsupported platform — no binary ships for this OS and architecture |
+| `8` | `verify` checked nothing: the boundary is not configured (`LIMEN012`) |
 
 ## JSON output
 
@@ -229,7 +269,15 @@ Every document carries `schemaVersion` (currently `1`) and `command`.
   "availableVersion": null,
   "configurationVersion": 1,
   "managedArtifacts": 2,
-  "verification": { "ok": true, "strict": false, "problems": [] }
+  "verification": {
+    "ok": true,
+    "strict": false,
+    "verdict": "passed",
+    "rationale": null,
+    "checked": { "engineFiles": 12, "kernelFiles": 4 },
+    "ruleSet": { "schemaVersion": 1, "sha256": "…" },
+    "problems": []
+  }
 }
 ```
 
@@ -283,16 +331,45 @@ Every document carries `schemaVersion` (currently `1`) and `command`.
 | `LIMEN009` | error | boundary violation |
 | `LIMEN010` | information | a configured directory does not exist yet |
 | `LIMEN011` | warning | the installation is older than the CLI |
+| `LIMEN012` | error | the boundary checks nothing (no engine path, or no engine source) |
 | `LIMEN020` | information | not a git repository |
 | `LIMEN021` | error | the repository is not writable |
 
 ## Using it in CI
 
+Run the CLI **pinned to the version the repository records** in
+`.echelon/limen.json`:
+
 ```yaml
-- run: npx --yes @echelon-foundry/typescript-wasm-kernel verify --strict
+- name: Read the Limen version this repository records
+  id: limen
+  run: echo "version=$(node -p "require('./.echelon/limen.json').installedVersion")" >> "$GITHUB_OUTPUT"
+
+- name: Verify the Limen boundary with that version
+  run: npx --yes "@echelon-foundry/typescript-wasm-kernel@${{ steps.limen.outputs.version }}" verify --strict
 ```
 
-`init` registers exactly this as `.github/workflows/limen-verify.yml`. To check
+`init` registers exactly this as `.github/workflows/limen-verify.yml`, and
+`upgrade` replaces an unedited older copy with it. The same pinned invocation
+works locally:
+
+```sh
+npx --yes @echelon-foundry/typescript-wasm-kernel@"$(node -p "require('./.echelon/limen.json').installedVersion")" verify --strict
+```
+
+Why pinned: an unpinned `npx … verify --strict` runs whatever was published
+last, and `--strict` treats an installation older than the CLI as a failure
+(`LIMEN011`). Every release would then turn every lagging repository red with
+no change of its own. Pinned, the gate is deterministic, and moving to a new
+version is an explicit `upgrade` commit (by a person, Conditor or a
+dependency bot) that CI verifies at the new version.
+
+Before 0.7 the installed workflow ran unpinned. Its file is tool-owned, so
+`npx --yes @echelon-foundry/typescript-wasm-kernel@<new> upgrade` rewrites it in
+place unless it was edited; an edited copy is reported and left for you to
+change by hand.
+
+To check
 that a repository is fully initialized rather than only valid:
 
 ```sh
@@ -331,7 +408,33 @@ it through an explicit migration.
 
 `engine` lists the directories that own application meaning; `kernel` lists the
 only directories permitted to touch the browser. Both accept any number of paths,
-so a monorepo can name several.
+so a monorepo can name several, and a path may name a single source file. Build
+output and dependency directories (`bin`, `obj`, `node_modules`, `target`,
+`publish`, …; the list is `neverWalked` in the rule set) are never read.
+
+Name only code that holds application authority as `engine`: a project that
+talks to the network or the filesystem on purpose — a host, an adapter, a CLI —
+is not engine code, and listing it there fails `verify`. Test projects that read
+fixtures from disk belong outside the engine paths too (Limen lists its Rust
+crates' `src/` directories, not the crates).
+
+A repository with no browser application declares
+`"boundary": { "notApplicable": { "rationale": "…" } }` instead (see
+[Verdicts](#verdicts)).
+
+### Migrating to 0.7
+
+| If your repository… | `verify` now says | Do this |
+| --- | --- | --- |
+| has `"engine": []` (Limen does not apply) | `not-configured`, exit `8` | replace `boundary` with `{ "notApplicable": { "rationale": "…" } }`, or remove the Limen installation |
+| names engine paths with no source yet | `not-configured`, exit `8` | add the engine code, or narrow the paths |
+| names engine paths that contain hosts, adapters or tests using `HttpClient`, `System.IO`, `node:` imports and so on | `failed`, `LIMEN009` | move those projects out of `engine` (they are kernel/host side) or move the authority behind an effect |
+| runs the old unpinned workflow | unchanged until upgraded | run `upgrade` at the new version and commit; CI is then pinned |
+
+`System.IO` is matched as a namespace, so an engine that opens it only for
+`MemoryStream` (typically to feed a `Utf8JsonWriter`) is reported too. Write
+JSON through `System.Buffers.ArrayBufferWriter<byte>` (or serialize to a
+string) instead; nothing in an engine needs a stream.
 
 ## How this is verified
 

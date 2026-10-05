@@ -16,6 +16,72 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Breaking — `limen verify` checks what Limen checks, and never passes vacuously (WI-0146, #51)
+
+The next release that carries this must be at least **0.7.0**: consumer
+verification outcomes change. Migration: [docs/20-lifecycle-cli.md § Migrating
+to 0.7](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md#migrating-to-07).
+
+- **An empty boundary is `not-configured`, not "passed".**
+  - `verify` reaches one verdict — `passed`, `not-applicable`,
+    `not-configured` or `failed` — reported as `verdict` in JSON with
+    `checked.engineFiles`/`kernelFiles`.
+  - No engine path, or engine paths holding no source, is `LIMEN012` and the
+    new exit code **8**. Previously `{"engine":[],"kernel":[]}` reported
+    "passed (strict)" while checking nothing.
+  - A repository with no browser application declares
+    `"boundary": { "notApplicable": { "rationale": "…" } }` and gets
+    `not-applicable`, exit 0. The rationale is required and cannot be
+    combined with paths.
+- **One rule set for Limen and its consumers.**
+  - `architecture/boundary-rules.json` holds every engine-authority token, per
+    language. `scripts/check-architecture.ts` and the CLI (which embeds the
+    file and reports its SHA-256 as `ruleSet.sha256`) both read it; the old
+    lists in `check-architecture.ts`, `layers.json` `engineLibraries` and
+    `Boundary.fs` are gone.
+  - Consumer F#/C# engines now also fail on JS interop (`JSImport`,
+    `System.Runtime.InteropServices.JavaScript`, …), `HttpClient`,
+    `System.Net.*`, `System.IO` and `System.Diagnostics.Process`; Rust engines
+    on `web_sys`, `wasm_bindgen`, `std::fs`/`net`/`process`/`env`; TypeScript
+    engines on `globalThis`, `navigator`, `XMLHttpRequest`, `WebSocket`,
+    `indexedDB`, `postMessage`, `import(` and `node:` imports. `fetch (` with a
+    space is now a call. `any` is a type escape in TypeScript and `dynamic` in
+    C# only.
+  - The reference engine's ban list is no longer narrower than the libraries'
+    one: both are the shared set.
+  - Two implementations of the matcher (TypeScript, F#) run the same fixtures,
+    `test/fixtures/boundary-rules/cases.json`.
+  - `architecture/verify-parity.json` classifies every repository check script
+    and every TypeScript-subset and layer rule as consumer-enforced or
+    repository-only with a reason; `test/boundary-rules.test.ts` fails on any
+    unclassified rule.
+- **The installed workflow is pinned.** `.github/workflows/limen-verify.yml`
+  now runs `npx --yes "@echelon-foundry/typescript-wasm-kernel@<installedVersion>"`
+  read from `.echelon/limen.json`, so a new release no longer fails every
+  lagging repository with `LIMEN011`. `upgrade` rewrites unedited copies. The
+  `LIMEN011` remedy names both the upgrade and the pinned invocation.
+- Configured boundary paths may name single files; `target` and `publish`
+  directories are not walked.
+
+### Changed — Limen applies the boundary to itself (WI-0146)
+
+- Limen's own `limen.config.json` declares its engine side (`src/engine`,
+  `libraries`, the site and both federation F# engines, the guest libraries
+  and contracts, the minimal engines) and its kernel side; self-verify checks 90
+  engine and 101 kernel files instead of none.
+- Self-verify (`.github/workflows/limen-verify.yml`) stamps the CLI with
+  `package.json`'s version instead of a hard-coded `0.6.1`, and
+  `.echelon/limen.json` records 0.6.2. A test fails if the two drift, so a
+  release must move the self-installation.
+- `check-architecture.ts` is default-deny: every source file under `src/` and
+  `site/app/` must be on a declared side, every `*.Engine`/`*.Guest`/library
+  project must be an engine path, and every `*.Wasm/Program.cs` host shim must
+  be listed in `architecture/wasm-hosts.json` — which now covers the two
+  federation hosts and both minimal-guest hosts, not only the site host.
+- The restricted TypeScript subset now covers `src/main.ts`, `src/renderer/**`
+  and all of `site/app/**`; a test fails when a handwritten `.ts` file is
+  outside it.
+
 ### Architecture
 
 - **Core has a machine-readable manifest (#60).**

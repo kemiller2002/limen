@@ -1,5 +1,5 @@
 {
-  "doc": "The restricted handwritten-TypeScript subset (kemiller2002/limen#54), checked by scripts/check-typescript.ts in npm test. Guardrail-owned. `sanctioned` names the one place a rule is deliberately not applied, with the reason; `knownDebt` is a ratchet \u2014 the exact count of pre-existing findings tied to the work item that removes them. A new finding fails; a count that drops fails until the entry is reduced, so debt can only shrink.",
+  "doc": "The restricted handwritten-TypeScript subset (kemiller2002/limen#54), checked by scripts/check-typescript.ts in npm test. Guardrail-owned. `sanctioned` names the one place a rule is deliberately not applied, with the reason; `knownDebt` is a ratchet \u2014 the exact count of pre-existing findings tied to the work item that removes them. A new finding fails; a count that drops fails until the entry is reduced, so debt can only shrink. Coverage is default-deny: test/typescript-boundary.test.ts fails when a handwritten .ts file under src/ or site/app/ is matched by no `files` glob (generated outputs from contract/targets.json excepted).",
   "files": [
     "src/protocol.ts",
     "src/index.ts",
@@ -11,7 +11,9 @@
     "src/capabilities/**",
     "src/federation.ts",
     "src/engine/**",
-    "site/app/*-transport.ts"
+    "src/main.ts",
+    "src/renderer/**",
+    "site/app/**"
   ],
   "expectErrorAllowed": [
     "test/fixtures/negative/**"

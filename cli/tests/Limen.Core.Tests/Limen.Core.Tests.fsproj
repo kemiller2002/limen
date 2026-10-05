@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <Compile Include="BoundaryTests.fs" />
+    <Compile Include="BoundaryRulesTests.fs" />
+    <Compile Include="VerdictTests.fs" />
     <Compile Include="ManifestTests.fs" />
     <Compile Include="PlanningTests.fs" />
     <Compile Include="LifecycleTests.fs" />

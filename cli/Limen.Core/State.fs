@@ -73,6 +73,36 @@ let state (cliVersion: string) (snapshot: RepositorySnapshot) =
                 Installed(InstalledVersion manifestValue.InstalledVersion)
         | problems -> Invalid problems
 
+/// Why a declared boundary checks nothing, if it does.
+///
+/// An empty engine list, or engine paths that hold no source file, would make
+/// every boundary rule vacuously true. That is not a pass: it is reported as
+/// `BoundaryNotConfigured`, and the verdict becomes `NotConfigured`.
+let private vacuity (declared: BoundaryConfig) (snapshot: RepositorySnapshot) =
+    if List.isEmpty declared.Engine then
+        [ BoundaryNotConfigured(sprintf "%s declares no engine path, so no engine code is checked" Paths.configuration) ]
+    elif List.isEmpty snapshot.EngineFiles then
+        [ BoundaryNotConfigured(
+              sprintf "no engine source file was found under %s, so no engine code is checked" (String.concat ", " declared.Engine)
+          ) ]
+    else
+        []
+
+/// The verdict for a list of problems. Anything other than an unconfigured
+/// boundary is a failure; an unconfigured boundary alone is `NotConfigured`;
+/// a repository that declared no boundary, with a reason, is `NotApplicable`.
+let verdictOf (declaration: BoundaryDeclaration option) (problems: InstallationProblem list) =
+    let isNotConfigured =
+        function
+        | BoundaryNotConfigured _ -> true
+        | _ -> false
+
+    match List.partition isNotConfigured problems, declaration with
+    | (_, _ :: _), _ -> Failed
+    | (_ :: _, []), _ -> NotConfigured
+    | ([], []), Some (NoBoundary rationale) -> NotApplicable rationale
+    | ([], []), _ -> Passed
+
 /// Verify the repository. Never writes anything.
 ///
 /// Under `--strict` an out-of-date installation is also a failure, so that CI
@@ -81,13 +111,20 @@ let state (cliVersion: string) (snapshot: RepositorySnapshot) =
 let verify (strict: bool) (cliVersion: string) (snapshot: RepositorySnapshot) =
     let installation = installationProblems strict snapshot
 
-    let boundary =
-        // Checking the boundary against a missing or unreadable configuration
-        // would be checking against a guess. Report the configuration problem
-        // and stop rather than emit violations the user cannot act on.
+    // Checking the boundary against a missing or unreadable configuration
+    // would be checking against a guess. Report the configuration problem
+    // and stop rather than emit violations the user cannot act on.
+    let declaration =
         match configuration snapshot with
-        | Some (Ok _) -> Boundary.check snapshot.EngineFiles snapshot.KernelFiles
-        | _ -> []
+        | Some (Ok value) -> Some value.Boundary
+        | _ -> None
+
+    let boundary =
+        match declaration with
+        | Some (Declared declared) ->
+            Boundary.check snapshot.EngineFiles snapshot.KernelFiles @ vacuity declared snapshot
+        | Some (NoBoundary _)
+        | None -> []
 
     let versionDrift =
         if not strict then
@@ -99,7 +136,11 @@ let verify (strict: bool) (cliVersion: string) (snapshot: RepositorySnapshot) =
             | _ -> []
 
     let problems = installation @ boundary @ versionDrift
+    let verdict = verdictOf declaration problems
 
-    { Ok = List.isEmpty problems
+    { Ok = Verdict.isAcceptable verdict
       Strict = strict
+      Verdict = verdict
+      EngineFilesChecked = List.length snapshot.EngineFiles
+      KernelFilesChecked = List.length snapshot.KernelFiles
       Problems = problems }

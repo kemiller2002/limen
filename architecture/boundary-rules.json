@@ -1,0 +1,88 @@
+{
+  "doc": "The one engine-authority rule set. Limen's own guardrails (scripts/check-architecture.ts via tools/guardrails/boundary.ts) and the consumer-facing `limen verify` (cli/Limen.Core/Boundary.fs, which embeds this file at build time) both read it; neither holds a token list of its own. test/boundary-rules.test.ts and cli/tests/Limen.Core.Tests/BoundaryRulesTests.fs run the same fixtures (test/fixtures/boundary-rules/cases.json) through both implementations, and the CLI reports this file's SHA-256 as `ruleSet.sha256` so a verify result names the rules it ran. Matching is lexical: comments and string literals are removed, then each token must stand as a whole word (a token ending in `(` is a call, whitespace allowed before the parenthesis). Guardrail-owned: change only under a guardrail-scoped work item.",
+  "schemaVersion": 1,
+  "languages": {
+    "typescript": [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"],
+    "fsharp": [".fs", ".fsx"],
+    "csharp": [".cs"],
+    "rust": [".rs"]
+  },
+  "neverWalked": ["node_modules", ".git", "dist", "dist-site", "bin", "obj", "runtimes", ".echelon", "target", "publish"],
+  "engine": {
+    "doc": "Engine-side code holds application authority. It may not acquire browser, JavaScript-interop, network, filesystem or process authority; it requests effects and receives results.",
+    "authority": {
+      "typescript": [
+        "document",
+        "window",
+        "globalThis",
+        "fetch(",
+        "XMLHttpRequest",
+        "WebSocket",
+        "EventSource",
+        "navigator",
+        "localStorage",
+        "sessionStorage",
+        "indexedDB",
+        "postMessage",
+        "importScripts",
+        "import("
+      ],
+      "fsharp": [
+        "System.Runtime.InteropServices.JavaScript",
+        "Microsoft.JSInterop",
+        "Fable.Core",
+        "Browser.Dom",
+        "JSImport",
+        "JSExport",
+        "JSHost",
+        "JSObject",
+        "JsValue",
+        "IJSRuntime",
+        "System.Net.Http",
+        "HttpClient",
+        "System.Net.WebClient",
+        "System.Net.WebSockets",
+        "System.IO",
+        "System.Diagnostics.Process"
+      ],
+      "csharp": [
+        "System.Runtime.InteropServices.JavaScript",
+        "Microsoft.JSInterop",
+        "JSImport",
+        "JSExport",
+        "JSHost",
+        "JSObject",
+        "JsValue",
+        "IJSRuntime",
+        "System.Net.Http",
+        "HttpClient",
+        "System.Net.WebClient",
+        "System.Net.WebSockets",
+        "System.IO",
+        "System.Diagnostics.Process"
+      ],
+      "rust": [
+        "wasm_bindgen",
+        "web_sys",
+        "js_sys",
+        "std::fs",
+        "std::net",
+        "std::process",
+        "std::env"
+      ]
+    },
+    "moduleSpecifierPrefixes": {
+      "doc": "Import specifiers an engine may not load (checked against the specifier text of static and dynamic imports, which comment and string removal would otherwise hide).",
+      "typescript": ["node:"]
+    },
+    "dynamicTypes": {
+      "doc": "Ways to defeat the type system, which is how meaning crosses the boundary unnoticed.",
+      "typescript": ["any"],
+      "csharp": ["dynamic"]
+    }
+  },
+  "everywhere": {
+    "doc": "Ways to hand the browser something to execute. Banned on both sides of the boundary, in every language.",
+    "escapeHatches": ["eval", "SetInnerHtml", "ExecuteScript"]
+  }
+}

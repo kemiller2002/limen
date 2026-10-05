@@ -79,10 +79,11 @@ let private runVerify (options: Args.VerifyOptions) =
         (Render.verifyToJson verification)
         (Render.verifyToText verification options.Global.Verbose)
 
-    if verification.Ok then
-        ExitCodes.success
-    else
-        ExitCodes.verificationFailed
+    match verification.Verdict with
+    | Passed
+    | NotApplicable _ -> ExitCodes.success
+    | NotConfigured -> ExitCodes.boundaryNotConfigured
+    | Failed -> ExitCodes.verificationFailed
 
 let private runDoctor (options: Args.DoctorOptions) =
     let root = resolveRoot options.Global.Root

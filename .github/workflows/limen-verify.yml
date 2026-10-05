@@ -27,7 +27,13 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      # Limen verifies itself with the CLI built from this commit, stamped with
+      # the version in package.json — never a hard-coded one. --strict then
+      # fails if .echelon/limen.json records any other version, which is how a
+      # release that forgets to move the self-installation is caught
+      # (test/boundary-rules.test.ts checks the same thing locally).
       - name: Verify the Limen boundary from its source implementation
         run: |
-          dotnet run --project cli/Limen.Cli/Limen.Cli.fsproj -c Release -p:Version=0.6.1 -- \
-            --root "$GITHUB_WORKSPACE" verify --strict
+          version="$(node -p "require('./package.json').version")"
+          dotnet run --project cli/Limen.Cli/Limen.Cli.fsproj -c Release -p:Version="$version" -- \
+            --root "$GITHUB_WORKSPACE" verify --strict --verbose

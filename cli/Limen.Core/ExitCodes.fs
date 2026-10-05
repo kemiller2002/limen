@@ -42,6 +42,13 @@ let prerequisiteFailure = 6
 [<Literal>]
 let unsupportedPlatform = 7
 
+/// `verify` ran correctly and checked nothing: the configuration declares no
+/// engine code (or engine paths with no source in them) and does not say the
+/// repository has no Limen boundary. Distinct from 3 so a CI job can tell
+/// "the boundary is broken" from "there is no boundary to check".
+[<Literal>]
+let boundaryNotConfigured = 8
+
 let describe code =
     match code with
     | 0 -> "success"
@@ -52,4 +59,5 @@ let describe code =
     | 5 -> "migration blocked"
     | 6 -> "prerequisite failure"
     | 7 -> "unsupported platform"
+    | 8 -> "boundary not configured"
     | _ -> "unknown"

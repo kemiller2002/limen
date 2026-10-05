@@ -1,0 +1,44 @@
+{
+  "doc": "What Limen checks in its own repository, and which of it the consumer-facing `limen verify` also checks. Every repository check script and every rule identifier the boundary guardrails can emit is listed here, either as `consumer` (the CLI enforces it, from the same source) or as `repositoryOnly` with the reason it cannot or should not apply to a consumer. test/boundary-rules.test.ts fails when a check script, a TypeScript-subset rule, a layer rule or a boundary rule exists that is not classified here, or when an entry names something that no longer exists — so the consumer verify cannot silently fall behind Limen's own checks again. Guardrail-owned.",
+  "boundaryRules": {
+    "doc": "The engine-authority rule set. Consumer and repository run the same file (architecture/boundary-rules.json) through two implementations held to the same fixtures (test/fixtures/boundary-rules/cases.json).",
+    "consumer": ["engine-authority", "engine-module", "engine-dynamic-type", "escape-hatch"]
+  },
+  "verdicts": {
+    "doc": "Repository and consumer both refuse a boundary that checks nothing: the CLI reports `not-configured` (LIMEN012, exit 8); scripts/check-architecture.ts fails when limen.config.json declares no engine path.",
+    "consumer": ["not-configured", "not-applicable"]
+  },
+  "checkScripts": {
+    "check-architecture.ts": {
+      "consumer": "partly",
+      "consumerParts": "the engine-authority boundary over limen.config.json paths (boundary-rules.json)",
+      "repositoryOnlyParts": "default-deny coverage of src/ and site/app, the engine-project and WASM host-shim manifests (architecture/wasm-hosts.json), and the Core manifest (architecture/core.json)",
+      "reason": "Coverage, host-shim and Core rules describe this repository's own layout and package; a consumer declares only engine and kernel paths, and has no Core."
+    },
+    "check-layers.ts": {
+      "consumer": "no",
+      "reason": "Import directions between Limen's own layers (architecture/layers.json), its zero-dependency package rule and the browser-type ban in its own contract. A consumer's module graph is its own architecture, not Limen's; the engine-authority part that used to live here moved to boundary-rules.json and is shared."
+    },
+    "check-typescript.ts": {
+      "consumer": "no",
+      "reason": "The restricted TypeScript subset is a type-aware analysis on the TypeScript compiler API. The CLI is a self-contained, trimmed .NET binary with no TypeScript compiler; its lexical engine-dynamic-type (`any`) and escape-hatch (`eval`) rules are the part that can be shipped."
+    },
+    "check-core-budget.ts": { "consumer": "no", "reason": "Limen Core's own complexity budget (architecture/core-baseline.json)." },
+    "check-docs.ts": { "consumer": "no", "reason": "Limen's own documentation and learning path." },
+    "check-views.ts": { "consumer": "no", "reason": "Limen's own example and site view contracts." },
+    "check-site.ts": { "consumer": "no", "reason": "Limen's own product site build." },
+    "check-package.ts": { "consumer": "no", "reason": "Limen's own npm package contents." },
+    "check-scope.ts": { "consumer": "no", "reason": "ROS work-item path scope for Limen's own commits; consumers run ROS themselves." }
+  },
+  "repositoryOnlyRules": {
+    "doc": "Rule identifiers emitted by Limen's repository guardrails that the CLI does not emit, each with its reason.",
+    "typescript": {
+      "rules": ["any-type", "suppression-directive", "script-execution", "html-injection-sink", "double-assertion", "assertion-bypasses-decoder", "duplicate-protocol-type", "untyped-capability-dispatch", "dynamic-dispatch", "non-exhaustive-union", "browser-object-in-message"],
+      "reason": "Type-aware rules of the restricted TypeScript subset (check-typescript.ts); they need the TypeScript compiler. any-type and script-execution have lexical counterparts the CLI does ship (engine-dynamic-type, escape-hatch)."
+    },
+    "layers": {
+      "rules": ["unresolvable-import", "external-dependency", "unlayered-import", "capability-pack-cross-import", "layer-direction", "browser-object-in-protocol"],
+      "reason": "Limen's own layer map and contract (check-layers.ts)."
+    }
+  }
+}
