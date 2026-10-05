@@ -1,0 +1,32 @@
+{
+  "workItem": "WI-0146",
+  "reference": "kemiller2002/limen#51",
+  "placement": "Guardrail — the consumer-facing `limen verify` (cli/Limen.Core) and Limen's own repository guardrails (scripts/check-*.ts, tools/guardrails/**) read one engine-authority rule set, architecture/boundary-rules.json, which the CLI embeds at build time. An undeclared or empty boundary is an explicit `not-configured` verdict with its own exit code; a repository with no Limen boundary declares that with a rationale. Limen's self-verify derives its CLI version from package.json; the installed consumer workflow pins the CLI to the repository's recorded Limen version. Handwritten TypeScript outside the restricted subset and the federation engines/hosts come under the checks or carry owned, expiring exceptions.",
+  "guardrail": true,
+  "paths": [
+    "cli/**",
+    "architecture/boundary-rules.json",
+    "architecture/layers.json",
+    "architecture/guardrails.json",
+    "architecture/typescript-boundary.json",
+    "tools/guardrails/**",
+    "scripts/check-*.ts",
+    "scripts/build-cli.ts",
+    "test/**",
+    ".github/workflows/limen-verify.yml",
+    ".github/workflows/ci.yml",
+    ".echelon/limen.json",
+    "limen.config.json",
+    "src/main.ts",
+    "src/renderer/**",
+    "site/app/**",
+    "bin/**",
+    "docs/**",
+    "README.md",
+    "CHANGELOG.md",
+    "package.json",
+    "package-lock.json"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
