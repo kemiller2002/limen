@@ -7,11 +7,11 @@ repository, verifies it, explains it when it breaks, and upgrades it. It is the
 same npm package as the library — installing one gives you both.
 
 ```sh
-npx @echelon-foundry/typescript-wasm-kernel init
-npx @echelon-foundry/typescript-wasm-kernel status
-npx @echelon-foundry/typescript-wasm-kernel verify
-npx @echelon-foundry/typescript-wasm-kernel upgrade
-npx @echelon-foundry/typescript-wasm-kernel doctor
+npx @echelon-foundry/limen init
+npx @echelon-foundry/limen status
+npx @echelon-foundry/limen verify
+npx @echelon-foundry/limen upgrade
+npx @echelon-foundry/limen doctor
 ```
 
 Every command in this document was executed against the packed npm archive, not
@@ -24,7 +24,7 @@ The package installs one program under two names:
 | Name | Use |
 | --- | --- |
 | `limen` | the product name — what you type once the package is installed |
-| `typescript-wasm-kernel` | matches the package name, so bare `npx @echelon-foundry/typescript-wasm-kernel` resolves |
+| `typescript-wasm-kernel` | legacy alias: it matched the package name up to 0.6.2, when the package was `@echelon-foundry/typescript-wasm-kernel`; kept so scripts that call it keep working |
 
 They are the same binary. There is no difference in behavior.
 
@@ -83,12 +83,12 @@ limen status [--json] [--verbose] [--root PATH]
 ```
 
 ```text
-Limen (@echelon-foundry/typescript-wasm-kernel)
+Limen (@echelon-foundry/limen)
 
-  CLI version:           0.6.1
-  Installed version:     0.6.1
+  CLI version:           0.7.0
+  Installed version:     0.7.0
   Configuration:         version 1
-  Installation:          installed (0.6.1)
+  Installation:          installed (0.7.0)
   Managed artifacts:     2
   Verification:          passed
   Upgrade:               up to date
@@ -262,10 +262,10 @@ Every document carries `schemaVersion` (currently `1`) and `command`.
   "schemaVersion": 1,
   "command": "status",
   "tool": "limen",
-  "package": "@echelon-foundry/typescript-wasm-kernel",
-  "cliVersion": "0.6.1",
+  "package": "@echelon-foundry/limen",
+  "cliVersion": "0.7.0",
   "state": "installed",
-  "installedVersion": "0.6.1",
+  "installedVersion": "0.7.0",
   "availableVersion": null,
   "configurationVersion": 1,
   "managedArtifacts": 2,
@@ -346,7 +346,7 @@ Run the CLI **pinned to the version the repository records** in
   run: echo "version=$(node -p "require('./.echelon/limen.json').installedVersion")" >> "$GITHUB_OUTPUT"
 
 - name: Verify the Limen boundary with that version
-  run: npx --yes "@echelon-foundry/typescript-wasm-kernel@${{ steps.limen.outputs.version }}" verify --strict
+  run: npx --yes "@echelon-foundry/limen@${{ steps.limen.outputs.version }}" verify --strict
 ```
 
 `init` registers exactly this as `.github/workflows/limen-verify.yml`, and
@@ -354,7 +354,7 @@ Run the CLI **pinned to the version the repository records** in
 works locally:
 
 ```sh
-npx --yes @echelon-foundry/typescript-wasm-kernel@"$(node -p "require('./.echelon/limen.json').installedVersion")" verify --strict
+npx --yes @echelon-foundry/limen@"$(node -p "require('./.echelon/limen.json').installedVersion")" verify --strict
 ```
 
 Why pinned: an unpinned `npx … verify --strict` runs whatever was published
@@ -364,8 +364,9 @@ no change of its own. Pinned, the gate is deterministic, and moving to a new
 version is an explicit `upgrade` commit (by a person, Conditor or a
 dependency bot) that CI verifies at the new version.
 
-Before 0.7 the installed workflow ran unpinned. Its file is tool-owned, so
-`npx --yes @echelon-foundry/typescript-wasm-kernel@<new> upgrade` rewrites it in
+Before 0.7 the installed workflow ran unpinned, and under the package's old
+name, `@echelon-foundry/typescript-wasm-kernel`. Its file is tool-owned, so
+`npx --yes @echelon-foundry/limen@<new> upgrade` rewrites it in
 place unless it was edited; an edited copy is reported and left for you to
 change by hand.
 
@@ -373,7 +374,7 @@ To check
 that a repository is fully initialized rather than only valid:
 
 ```sh
-npx @echelon-foundry/typescript-wasm-kernel init --check
+npx @echelon-foundry/limen init --check
 ```
 
 which writes nothing and exits `3` if any work is outstanding.
@@ -430,6 +431,7 @@ A repository with no browser application declares
 | names engine paths with no source yet | `not-configured`, exit `8` | add the engine code, or narrow the paths |
 | names engine paths that contain hosts, adapters or tests using `HttpClient`, `System.IO`, `node:` imports and so on | `failed`, `LIMEN009` | move those projects out of `engine` (they are kernel/host side) or move the authority behind an effect |
 | runs the old unpinned workflow | unchanged until upgraded | run `upgrade` at the new version and commit; CI is then pinned |
+| depends on `@echelon-foundry/typescript-wasm-kernel` | unchanged until upgraded | the package is now `@echelon-foundry/limen` (the old name is deprecated; 0.6.2 is its last version). Change the dependency and import specifiers — nothing else was renamed — then run `npx --yes @echelon-foundry/limen@0.7.0 upgrade` and commit: it rewrites an unedited verify workflow to the pinned new name and records the new name in `.echelon/limen.json`. An edited workflow stops the upgrade (exit `5`) and nothing is written; delete it, run `upgrade` again to take the tool's copy, then re-apply your edits |
 
 `System.IO` is matched as a namespace, so an engine that opens it only for
 `MemoryStream` (typically to feed a `Utf8JsonWriter`) is reported too. Write

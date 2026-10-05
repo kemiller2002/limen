@@ -1,7 +1,7 @@
 # Changelog
 
-Notable changes to **Limen** (published as
-`@echelon-foundry/typescript-wasm-kernel`).
+Notable changes to **Limen** (published as `@echelon-foundry/limen` from
+0.7.0; as `@echelon-foundry/typescript-wasm-kernel` up to 0.6.2).
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
@@ -58,12 +58,22 @@ to 0.7](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md
     repository-only with a reason; `test/boundary-rules.test.ts` fails on any
     unclassified rule.
 - **The installed workflow is pinned.** `.github/workflows/limen-verify.yml`
-  now runs `npx --yes "@echelon-foundry/typescript-wasm-kernel@<installedVersion>"`
+  now runs `npx --yes "@echelon-foundry/limen@<installedVersion>"`
   read from `.echelon/limen.json`, so a new release no longer fails every
   lagging repository with `LIMEN011`. `upgrade` rewrites unedited copies. The
   `LIMEN011` remedy names both the upgrade and the pinned invocation.
 - Configured boundary paths may name single files; `target` and `publish`
   directories are not walked.
+
+### Changed — the package is now `@echelon-foundry/limen` (WI-0149)
+
+- The package is now published as `@echelon-foundry/limen`, and
+  `@echelon-foundry/typescript-wasm-kernel` will be deprecated with 0.6.2 as
+  its last version. Only the distribution name changed — subpaths, symbols,
+  protocol, contract and the `limen` executable are unchanged; `limen upgrade`
+  rewrites an unedited verify workflow to the pinned new name and records it
+  in `.echelon/limen.json`. See
+  [docs/18-naming-and-compatibility.md](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md#package-rename-070).
 
 ### Changed — Limen applies the boundary to itself (WI-0146)
 
@@ -338,8 +348,9 @@ to 0.7](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md
 - **Repository renamed to `kemiller2002/limen`.** GitHub repository metadata,
   documentation links, Pages URL, current Praxis/ROS identity, CLI help, and
   validation checks now use the Limen repository name. The published npm
-  package `@echelon-foundry/typescript-wasm-kernel` and legacy CLI alias remain
-  unchanged for compatibility.
+  package `@echelon-foundry/typescript-wasm-kernel` and legacy CLI alias were
+  left unchanged by the repository rename; the package itself is renamed to
+  `@echelon-foundry/limen` separately in this release (WI-0149).
 
 ### Added
 

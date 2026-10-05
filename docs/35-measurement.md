@@ -14,7 +14,7 @@ Every answer and every update is plain JSON. What a size or a visibility
 virtualize a long list.
 
 ```ts
-import { measureCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/measure";
+import { measureCapability } from "@echelon-foundry/limen/capabilities/measure";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [measureCapability()] }).start();
 ```

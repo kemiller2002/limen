@@ -6,7 +6,7 @@ Tabs, windows, frames and workers of one application coordinate, without
 shared mutable state (kemiller2002/limen#46, LCP-040).
 
 ```ts
-import { coordinationCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/coordination";
+import { coordinationCapability } from "@echelon-foundry/limen/capabilities/coordination";
 
 coordinationCapability({ hub: { url: "/hub.js", scriptURL: (url) => policy.createScriptURL(url) } });
 ```

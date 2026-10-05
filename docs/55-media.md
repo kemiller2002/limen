@@ -8,7 +8,7 @@ Camera and microphone capture, previews and recordings, without a
 [docs/51](https://github.com/kemiller2002/limen/blob/main/docs/51-permission-sensitive-capabilities.md).
 
 ```ts
-import { mediaCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/media";
+import { mediaCapability } from "@echelon-foundry/limen/capabilities/media";
 
 const media = mediaCapability();
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [media] }).start();

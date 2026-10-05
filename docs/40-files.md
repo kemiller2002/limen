@@ -14,7 +14,7 @@ else. The files pack keeps that model and gives the engine two things:
 - **bounded reads** of those files, under opaque ids.
 
 ```ts
-import { filesCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/files";
+import { filesCapability } from "@echelon-foundry/limen/capabilities/files";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [filesCapability()] }).start();
 ```

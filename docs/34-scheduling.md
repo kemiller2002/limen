@@ -12,7 +12,7 @@ requests and keeps them in its own state. The pack holds no policy, and the
 kernel hides no timer.
 
 ```ts
-import { scheduleCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/schedule";
+import { scheduleCapability } from "@echelon-foundry/limen/capabilities/schedule";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [scheduleCapability()] }).start();
 // engine → { kind: "Capability", correlationId: "search-2", capability: "limen.schedule", version: 1,

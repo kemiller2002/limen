@@ -597,7 +597,7 @@ import {
   type FederationEnvelope,
   type FederationStartReport,
   type ModuleManifest,
-} from "@echelon-foundry/typescript-wasm-kernel/federation";
+} from "@echelon-foundry/limen/federation";
 ```
 
 Federation is not exported from the package root: it is optional

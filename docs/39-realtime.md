@@ -14,7 +14,7 @@ A long-lived connection has two parts:
 The realtime pack does the first part and never the second.
 
 ```ts
-import { realtimeCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/realtime";
+import { realtimeCapability } from "@echelon-foundry/limen/capabilities/realtime";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [realtimeCapability()] }).start();
 ```

@@ -483,8 +483,8 @@ report(event) {
 ### Wrong
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
-import { DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel/reference-engine";
+import { BrowserKernel } from "@echelon-foundry/limen";
+import { DirectTypeScriptTransport } from "@echelon-foundry/limen/reference-engine";
 await new BrowserKernel(new DirectTypeScriptTransport(), document).start();
 // then wondering why data-event="save" throws "Unrecognized event"
 ```

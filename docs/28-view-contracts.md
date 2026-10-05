@@ -101,10 +101,10 @@ sees `data-*` only in real tags, not in escaped code samples.
 
 ## In your own application
 
-The checker is exported as `@echelon-foundry/typescript-wasm-kernel/testing/views`:
+The checker is exported as `@echelon-foundry/limen/testing/views`:
 
 ```js
-import { checkPage, checkProjection, checkEvent, formatDiagnostic, parseViewContract } from "@echelon-foundry/typescript-wasm-kernel/testing/views";
+import { checkPage, checkProjection, checkEvent, formatDiagnostic, parseViewContract } from "@echelon-foundry/limen/testing/views";
 ```
 
 - `parseViewContract(json)` is the only way from JSON to a contract. It names

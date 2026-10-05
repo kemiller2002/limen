@@ -14,7 +14,7 @@ for a few small values. The store pack is for data sets:
 - several writes that must succeed or fail together.
 
 ```ts
-import { storeCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/store";
+import { storeCapability } from "@echelon-foundry/limen/capabilities/store";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [storeCapability()] }).start();
 ```

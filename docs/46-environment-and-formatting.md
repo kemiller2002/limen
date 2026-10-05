@@ -11,7 +11,7 @@ It also cannot run as F#, C# or Rust at all. So the engine asks for these
 facts:
 
 ```ts
-import { environmentCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/environment";
+import { environmentCapability } from "@echelon-foundry/limen/capabilities/environment";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [environmentCapability()] }).start();
 ```

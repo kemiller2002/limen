@@ -150,7 +150,7 @@ Understands six `data-*` attributes and interprets none of them.
 Say **"the Limen kernel"** where the bridge could be confused with the product.
 
 > ⚠️ Note the collision: "kernel" here means the **browser-side bridge**, but
-> the package is named `typescript-wasm-kernel` and `ROADMAP.md`'s mental-model
+> the package was named `typescript-wasm-kernel` until 0.7.0 and `ROADMAP.md`'s mental-model
 > diagram once labelled the *engine* as "WASM Kernel". Recorded as finding
 > **N-1**; the product is now named [Limen](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md),
 > which resolves the product-level half of the collision.
@@ -165,9 +165,9 @@ Limen is the whole: the contract in `src/protocol.ts`, the kernel that
 implements the browser side, and the rules governing what may live where. It is
 **not** a synonym for the kernel alone, and not a synonym for the engine.
 
-The npm package is still `@echelon-foundry/typescript-wasm-kernel`; the GitHub
-repository is now `kemiller2002/limen`, while package and API compatibility
-identifiers remain unchanged. See [18-naming-and-compatibility.md](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md).
+From 0.7.0 the npm package is `@echelon-foundry/limen` (up to 0.6.2 it was
+`@echelon-foundry/typescript-wasm-kernel`); the GitHub repository is
+`kemiller2002/limen`, and API compatibility identifiers remain unchanged. See [18-naming-and-compatibility.md](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md).
 
 > Discouraged aliases: "the WASM kernel", "the TypeScript WASM kernel".
 > WebAssembly may exist behind `EngineTransport`, as it does for the product

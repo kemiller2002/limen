@@ -18,7 +18,7 @@ npm run dev -- examples/01-counter 4180   # serves the directory; streams change
 ```
 
 ```ts
-import { createHotReloader, connectDevEvents } from "@echelon-foundry/typescript-wasm-kernel/tooling/hot-reload";
+import { createHotReloader, connectDevEvents } from "@echelon-foundry/limen/tooling/hot-reload";
 
 const reloader = await createHotReloader({
   document,
