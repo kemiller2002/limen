@@ -15,7 +15,7 @@ Worked example: [`examples/08-routing/`](../examples/08-routing/README.md).
 > capability does not exist in your copy: requesting the effect produces a
 > `BridgeError` with `phase: "effect"` and **no result**, and an engine waiting
 > on that correlation id waits forever. Check your installed version with
-> `npm ls @echelon-foundry/typescript-wasm-kernel`.
+> `npm ls @echelon-foundry/limen`.
 
 ---
 

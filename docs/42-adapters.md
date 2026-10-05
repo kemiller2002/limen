@@ -12,8 +12,8 @@ door. The widget keeps its internals. The engine keeps application meaning.
 Between them, only JSON crosses.
 
 ```ts
-import { adaptersCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/adapters";
-import { webComponentAdapter } from "@echelon-foundry/typescript-wasm-kernel/capabilities/adapters/web-component";
+import { adaptersCapability } from "@echelon-foundry/limen/capabilities/adapters";
+import { webComponentAdapter } from "@echelon-foundry/limen/capabilities/adapters/web-component";
 import { chartAdapter } from "./adapters/chart.js"; // the application's own
 
 const rating = webComponentAdapter({

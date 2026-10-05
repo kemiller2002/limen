@@ -12,7 +12,7 @@ attributes. **Each listener opts into exactly the facts it needs**, so a
 high-volume event carries nothing it did not ask for.
 
 ```ts
-import { eventsCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/events";
+import { eventsCapability } from "@echelon-foundry/limen/capabilities/events";
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [eventsCapability()] }).start();
 ```
 

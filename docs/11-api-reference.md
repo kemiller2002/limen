@@ -57,13 +57,13 @@ Know what you are allowed to depend on.
 ## Entry points
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
-import type { ViewState } from "@echelon-foundry/typescript-wasm-kernel/protocol";
+import { BrowserKernel } from "@echelon-foundry/limen";
+import type { ViewState } from "@echelon-foundry/limen/protocol";
 ```
 
 | Specifier | Contents |
 | --- | --- |
-| `@echelon-foundry/typescript-wasm-kernel` | **Limen Core only** ([`src/index.ts`](https://github.com/kemiller2002/limen/blob/main/src/index.ts)): the kernel, the boundary messages, the four built-in effect families, the optional-capability seam, compatibility. Every name belongs to an approved export family of [`architecture/core.json`](https://github.com/kemiller2002/limen/blob/main/architecture/core.json); nothing it loads is optional code |
+| `@echelon-foundry/limen` | **Limen Core only** ([`src/index.ts`](https://github.com/kemiller2002/limen/blob/main/src/index.ts)): the kernel, the boundary messages, the four built-in effect families, the optional-capability seam, compatibility. Every name belongs to an approved export family of [`architecture/core.json`](https://github.com/kemiller2002/limen/blob/main/architecture/core.json); nothing it loads is optional code |
 | `…/protocol` | the protocol types |
 | `…/contract` | the generated Core codec (decoders and encoders) |
 | `…/capabilities` | the optional-capability seam (`defineCapability`) |

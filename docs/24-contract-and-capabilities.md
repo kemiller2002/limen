@@ -56,7 +56,7 @@ In TypeScript, [`src/protocol.ts`](../src/protocol.ts) re-exports the generated
 [`src/generated/core.ts`](../src/generated/core.ts) under the same public names
 it has always had. The strict decoder for every type is
 [`src/generated/core.codec.ts`](../src/generated/core.codec.ts), exported as
-`@echelon-foundry/typescript-wasm-kernel/contract`. Use it wherever untrusted
+`@echelon-foundry/limen/contract`. Use it wherever untrusted
 JSON crosses into host code — typically a WebAssembly transport. It rejects
 unknown variants, missing fields, **and unexpected fields**.
 
@@ -239,8 +239,8 @@ envelope and never looks inside:
 A host registers the packs it implements:
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
-import { focusCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/focus"; // optional; loaded only if imported
+import { BrowserKernel } from "@echelon-foundry/limen";
+import { focusCapability } from "@echelon-foundry/limen/capabilities/focus"; // optional; loaded only if imported
 
 new BrowserKernel(transport, document, diagnostics, { capabilities: [focusCapability()] });
 ```
@@ -289,7 +289,7 @@ above.
 
 A browser resource that must outlive one request — an observer, a picked
 file, a media stream — stays in the browser, in a **handle table**, and only
-its id crosses. `@echelon-foundry/typescript-wasm-kernel/capability-support/handles`
+its id crosses. `@echelon-foundry/limen/capability-support/handles`
 provides one:
 
 ```ts
@@ -310,7 +310,7 @@ The table is capability-support, not Core: a pack that needs none imports none.
 ### Provider conformance
 
 `runProviderConformance(provider, fixture)` from
-`@echelon-foundry/typescript-wasm-kernel/testing/providers` runs the same checks
+`@echelon-foundry/limen/testing/providers` runs the same checks
 against every pack, fed by the pack's own payloads and generated result decoder,
 and returns the failures (empty when the provider conforms):
 

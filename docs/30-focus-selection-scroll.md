@@ -16,8 +16,8 @@ does not register it loads none of it (`test/bench-size.test.ts`).
 ## Using it
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
-import { focusCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/focus";
+import { BrowserKernel } from "@echelon-foundry/limen";
+import { focusCapability } from "@echelon-foundry/limen/capabilities/focus";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [focusCapability()] }).start();
 ```

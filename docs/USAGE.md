@@ -14,7 +14,7 @@
 > your own application — write your own `EngineTransport`, which is about eight
 > lines. See [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md) finding A-1.
 
-Step-by-step instructions for using `@echelon-foundry/typescript-wasm-kernel`
+Step-by-step instructions for using `@echelon-foundry/limen`
 once it is installed.
 
 `BrowserKernel` is a generic declarative bridge — it does not know about your
@@ -38,7 +38,7 @@ availability checking) using these primitives end to end.
 ## 1. Install the package
 
 ```sh
-npm install @echelon-foundry/typescript-wasm-kernel
+npm install @echelon-foundry/limen
 ```
 
 ## 2. Author HTML with data-* bindings
@@ -102,10 +102,10 @@ order/membership. An event fired from inside an instantiated item (e.g. the
 ## 3. Wire the kernel in your entry script
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { BrowserKernel } from "@echelon-foundry/limen";
 // The reference engine is a demonstration, reached only by its explicit
 // subpath; your application supplies its own EngineTransport instead.
-import { DirectTypeScriptTransport } from "@echelon-foundry/typescript-wasm-kernel/reference-engine";
+import { DirectTypeScriptTransport } from "@echelon-foundry/limen/reference-engine";
 
 const kernel = new BrowserKernel(
   new DirectTypeScriptTransport(),

@@ -27,7 +27,7 @@ network call. Roughly twenty minutes.
 mkdir my-app && cd my-app
 npm init -y
 npm pkg set type=module
-npm install @echelon-foundry/typescript-wasm-kernel
+npm install @echelon-foundry/limen
 npm install --save-dev typescript
 ```
 
@@ -116,7 +116,7 @@ import type {
   EngineToBrowserMessage,
   EngineTransport,
   ViewState,
-} from "@echelon-foundry/typescript-wasm-kernel/protocol";
+} from "@echelon-foundry/limen/protocol";
 
 // 1. Authoritative state. This is the only place it exists.
 export type State = { readonly count: number };
@@ -185,7 +185,7 @@ not as a base class. Your transport is the eight lines above.
 **`my-app/src/main.ts`**
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { BrowserKernel } from "@echelon-foundry/limen";
 import { createTransport } from "./engine.js";
 
 await new BrowserKernel(createTransport(), document).start();

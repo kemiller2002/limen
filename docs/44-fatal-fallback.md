@@ -27,8 +27,8 @@ does that. It is a host, not Core, because what to show and whether to restart
 are the composition root's decisions.
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
-import { startWithFallback } from "@echelon-foundry/typescript-wasm-kernel/hosts/fallback";
+import { BrowserKernel } from "@echelon-foundry/limen";
+import { startWithFallback } from "@echelon-foundry/limen/hosts/fallback";
 
 const host = await startWithFallback({
   document,

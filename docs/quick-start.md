@@ -16,7 +16,7 @@ this repository's test suite.
 ## 1. Install
 
 ```sh
-npm install @echelon-foundry/typescript-wasm-kernel
+npm install @echelon-foundry/limen
 ```
 
 That is the whole install. The package has **no runtime dependencies**.
@@ -66,7 +66,7 @@ import type {
   EngineToBrowserMessage,
   EngineTransport,
   ViewState,
-} from "@echelon-foundry/typescript-wasm-kernel/protocol";
+} from "@echelon-foundry/limen/protocol";
 
 type State = { readonly count: number };
 
@@ -108,7 +108,7 @@ Three lines, and this is the only file that touches the browser.
 
 ```ts
 // main.ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { BrowserKernel } from "@echelon-foundry/limen";
 import { createCounterTransport } from "./engine.js";
 
 await new BrowserKernel(createCounterTransport(), document).start();

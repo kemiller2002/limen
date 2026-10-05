@@ -8,8 +8,8 @@ Offers, answers and ICE candidates are plain data that the engine relays
 itself.
 
 ```ts
-import { mediaCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/media";
-import { peerCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/peer";
+import { mediaCapability } from "@echelon-foundry/limen/capabilities/media";
+import { peerCapability } from "@echelon-foundry/limen/capabilities/peer";
 
 const media = mediaCapability();
 // The application, not the packs, decides that peers may send its captures.

@@ -8,7 +8,7 @@ browser, and how to see — and replay — exactly what crossed the boundary.
 These are tooling (`src/tooling/`, layer `tooling`). Core never imports them,
 and an application that does not use them pays nothing.
 
-## The fake host — `@echelon-foundry/typescript-wasm-kernel/testing`
+## The fake host — `@echelon-foundry/limen/testing`
 
 `createFakeHost` plays the kernel's role with no DOM: the same handshake, the
 same message order, a **fake clock**, a **fake location and history**, an
@@ -41,7 +41,7 @@ Browser semantics a fake cannot establish — real `fetch`, clipboard
 permission, the Back button — still need a real browser (`smoke:browser`,
 `smoke:guests`).
 
-## Traces — `@echelon-foundry/typescript-wasm-kernel/trace`
+## Traces — `@echelon-foundry/limen/trace`
 
 ```ts
 const entries: TraceEntry[] = [];

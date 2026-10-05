@@ -151,3 +151,4 @@
 | WI-0146 | Consumer verify integrity: explicit not-configured verdict, rule parity with Limen's own guardrails, one browser-token source, in-repo self-verify version, pinned consumer invocation, handwritten TS and federation engine coverage | complete |  | medium |
 | WI-0147 | Release 0.7.0: bump package version, date the changelog, move the self-installation record | complete |  | medium |
 | WI-0148 | Pages smoke waits for the F# WASM DOM marker on the wall clock: headless Chrome's virtual-time budget expires while the .NET runtime is still compiling off the main thread on a slow runner (release 0.7.0 Pages failure) | complete |  | medium |
+| WI-0149 | Rename npm package to @echelon-foundry/limen before 0.7.0 is first published | complete |  | medium |

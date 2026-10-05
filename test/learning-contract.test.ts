@@ -52,12 +52,12 @@ test("required reading that drops a Core document fails", () => {
 });
 
 test("a quick start importing an optional surface fails", () => {
-  const federated = replaced("docs/quick-start.md", (text) => `${text}\n\`\`\`ts\nimport { ModuleFederation } from "@echelon-foundry/typescript-wasm-kernel/federation";\n\`\`\`\n`);
+  const federated = replaced("docs/quick-start.md", (text) => `${text}\n\`\`\`ts\nimport { ModuleFederation } from "@echelon-foundry/limen/federation";\n\`\`\`\n`);
   assert.deepEqual(rules(federated), ["quick-start-optional-import"]);
 });
 
 test("importing an optional name from the package root fails anywhere", () => {
-  const fromRoot = replaced("README.md", (text) => `${text}\n\`\`\`ts\nimport { BrowserKernel, ReferenceEngine } from "@echelon-foundry/typescript-wasm-kernel";\n\`\`\`\n`);
+  const fromRoot = replaced("README.md", (text) => `${text}\n\`\`\`ts\nimport { BrowserKernel, ReferenceEngine } from "@echelon-foundry/limen";\n\`\`\`\n`);
   const found = checkLearning(manifest, learning, fromRoot);
   assert.deepEqual(found.map((violation) => violation.rule), ["optional-import-from-root"]);
   assert.match(found[0]?.detail ?? "", /ReferenceEngine/);
@@ -80,7 +80,7 @@ test("which documents are optional is a pattern: every subsystem document from 2
 test("a legitimate optional capability ships without changing the Core model, its reading, or the manifest", () => {
   const packDoc: Document = {
     path: "docs/99-vibration.md",
-    text: "# Vibration\n\n> **Optional — not Limen Core.** This is the vibration pack, a capability pack. It composes with the Core concept `typed-capabilities`: it is requested through the generic Capability seam.\n\nimport { vibrationCapability } from \"@echelon-foundry/typescript-wasm-kernel/capabilities/vibration\";\n",
+    text: "# Vibration\n\n> **Optional — not Limen Core.** This is the vibration pack, a capability pack. It composes with the Core concept `typed-capabilities`: it is requested through the generic Capability seam.\n\nimport { vibrationCapability } from \"@echelon-foundry/limen/capabilities/vibration\";\n",
   };
   assert.deepEqual(checkLearning(manifest, learning, [...documents, packDoc]), []);
   // The same document without its banner is caught, with no manifest edit either way.

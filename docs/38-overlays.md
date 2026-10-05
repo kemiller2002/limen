@@ -20,7 +20,7 @@ named targets, when the engine asks, and reports what the browser did. The
 engine owns **whether** an overlay should be open; the browser owns **how**.
 
 ```ts
-import { overlayCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/overlay";
+import { overlayCapability } from "@echelon-foundry/limen/capabilities/overlay";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [overlayCapability()] }).start();
 ```

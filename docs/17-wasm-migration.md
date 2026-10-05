@@ -14,7 +14,7 @@ That is no longer true.
 There are now three distinct surfaces that must not be conflated:
 
 1. **The npm package**
-   `@echelon-foundry/typescript-wasm-kernel` still ships a TypeScript browser
+   `@echelon-foundry/limen` ships a TypeScript browser
    kernel, protocol types, reference engine, documentation, examples, and the
    F# lifecycle CLI. It does **not** ship a domain-specific WASM application
    engine.

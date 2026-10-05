@@ -6,7 +6,7 @@ Browser-native loading and polish, with the decisions left to the engine
 (kemiller2002/limen#34, LCP-025 and LCP-026).
 
 ```ts
-import { presentationCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/presentation";
+import { presentationCapability } from "@echelon-foundry/limen/capabilities/presentation";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [presentationCapability()] }).start();
 ```

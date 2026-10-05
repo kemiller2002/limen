@@ -22,7 +22,7 @@ is application meaning, so it lives in the engine.
 ## The pack
 
 ```ts
-import { offlineCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/offline";
+import { offlineCapability } from "@echelon-foundry/limen/capabilities/offline";
 
 // The host's Trusted Types policy vouches for its own worker and nothing else.
 const policy = trustedTypes.createPolicy("app-worker", {
@@ -69,7 +69,7 @@ existing registration, so it works offline as well.
 The host serves a one-line module:
 
 ```js
-import { serveOffline } from "/node_modules/@echelon-foundry/typescript-wasm-kernel/dist/capabilities/offline/worker.js";
+import { serveOffline } from "/node_modules/@echelon-foundry/limen/dist/capabilities/offline/worker.js";
 serveOffline(self, { version: "2026.09.29", shell: ["/", "/app.js", "/app.css"], fallback: "/" });
 ```
 

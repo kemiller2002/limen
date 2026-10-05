@@ -13,7 +13,7 @@ into the back/forward cache, or has it just come back? An engine that reads
 Rust, and cannot be tested without a browser. So it asks:
 
 ```ts
-import { lifecycleCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/lifecycle";
+import { lifecycleCapability } from "@echelon-foundry/limen/capabilities/lifecycle";
 
 await new BrowserKernel(transport, document, diagnostics, { capabilities: [lifecycleCapability()] }).start();
 ```

@@ -22,7 +22,7 @@ From an empty directory:
 
 ```sh
 npm init -y
-npm install @echelon-foundry/typescript-wasm-kernel
+npm install @echelon-foundry/limen
 # copy index.html, engine.js and main.js from this directory
 python3 -m http.server 4173
 ```
@@ -71,7 +71,7 @@ as plain JSON that an engine in any language can publish. The package checks
 the HTML against it with no browser:
 
 ```js
-import { checkPage, formatDiagnostic, parseViewContract } from "@echelon-foundry/typescript-wasm-kernel/testing/views";
+import { checkPage, formatDiagnostic, parseViewContract } from "@echelon-foundry/limen/testing/views";
 
 const parsed = parseViewContract(JSON.parse(await readFile("index.view.json", "utf8")));
 if (!parsed.ok) throw new Error(parsed.errors.join("\n"));

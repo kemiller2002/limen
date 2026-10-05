@@ -52,9 +52,11 @@ them. Growing Core itself is a [Core Admission](docs/core-admission.md).
 
 **1. This repository is Limen.** Limen is the product name for the
 architecture here: an explicit boundary keeping browser capabilities separate
-from application authority. The npm package is still
-`@echelon-foundry/typescript-wasm-kernel` and **no exported symbol, file path,
-or protocol type was renamed** — the rename is documentation-only. See
+from application authority. From 0.7.0 the npm package is
+`@echelon-foundry/limen` (releases up to 0.6.2 were published as
+`@echelon-foundry/typescript-wasm-kernel`, now deprecated). **No exported
+symbol, file path, or protocol type was renamed** — only the distribution
+identity changed. See
 [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md).
 
 Note the term "kernel" is still load-bearing and still correct: it means the

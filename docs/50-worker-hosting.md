@@ -8,7 +8,7 @@ written in (kemiller2002/limen#41, LCP-035).
 
 ```ts
 // The page: a transport like any other. The kernel does not know the engine moved.
-import { WorkerTransport } from "@echelon-foundry/typescript-wasm-kernel/hosts/worker";
+import { WorkerTransport } from "@echelon-foundry/limen/hosts/worker";
 
 const transport = new WorkerTransport({
   createWorker: () => new Worker(new URL("./worker.js", import.meta.url), { type: "module" }),
@@ -18,8 +18,8 @@ await new BrowserKernel(transport, document, diagnostics, { requireHandshake: tr
 
 ```ts
 // worker.js: the worker's composition root builds whichever engine it runs.
-import { serveEngine } from "@echelon-foundry/typescript-wasm-kernel/hosts/worker-engine";
-import { RawWasmTransport } from "@echelon-foundry/typescript-wasm-kernel/hosts/raw-wasm";
+import { serveEngine } from "@echelon-foundry/limen/hosts/worker-engine";
+import { RawWasmTransport } from "@echelon-foundry/limen/hosts/raw-wasm";
 
 serveEngine(self, () => new RawWasmTransport({ loadModule: () => fetch("./engine.wasm") }));
 ```

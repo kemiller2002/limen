@@ -198,3 +198,170 @@ let ``init works in a directory that is not a git repository`` () =
 
     Assert.Empty result.Plan.Conflicts
     Assert.True(File.Exists(Path.Combine(root, Paths.manifest)))
+
+// --- Consumers installed before the package rename (0.7.0) -------------------
+//
+// Every release before 0.7.0 was published as Paths.legacyPackageName, wrote
+// that name into .echelon/limen.json and invoked it from the workflow. These
+// tests stand up such an installation on disk exactly as that release left it
+// and prove `upgrade` moves it to the new name without any special-case code:
+// the managed workflow is regenerated from the template because the manifest
+// records the hash of the legacy copy, and the manifest is rewritten with the
+// current package identity.
+
+/// The workflow 0.5.0 through 0.6.2 installed: the legacy name, unpinned.
+let private legacyUnpinnedWorkflow =
+    """# Installed and maintained by Limen (@echelon-foundry/typescript-wasm-kernel).
+# Edit freely — once changed, `limen upgrade` will stop rewriting it and will
+# tell you what the current tool-owned version would have been.
+name: Limen verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  limen-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify the Limen boundary
+        run: npx --yes @echelon-foundry/typescript-wasm-kernel verify --strict
+"""
+
+/// The pinned workflow as tagged at v0.7.0 before the rename (never published,
+/// but a repository initialized from a source build has it): the legacy name,
+/// pinned to the recorded version.
+let private legacyPinnedWorkflow =
+    Assets.workflow.Replace(Paths.packageName, Paths.legacyPackageName)
+
+/// Make `root` look exactly like a repository a pre-rename release installed:
+/// the given legacy workflow, and a manifest naming the legacy package that
+/// records that workflow's hash as the copy the tool wrote.
+let private installedBeforeRename (installedVersion: string) (workflow: string) =
+    let root = newRepository ()
+    Operations.initialize root installedVersion false |> ignore
+    File.WriteAllText(Path.Combine(root, Paths.workflow), workflow)
+
+    let manifest =
+        match Operations.inspectRepository root |> Inspect.manifest with
+        | Some (Ok manifest) -> manifest
+        | other -> failwithf "expected a readable manifest, got %A" other
+
+    let legacy =
+        { manifest with
+            Package = Paths.legacyPackageName
+            ManagedArtifacts =
+                manifest.ManagedArtifacts
+                |> List.map (fun artifact ->
+                    if artifact.Path = Paths.workflow then
+                        { artifact with Sha256 = Hashing.sha256OfString workflow }
+                    else
+                        artifact) }
+
+    File.WriteAllText(Path.Combine(root, Paths.manifest), Manifest.serialize legacy)
+    root
+
+let private assertMigratedToCurrentName root =
+    let workflow = File.ReadAllText(Path.Combine(root, Paths.workflow))
+    Assert.Equal(Assets.workflow, workflow)
+    Assert.DoesNotContain(Paths.legacyPackageName, workflow)
+    Assert.Contains("npx --yes \"@echelon-foundry/limen@${{ steps.limen.outputs.version }}\" verify --strict", workflow)
+
+    let manifestText = File.ReadAllText(Path.Combine(root, Paths.manifest))
+    Assert.DoesNotContain(Paths.legacyPackageName, manifestText)
+
+    match Operations.inspectRepository root |> Inspect.manifest with
+    | Some (Ok manifest) ->
+        Assert.Equal("@echelon-foundry/limen", manifest.Package)
+        Assert.Equal("0.7.0", manifest.InstalledVersion)
+
+        let recorded = manifest |> Manifest.tryFindArtifact Paths.workflow |> Option.get
+        Assert.Equal(Hashing.sha256OfString Assets.workflow, recorded.Sha256)
+        Assert.Equal(InstalledByTool, recorded.Disposition)
+    | other -> failwithf "expected a readable manifest, got %A" other
+
+    let verification = Operations.verify true "0.7.0" (Operations.inspectRepository root)
+    Assert.True(verification.Ok, sprintf "expected strict verification to pass after the rename upgrade, got %A" verification.Problems)
+
+[<Fact>]
+let ``the package is published as echelon-foundry/limen, and the workflow pins it`` () =
+    Assert.Equal("@echelon-foundry/limen", Paths.packageName)
+    Assert.Equal("@echelon-foundry/typescript-wasm-kernel", Paths.legacyPackageName)
+    Assert.DoesNotContain(Paths.legacyPackageName, Assets.workflow)
+    Assert.Contains("npx --yes \"@echelon-foundry/limen@${{ steps.limen.outputs.version }}\" verify --strict", Assets.workflow)
+
+[<Fact>]
+let ``upgrade moves a 0.6.x installation's unpinned legacy-name workflow to the pinned new name`` () =
+    let root = installedBeforeRename "0.6.2" legacyUnpinnedWorkflow
+
+    let dryRun = Operations.performUpgrade root "0.7.0" true
+    Assert.Empty dryRun.Plan.Conflicts
+
+    Assert.Contains(
+        dryRun.Plan.Changes,
+        fun change ->
+            match change with
+            | UpdateManagedFile (path, content, _) -> path = Paths.workflow && content = Assets.workflow
+            | _ -> false
+    )
+
+    Assert.Contains(
+        dryRun.Plan.Changes,
+        fun change ->
+            match change with
+            | WriteManifest manifest -> manifest.Package = Paths.packageName
+            | _ -> false
+    )
+
+    let result = Operations.performUpgrade root "0.7.0" false
+    Assert.Empty result.Plan.Conflicts
+    assertMigratedToCurrentName root
+
+    // And it is now settled: a second upgrade has nothing to do.
+    Assert.True(Plan.isNoOp (Operations.performUpgrade root "0.7.0" false).Plan)
+
+[<Fact>]
+let ``upgrade moves a pinned legacy-name workflow to the pinned new name`` () =
+    let root = installedBeforeRename "0.7.0" legacyPinnedWorkflow
+
+    let result = Operations.performUpgrade root "0.7.0" false
+
+    Assert.Empty result.Plan.Conflicts
+    assertMigratedToCurrentName root
+
+[<Fact>]
+let ``an edited legacy-name workflow is not guessed at: upgrade stops and writes nothing`` () =
+    let root = installedBeforeRename "0.6.2" legacyUnpinnedWorkflow
+    File.AppendAllText(Path.Combine(root, Paths.workflow), "\n# my own step\n")
+    let before = fingerprint root
+
+    let result = Operations.performUpgrade root "0.7.0" false
+
+    Assert.Contains(result.Plan.Conflicts, fun conflict -> conflict.Path = Paths.workflow)
+    Assert.Empty result.Plan.Changes
+    Assert.Equal(before, fingerprint root)
+
+[<Fact>]
+let ``a pre-rename version is pinned under the legacy package name in the LIMEN011 remedy`` () =
+    Assert.Equal(Paths.legacyPackageName, Paths.publishedAs "0.6.2")
+    Assert.Equal(Paths.legacyPackageName, Paths.publishedAs "0.5.0")
+    Assert.Equal(Paths.packageName, Paths.publishedAs "0.7.0")
+    Assert.Equal(Paths.packageName, Paths.publishedAs "0.10.0")
+    Assert.Equal(Paths.packageName, Paths.publishedAs "1.0.0")
+
+    let remedy =
+        (Diagnose.explain (InstalledVersionOutdated("0.6.2", "0.7.0"))).Remedy |> Option.defaultValue ""
+
+    Assert.Contains("npx --yes @echelon-foundry/limen@0.7.0 upgrade", remedy)
+    Assert.Contains("npx --yes @echelon-foundry/typescript-wasm-kernel@0.6.2 verify --strict", remedy)

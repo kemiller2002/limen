@@ -8,7 +8,7 @@ application stands behind it. The browser stands in front of it. Nothing
 crosses except plain, serializable data.
 
 ```sh
-npm install @echelon-foundry/typescript-wasm-kernel
+npm install @echelon-foundry/limen
 ```
 
 | | |
@@ -51,9 +51,13 @@ and keeps it honest.
    transitions, evidence handling, capabilities and projection are also F#,
    compiled to WebAssembly. A tiny C# `[JSExport]` file exists only as .NET
    marshalling glue; it contains no application decision.
-3. **Why is the package named `typescript-wasm-kernel`?** History. Limen is the
-   product name; **no exported symbol, file path, or protocol type was
-   renamed**, and nothing was deprecated. See
+3. **What happened to `@echelon-foundry/typescript-wasm-kernel`?** It is the
+   same package under its old name. From 0.7.0 Limen is published as
+   `@echelon-foundry/limen`; the old name is deprecated, with 0.6.2 its last
+   version. **No exported symbol, file path, or protocol type was renamed** —
+   change the dependency name and the import specifiers, and run
+   `npx --yes @echelon-foundry/limen@0.7.0 upgrade` if the lifecycle CLI is
+   installed. See
    [docs/18-naming-and-compatibility.md](https://github.com/kemiller2002/limen/blob/main/docs/18-naming-and-compatibility.md).
 
 ## Why it exists
@@ -189,7 +193,7 @@ Full design and API:
 ## Install
 
 ```sh
-npm install @echelon-foundry/typescript-wasm-kernel
+npm install @echelon-foundry/limen
 ```
 
 No runtime dependencies. Node ≥ 22 to build or test; any browser with ES2022
@@ -213,7 +217,7 @@ Three files. Nothing elided.
 
 ```ts
 import type { BrowserToEngineMessage, EngineToBrowserMessage, EngineTransport, ViewState }
-  from "@echelon-foundry/typescript-wasm-kernel/protocol";
+  from "@echelon-foundry/limen/protocol";
 
 type State = { readonly count: number };
 
@@ -247,7 +251,7 @@ export function createCounterTransport(): EngineTransport {
 **`main.ts`** — the wiring, in full:
 
 ```ts
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { BrowserKernel } from "@echelon-foundry/limen";
 import { createCounterTransport } from "./engine.js";
 
 await new BrowserKernel(createCounterTransport(), document).start();
@@ -298,7 +302,7 @@ it and reports a typed outcome, which the engine then treats as evidence.
 
 **`Clipboard` and `Navigation` are new in 0.6.1.** On an earlier version they do
 not exist, and requesting one produces a `BridgeError` with `phase: "effect"`
-and no result. Check with `npm ls @echelon-foundry/typescript-wasm-kernel`; the
+and no result. Check with `npm ls @echelon-foundry/limen`; the
 per-version record is [CHANGELOG.md](https://github.com/kemiller2002/limen/blob/main/CHANGELOG.md).
 
 Plus one message nobody requested: **`LocationChanged`**, when the user presses
@@ -406,7 +410,7 @@ Deeper guidance:
 ## The npm package
 
 ```sh
-npm install @echelon-foundry/typescript-wasm-kernel
+npm install @echelon-foundry/limen
 ```
 
 What you receive:
@@ -415,7 +419,7 @@ What you receive:
 | --- | --- |
 | Entry points | `.` (kernel + types), `./protocol`, `./kernel`, `./reference-engine` |
 | Types | `.d.ts` for everything, with source maps |
-| Executables | `limen` (and `typescript-wasm-kernel`) — the lifecycle CLI |
+| Executables | `limen` (and its legacy alias `typescript-wasm-kernel`) — the lifecycle CLI |
 | Documentation | `README.md`, `CHANGELOG.md`, `LICENSE`, and `docs/`: quick start, mental model, where-code-goes, API reference, troubleshooting, glossary |
 | A complete example | `examples/minimal/` — four files, no build step |
 | Runtime dependencies | **none** |
@@ -435,11 +439,11 @@ into a repository and keeps it honest. No .NET runtime is required — a
 self-contained binary ships for each supported platform.
 
 ```sh
-npx @echelon-foundry/typescript-wasm-kernel init      # install the boundary. Idempotent.
-npx @echelon-foundry/typescript-wasm-kernel status    # what is installed, and is it valid?
-npx @echelon-foundry/typescript-wasm-kernel verify    # check it. Read-only.
-npx @echelon-foundry/typescript-wasm-kernel upgrade   # move to this version, safely.
-npx @echelon-foundry/typescript-wasm-kernel doctor    # explain what is wrong, and how to fix it.
+npx @echelon-foundry/limen init      # install the boundary. Idempotent.
+npx @echelon-foundry/limen status    # what is installed, and is it valid?
+npx @echelon-foundry/limen verify    # check it. Read-only.
+npx @echelon-foundry/limen upgrade   # move to this version, safely.
+npx @echelon-foundry/limen doctor    # explain what is wrong, and how to fix it.
 ```
 
 Once installed, the executable is simply `limen`.

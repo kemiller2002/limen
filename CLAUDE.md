@@ -9,9 +9,10 @@ is stale), not something to silently pick a side on.
 
 **Limen** is the product name for the architecture implemented here: an
 explicit boundary keeping browser capabilities separate from application
-authority. The published package is still
-`@echelon-foundry/typescript-wasm-kernel`, and **no exported symbol, file path,
-or protocol type was renamed** — see
+authority. From 0.7.0 the published package is `@echelon-foundry/limen`
+(up to 0.6.2 it was `@echelon-foundry/typescript-wasm-kernel`, now
+deprecated), and **no exported symbol, file path, or protocol type was
+renamed** — see
 [docs/18-naming-and-compatibility.md](docs/18-naming-and-compatibility.md).
 
 "Kernel" is still correct for the **browser-side bridge** (`BrowserKernel`,

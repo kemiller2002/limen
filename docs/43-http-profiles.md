@@ -122,8 +122,8 @@ behaviour as the default.
 ## The transfer profile pack
 
 ```ts
-import { filesCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/files";
-import { transferCapability } from "@echelon-foundry/typescript-wasm-kernel/capabilities/transfer";
+import { filesCapability } from "@echelon-foundry/limen/capabilities/files";
+import { transferCapability } from "@echelon-foundry/limen/capabilities/transfer";
 
 const files = filesCapability();
 await new BrowserKernel(transport, document, diagnostics, {

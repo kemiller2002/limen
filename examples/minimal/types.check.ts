@@ -4,13 +4,13 @@
 // against this repository's source.
 //
 // If you are writing TypeScript, this is the shape your own engine takes.
-import { BrowserKernel } from "@echelon-foundry/typescript-wasm-kernel";
+import { BrowserKernel } from "@echelon-foundry/limen";
 import type {
   BrowserToEngineMessage,
   EngineToBrowserMessage,
   EngineTransport,
   ViewState,
-} from "@echelon-foundry/typescript-wasm-kernel/protocol";
+} from "@echelon-foundry/limen/protocol";
 
 type State = { readonly count: number };
 

@@ -8,7 +8,7 @@ The application chooses per route: client rendering only (the default), static
 generation (SSG), or rendering on request (SSR).
 
 ```ts
-import { renderRoute, renderStatic } from "@echelon-foundry/typescript-wasm-kernel/renderer";
+import { renderRoute, renderStatic } from "@echelon-foundry/limen/renderer";
 
 const { html, settled, refused } = await renderRoute({
   page,                        // the page's template HTML: the same file the browser loads
