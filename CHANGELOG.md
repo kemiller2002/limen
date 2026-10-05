@@ -16,10 +16,12 @@ exhaustive lists.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-05
+
 ### Breaking — `limen verify` checks what Limen checks, and never passes vacuously (WI-0146, #51)
 
-The next release that carries this must be at least **0.7.0**: consumer
-verification outcomes change. Migration: [docs/20-lifecycle-cli.md § Migrating
+This is why this release is **0.7.0**: consumer verification outcomes
+change. Migration: [docs/20-lifecycle-cli.md § Migrating
 to 0.7](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md#migrating-to-07).
 
 - **An empty boundary is `not-configured`, not "passed".**
@@ -71,7 +73,8 @@ to 0.7](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md
   engine and 101 kernel files instead of none.
 - Self-verify (`.github/workflows/limen-verify.yml`) stamps the CLI with
   `package.json`'s version instead of a hard-coded `0.6.1`, and
-  `.echelon/limen.json` records 0.6.2. A test fails if the two drift, so a
+  `.echelon/limen.json` records the package version (0.7.0, moved with
+  `limen upgrade`). A test fails if the two drift, so a
   release must move the self-installation.
 - `check-architecture.ts` is default-deny: every source file under `src/` and
   `site/app/` must be on a declared side, every `*.Engine`/`*.Guest`/library
@@ -998,7 +1001,8 @@ Pre-release development, beginning at `0.2.1`: the protocol, the browser kernel,
 the reference engine, the six original examples, the documentation set, and the
 architecture and documentation checks. See the repository history.
 
-[Unreleased]: https://github.com/kemiller2002/limen/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/kemiller2002/limen/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/kemiller2002/limen/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/kemiller2002/limen/compare/v0.5.1...HEAD
 [0.5.1]: https://github.com/kemiller2002/limen/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kemiller2002/limen/releases/tag/v0.5.0
