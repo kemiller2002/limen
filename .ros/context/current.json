@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-05T12:39:53Z",
+  "updatedAt": "2026-10-05T12:46:32Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3233,13 +3233,23 @@
     {
       "id": "WI-0147",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-05T12:39:53Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "package.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/boundary-rules.test.ts"
+        }
+      ],
+      "updatedAt": "2026-10-05T12:46:32Z",
       "telemetryExecutionIds": [
         "EXE-20261005T123953480Z-6b52fbee"
-      ]
+      ],
+      "completedAt": "2026-10-05T12:46:32Z"
     }
   ]
 }
