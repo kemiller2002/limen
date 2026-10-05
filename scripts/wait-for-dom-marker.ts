@@ -20,7 +20,10 @@ import { join } from "node:path";
 type Target = { readonly type: string; readonly url: string; readonly webSocketDebuggerUrl: string };
 type Reply = { readonly id?: number; readonly result?: { readonly result?: { readonly value?: unknown } } };
 
+type Outcome = { readonly found: boolean; readonly dom: string };
+
 const POLL_MS = 250;
+const HARD_CAP_GRACE_MS = 5000;
 
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 
@@ -78,12 +81,26 @@ const evaluate = (socket: WebSocket, id: number, expression: string): Promise<st
 
 const DOM = "document.documentElement ? document.documentElement.outerHTML : ''";
 
-const pollUntilMarker = async (socket: WebSocket, marker: string, deadline: number, id = 1): Promise<{ found: boolean; dom: string }> => {
+const pollUntilMarker = async (socket: WebSocket, marker: string, deadline: number, id = 1): Promise<Outcome> => {
   const dom = await evaluate(socket, id, DOM);
   if (dom.includes(marker)) return { found: true, dom };
   if (Date.now() >= deadline) return { found: false, dom };
   await sleep(POLL_MS);
   return pollUntilMarker(socket, marker, deadline, id + 1);
+};
+
+// A hard wall-clock cap over the whole DevTools exchange: a Chrome that stops
+// answering must fail this attempt, never hang the job. The timer is cleared
+// as soon as the exchange settles, so a pass costs no extra time.
+const withHardCap = (observed: Promise<Outcome>, capMs: number): Promise<Outcome> => {
+  const timer: { handle?: ReturnType<typeof setTimeout> } = {};
+  const abandoned = new Promise<Outcome>((resolve) => {
+    timer.handle = setTimeout(() => {
+      process.stderr.write(`DevTools exchange exceeded its ${capMs} ms hard cap.\n`);
+      resolve({ found: false, dom: "" });
+    }, capMs);
+  });
+  return Promise.race([observed, abandoned]).finally(() => clearTimeout(timer.handle));
 };
 
 const run = async (chromePath: string, url: string, marker: string, timeoutMs: number): Promise<boolean> => {
@@ -92,10 +109,14 @@ const run = async (chromePath: string, url: string, marker: string, timeoutMs: n
   const exited = new Promise<void>((done) => chrome.once("exit", () => done()));
   try {
     const deadline = Date.now() + timeoutMs;
-    const port = await devToolsPort(chrome);
-    const socket = await connect((await pageTarget(port, url)).webSocketDebuggerUrl);
-    const outcome = await pollUntilMarker(socket, marker, deadline);
-    socket.close();
+    const observed = (async () => {
+      const port = await devToolsPort(chrome);
+      const socket = await connect((await pageTarget(port, url)).webSocketDebuggerUrl);
+      const outcome = await pollUntilMarker(socket, marker, deadline);
+      socket.close();
+      return outcome;
+    })();
+    const outcome = await withHardCap(observed, timeoutMs + HARD_CAP_GRACE_MS);
     process.stdout.write(outcome.dom);
     return outcome.found;
   } finally {
