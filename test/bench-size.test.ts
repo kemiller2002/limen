@@ -30,7 +30,7 @@ test("optional capability support is absent unless imported: no Core module impo
 
 test("the shipped minimal consumer imports only the package root", async () => {
   const main = await readFile("examples/minimal/main.js", "utf8");
-  assert.deepEqual([...main.matchAll(/from\s+["']([^"']+)["']/g)].map((match) => match[1]), ["@echelon-foundry/typescript-wasm-kernel", "./engine.js"]);
+  assert.deepEqual([...main.matchAll(/from\s+["']([^"']+)["']/g)].map((match) => match[1]), ["@echelon-foundry/limen", "./engine.js"]);
 });
 
 test("the import scanner sees static, re-exported, side-effect and dynamic imports, and skips packages", () => {

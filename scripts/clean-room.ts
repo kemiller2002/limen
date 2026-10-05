@@ -18,7 +18,7 @@ import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const PACKAGE = "@echelon-foundry/typescript-wasm-kernel";
+const PACKAGE = "@echelon-foundry/limen";
 const run = promisify(execFile);
 
 const step = (message: string): void => console.log(`  ${message}`);

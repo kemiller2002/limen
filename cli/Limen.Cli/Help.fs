@@ -15,7 +15,7 @@ application authority. This tool installs that boundary into a repository,
 verifies it, diagnoses it, and upgrades it.
 
 USAGE
-  npx @echelon-foundry/typescript-wasm-kernel <command> [options]
+  npx @echelon-foundry/limen <command> [options]
 
 COMMANDS
   init       Bring the repository into a valid installed state. Idempotent.
@@ -66,8 +66,8 @@ OPTIONS
   --check    As --dry-run, but exit 3 if anything would change. For CI.
 
 EXAMPLES
-  npx @echelon-foundry/typescript-wasm-kernel init
-  npx @echelon-foundry/typescript-wasm-kernel init --dry-run --json
+  npx @echelon-foundry/limen init
+  npx @echelon-foundry/limen init --dry-run --json
 """
 
 let status =
@@ -89,8 +89,8 @@ EXIT CODES
   4  not installed, or the installation is not valid
 
 EXAMPLES
-  npx @echelon-foundry/typescript-wasm-kernel status
-  npx @echelon-foundry/typescript-wasm-kernel status --json
+  npx @echelon-foundry/limen status
+  npx @echelon-foundry/limen status --json
 """
 
 let verify =
@@ -131,11 +131,11 @@ EXIT CODES
 PINNING
   Run the CLI at the version this repository records, so CI does not float to
   whatever was published last (this is what the installed workflow does):
-    npx --yes @echelon-foundry/typescript-wasm-kernel@"$(node -p "require('./.echelon/limen.json').installedVersion")" verify --strict
+    npx --yes @echelon-foundry/limen@"$(node -p "require('./.echelon/limen.json').installedVersion")" verify --strict
 
 EXAMPLES
-  npx @echelon-foundry/typescript-wasm-kernel verify --strict
-  npx @echelon-foundry/typescript-wasm-kernel verify --json
+  npx @echelon-foundry/limen verify --strict
+  npx @echelon-foundry/limen verify --json
 """
 
 let upgrade =
@@ -162,8 +162,8 @@ EXIT CODES
   5  blocked by a local change — nothing was written
 
 EXAMPLES
-  npx @echelon-foundry/typescript-wasm-kernel upgrade --dry-run
-  npx @echelon-foundry/typescript-wasm-kernel upgrade
+  npx @echelon-foundry/limen upgrade --dry-run
+  npx @echelon-foundry/limen upgrade
 """
 
 let doctor =
@@ -188,8 +188,8 @@ EXIT CODES
   3  at least one error
 
 EXAMPLES
-  npx @echelon-foundry/typescript-wasm-kernel doctor
-  npx @echelon-foundry/typescript-wasm-kernel doctor --json
+  npx @echelon-foundry/limen doctor
+  npx @echelon-foundry/limen doctor --json
 """
 
 /// Help for one topic, or the general help when the topic is unknown.

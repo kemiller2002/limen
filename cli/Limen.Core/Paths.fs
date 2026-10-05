@@ -39,10 +39,32 @@ let supportedConfigurationVersion = 1
 [<Literal>]
 let toolName = "limen"
 
-/// The npm package this CLI is distributed in. The product is named Limen; the
-/// package deliberately kept its original name so no consumer had to migrate.
+/// The npm package this CLI is distributed in, from 0.7.0 on.
 [<Literal>]
-let packageName = "@echelon-foundry/typescript-wasm-kernel"
+let packageName = "@echelon-foundry/limen"
+
+/// The npm package every release before 0.7.0 was published as. It is
+/// deprecated, with 0.6.2 as its last version; nothing installs it any more,
+/// but a 0.6.x installation records it and names it in its workflow, which is
+/// why `upgrade` must recognize it (see `publishedAs`).
+[<Literal>]
+let legacyPackageName = "@echelon-foundry/typescript-wasm-kernel"
+
+/// The package a given release was published under: before 0.7.0 the legacy
+/// name, from 0.7.0 on `packageName`. A version that does not parse is treated
+/// as current — this only chooses which name a remedy prints.
+let publishedAs (version: string) =
+    let leading =
+        version.Split([| '.'; '-'; '+' |])
+        |> Array.truncate 2
+        |> Array.map (fun part ->
+            match Int32.TryParse part with
+            | true, value -> Some value
+            | _ -> None)
+
+    match leading with
+    | [| Some 0; Some minor |] when minor < 7 -> legacyPackageName
+    | _ -> packageName
 
 /// Normalize a repository-relative path to the forward-slash form used in the
 /// manifest, so a manifest written on Windows verifies on Linux.

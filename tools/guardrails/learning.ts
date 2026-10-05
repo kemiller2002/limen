@@ -25,7 +25,7 @@ export type Document = { readonly path: string; readonly text: string };
 
 export type LearningViolation = { readonly rule: string; readonly path: string; readonly detail: string; readonly remedy: string };
 
-const PACKAGE = "@echelon-foundry/typescript-wasm-kernel";
+const PACKAGE = "@echelon-foundry/limen";
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => typeof value === "object" && value !== null && !Array.isArray(value);
 const strings = (value: unknown): readonly string[] => (Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []);

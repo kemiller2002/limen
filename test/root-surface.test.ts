@@ -16,7 +16,7 @@ import { exportTargets, moduleClosure, parseCoreManifest, emittedPath } from "..
 import { exampleBody, withDom } from "./dom-helpers.ts";
 
 const ROOT = join(import.meta.dirname, "..");
-const PACKAGE = "@echelon-foundry/typescript-wasm-kernel";
+const PACKAGE = "@echelon-foundry/limen";
 const json = async (path: string): Promise<unknown> => JSON.parse(await readFile(join(ROOT, path), "utf8")) as unknown;
 const manifest = parseCoreManifest(await json("architecture/core.json"));
 const targets = exportTargets(await json("package.json"));

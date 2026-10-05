@@ -18,8 +18,14 @@ module Limen.Core.Assets
 /// newest release (LIMEN011) for no change of its own. Reading the pin at run
 /// time keeps the version out of this file's content, so a release does not
 /// mark every installed copy as changed; `limen upgrade` moves the pin.
+///
+/// Releases before 0.7.0 were published as `Paths.legacyPackageName` and
+/// installed an unpinned copy naming it. `upgrade` replaces such a copy with
+/// this one like any other unedited tool-owned file — the manifest records the
+/// hash of the copy the old release wrote — so the rename needs no migration
+/// of its own (LifecycleTests: the "legacy-name workflow" cases).
 let workflow =
-    """# Installed and maintained by Limen (@echelon-foundry/typescript-wasm-kernel).
+    """# Installed and maintained by Limen (@echelon-foundry/limen).
 # Edit freely — once changed, `limen upgrade` will stop rewriting it and will
 # tell you what the current tool-owned version would have been.
 name: Limen verify
@@ -48,7 +54,7 @@ jobs:
         run: echo "version=$(node -p "require('./.echelon/limen.json').installedVersion")" >> "$GITHUB_OUTPUT"
 
       - name: Verify the Limen boundary with that version
-        run: npx --yes "@echelon-foundry/typescript-wasm-kernel@${{ steps.limen.outputs.version }}" verify --strict
+        run: npx --yes "@echelon-foundry/limen@${{ steps.limen.outputs.version }}" verify --strict
 """
 
 /// Every tool-owned asset, as (path, content, ownership).

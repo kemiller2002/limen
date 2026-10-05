@@ -25,7 +25,7 @@ let explain (problem: InstallationProblem) =
             "LIMEN001"
             "Limen is not installed in this repository"
             (sprintf "No installation manifest was found at %s." Paths.manifest)
-            (Some "Run `npx @echelon-foundry/typescript-wasm-kernel init`.")
+            (Some(sprintf "Run `npx %s init`." Paths.packageName))
 
     | ManifestUnreadable detail ->
         diagnosis
@@ -45,7 +45,7 @@ let explain (problem: InstallationProblem) =
             "LIMEN003"
             "The installation manifest is a newer format than this CLI understands"
             (sprintf "The manifest declares schema version %d; this CLI supports version %d." found supported)
-            (Some "Upgrade the CLI: `npx @echelon-foundry/typescript-wasm-kernel@latest status`.")
+            (Some(sprintf "Upgrade the CLI: `npx %s@latest status`." Paths.packageName))
 
     | ConfigurationMissing path ->
         diagnosis
@@ -120,9 +120,11 @@ let explain (problem: InstallationProblem) =
             (sprintf "This repository was initialized by version %s; the CLI running is %s." installed available)
             (Some(
                 sprintf
-                    "To move this repository to %s, run `npx --yes @echelon-foundry/typescript-wasm-kernel@%s upgrade` and commit the result. To verify against the version it records instead, pin the CLI to it: `npx --yes @echelon-foundry/typescript-wasm-kernel@%s verify --strict` — the installed workflow reads that pin from %s."
+                    "To move this repository to %s, run `npx --yes %s@%s upgrade` and commit the result. To verify against the version it records instead, pin the CLI to it: `npx --yes %s@%s verify --strict` — the installed workflow reads that pin from %s."
                     available
+                    Paths.packageName
                     available
+                    (Paths.publishedAs installed)
                     installed
                     Paths.manifest
             ))

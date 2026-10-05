@@ -154,6 +154,7 @@ test("self-verify runs at the in-repository version, never a hard-coded one", as
 test("the workflow Limen installs into consumers runs the CLI pinned to the recorded version", async () => {
   const assets = await read("cli/Limen.Core/Assets.fs");
   assert.match(assets, /require\('\.\/\.echelon\/limen\.json'\)\.installedVersion/);
-  assert.match(assets, /typescript-wasm-kernel@\$\{\{ steps\.limen\.outputs\.version \}\}" verify --strict/);
-  assert.doesNotMatch(assets, /npx --yes @echelon-foundry\/typescript-wasm-kernel verify/, "an unpinned verify floats to the latest release");
+  assert.match(assets, /@echelon-foundry\/limen@\$\{\{ steps\.limen\.outputs\.version \}\}" verify --strict/);
+  assert.doesNotMatch(assets, /npx --yes @echelon-foundry\/limen verify/, "an unpinned verify floats to the latest release");
+  assert.doesNotMatch(assets, /typescript-wasm-kernel/, "the workflow installs the package under its 0.7.0 name, @echelon-foundry/limen");
 });
