@@ -85,6 +85,15 @@ to 0.7](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md
   and all of `site/app/**`; a test fails when a handwritten `.ts` file is
   outside it.
 
+### Fixed — the site smoke waits on the wall clock (WI-0148)
+
+- `npm run smoke:site:wasm` waits for its DOM markers with a 20-second
+  wall-clock deadline per attempt (`scripts/wait-for-dom-marker.ts`, plain
+  CDP over Node's own `WebSocket`) instead of Chrome's
+  `--virtual-time-budget`. Virtual time ran ahead while the .NET runtime was
+  still loading, so on a slow runner every attempt dumped the page before the
+  F# engine had projected anything. Same markers, same three attempts.
+
 ### Architecture
 
 - **Core has a machine-readable manifest (#60).**

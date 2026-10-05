@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-05T13:52:06Z",
+  "updatedAt": "2026-10-05T13:58:08Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3254,13 +3254,23 @@
     {
       "id": "WI-0148",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-05T13:52:06Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/wait-for-dom-marker.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-site-wasm.sh"
+        }
+      ],
+      "updatedAt": "2026-10-05T13:58:08Z",
       "telemetryExecutionIds": [
         "EXE-20261005T135206879Z-5eb26b4d"
-      ]
+      ],
+      "completedAt": "2026-10-05T13:58:08Z"
     }
   ]
 }
