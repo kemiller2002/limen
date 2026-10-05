@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 147,
+  "nextSeq": 148,
   "items": [
     {
       "id": "WI-0001",
@@ -2144,6 +2144,20 @@
       "attachments": [],
       "createdAt": "2026-10-05T09:21:35.958Z",
       "updatedAt": "2026-10-05T09:48:00Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0147",
+      "title": "Release 0.7.0: bump package version, date the changelog, move the self-installation record",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-05T12:39:21.659Z",
+      "updatedAt": "2026-10-05T12:39:30Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

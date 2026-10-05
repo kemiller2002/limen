@@ -1,0 +1,12 @@
+{
+  "workItem": "WI-0147",
+  "reference": "kemiller2002/limen#77",
+  "placement": "Release metadata only — the package version (package.json and its lockfile mirror), the dated CHANGELOG 0.7.0 entry, and Limen's self-installation record (.echelon/limen.json), which test/boundary-rules.test.ts requires to equal package.json. No source, rule set, guardrail or workflow changes; publishing remains the existing tag-triggered publish.yml.",
+  "guardrail": false,
+  "paths": [
+    "package.json",
+    "package-lock.json",
+    "CHANGELOG.md",
+    ".echelon/limen.json"
+  ]
+}
