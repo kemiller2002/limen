@@ -49,7 +49,10 @@ separate work, capture it with `./ros add` and do it under its own item.
 | `capability-pack-cross-import` | `src/capabilities/a/**` imports `src/capabilities/b/**` | compose both in the engine or at the host root |
 | `external-dependency` | anything in the published package imports a bare or `node:` module | implement it in-repo; a dependency needs its own justified work item |
 | `unresolvable-import` | a computed `import(…)` in a layered file | import a fixed path |
-| `engine-library-authority` | code under `libraries/` names browser, JS-interop, network, filesystem or process APIs | request an effect; authority belongs to a provider or host adapter |
+| `engine-authority` / `engine-module` / `engine-dynamic-type` | code under any engine path in [`limen.config.json`](../limen.config.json) — `src/engine`, `libraries/`, the site and federation F# engines, the guest libraries and minimal engines — names browser, JS-interop, network, filesystem or process APIs, imports a `node:` module, or uses `any`/`dynamic`. The rules are [`architecture/boundary-rules.json`](../architecture/boundary-rules.json), the same file the consumer `limen verify` embeds; [`architecture/verify-parity.json`](../architecture/verify-parity.json) records which repository checks consumers do not get, and why | request an effect; authority belongs to a provider or host adapter |
+| `escape-hatch` | `eval`, `SetInnerHtml` or `ExecuteScript` anywhere on either side of the declared boundary | a typed effect or a binding primitive |
+| boundary coverage | a source file under `src/` or `site/app/` is on neither side of the declared boundary, or an `*.Engine`/`*.Guest` project or `libraries/` project is not an engine path | add it to `boundary.engine` or `boundary.kernel` in `limen.config.json` |
+| host shim | a `*.Wasm/Program.cs` is not listed in [`architecture/wasm-hosts.json`](../architecture/wasm-hosts.json), does not forward to its engine, contains control flow, or names a browser or application concept | marshalling only: forward the serialized message to the engine |
 | `browser-object-in-protocol` | core-contract code references `File`, `Element`, `Response`, … | serialized values or an opaque handle id, defined in the contract |
 | contract `names a browser runtime object` | a contract type is named `File`, `Element`, … | same |
 | `unattributed-commit` / `multiple-work-items` | a commit changes meaningful paths with zero or two work items | one commit, one work item |
@@ -71,7 +74,9 @@ separate work, capture it with `./ros add` and do it under its own item.
 
 The TypeScript rules apply to the files listed in
 [`architecture/typescript-boundary.json`](../architecture/typescript-boundary.json)
-(Core, capability packs, the reference engine, the site's WASM transports),
+— every handwritten TypeScript file under `src/` and `site/app/`, including
+the demo and site composition roots and the renderer; coverage is default-deny,
+so a new file outside the globs fails `test/typescript-boundary.test.ts` —
 excluding registered contract-gen outputs — pasting the generated marker into
 a handwritten file exempts nothing. The same file holds the one sanctioned
 exception (the generic capability seam) and a **ratchet** of pre-existing debt:

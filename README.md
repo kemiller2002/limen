@@ -446,13 +446,20 @@ Once installed, the executable is simply `limen`.
 
 `init` creates three things: `limen.config.json` (yours — it names which
 directories are engine and which are kernel), a CI workflow that runs
-`verify --strict`, and an installation manifest at `.echelon/limen.json`. It
+`verify --strict` pinned to the version recorded in the installation manifest,
+and that manifest at `.echelon/limen.json`. It
 never overwrites a file you have edited, and never overwrites a file that was
 there before it arrived. Running it twice makes no second round of changes.
 
-`verify` then enforces the boundary this README opens with: engine code must not
-name `document`, `window`, `fetch(`, `localStorage` or `sessionStorage`, and
-neither side may use `eval`. It is a lexical check — a guard rail, not a proof.
+`verify` then enforces the boundary this README opens with, using the same
+rule set Limen applies to its own repository
+([`architecture/boundary-rules.json`](https://github.com/kemiller2002/limen/blob/main/architecture/boundary-rules.json)):
+engine code must not acquire browser, JavaScript-interop, network, filesystem
+or process authority, and neither side may use `eval`. A boundary that checks
+no engine code is reported as `not-configured` (exit 8), never as a pass; a
+repository with no browser application declares
+`"boundary": { "notApplicable": { "rationale": "…" } }`. It is a lexical check —
+a guard rail, not a proof.
 
 For CI and agents, every command takes `--json` and branches on stable exit
 codes; `init` and `upgrade` take `--dry-run` and `--check`. Nothing prompts, so
