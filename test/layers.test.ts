@@ -54,11 +54,12 @@ test("imports quoted in comments or strings are not imports", () => {
   assert.deepEqual(importsOf(`// import x from "../capabilities/focus/provider.js";\n/* export * from "lodash"; */\nconst s = "import y from 'z'";`), []);
 });
 
-test("an engine library acquiring browser, interop, network or filesystem authority fails, per language", () => {
-  assert.deepEqual(rules([{ path: "libraries/fsharp/Routing/Routing.fs", source: "module Routing\nopen System.Runtime.InteropServices.JavaScript" }]), ["engine-library-authority"]);
-  assert.deepEqual(rules([{ path: "libraries/csharp/Forms/Forms.cs", source: "using System.Net.Http;" }]), ["engine-library-authority"]);
-  assert.deepEqual(rules([{ path: "libraries/rust/routing/src/lib.rs", source: "use web_sys::window;" }]), ["engine-library-authority"]);
-  assert.deepEqual(rules([{ path: "libraries/fsharp/Routing/Routing.fs", source: "module Routing\n// System.IO is mentioned only in this comment\nlet parse (path: string) = path.Split '/'" }]), []);
+test("engine authority is not a layer rule: one rule set lives in architecture/boundary-rules.json", () => {
+  // Engine libraries are checked by scripts/check-architecture.ts through
+  // tools/guardrails/boundary.ts (test/boundary-rules.test.ts). A second token
+  // list in the layer map is refused so the two cannot drift apart again.
+  assert.equal("engineLibraries" in (rawMap as Record<string, unknown>), false);
+  assert.throws(() => parseLayerMap({ ...rawMap, engineLibraries: { paths: ["libraries/**"], forbidden: {} } }), /boundary-rules\.json/);
 });
 
 test("a browser runtime type in core-contract code fails", () => {

@@ -2,6 +2,12 @@
   "doc": "Guardrail-owned paths and required gates. A commit that changes a guardrail path must belong to a work item whose scope manifest (architecture/work-scopes/WI-####.json) declares \"guardrail\": true. Feature work is not authority to change its supervisor (kemiller2002/limen#51 \u00a711). Checked by scripts/check-scope.ts; required gates are checked by test/guardrails.test.ts.",
   "paths": [
     "architecture/layers.json",
+    "architecture/boundary-rules.json",
+    "architecture/verify-parity.json",
+    "architecture/wasm-hosts.json",
+    "limen.config.json",
+    "test/boundary-rules.test.ts",
+    "test/fixtures/boundary-rules/**",
     "architecture/guardrails.json",
     "architecture/core.json",
     "architecture/core-baseline.json",

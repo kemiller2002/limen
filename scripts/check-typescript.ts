@@ -17,8 +17,10 @@ const protocolTypeNames = (await Promise.all(targets.units.map(async (unit) =>
   (JSON.parse(await readFile(join(ROOT, unit), "utf8")) as { readonly types: readonly { readonly name: string }[] }).types.map((type) => type.name)))).flat();
 
 const tsconfig = ts.parseJsonConfigFileContent(ts.readConfigFile(join(ROOT, "tsconfig.json"), ts.sys.readFile).config, ts.sys, ROOT);
-const siteTransports = ts.sys.readDirectory(join(ROOT, "site/app"), [".ts"]).filter((file) => file.endsWith("-transport.ts"));
-const program = ts.createProgram([...tsconfig.fileNames, ...siteTransports], { ...tsconfig.options, noEmit: true, rootDir: undefined, declaration: false, declarationMap: false });
+// Every handwritten site module, not only the transports: the site's
+// composition roots are handwritten TypeScript at the browser boundary too.
+const siteModules = ts.sys.readDirectory(join(ROOT, "site/app"), [".ts"]);
+const program = ts.createProgram([...tsconfig.fileNames, ...siteModules], { ...tsconfig.options, noEmit: true, rootDir: undefined, declaration: false, declarationMap: false });
 
 const outcome = checkProgram(program, ROOT, { ...raw, protocolTypeNames, generatedPaths });
 const stale = outcome.staleDebt.map((entry) => entry.actual < entry.declared

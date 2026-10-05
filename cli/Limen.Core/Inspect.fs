@@ -34,9 +34,6 @@ type RepositorySnapshot =
 /// and prove nothing.
 let private maximumFileBytes = 2L * 1024L * 1024L
 
-let private directoriesNeverWalked =
-    set [ "node_modules"; ".git"; "dist"; "dist-site"; "bin"; "obj"; "runtimes"; ".echelon" ]
-
 let private readTextIfExists (fullPath: string) =
     try
         if File.Exists fullPath then
@@ -47,12 +44,19 @@ let private readTextIfExists (fullPath: string) =
     with :? IOException ->
         None
 
-/// Walk one configured directory, returning (repository-relative path, content)
-/// for each source file inside it.
+/// Walk one configured path, returning (repository-relative path, content)
+/// for each source file inside it. A configured path may name a single source
+/// file as well as a directory. Directories named in the rule set's
+/// `neverWalked` (build output, dependencies) are skipped.
 let private readSourceTree (root: string) (relative: string) =
     let full = Path.Combine(root, relative)
+    let directoriesNeverWalked = Boundary.neverWalked ()
 
-    if not (Directory.Exists full) then
+    if File.Exists full then
+        match Boundary.isSourceFile relative, readTextIfExists full with
+        | true, Some content -> [ Paths.normalize relative, content ]
+        | _ -> []
+    elif not (Directory.Exists full) then
         []
     else
         let results = ResizeArray()
@@ -113,7 +117,7 @@ let repository (root: string) : RepositorySnapshot =
 
     let boundary =
         configuration
-        |> Option.map (fun c -> c.Boundary)
+        |> Option.map Configuration.declaredPaths
         |> Option.defaultValue Configuration.defaultBoundary
 
     // Managed paths come from two places: what the manifest says was installed,
@@ -145,7 +149,9 @@ let repository (root: string) : RepositorySnapshot =
 
     let missing =
         boundary.Engine @ boundary.Kernel
-        |> List.filter (fun relative -> not (Directory.Exists(Path.Combine(root, relative))))
+        |> List.filter (fun relative ->
+            let full = Path.Combine(root, relative)
+            not (Directory.Exists full || File.Exists full))
 
     { Root = root
       ManifestText = manifestText

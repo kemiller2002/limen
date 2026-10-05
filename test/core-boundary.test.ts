@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { cp, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 import test from "node:test";
 import { checkCore, contractFamilies, dataAttributesOf, exportedNames, parseCoreManifest, runtimeDependencies, type CoreInputs, type CoreManifest } from "../tools/guardrails/core.ts";
 import { checkLayers, parseLayerMap, type SourceFile } from "../tools/guardrails/layers.ts";
@@ -214,8 +214,12 @@ test("export names are read from lists, renames and declarations", () => {
 test("npm run check:architecture fails on a Core violation in an isolated copy of the repository", async () => {
   const copy = await mkdtemp(join(tmpdir(), "limen-core-"));
   try {
-    await Promise.all(["src", "architecture", "contract", "scripts", "tools", "site/fsharp/Limen.Site.Engine", "site/fsharp/Limen.Site.Wasm/Program.cs", "package.json"]
-      .map((path) => cp(join(ROOT, path), join(copy, path), { recursive: true })));
+    // Everything check:architecture reads: the Core manifest's inputs, plus the
+    // declared boundary (limen.config.json and every engine, kernel and host
+    // path it names). Build output is skipped; the check never walks it.
+    const buildOutput = new Set(["bin", "obj", "publish", "target", "node_modules"]);
+    await Promise.all(["src", "architecture", "contract", "scripts", "tools", "site/app", "site/fsharp", "guests", "libraries", "package.json", "limen.config.json"]
+      .map((path) => cp(join(ROOT, path), join(copy, path), { recursive: true, filter: (source) => !buildOutput.has(basename(source)) })));
     const run = () => spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "scripts/check-architecture.ts"], { cwd: copy, encoding: "utf8" });
     assert.equal(run().status, 0, run().stderr);
     await writeFile(join(copy, "src/kernel/timers.ts"), `import { ModuleFederation } from "../federation.js";\nexport const federation = ModuleFederation;\n`);

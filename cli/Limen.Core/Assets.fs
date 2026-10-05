@@ -11,9 +11,13 @@ module Limen.Core.Assets
 
 /// The CI integration `init` registers.
 ///
-/// It pins no version deliberately: a repository that wants to pin one edits
-/// the file, and the ownership rules then treat it as locally modified and stop
-/// overwriting it.
+/// It runs the CLI pinned to the version the repository records in its
+/// installation manifest (`installedVersion` in `.echelon/limen.json`), read at
+/// run time. An unpinned `npx` would float to whatever was published last, and
+/// `--strict` would then fail every repository whose installation lags the
+/// newest release (LIMEN011) for no change of its own. Reading the pin at run
+/// time keeps the version out of this file's content, so a release does not
+/// mark every installed copy as changed; `limen upgrade` moves the pin.
 let workflow =
     """# Installed and maintained by Limen (@echelon-foundry/typescript-wasm-kernel).
 # Edit freely — once changed, `limen upgrade` will stop rewriting it and will
@@ -39,8 +43,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: Verify the Limen boundary
-        run: npx --yes @echelon-foundry/typescript-wasm-kernel verify --strict
+      - name: Read the Limen version this repository records
+        id: limen
+        run: echo "version=$(node -p "require('./.echelon/limen.json').installedVersion")" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the Limen boundary with that version
+        run: npx --yes "@echelon-foundry/typescript-wasm-kernel@${{ steps.limen.outputs.version }}" verify --strict
 """
 
 /// Every tool-owned asset, as (path, content, ownership).

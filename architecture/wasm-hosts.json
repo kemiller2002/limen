@@ -1,0 +1,32 @@
+{
+  "doc": "Every .NET WebAssembly host shim in this repository: the C# [JSExport] glue between the browser and an engine. A shim is marshalling only — it forwards serialized messages to its engine and contains no decision, state or browser concept. scripts/check-architecture.ts requires every */*.Wasm/Program.cs under site/ and guests/ to be listed here (default deny), each to reference its engine, to contain no control flow, and to name none of `forbidden` or its own `applicationConcepts`. Repository-only: consumers declare no host shims to `limen verify` (see architecture/verify-parity.json). The Rust ABI shim (guests/minimal/rust/limen-minimal-wasm) is not a .NET host and is held instead by architecture/guardrails.json requiredGates.unsafeAbiCrates. Guardrail-owned.",
+  "forbidden": ["document", "window", "fetch(", "localStorage", "sessionStorage", "HttpClient", "System.IO", "System.Net.Http"],
+  "controlFlow": ["if", "else", "switch", "case", "for", "foreach", "while", "do", "try", "catch", "goto"],
+  "hosts": [
+    {
+      "path": "site/fsharp/Limen.Site.Wasm/Program.cs",
+      "engine": "Limen.Site.Engine.Dispatch.handle",
+      "applicationConcepts": ["ApproveRelease", "ReconciliationRequired", "EvidenceState", "DeploymentState", "StartPolicyA", "StartPolicyB"]
+    },
+    {
+      "path": "site/fsharp/federation/Limen.Federation.Source.Wasm/Program.cs",
+      "engine": "Limen.Federation.Source.Engine.SourceModule",
+      "applicationConcepts": []
+    },
+    {
+      "path": "site/fsharp/federation/Limen.Federation.Target.Wasm/Program.cs",
+      "engine": "Limen.Federation.Target.Engine.TargetModule",
+      "applicationConcepts": []
+    },
+    {
+      "path": "guests/minimal/fsharp/Limen.Minimal.Wasm/Program.cs",
+      "engine": "Limen.Minimal.Dispatch.handle",
+      "applicationConcepts": []
+    },
+    {
+      "path": "guests/minimal/csharp/Limen.Minimal.Wasm/Program.cs",
+      "engine": "Limen.Minimal.Dispatch.Handle",
+      "applicationConcepts": []
+    }
+  ]
+}

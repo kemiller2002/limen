@@ -101,6 +101,15 @@ let ``help wins over the command it is attached to`` () =
 
 // ----------------------------------------------------------------- output --
 
+/// A failed verification, as the tests that only care about problems need it.
+let private failed strict problems =
+    { Ok = false
+      Strict = strict
+      Verdict = Failed
+      EngineFilesChecked = 0
+      KernelFilesChecked = 0
+      Problems = problems }
+
 let private parseJson (text: string) =
     let document = System.Text.Json.JsonDocument.Parse text
     document.RootElement
@@ -114,7 +123,7 @@ let ``status JSON is valid and carries a schema version`` () =
           State = NotInstalled
           ConfigurationVersion = None
           ManagedArtifactCount = 0
-          Verification = Some { Ok = false; Strict = false; Problems = [ ManifestMissing ] } }
+          Verification = Some(failed false [ ManifestMissing ]) }
 
     let root = parseJson (Json.render (Render.statusToJson report))
 
@@ -125,9 +134,7 @@ let ``status JSON is valid and carries a schema version`` () =
 [<Fact>]
 let ``verify JSON lists every problem with a code and a remedy`` () =
     let verification =
-        { Ok = false
-          Strict = true
-          Problems = [ BoundaryViolation("src/engine/a.ts", "reaches the DOM"); ManifestMissing ] }
+        failed true [ BoundaryViolation("src/engine/a.ts", "reaches the DOM"); ManifestMissing ]
 
     let root = parseJson (Json.render (Render.verifyToJson verification))
     let problems = root.GetProperty("problems")
@@ -141,9 +148,7 @@ let ``verify JSON lists every problem with a code and a remedy`` () =
 [<Fact>]
 let ``a boundary problem reports the file it is about`` () =
     let verification =
-        { Ok = false
-          Strict = false
-          Problems = [ BoundaryViolation("src/engine/a.ts", "reaches the DOM") ] }
+        failed false [ BoundaryViolation("src/engine/a.ts", "reaches the DOM") ]
 
     let root = parseJson (Json.render (Render.verifyToJson verification))
     let first = root.GetProperty("problems").EnumerateArray() |> Seq.head
@@ -164,7 +169,8 @@ let ``every problem case can be explained`` () =
           ManagedArtifactModified "a"
           BoundaryViolation("a", "r")
           ConfiguredPathMissing "a"
-          InstalledVersionOutdated("1.0.0", "2.0.0") ]
+          InstalledVersionOutdated("1.0.0", "2.0.0")
+          BoundaryNotConfigured "no engine path" ]
 
     for problem in every do
         let finding = Diagnose.explain problem
@@ -185,7 +191,8 @@ let ``problem codes are unique`` () =
           ManagedArtifactModified "a"
           BoundaryViolation("a", "r")
           ConfiguredPathMissing "a"
-          InstalledVersionOutdated("1.0.0", "2.0.0") ]
+          InstalledVersionOutdated("1.0.0", "2.0.0")
+          BoundaryNotConfigured "no engine path" ]
         |> List.map (fun problem -> (Diagnose.explain problem).Code)
 
     Assert.Equal(List.length codes, codes |> List.distinct |> List.length)
@@ -202,9 +209,7 @@ let ``JSON escaping survives control characters and quotes`` () =
 let ``verbose actually changes what verify prints`` () =
     // A documented flag that does nothing is a lie in the public interface.
     let verification =
-        { Ok = false
-          Strict = false
-          Problems = [ BoundaryViolation("src/engine/a.ts", "reaches the DOM") ] }
+        failed false [ BoundaryViolation("src/engine/a.ts", "reaches the DOM") ]
 
     let plain = Render.verifyToText verification false
     let verbose = Render.verifyToText verification true
@@ -215,5 +220,38 @@ let ``verbose actually changes what verify prints`` () =
 
 [<Fact>]
 let ``the help text documents every exit code the CLI can return`` () =
-    for code in [ 0; 1; 2; 3; 4; 5; 6; 7 ] do
+    for code in [ 0; 1; 2; 3; 4; 5; 6; 7; 8 ] do
         Assert.Contains(string code, Help.general)
+
+[<Fact>]
+let ``verify JSON carries the verdict, what was checked and the rule set`` () =
+    let verification =
+        { Ok = true
+          Strict = true
+          Verdict = NotApplicable "No browser application."
+          EngineFilesChecked = 0
+          KernelFilesChecked = 0
+          Problems = [] }
+
+    let root = parseJson (Json.render (Render.verifyToJson verification))
+
+    Assert.Equal("not-applicable", root.GetProperty("verdict").GetString())
+    Assert.Equal("No browser application.", root.GetProperty("rationale").GetString())
+    Assert.Equal(0, root.GetProperty("checked").GetProperty("engineFiles").GetInt32())
+    Assert.Equal(Boundary.ruleSetSha256 (), root.GetProperty("ruleSet").GetProperty("sha256").GetString())
+
+[<Fact>]
+let ``a not-configured verification never reads as a pass`` () =
+    let verification =
+        { Ok = false
+          Strict = true
+          Verdict = NotConfigured
+          EngineFilesChecked = 0
+          KernelFilesChecked = 0
+          Problems = [ BoundaryNotConfigured "limen.config.json declares no engine path" ] }
+
+    let text = Render.verifyToText verification false
+
+    Assert.DoesNotContain("passed", text)
+    Assert.Contains("not configured", text)
+    Assert.Equal("not-configured", (parseJson (Json.render (Render.verifyToJson verification))).GetProperty("verdict").GetString())

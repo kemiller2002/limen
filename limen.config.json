@@ -1,1 +1,37 @@
-{"configurationVersion":1,"boundary":{"engine":[],"kernel":[]}}
+{
+  "configurationVersion": 1,
+  "boundary": {
+    "engine": [
+      "src/engine",
+      "libraries",
+      "site/fsharp/Limen.Site.Engine",
+      "site/fsharp/federation/Limen.Federation.Source.Engine",
+      "site/fsharp/federation/Limen.Federation.Target.Engine",
+      "guests/fsharp/Limen.Guest",
+      "guests/fsharp/Limen.Contract",
+      "guests/csharp/Limen.Guest",
+      "guests/csharp/Limen.Contract",
+      "guests/rust/limen-guest/src",
+      "guests/rust/limen-contract/src",
+      "guests/minimal/fsharp/Limen.Minimal.Engine",
+      "guests/minimal/csharp/Limen.Minimal.Engine",
+      "guests/minimal/rust/limen-minimal/src"
+    ],
+    "kernel": [
+      "src/kernel",
+      "src/capabilities",
+      "src/capability-support",
+      "src/hosts",
+      "src/renderer",
+      "src/tooling",
+      "src/guest",
+      "src/generated",
+      "src/federation",
+      "src/federation.ts",
+      "src/index.ts",
+      "src/protocol.ts",
+      "src/main.ts",
+      "site/app"
+    ]
+  }
+}

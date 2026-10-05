@@ -16,8 +16,6 @@ export type Layer = {
 export type LayerMap = {
   readonly layers: readonly Layer[];
   readonly allowedExternal: readonly string[];
-  readonly engineLibraryPaths: readonly string[];
-  readonly engineLibraryForbidden: Readonly<Record<string, readonly string[]>>;
   readonly protocolForbiddenTypes: readonly string[];
 };
 
@@ -56,13 +54,13 @@ export const parseLayerMap = (raw: unknown): LayerMap => {
     if (!isRecord(layer) || typeof layer.name !== "string") throw new Error(`architecture/layers.json: layers[${index}] needs a name`);
     return { name: layer.name, paths: strings(layer.paths), instance: typeof layer.instance === "string" ? layer.instance : undefined, mayImport: strings(layer.mayImport) };
   });
-  const libraries = isRecord(raw.engineLibraries) ? raw.engineLibraries : {};
-  const forbidden = isRecord(libraries.forbidden) ? libraries.forbidden : {};
+  // Engine authority moved to architecture/boundary-rules.json (one rule set,
+  // shared with the consumer `limen verify`). A stale token list here would be
+  // a second source of truth, so it is refused rather than silently ignored.
+  if ("engineLibraries" in raw) throw new Error("architecture/layers.json: engineLibraries moved to architecture/boundary-rules.json; libraries/** is an engine path in limen.config.json");
   return {
     layers,
     allowedExternal: isRecord(raw.externalImports) ? strings(raw.externalImports.allowed) : [],
-    engineLibraryPaths: strings(libraries.paths),
-    engineLibraryForbidden: Object.fromEntries(Object.entries(forbidden).map(([extension, tokens]) => [extension, strings(tokens)])),
     protocolForbiddenTypes: isRecord(raw.protocolForbiddenTypes) ? strings(raw.protocolForbiddenTypes.names) : [],
   };
 };
@@ -161,20 +159,10 @@ const protocolTypeViolations = (map: LayerMap, file: SourceFile): readonly Viola
     .map((name) => ({ rule: "browser-object-in-protocol", path: file.path, detail: `core-contract code references the browser runtime type ${name}`, remedy: "Browser objects never cross the boundary. Carry serialized values or an opaque handle id, defined in the contract." }));
 };
 
-const engineLibraryViolations = (map: LayerMap, file: SourceFile): readonly Violation[] => {
-  if (!map.engineLibraryPaths.some((glob) => matches(glob, file.path))) return [];
-  const extension = /\.[^.\/]+$/.exec(file.path)?.[0] ?? "";
-  const code = withoutComments(file.source);
-  return (map.engineLibraryForbidden[extension] ?? [])
-    .filter((token) => code.includes(token))
-    .map((token) => ({ rule: "engine-library-authority", path: file.path, detail: `engine library acquires host authority via ${token}`, remedy: "An engine library is pure application logic: it requests effects and receives results. Code that needs this authority is a host adapter or a capability provider, not an engine library." }));
-};
-
 export const checkLayers = (map: LayerMap, files: readonly SourceFile[]): readonly Violation[] =>
   files.flatMap((file) => [
     ...(file.path.endsWith(".ts") ? importViolations(map, file) : []),
     ...(file.path.endsWith(".ts") ? protocolTypeViolations(map, file) : []),
-    ...engineLibraryViolations(map, file),
   ]);
 
 export const describeViolation = (violation: Violation): string =>

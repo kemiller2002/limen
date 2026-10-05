@@ -36,6 +36,7 @@ EXIT CODES
   1  internal failure             5  upgrade blocked by a local change
   2  invalid arguments            6  prerequisite failure
   3  verification failed          7  unsupported platform
+                                  8  boundary not configured (verify)
 
 Documentation: https://github.com/kemiller2002/limen
 """
@@ -101,8 +102,18 @@ USAGE
 WHAT IT CHECKS
   That the manifest and configuration are present, readable and a version this
   CLI understands; that every file the manifest records still exists; and that
-  engine code does not reach for the browser while kernel code is the only
-  place that does.
+  engine code does not reach for the browser, JavaScript interop, the network,
+  the filesystem or a process, while kernel code is the only place that does.
+  The rules are the ones Limen applies to its own repository; `--json` names
+  them by SHA-256 (ruleSet.sha256).
+
+VERDICTS
+  passed          engine code was checked and nothing was wrong
+  not-applicable  limen.config.json declares "boundary": { "notApplicable":
+                  { "rationale": "…" } } — this repository has no boundary
+  not-configured  no engine path is declared, or none holds source: nothing
+                  was checked, which is not a pass
+  failed          every reason is listed
 
 STRICT
   --strict additionally requires that tool-owned files have not been edited
@@ -113,8 +124,14 @@ SIDE EFFECTS
   None. verify never writes to the repository.
 
 EXIT CODES
-  0  valid
-  3  invalid — every reason is listed
+  0  passed, or not-applicable
+  3  failed — every reason is listed
+  8  not-configured
+
+PINNING
+  Run the CLI at the version this repository records, so CI does not float to
+  whatever was published last (this is what the installed workflow does):
+    npx --yes @echelon-foundry/typescript-wasm-kernel@"$(node -p "require('./.echelon/limen.json').installedVersion")" verify --strict
 
 EXAMPLES
   npx @echelon-foundry/typescript-wasm-kernel verify --strict

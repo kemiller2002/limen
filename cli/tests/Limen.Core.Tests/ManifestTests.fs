@@ -101,9 +101,10 @@ let ``configuration round trips its boundary`` () =
     let text = Configuration.serialize Configuration.defaultConfiguration
 
     match Configuration.parse "limen.config.json" text with
-    | Ok parsed ->
-        Assert.Equal<string list>([ "src/engine" ], parsed.Boundary.Engine)
-        Assert.Equal<string list>([ "src/kernel" ], parsed.Boundary.Kernel)
+    | Ok { Boundary = Declared declared } ->
+        Assert.Equal<string list>([ "src/engine" ], declared.Engine)
+        Assert.Equal<string list>([ "src/kernel" ], declared.Kernel)
+    | Ok other -> failwithf "expected a declared boundary, got %A" other
     | Error problem -> failwithf "unexpected %A" problem
 
 [<Theory>]

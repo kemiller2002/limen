@@ -95,3 +95,15 @@ test("the repository's handwritten boundary TypeScript passes", () => {
   const output = execFileSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "scripts/check-typescript.ts"], { cwd: ROOT, encoding: "utf8" });
   assert.match(output, /Restricted TypeScript checks passed/);
 });
+
+test("coverage is default-deny: every handwritten TypeScript file under src/ and site/app/ is in the restricted subset", async () => {
+  const { matches } = await import("../tools/guardrails/layers.ts");
+  const boundary = JSON.parse(await readFile(join(ROOT, "architecture/typescript-boundary.json"), "utf8")) as { files: readonly string[] };
+  const generated = new Set((JSON.parse(await readFile(join(ROOT, "contract/targets.json"), "utf8")) as { outputs: readonly { path: string }[] }).outputs.map((output) => output.path));
+  const handwritten = [...ts.sys.readDirectory(join(ROOT, "src"), [".ts"]), ...ts.sys.readDirectory(join(ROOT, "site/app"), [".ts"])]
+    .map((file) => file.slice(ROOT.length + 1))
+    .filter((path) => !path.endsWith(".d.ts") && !generated.has(path));
+  const uncovered = handwritten.filter((path) => !boundary.files.some((glob) => matches(glob, path)));
+  assert.deepEqual(uncovered, [], "add these to architecture/typescript-boundary.json `files` (or fix them until they pass)");
+  assert.ok(handwritten.includes("src/main.ts") && handwritten.includes("site/app/federation-proof.ts"));
+});

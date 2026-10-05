@@ -1,0 +1,433 @@
+{
+  "doc": "Shared conformance fixtures for the engine-authority rule set (architecture/boundary-rules.json). test/boundary-rules.test.ts runs them through tools/guardrails/boundary.ts (the repository guardrail) and cli/tests/Limen.Core.Tests/BoundaryRulesTests.fs runs them through cli/Limen.Core/Boundary.fs (consumer `limen verify`). Each case lists every (rule, token) expected, in rule-set order; both implementations must produce exactly that list.",
+  "cases": [
+    {
+      "name": "a browser global in TypeScript engine code",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const t = () => document.title;\n",
+      "expect": [
+        [
+          "engine-authority",
+          "document"
+        ]
+      ]
+    },
+    {
+      "name": "a comment naming the browser is prose, not access",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "// the engine never touches document or window\nexport const f = (n: number) => n;\n",
+      "expect": []
+    },
+    {
+      "name": "a block comment naming the browser is prose",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "/* uses no window at all */\nexport const f = (n: number) => n;\n",
+      "expect": []
+    },
+    {
+      "name": "a string literal naming the browser is data",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const label = \"document\";\nexport const other = 'window';\n",
+      "expect": []
+    },
+    {
+      "name": "a word that contains a token is not the token",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "const documentation = 1; const windowWidth = 2; const fetcher = 3;\n",
+      "expect": []
+    },
+    {
+      "name": "a call is a call with whitespace before the parenthesis",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const load = (url: string) => fetch (url);\n",
+      "expect": [
+        [
+          "engine-authority",
+          "fetch("
+        ]
+      ]
+    },
+    {
+      "name": "a template substitution is code",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const t = () => `title: ${document.title}`;\n",
+      "expect": [
+        [
+          "engine-authority",
+          "document"
+        ]
+      ]
+    },
+    {
+      "name": "template text is data",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const t = (n: number) => `document ${n} window`;\n",
+      "expect": []
+    },
+    {
+      "name": "nested braces inside a template substitution stay code",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const t = () => `${ { a: 1 }.a } and ${navigator.language}`;\n",
+      "expect": [
+        [
+          "engine-authority",
+          "navigator"
+        ]
+      ]
+    },
+    {
+      "name": "a dynamic import acquires a module at run time",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const later = () => import(\"./heavy.js\");\n",
+      "expect": [
+        [
+          "engine-authority",
+          "import("
+        ]
+      ]
+    },
+    {
+      "name": "an engine may not import a host module",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "import { readFile } from \"node:fs/promises\";\nexport const r = readFile;\n",
+      "expect": [
+        [
+          "engine-module",
+          "node:"
+        ]
+      ]
+    },
+    {
+      "name": "a side-effect import of a host module is still an import",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "import \"node:process\";\nexport const x = 1;\n",
+      "expect": [
+        [
+          "engine-module",
+          "node:"
+        ]
+      ]
+    },
+    {
+      "name": "a comment mentioning a host module is not an import",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "// never import from \"node:fs\" here\nexport const x = 1;\n",
+      "expect": []
+    },
+    {
+      "name": "the kernel may import host modules",
+      "side": "kernel",
+      "path": "src/kernel/a.ts",
+      "source": "import { readFile } from \"node:fs/promises\";\nexport const r = readFile;\n",
+      "expect": []
+    },
+    {
+      "name": "every TypeScript browser global is caught",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "const a = globalThis; const b = new XMLHttpRequest(); const c = indexedDB; const d = new WebSocket(u); const e = new EventSource(u); postMessage(1); importScripts(u); const f = localStorage; const g = sessionStorage; const h = window;\n",
+      "expect": [
+        [
+          "engine-authority",
+          "window"
+        ],
+        [
+          "engine-authority",
+          "globalThis"
+        ],
+        [
+          "engine-authority",
+          "XMLHttpRequest"
+        ],
+        [
+          "engine-authority",
+          "WebSocket"
+        ],
+        [
+          "engine-authority",
+          "EventSource"
+        ],
+        [
+          "engine-authority",
+          "localStorage"
+        ],
+        [
+          "engine-authority",
+          "sessionStorage"
+        ],
+        [
+          "engine-authority",
+          "indexedDB"
+        ],
+        [
+          "engine-authority",
+          "postMessage"
+        ],
+        [
+          "engine-authority",
+          "importScripts"
+        ]
+      ]
+    },
+    {
+      "name": "a qualified browser global is still the global",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const send = (x: number) => self.postMessage(x);\n",
+      "expect": [
+        [
+          "engine-authority",
+          "postMessage"
+        ]
+      ]
+    },
+    {
+      "name": "any is a type escape in engine code",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "export const f = (x: any) => x;\n",
+      "expect": [
+        [
+          "engine-dynamic-type",
+          "any"
+        ]
+      ]
+    },
+    {
+      "name": "any in prose is not a type",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "// callers may pass any number\nexport const f = (n: number) => n;\n",
+      "expect": []
+    },
+    {
+      "name": "the kernel may use the browser",
+      "side": "kernel",
+      "path": "src/kernel/a.ts",
+      "source": "export const t = () => window.localStorage.getItem(\"k\") ?? document.title;\n",
+      "expect": []
+    },
+    {
+      "name": "eval is an escape hatch on the kernel side too",
+      "side": "kernel",
+      "path": "src/kernel/a.ts",
+      "source": "export const f = () => eval(\"1\");\n",
+      "expect": [
+        [
+          "escape-hatch",
+          "eval"
+        ]
+      ]
+    },
+    {
+      "name": "an escaped quote does not hide what follows",
+      "side": "engine",
+      "path": "src/engine/a.ts",
+      "source": "const label = \"a\\\"b\";\nconst x = document.title;\n",
+      "expect": [
+        [
+          "engine-authority",
+          "document"
+        ]
+      ]
+    },
+    {
+      "name": "F# engine code may not open the filesystem",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "module Domain\nopen System.IO\nlet read path = File.ReadAllText path\n",
+      "expect": [
+        [
+          "engine-authority",
+          "System.IO"
+        ]
+      ]
+    },
+    {
+      "name": "a longer name that starts like a token is not the token",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "module Domain\nlet failed = System.IOException(\"x\")\n",
+      "expect": []
+    },
+    {
+      "name": "document is ordinary F# domain vocabulary",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "let summarize document = document\n",
+      "expect": []
+    },
+    {
+      "name": "a qualified F# browser binding is caught",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "let title () = Browser.Dom.document.title\n",
+      "expect": [
+        [
+          "engine-authority",
+          "Browser.Dom"
+        ]
+      ]
+    },
+    {
+      "name": "an F# type parameter is not a string",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "let pair (x: 'T) (y: 'T) = new HttpClient()\n",
+      "expect": [
+        [
+          "engine-authority",
+          "HttpClient"
+        ]
+      ]
+    },
+    {
+      "name": "an F# block comment is prose",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "(* would use HttpClient here *)\nlet x = 1\n",
+      "expect": []
+    },
+    {
+      "name": "the F# multiplication operator is not a comment",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "let m = (*) 2 3\nlet c = new HttpClient()\n",
+      "expect": [
+        [
+          "engine-authority",
+          "HttpClient"
+        ]
+      ]
+    },
+    {
+      "name": "an F# triple-quoted string is data",
+      "side": "engine",
+      "path": "src/Engine/Domain.fs",
+      "source": "let text = \"\"\"open System.IO \"quoted\" HttpClient\"\"\"\n",
+      "expect": []
+    },
+    {
+      "name": "F# JavaScript interop is caught",
+      "side": "engine",
+      "path": "src/Engine/Interop.fs",
+      "source": "open System.Runtime.InteropServices.JavaScript\n[<JSImport(\"x\", \"m\")>]\nextern string X()\n",
+      "expect": [
+        [
+          "engine-authority",
+          "System.Runtime.InteropServices.JavaScript"
+        ],
+        [
+          "engine-authority",
+          "JSImport"
+        ]
+      ]
+    },
+    {
+      "name": "C# engine code may not reach the network",
+      "side": "engine",
+      "path": "src/Engine/Domain.cs",
+      "source": "using System.Net.Http;\nclass D { }\n",
+      "expect": [
+        [
+          "engine-authority",
+          "System.Net.Http"
+        ]
+      ]
+    },
+    {
+      "name": "dynamic is a type escape in C# engine code",
+      "side": "engine",
+      "path": "src/Engine/Domain.cs",
+      "source": "class D { dynamic x = 1; }\n",
+      "expect": [
+        [
+          "engine-dynamic-type",
+          "dynamic"
+        ]
+      ]
+    },
+    {
+      "name": "window is ordinary C# domain vocabulary",
+      "side": "engine",
+      "path": "src/Engine/Domain.cs",
+      "source": "class D { string Name(Window window) => window.Name; }\n",
+      "expect": []
+    },
+    {
+      "name": "a C# character literal holding a quote does not open a string",
+      "side": "engine",
+      "path": "src/Engine/Domain.cs",
+      "source": "class D { char q = '\"'; object c = new HttpClient(); }\n",
+      "expect": [
+        [
+          "engine-authority",
+          "HttpClient"
+        ]
+      ]
+    },
+    {
+      "name": "a C# escape hatch is caught on the kernel side",
+      "side": "kernel",
+      "path": "src/Browser/Host.cs",
+      "source": "class H { void R(IJSRuntime js) => js.SetInnerHtml(\"x\"); }\n",
+      "expect": [
+        [
+          "escape-hatch",
+          "SetInnerHtml"
+        ]
+      ]
+    },
+    {
+      "name": "Rust engine code may not bind the browser",
+      "side": "engine",
+      "path": "engine/src/lib.rs",
+      "source": "use web_sys::window;\npub fn f() {}\n",
+      "expect": [
+        [
+          "engine-authority",
+          "web_sys"
+        ]
+      ]
+    },
+    {
+      "name": "a Rust lifetime is not a string",
+      "side": "engine",
+      "path": "engine/src/lib.rs",
+      "source": "pub fn f<'a>(x: &'a str) -> String { std::fs::read_to_string(x).unwrap() }\n",
+      "expect": [
+        [
+          "engine-authority",
+          "std::fs"
+        ]
+      ]
+    },
+    {
+      "name": "Rust kernel code may bind the browser",
+      "side": "kernel",
+      "path": "kernel/src/lib.rs",
+      "source": "use web_sys::window;\npub fn f() {}\n",
+      "expect": []
+    },
+    {
+      "name": "a file in no checked language is not scanned",
+      "side": "engine",
+      "path": "src/engine/notes.md",
+      "source": "document window any eval( System.IO\n",
+      "expect": []
+    }
+  ]
+}

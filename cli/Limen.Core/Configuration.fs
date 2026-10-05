@@ -19,20 +19,31 @@ let defaultBoundary =
 
 let defaultConfiguration =
     { ConfigurationVersion = Paths.supportedConfigurationVersion
-      Boundary = defaultBoundary }
+      Boundary = Declared defaultBoundary }
 
 let toJson (configuration: Configuration) =
+    let boundary =
+        match configuration.Boundary with
+        | Declared declared ->
+            JObject
+                [ "engine", declared.Engine |> List.map JString |> JArray
+                  "kernel", declared.Kernel |> List.map JString |> JArray ]
+        | NoBoundary rationale -> JObject [ "notApplicable", JObject [ "rationale", JString rationale ] ]
+
     JObject
         [ "configurationVersion", JInt configuration.ConfigurationVersion
-          "boundary",
-          JObject
-              [ "engine", configuration.Boundary.Engine |> List.map JString |> JArray
-                "kernel", configuration.Boundary.Kernel |> List.map JString |> JArray ] ]
+          "boundary", boundary ]
 
 /// Serialize with a leading comment? No — JSON has no comments, and inventing a
 /// `"//"` key would put a fake field into a public schema. The explanation
 /// lives in the documentation instead.
 let serialize configuration = render (toJson configuration) + "\n"
+
+/// The declared boundary paths, or none for a repository with no boundary.
+let declaredPaths (configuration: Configuration) =
+    match configuration.Boundary with
+    | Declared declared -> declared
+    | NoBoundary _ -> { Engine = []; Kernel = [] }
 
 let parse (path: string) (text: string) : Result<Configuration, InstallationProblem> =
     match tryParse text with
@@ -58,8 +69,41 @@ let parse (path: string) (text: string) : Result<Configuration, InstallationProb
                 |> Option.defaultValue []
                 |> List.map Paths.normalize
 
-            Ok
-                { ConfigurationVersion = version
-                  Boundary =
-                    { Engine = list "engine"
-                      Kernel = list "kernel" } }
+            let declared =
+                { Engine = list "engine"
+                  Kernel = list "kernel" }
+
+            let rationale =
+                boundary
+                |> Option.bind (tryProperty "notApplicable")
+                |> Option.map (fun notApplicable ->
+                    tryProperty "rationale" notApplicable
+                    |> Option.bind tryString
+                    |> Option.map (fun text -> text.Trim())
+                    |> Option.defaultValue "")
+
+            // "No boundary" is a statement a reviewer must be able to read, so
+            // it needs a reason, and it cannot be combined with a boundary.
+            match rationale with
+            | None ->
+                Ok
+                    { ConfigurationVersion = version
+                      Boundary = Declared declared }
+            | Some "" ->
+                Error(
+                    ConfigurationUnreadable(
+                        path,
+                        "\"boundary.notApplicable\" needs a non-empty \"rationale\" saying why this repository has no Limen boundary"
+                    )
+                )
+            | Some _ when not (List.isEmpty declared.Engine && List.isEmpty declared.Kernel) ->
+                Error(
+                    ConfigurationUnreadable(
+                        path,
+                        "\"boundary.notApplicable\" cannot be combined with engine or kernel paths; declare one or the other"
+                    )
+                )
+            | Some reason ->
+                Ok
+                    { ConfigurationVersion = version
+                      Boundary = NoBoundary reason }

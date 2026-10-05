@@ -118,7 +118,26 @@ let explain (problem: InstallationProblem) =
             "LIMEN011"
             "The installation is older than the CLI"
             (sprintf "This repository was initialized by version %s; the CLI running is %s." installed available)
-            (Some "Run `npx @echelon-foundry/typescript-wasm-kernel upgrade`.")
+            (Some(
+                sprintf
+                    "To move this repository to %s, run `npx --yes @echelon-foundry/typescript-wasm-kernel@%s upgrade` and commit the result. To verify against the version it records instead, pin the CLI to it: `npx --yes @echelon-foundry/typescript-wasm-kernel@%s verify --strict` — the installed workflow reads that pin from %s."
+                    available
+                    available
+                    installed
+                    Paths.manifest
+            ))
+
+    | BoundaryNotConfigured reason ->
+        diagnosis
+            Severity.Error
+            "LIMEN012"
+            "The Limen boundary checks nothing"
+            (sprintf "%s. A verification that checks no engine code is not a pass." (reason.Substring(0, 1).ToUpperInvariant() + reason.Substring 1))
+            (Some(
+                sprintf
+                    "Name the directories (or files) that hold application authority in %s under \"boundary\": { \"engine\": [...] }. If this repository has no browser application, declare that instead: \"boundary\": { \"notApplicable\": { \"rationale\": \"why\" } } — or remove the Limen installation."
+                    Paths.configuration
+            ))
 
 /// Environment checks that are about the machine rather than the repository.
 let private environment (root: string) =
