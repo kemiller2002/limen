@@ -57,7 +57,12 @@ dump_until_marker() {
   local chrome_log="$LOG_DIR/${page%.html}-chrome.log"
 
   for attempt in 1 2 3; do
-    if "$CHROME"       --headless=new       --no-sandbox       --disable-gpu       --disable-dev-shm-usage       --virtual-time-budget=20000       --dump-dom       "http://127.0.0.1:$PORT/$page"       >"$output" 2>"$chrome_log"; then
+    # A wall-clock bound, not --virtual-time-budget: Chrome's virtual clock
+    # races ahead while the page waits on the .NET runtime, so on a slow runner
+    # any budget is spent and the DOM dumped before the engine has started.
+    if node --experimental-strip-types "$ROOT/scripts/wait-for-dom-marker.ts" \
+      "$CHROME" "http://127.0.0.1:$PORT/$page" "$marker" 20000 \
+      >"$output" 2>"$chrome_log"; then
       if grep -Fq "$marker" "$output"; then
         return 0
       fi

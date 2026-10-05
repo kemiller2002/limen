@@ -149,3 +149,5 @@
 | WI-0142 | Implement CA-0003 (approved): a handshake-only generated Core codec, so the kernel stops loading the whole core codec (WI-0047 codec half, GH-19) | complete |  | medium |
 | WI-0143 | Trimmed F# guest: reflection-free, printf-free F#, full trim mode, and the owner-approved IL2040 exception declared in guardrails (WI-0046, GH-19) | complete |  | medium |
 | WI-0146 | Consumer verify integrity: explicit not-configured verdict, rule parity with Limen's own guardrails, one browser-token source, in-repo self-verify version, pinned consumer invocation, handwritten TS and federation engine coverage | complete |  | medium |
+| WI-0147 | Release 0.7.0: bump package version, date the changelog, move the self-installation record | complete |  | medium |
+| WI-0148 | Pages smoke waits for the F# WASM DOM marker on the wall clock: headless Chrome's virtual-time budget expires while the .NET runtime is still compiling off the main thread on a slow runner (release 0.7.0 Pages failure) | complete |  | medium |
