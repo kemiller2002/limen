@@ -76,18 +76,20 @@ Measured, not assumed — each of these cost real time to rediscover.
 
 Two consequences worth internalising before you act:
 
-**Releases cannot be cut from here.** `publish.yml` triggers on a `v*.*.*` tag,
-and no agent in this sandbox can create one. Prepare the version bump, get it
-onto `main`, and hand the human this:
+**Release tags cannot be pushed from here — use the workflow instead.** No
+agent in this sandbox can push a `v*.*.*` tag. Prepare the version bump and get
+it onto `main`; then either hand the human this:
 
 ```sh
 git fetch origin main && git tag -a vX.Y.Z <sha> -m "Limen X.Y.Z" && git push origin vX.Y.Z
 ```
 
-Do not "solve" this by adding `workflow_dispatch` to `publish.yml`: its guard
-compares the tag to `package.json`, so making a dispatch work means loosening a
-release check to compensate for a sandbox limit. A tag pushed by `GITHUB_TOKEN`
-would not trigger the workflow anyway.
+or, when the owner has asked for it, dispatch `publish.yml` on `main` with
+`version=X.Y.Z` and `commit=<full sha>`. That path does not loosen the release
+check: it still requires `package.json` at the commit to equal the version, and
+additionally that the commit is on `main` and its CI passed. The workflow, not
+the agent, creates the tag. Publishing is irreversible, so never dispatch it on
+your own initiative.
 
 **Never push a throwaway branch.** Deletion is blocked, so every scratch branch
 is permanent litter only the human can clear. Two such branches

@@ -608,14 +608,28 @@ simple page. See
 ## Release
 
 CI builds, tests, and validates the npm tarball on every push and pull request.
-Publishing is triggered by a semantic-version tag and authenticates with npm
+Publishing runs in `.github/workflows/publish.yml` and authenticates with npm
 Trusted Publishing over GitHub OIDC — no npm token is stored in GitHub.
 
-1. `npm version patch` (or `minor`/`major`)
-2. `git push --follow-tags`
+Get the version bump (`package.json`, lockfile, CHANGELOG) merged to `main`,
+then take either path:
 
-The publish workflow rejects a tag whose version does not match `package.json`,
-then runs all checks before publishing.
+- **Push the tag.** `git tag -a vX.Y.Z <sha> -m "Limen X.Y.Z"` and
+  `git push origin vX.Y.Z`.
+- **Or run "Publish" from the Actions tab** on `main`, with `version`
+  (`X.Y.Z`, no `v`) and `commit` (the full 40-character SHA). Before anything
+  is tagged, the run requires the commit to be on `main`, its `package.json` to
+  carry that version, its CI run to have passed, and `vX.Y.Z` to be absent or
+  already at that commit. It then pushes the annotated tag itself and publishes
+  in the same run.
+
+Either way the workflow rejects a tag whose version does not match
+`package.json`, rebuilds and runs all checks on the tagged commit, publishes
+the tested archive, and creates the GitHub release with the version's
+CHANGELOG section as notes. A re-run is safe: an existing matching tag, an
+already-published version and an existing release are each left alone. On the
+dispatch path, npm's provenance names the `main` commit the workflow ran from;
+the tag names the released commit.
 
 Changes by version: [CHANGELOG.md](https://github.com/kemiller2002/limen/blob/main/CHANGELOG.md).
 
