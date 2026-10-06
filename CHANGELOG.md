@@ -16,6 +16,32 @@ exhaustive lists.
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-10-06
+
+### Fixed — a form submit no longer re-sends unchecked radios and checkboxes (WI-0150, #80)
+
+- Before a form's own `data-event`, the kernel re-fires its fields' bindings
+  so an edit made without blurring reaches the engine (the pending-field
+  flush). It re-fired **every** bound control in the form: every radio in a
+  group, unchecked checkboxes, disabled controls and even `data-event`
+  buttons. A 1.1 engine, which receives no `checked`, saw each radio's value
+  in document order, so the *last* radio won whether or not it was checked —
+  breaking the documented radio recipe (one event name per group) inside a
+  form. A 1.2 engine received them with `checked: false` and had to filter
+  them out. Found by Signal (kemiller2002/signal#11).
+- The flush now follows the browser's own form data set: an enabled
+  `<input>`, `<textarea>`, or `<select>` with a selection; a checkbox or radio
+  only when checked; never a button or a disabled control (including one in
+  a disabled `<fieldset>`). A radio group contributes only its checked value;
+  a group with nothing checked contributes nothing. A field still needs no
+  `name`. A control's own `change` is unchanged and still reports an
+  unchecked radio or checkbox.
+- No protocol or contract change. An engine that already ignored
+  `checked: false` radios on submit keeps working; it no longer has to.
+- Regression tests: `test/form-controls.test.ts` (1.2 and 1.1 engines) and
+  the real-Chromium pack `test/browser/packs/core-form-controls/`. Documented
+  in docs/05, docs/32, docs/15, docs/03 and USAGE.
+
 ## [0.7.0] — 2026-10-05
 
 ### Breaking — `limen verify` checks what Limen checks, and never passes vacuously (WI-0146, #51)
@@ -1021,7 +1047,8 @@ Pre-release development, beginning at `0.2.1`: the protocol, the browser kernel,
 the reference engine, the six original examples, the documentation set, and the
 architecture and documentation checks. See the repository history.
 
-[Unreleased]: https://github.com/kemiller2002/limen/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/kemiller2002/limen/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/kemiller2002/limen/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/kemiller2002/limen/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/kemiller2002/limen/compare/v0.5.1...HEAD
 [0.5.1]: https://github.com/kemiller2002/limen/compare/v0.5.0...v0.5.1

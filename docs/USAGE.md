@@ -67,7 +67,10 @@ Notes:
   field edited without blurring still reaches the engine before submit. This
   is a purely mechanical "commit before the coarser action" behavior — the
   kernel does not know these fields form one logical draft, only that they're
-  declared bindings inside the same `<form>`.
+  declared bindings inside the same `<form>`. It flushes only what a native
+  submission would send: enabled fields, checkboxes and radios only when
+  checked, never buttons — so an unchecked radio never reaches the engine on
+  submit.
 
 ### Conditional content
 

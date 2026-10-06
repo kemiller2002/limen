@@ -174,17 +174,29 @@ if (trigger !== "submit" && form !== null) {
 }
 ```
 
-On submit, those fire first, in order, and are awaited:
+On submit, those that belong in the form's data set fire first, in order,
+and are awaited:
 
 ```ts
 if (el instanceof HTMLFormElement) {
   if (!el.reportValidity()) return;
-  for (const flush of this.#flushable.get(el) ?? []) await flush();
+  for (const entry of live.filter((candidate) => contributesToSubmission(candidate.element))) await entry.fire();
 }
 ```
 
 So the engine receives `nameChanged`, `emailChanged`, *then* `submit` — each as
 a separate round trip.
+
+**What is flushed follows the browser's own form data set** (#80): exactly
+the controls a native submission would send. An enabled `<input>`,
+`<textarea>`, or `<select>` with a selection; a checkbox or radio **only when
+it is checked**; never a button, and never a disabled control (including one
+inside a disabled `<fieldset>`). So a radio group contributes its checked
+value and nothing else, and a group with nothing checked contributes nothing.
+The one difference from the browser: a field needs no `name` attribute,
+because Limen identifies it by its `data-event`. The flush never sends an
+unchecked radio — a control's own `change` still does (with `checked: false`
+for a 1.2 engine), because that is the user acting on that control.
 
 This uses the native `.form` association, so a field associated by the `form="…"`
 attribute is included even if it sits outside the element. And it is purely
@@ -243,7 +255,7 @@ because they *are* the same intent.
 | DOM click | `<button data-event="save">` | `Event { name: "save" }` | state transition, maybe an effect |
 | DOM input | `<input data-event="x" data-on="input">` | `Event { name, value }` | draft update |
 | DOM change (blur) | `<input data-event="x">` | `Event { name, value }` | committed field |
-| Form submit | `<form data-event="submit">` | pending flushes, then `Event { name }` | validate and act |
+| Form submit | `<form data-event="submit">` | flushes of the controls in the form data set, then `Event { name }` | validate and act |
 | List item | `data-event` inside `data-each` | `Event { name, key }` | act on that item |
 | Kernel startup | — | `Initialize { protocolVersion, capabilities, location }` | project initial view, maybe load |
 | Http completion | engine requested it earlier | `EffectResult { HttpResult }` | record evidence |

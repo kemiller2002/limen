@@ -141,7 +141,9 @@ Per form:
 ## Browser controls
 
 A checkbox reports `true`/`false`. A checkbox group or multi-select reports
-the selected values. A radio group reports its checked value. A submit
+the selected values. A radio group reports its checked value — on submit too,
+where the kernel re-sends only the controls the browser's form data set would
+contain (checked radios and checkboxes, enabled fields, no buttons). A submit
 reports its submitter. The kernel delivers these faithfully from protocol
 1.2 on (`checked`, `values`, `submitter`; see
 [docs/32-forms.md](../../docs/32-forms.md)). Files arrive through the file

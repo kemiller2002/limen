@@ -1,0 +1,18 @@
+{
+  "workItem": "WI-0150",
+  "reference": "kemiller2002/limen#80",
+  "placement": "Core kernel mechanism fix plus the 0.7.1 release record. The browser kernel's pending-field flush on form submit (src/kernel/browser-kernel.ts) re-fires only the controls a native submission would include in the form data set: enabled input/select/textarea, checkboxes and radios only when checked, never buttons. No protocol, contract, generated binding, engine or guardrail change. Regression tests in test/form-controls.test.ts and the real-browser pack test/browser/packs/core-form-controls; the flush contract stated in docs; release metadata (package.json, its lockfile mirror, the dated CHANGELOG 0.7.1 entry, Limen's self-installation record .echelon/limen.json). Publishing remains the existing tag-triggered publish.yml.",
+  "guardrail": false,
+  "paths": [
+    "src/kernel/browser-kernel.ts",
+    "test/form-controls.test.ts",
+    "test/kernel.test.ts",
+    "test/browser/packs/core-form-controls/**",
+    "docs/**",
+    "conformance/forms/README.md",
+    "CHANGELOG.md",
+    "package.json",
+    "package-lock.json",
+    ".echelon/limen.json"
+  ]
+}

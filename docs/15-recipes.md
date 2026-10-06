@@ -547,6 +547,9 @@ meaningful — so the ordinary text-field shape works unchanged:
 
 Each selection dispatches `{ name: "selectFrequency", value: "daily" }`. One
 event name, one transition, and the engine projects one `is…` flag per option.
+Inside a `<form>` this stays true on submit: the pending-field flush re-sends
+only the checked radio, as a native submission would, so the unchecked ones
+never overwrite the answer (#80).
 
 **Common mistake:** binding `data-bind-value` to a checkbox and wondering why
 nothing toggles. The state you want is `checked`.

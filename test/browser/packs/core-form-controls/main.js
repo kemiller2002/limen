@@ -45,9 +45,15 @@ colours.dispatchEvent(new Event("change", { bubbles: true }));
 await settle();
 expect("a multi-select reports every selected value", JSON.stringify(last()?.values) === JSON.stringify(["red", "blue"]), last());
 
+const beforeSubmit = events.length;
 document.getElementById("publish").click();
 await settle();
 expect("a real submission reports the named button that submitted it", last()?.name === "save" && last()?.submitter === "publish", last());
+
+// The submit flush follows the browser's own form data set (#80): checked
+// radios and checkboxes only, so the unchecked "free" and "terms" stay silent.
+const flushed = events.slice(beforeSubmit).map((event) => `${event.name}=${event.value}`);
+expect("submitting flushes only checked radios and checkboxes, as a native submission would", JSON.stringify(flushed) === JSON.stringify(["topics=news", "topics=tips", "plan=pro", "colours=red", "save=undefined"]), flushed);
 
 document.getElementById("draft").click();
 await settle();

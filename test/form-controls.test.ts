@@ -150,3 +150,86 @@ for (const revision of ["1.1", "legacy"] as const) {
     for (const event of events) assert.deepEqual(Object.keys(event).filter((key) => !["kind", "name", "key", "value"].includes(key)), [], JSON.stringify(event));
   });
 }
+
+// ---------------------------------------------------------------------------
+// The submit flush follows the browser's form data set (kemiller2002/limen#80)
+//
+// Before a form's own event, the kernel re-fires its fields' bindings so an
+// edit made without blurring reaches the engine. It re-fires exactly the
+// controls a native submission would include: enabled inputs, selects and
+// textareas, checkboxes and radios only when checked, never buttons. Before
+// this fix every radio in a group was re-sent, so a 1.1 engine following the
+// documented radio recipe (one event name per group) saw the *last* radio in
+// document order win, checked or not. Found by Signal (kemiller2002/signal#11).
+// ---------------------------------------------------------------------------
+
+const SURVEY = `
+  <form id="survey" data-event="save">
+    <input type="radio" name="colour" value="red" data-event="colour">
+    <input type="radio" name="colour" value="green" data-event="colour" checked>
+    <input type="radio" name="colour" value="blue" data-event="colour">
+    <input type="radio" name="size" value="small" data-event="size">
+    <input type="radio" name="size" value="large" data-event="size">
+    <input type="checkbox" name="agree" data-event="agree">
+    <input type="checkbox" name="topics" value="news" data-event="topics" checked>
+    <input type="checkbox" name="topics" value="tips" data-event="topics">
+    <select name="country" data-event="country"><option value="uk">UK</option><option value="fr" selected>France</option></select>
+    <select name="tags" multiple data-event="tags"><option value="a">A</option><option value="b">B</option></select>
+    <input name="note" value="hello" data-event="note">
+    <textarea name="body" data-event="body">text</textarea>
+    <input name="locked" value="x" disabled data-event="locked">
+    <input type="radio" name="tier" value="gold" checked disabled data-event="tier">
+    <fieldset disabled>
+      <input name="inner" value="y" data-event="inner">
+      <input type="checkbox" name="innerBox" checked data-event="innerBox">
+    </fieldset>
+    <button type="button" data-event="addRow">Add row</button>
+    <input type="button" value="Preview" data-event="preview">
+    <button id="send" type="submit" name="send">Send</button>
+  </form>`;
+
+const submitSurvey = async (revision: Revision): Promise<readonly SemanticEvent[]> => {
+  const { transport, events } = engine(revision);
+  await withDom(SURVEY, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    const form = document.getElementById("survey");
+    assert.ok(form instanceof HTMLFormElement);
+    form.requestSubmit(document.getElementById("send"));
+    await flush();
+  });
+  return events;
+};
+
+test("1.2: submitting flushes only what a native submission would include — checked radios and checkboxes, enabled fields, no buttons", async () => {
+  assert.deepEqual(await submitSurvey("1.2"), [
+    { kind: "Event", name: "colour", value: "green", checked: true },
+    { kind: "Event", name: "topics", value: "news", checked: true, values: ["news"] },
+    { kind: "Event", name: "country", value: "fr" },
+    { kind: "Event", name: "note", value: "hello" },
+    { kind: "Event", name: "body", value: "text" },
+    { kind: "Event", name: "save", submitter: "send" },
+  ]);
+});
+
+test("1.1: an engine without `checked` never sees an unchecked radio's value on submit, so the checked one is the only answer", async () => {
+  assert.deepEqual(await submitSurvey("1.1"), [
+    { kind: "Event", name: "colour", value: "green" },
+    { kind: "Event", name: "topics", value: "news" },
+    { kind: "Event", name: "country", value: "fr" },
+    { kind: "Event", name: "note", value: "hello" },
+    { kind: "Event", name: "body", value: "text" },
+    { kind: "Event", name: "save" },
+  ]);
+});
+
+test("a control's own change still reports an unchecked radio or checkbox — only the submit flush follows the form data set", async () => {
+  const { transport, events } = engine("1.2");
+  await withDom(SURVEY, async (document) => {
+    await new BrowserKernel(transport, document).start();
+    const agree = document.querySelector("input[name=agree]");
+    assert.ok(agree instanceof HTMLInputElement);
+    change(agree);
+    await flush();
+  });
+  assert.deepEqual(events, [{ kind: "Event", name: "agree", value: "on", checked: false, values: [] }]);
+});
