@@ -1,0 +1,17 @@
+{
+  "workItem": "WI-0154",
+  "reference": "owner request: move Limen to Praxis 3.7.2, Ordo 1.4.2 and Visual Engineering 1.0.1, and adopt Conditor against the echelon-current resolved release set; governance tooling only, no release",
+  "placement": "Governance tooling only. `praxis upgrade` 3.7.2 refreshes its tool-owned payload (.echelon/ros.json, two Praxis-owned docs, the toolchain pin) and adds eol=crlf rules for praxis.cmd and ros.cmd to .gitattributes; the two .cmd launchers were restored to their installed CRLF content first (git had normalised them to LF), so their committed content does not change. `ordo upgrade` replaces the .sde/ payload (1.4.1 -> 1.4.2) and pins ordo 1.4.2. `visual-engineering upgrade` 1.0.1 rewrites its managed .gitignore region and the now-committed .visual-engineering/ context. `conditor adopt` writes conditor.json and .conditor/ (lock and resolved-release-set authority). No source, contract, test, workflow or guardrail-owned path changes.",
+  "guardrail": false,
+  "paths": [
+    ".echelon/**",
+    ".sde/**",
+    ".gitattributes",
+    ".gitignore",
+    ".visual-engineering/**",
+    "docs/fallback-reconciliation.md",
+    "docs/remote-protocol.md",
+    "conditor.json",
+    ".conditor/**"
+  ]
+}
