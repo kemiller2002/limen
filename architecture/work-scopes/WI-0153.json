@@ -1,0 +1,11 @@
+{
+  "workItem": "WI-0153",
+  "reference": "owner request: move Limen to Ordo 1.4.1 (ordo upgrade 1.4.0 -> 1.4.1); governance tooling only, no release",
+  "placement": "Governance tooling only. `ordo upgrade` 1.4.1 replaces the tool-owned .sde/ payload (1.4.0 -> 1.4.1), rewrites .echelon/sde.json and pins ordo 1.4.1 in .echelon/toolchain.json. No source, contract, test, workflow or guardrail-owned path changes.",
+  "guardrail": false,
+  "paths": [
+    ".echelon/sde.json",
+    ".echelon/toolchain.json",
+    ".sde/**"
+  ]
+}
