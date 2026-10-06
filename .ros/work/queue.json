@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 152,
+  "nextSeq": 153,
   "items": [
     {
       "id": "WI-0001",
@@ -2215,6 +2215,31 @@
       "createdAt": "2026-10-06T09:05:16.466Z",
       "updatedAt": "2026-10-06T09:13:32Z",
       "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0152",
+      "title": "Move limen to Praxis 3.7.1 (ROS -> Praxis rename) and Ordo 1.4.0",
+      "description": null,
+      "tags": [
+        "praxis",
+        "ordo",
+        "toolchain"
+      ],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-06T12:23:22.229Z",
+      "updatedAt": "2026-10-06T12:23:22.000Z",
+      "createdBy": "anthropic/claude-code",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "claude-opus-5-5",
+        "runtime": "claude-code"
+      },
       "source": "manual",
       "sourceReference": null
     }
