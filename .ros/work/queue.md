@@ -156,4 +156,4 @@
 | WI-0151 | Publish workflow: workflow_dispatch path that verifies, tags and publishes a released commit (owner-requested) | complete |  | medium |
 | WI-0152 | Move limen to Praxis 3.7.1 (ROS -> Praxis rename) and Ordo 1.4.0 | complete | praxis, ordo, toolchain | medium |
 | WI-0153 | Move limen to Ordo 1.4.1 | complete | ordo, toolchain | medium |
-| WI-0154 | Move limen to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | ready | praxis, ordo, toolchain | medium |
+| WI-0154 | Move limen to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | complete | praxis, ordo, toolchain | medium |
