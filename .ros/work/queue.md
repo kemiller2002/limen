@@ -152,3 +152,4 @@
 | WI-0147 | Release 0.7.0: bump package version, date the changelog, move the self-installation record | complete |  | medium |
 | WI-0148 | Pages smoke waits for the F# WASM DOM marker on the wall clock: headless Chrome's virtual-time budget expires while the .NET runtime is still compiling off the main thread on a slow runner (release 0.7.0 Pages failure) | complete |  | medium |
 | WI-0149 | Rename npm package to @echelon-foundry/limen before 0.7.0 is first published | complete |  | medium |
+| WI-0150 | Form submit flush follows native form-data-set semantics: no unchecked radios/checkboxes, disabled controls or buttons (GH-80) | ready |  | medium |
