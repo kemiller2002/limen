@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
   "repository": "limen",
-  "actor": "claude",
+  "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-06T09:13:32Z",
+  "updatedAt": "2026-10-06T12:33:22.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3334,6 +3334,55 @@
         "EXE-20261006T090540457Z-ce1506a3"
       ],
       "completedAt": "2026-10-06T09:13:32Z"
+    },
+    {
+      "id": "WI-0152",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".echelon/ros.json"
+        },
+        {
+          "type": "implementation",
+          "path": ".echelon/sde.json"
+        },
+        {
+          "type": "documentation",
+          "path": "AGENTS.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-10-06T12:33:22.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261006T122324011Z-b73000d6"
+      ],
+      "latestCheckpoint": {
+        "id": "7f5dc12eb17f2a202529a48e",
+        "recordedAt": "2026-10-06T12:33:20.000Z",
+        "executionId": "EXE-20261006T122324011Z-b73000d6",
+        "repository": "limen",
+        "branch": "chore/praxis-3.7.1",
+        "commit": "d09cb2a5c0df956575e8b6c01bd544775bfc7069",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "chore/praxis-3.7.1",
+        "remoteCommit": "d09cb2a5c0df956575e8b6c01bd544775bfc7069",
+        "summary": "upgrade applied, verified, pushed",
+        "nextAction": "complete, PR",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-06T12:33:22.000Z"
     }
   ]
 }

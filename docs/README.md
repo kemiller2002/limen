@@ -160,12 +160,16 @@ flow, exercises, and the mistakes people actually make with it.
 
 ## Governance and process
 
-These are installed and owned by the Repository Operating System package, not by
-the kernel. They describe process, not architecture.
+These are installed and owned by Praxis, the repository operating system, not
+by the kernel. They describe process, not architecture.
 
 - [Governance index](https://github.com/kemiller2002/limen/blob/main/docs/00-governance/README.md)
 - [Work protocol](https://github.com/kemiller2002/limen/blob/main/docs/work-protocol.md)
 - [Work adapter contract](https://github.com/kemiller2002/limen/blob/main/docs/work-adapter-contract.md)
+- [Agent provenance](https://github.com/kemiller2002/limen/blob/main/docs/agent-provenance.md)
+- [Fallback reconciliation](https://github.com/kemiller2002/limen/blob/main/docs/fallback-reconciliation.md)
+- [Remote protocol](https://github.com/kemiller2002/limen/blob/main/docs/remote-protocol.md)
+- [Remote agent contract](https://github.com/kemiller2002/limen/blob/main/docs/remote-agent-contract.md)
 - [Pilot measurement plan](https://github.com/kemiller2002/limen/blob/main/docs/PILOT-MEASUREMENT-PLAN.md)
 - [Architecture records](https://github.com/kemiller2002/limen/blob/main/docs/architecture/README.md)
 - [Core boundary v1: verification record](https://github.com/kemiller2002/limen/blob/main/docs/architecture/core-boundary-v1.md) — where each #59 criterion is enforced

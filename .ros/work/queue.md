@@ -154,3 +154,4 @@
 | WI-0149 | Rename npm package to @echelon-foundry/limen before 0.7.0 is first published | complete |  | medium |
 | WI-0150 | Form submit flush follows native form-data-set semantics: no unchecked radios/checkboxes, disabled controls or buttons (GH-80) | complete |  | medium |
 | WI-0151 | Publish workflow: workflow_dispatch path that verifies, tags and publishes a released commit (owner-requested) | complete |  | medium |
+| WI-0152 | Move limen to Praxis 3.7.1 (ROS -> Praxis rename) and Ordo 1.4.0 | complete | praxis, ordo, toolchain | medium |

@@ -58,3 +58,6 @@ libraries/**/bin/
 libraries/**/obj/
 conformance/**/bin/
 conformance/**/obj/
+
+# Praxis transient work locks
+.ros/locks/

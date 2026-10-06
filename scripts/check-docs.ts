@@ -59,6 +59,11 @@ async function markdownFiles(directory: string): Promise<string[]> {
 const ROS_MANAGED = new Set([
   "docs/work-protocol.md",
   "docs/work-adapter-contract.md",
+  "docs/development-telemetry.md",
+  "docs/agent-provenance.md",
+  "docs/fallback-reconciliation.md",
+  "docs/remote-agent-contract.md",
+  "docs/remote-protocol.md",
   "docs/PILOT-MEASUREMENT-PLAN.md",
   "docs/architecture/README.md",
   "docs/decisions/README.md",
@@ -86,6 +91,14 @@ const repositoryPath = (target: string): string | null => {
 // get treated as a real link.
 const withoutCodeFences = (source: string): string => source.replace(/```[\s\S]*?```/g, "");
 
+// AGENTS.md embeds the Praxis agent contract verbatim between these markers.
+// Like the ROS_MANAGED documents above, it is Praxis-owned text: it names
+// paths of the Praxis source checkout (docs/cli.md, scripts/install-native.sh)
+// that this repository does not have, and the next `praxis upgrade` would
+// bring the same text back. Its links still count for the orphan rule below.
+const withoutPraxisContract = (source: string): string =>
+  source.replace(/<!-- praxis:contract:start -->[\s\S]*?<!-- praxis:contract:end -->/g, "");
+
 const violations: string[] = [];
 const files = await markdownFiles(ROOT);
 
@@ -104,7 +117,7 @@ for (const file of files) {
   if (source.includes(STALE_PAGES_URL)) {
     violations.push(`${relative(ROOT, file)}: stale pre-rename Pages URL -> ${STALE_PAGES_URL}`);
   }
-  const body = withoutCodeFences(source);
+  const body = withoutCodeFences(withoutPraxisContract(source));
   const here = dirname(file);
 
   for (const [, target] of body.matchAll(LINK)) {
