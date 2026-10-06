@@ -103,3 +103,16 @@ engine's strict decoder never sees a field it does not know
 own behaviour — real activation toggling a checkbox, a real submission
 naming its submitter — is proven by
 [`test/browser/packs/core-form-controls/`](../test/browser/packs/core-form-controls/).
+
+### What a submit sends
+
+Before the form's own event, the kernel re-fires the bindings of the form's
+fields, so an edit made without blurring is not lost. It re-fires exactly the
+controls the browser's own form data set would contain: an enabled `<input>`,
+`<textarea>`, or `<select>` with a selection; a checkbox or radio only when it
+is checked; never a button or a disabled control. A radio group therefore
+contributes its checked value and nothing else, and a group with nothing
+checked contributes nothing — an engine never has to filter `checked: false`
+radios out of a submission. (Before 0.7.1 every radio was re-sent, and a 1.1
+engine, which receives no `checked`, could not tell them apart; #80.) A field
+needs no `name` attribute: Limen identifies it by its `data-event`.

@@ -204,6 +204,22 @@ function readControlState(el: HTMLElement, submitter: HTMLElement | null): Contr
   return {};
 }
 
+// The submit flush re-fires exactly the controls a native submission would
+// put in the form data set (HTML's "constructing the entry list"): enabled
+// inputs, selects with a selection and textareas; a checkbox or radio only
+// when checked; never a button. So a radio group contributes its checked
+// value and nothing else, and a group with nothing checked contributes
+// nothing (kemiller2002/limen#80). Unlike the browser, a field needs no
+// `name`: here it is identified by its data-event. Mechanism only.
+const NOT_ENTRIES: readonly string[] = ["button", "submit", "reset", "image"];
+
+function contributesToSubmission(el: HTMLElement): boolean {
+  if (el.matches(":disabled")) return false;
+  if (el instanceof HTMLInputElement) return el.type === "checkbox" || el.type === "radio" ? el.checked : !NOT_ENTRIES.includes(el.type);
+  if (el instanceof HTMLSelectElement) return el.selectedOptions.length > 0;
+  return el instanceof HTMLTextAreaElement;
+}
+
 // Bindings inside <template> content are bound only when a row or a
 // conditional section mounts. Refuse a forbidden target there when the page
 // starts, not later in the middle of a projection.
@@ -520,7 +536,7 @@ export class BrowserKernel {
       const pending = this.#flushable.get(el) ?? [];
       const live = pending.filter((entry) => entry.element.isConnected);
       if (live.length !== pending.length) this.#flushable.set(el, live);
-      for (const entry of live) await entry.fire();
+      for (const entry of live.filter((candidate) => contributesToSubmission(candidate.element))) await entry.fire();
     }
     const value = readValue(el);
     // A 1.1 engine's strict decoder would refuse fields it has never heard of,

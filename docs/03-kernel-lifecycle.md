@@ -176,13 +176,16 @@ When the trigger is `submit`, `#fire` does two things first:
 ```ts
 if (el instanceof HTMLFormElement) {
   if (!el.reportValidity()) return;                       // native validation gates everything
-  for (const flush of this.#flushable.get(el) ?? []) await flush();
+  for (const entry of live.filter((candidate) => contributesToSubmission(candidate.element))) await entry.fire();
 }
 ```
 
-Native HTML validation runs before the engine hears anything. Then every
-`change`-bound field inside the form is dispatched *before* the submit event, so
-a field edited but never blurred still reaches the engine in time.
+Native HTML validation runs before the engine hears anything. Then every bound
+field inside the form that a native submission would include is dispatched
+*before* the submit event, so a field edited but never blurred still reaches the
+engine in time. Like the browser's form data set, that is enabled inputs,
+selects and textareas, with checkboxes and radios only when checked, and never
+buttons — see [05 § the pending-field flush](05-events-and-dispatch.md#form-submission-the-pending-field-flush).
 
 This is mechanism, not meaning: the kernel knows these bindings share a `<form>`
 element, not that they form one logical draft.
