@@ -305,7 +305,10 @@ They compile and are packaged; they have not been run.
 ## 26 · Publishing process
 
 Unchanged in shape: tag `vX.Y.Z` → `publish.yml` → npm Trusted Publishing over
-GitHub OIDC, no stored token. Now additionally installs .NET, runs the F# tests,
+GitHub OIDC, no stored token. (Later, WI-0151: `publish.yml` can also be run
+from the Actions tab with a version and commit; it verifies the commit, pushes
+the tag itself and publishes in the same run. See the README's Release
+section.) Now additionally installs .NET, runs the F# tests,
 packs the archive, asserts every platform binary is inside it, installs that
 archive into a throwaway repository, runs the documented quick start, and only
 then publishes — the tested artifact itself, not a re-pack.

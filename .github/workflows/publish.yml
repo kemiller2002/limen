@@ -1,24 +1,157 @@
 name: Publish package
 
+# Two ways to cut a release, one publish path:
+#
+#  1. Push an annotated tag vX.Y.Z (the original path).
+#  2. Run "Publish" from the Actions tab on main with the version and the full
+#     commit SHA. The `tag` job verifies that commit and pushes the tag with
+#     GITHUB_TOKEN; `publish` then publishes from that tag in this same run.
+#
+# The dispatch path has to live in this file, not a separate workflow: a tag
+# pushed by GITHUB_TOKEN never starts another workflow, and npm Trusted
+# Publishing trusts this workflow file by name.
+
 concurrency:
-  group: npm-publish-${{ github.ref }}
+  group: npm-publish-${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
   cancel-in-progress: false
 
 on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, without the v (for example 0.7.1). Must equal package.json at the commit."
+        required: true
+        type: string
+      commit:
+        description: "Full 40-character SHA of the commit on main to release."
+        required: true
+        type: string
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
-  publish:
+  # Dispatch only. Fails closed before anything is tagged or published.
+  tag:
+    name: Verify the commit and tag it
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the tag
+      actions: read # find the commit's CI run
+      checks: read # read that run's check runs
+    env:
+      VERSION: ${{ inputs.version }}
+      COMMIT: ${{ inputs.commit }}
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out repository
+      - name: Require well-formed inputs, dispatched from main
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Run this workflow from main, not $GITHUB_REF"
+            exit 1
+          fi
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version '$VERSION' is not X.Y.Z"
+            exit 1
+          fi
+          if [[ ! "$COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::commit '$COMMIT' is not a full lowercase 40-character SHA"
+            exit 1
+          fi
+
+      - name: Check out the release commit
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+
+      - name: Require the commit to be on main
+        shell: bash
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "$COMMIT" origin/main; then
+            echo "::error::$COMMIT is not main or an ancestor of main"
+            exit 1
+          fi
+
+      - name: Require package.json at the commit to carry the version
+        shell: bash
+        run: |
+          package_version="$(git show "$COMMIT:package.json" | jq -r .version)"
+          if [[ "$package_version" != "$VERSION" ]]; then
+            echo "::error::package.json at $COMMIT is $package_version, not $VERSION"
+            exit 1
+          fi
+
+      - name: Require CI to have passed on the commit
+        shell: bash
+        run: |
+          run="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$COMMIT&event=push&per_page=1" \
+            --jq '.workflow_runs[0] // empty | [.id, .status, (.conclusion // "none"), .check_suite_id] | @tsv')"
+          if [[ -z "$run" ]]; then
+            echo "::error::no CI push run found for $COMMIT"
+            exit 1
+          fi
+          read -r run_id status conclusion suite_id <<<"$run"
+          echo "CI run $run_id: $status/$conclusion"
+          if [[ "$status" != "completed" || "$conclusion" != "success" ]]; then
+            echo "::error::CI run $run_id on $COMMIT is $status/$conclusion, not completed/success"
+            exit 1
+          fi
+          checks="$(gh api --paginate "repos/$GITHUB_REPOSITORY/check-suites/$suite_id/check-runs?per_page=100" \
+            --jq '.check_runs[] | [.name, .status, (.conclusion // "none")] | @tsv')"
+          echo "$checks"
+          if [[ -z "$checks" ]]; then
+            echo "::error::CI run $run_id has no check runs"
+            exit 1
+          fi
+          if awk -F'\t' '$2 != "completed" || ($3 != "success" && $3 != "skipped" && $3 != "neutral")' <<<"$checks" | grep -q .; then
+            echo "::error::a CI check run on $COMMIT did not succeed"
+            exit 1
+          fi
+
+      # Idempotent: a re-run finds the tag it pushed and accepts it, but a tag
+      # at any other commit stops the release.
+      - name: Create and push the annotated tag
+        shell: bash
+        run: |
+          tag="v$VERSION"
+          existing="$(git ls-remote --tags origin "refs/tags/$tag" "refs/tags/$tag^{}")"
+          if [[ -n "$existing" ]]; then
+            target="$(awk -v ref="refs/tags/$tag^{}" '$2 == ref { print $1 }' <<<"$existing")"
+            [[ -z "$target" ]] && target="$(awk '{ print $1 }' <<<"$existing" | head -n 1)"
+            if [[ "$target" != "$COMMIT" ]]; then
+              echo "::error::$tag already exists at $target, not $COMMIT"
+              exit 1
+            fi
+            echo "$tag already exists at $COMMIT; not re-creating it"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" "$COMMIT" -m "Limen $VERSION"
+          git push origin "refs/tags/$tag"
+
+  publish:
+    needs: tag
+    # Runs for a tag push (where `tag` is skipped) or after `tag` succeeds.
+    if: ${{ !cancelled() && (github.event_name == 'push' || needs.tag.result == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+      RELEASE_COMMIT: ${{ inputs.commit }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -42,9 +175,13 @@ jobs:
         shell: bash
         run: |
           package_version="$(node -p "require('./package.json').version")"
-          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${RELEASE_TAG#v}"
           if [[ "$package_version" != "$tag_version" ]]; then
-            echo "package.json version $package_version does not match tag $GITHUB_REF_NAME"
+            echo "package.json version $package_version does not match tag $RELEASE_TAG"
+            exit 1
+          fi
+          if [[ -n "$RELEASE_COMMIT" && "$(git rev-parse HEAD)" != "$RELEASE_COMMIT" ]]; then
+            echo "$RELEASE_TAG resolves to $(git rev-parse HEAD), not $RELEASE_COMMIT"
             exit 1
           fi
 
@@ -119,5 +256,52 @@ jobs:
         shell: bash
         run: npm run check:clean-room -- --tarball "$(ls ./release/*.tgz)"
 
+      # Idempotent: a version already on the registry is left alone, so a
+      # re-run after a later step fails does not fail here.
       - name: Publish to npm
-        run: npm publish --access public ./release/*.tgz
+        shell: bash
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if [[ "$(npm view "$name@$version" version 2>/dev/null)" == "$version" ]]; then
+            echo "::notice::$name@$version is already published; skipping npm publish"
+            exit 0
+          fi
+          npm publish --access public ./release/*.tgz
+
+  release:
+    name: GitHub release
+    needs: publish
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
+
+      # Notes are the version's CHANGELOG section. Idempotent: an existing
+      # release is left alone.
+      - name: Create the GitHub release
+        shell: bash
+        run: |
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists"
+            exit 0
+          fi
+          version="${RELEASE_TAG#v}"
+          awk -v head="## [$version]" '
+            index($0, head) == 1 { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          if [[ -s "$RUNNER_TEMP/notes.md" ]]; then
+            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-from-tag
+          fi

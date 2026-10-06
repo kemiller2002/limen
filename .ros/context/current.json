@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
   "repository": "limen",
-  "actor": "claude-code",
+  "actor": "claude",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-06T00:50:17Z",
+  "updatedAt": "2026-10-06T09:13:32Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3313,6 +3313,27 @@
         "EXE-20261006T003735686Z-c3c785cb"
       ],
       "completedAt": "2026-10-06T00:50:17Z"
+    },
+    {
+      "id": "WI-0151",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".github/workflows/publish.yml"
+        },
+        {
+          "type": "tests",
+          "path": "README.md"
+        }
+      ],
+      "updatedAt": "2026-10-06T09:13:32Z",
+      "telemetryExecutionIds": [
+        "EXE-20261006T090540457Z-ce1506a3"
+      ],
+      "completedAt": "2026-10-06T09:13:32Z"
     }
   ]
 }

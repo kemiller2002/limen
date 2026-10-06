@@ -1,0 +1,12 @@
+{
+  "workItem": "WI-0151",
+  "reference": "owner request: publish 0.7.1 without a locally pushed tag",
+  "placement": "Release automation only. publish.yml gains a workflow_dispatch path (inputs: version, full commit SHA) that fails closed — the commit is on main, its package.json carries the version, the tag is absent or already at that commit, and the commit's push CI run succeeded — then creates and pushes the annotated tag v<version> with GITHUB_TOKEN and publishes from that tag in the same run, inside publish.yml so npm Trusted Publishing's binding to the workflow file holds. The tag-push path is unchanged apart from skipping an already-published version and creating the GitHub release. The release procedure is documented in README.md and the agent sandbox notes in CLAUDE.md. No source, contract, test or other guardrail change.",
+  "guardrail": true,
+  "paths": [
+    ".github/workflows/publish.yml",
+    "README.md",
+    "CLAUDE.md",
+    "docs/22-lifecycle-conversion-report.md"
+  ]
+}
