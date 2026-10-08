@@ -26,6 +26,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "LCP-088..112 derived from the portfolio URL-state requirement (coordinator 2026-10-08) and LCP-005's routing semantics"
+    EXE-20261008T191444622Z-e12edc63:
+      operations: [modified]
+      at: 2026-10-08T19:14:45.338Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "LCP-093: format returns a result for mappings the table refuses"
 ---
 
 # Navigable state in the URL: the routing and URL-state module
@@ -246,12 +256,15 @@ and get:
 
 ```text
 parse  : Location -> Result<'Route, RouteError>
-format : 'Route   -> Location
+format : 'Route   -> Result<Location, BuildError>
 ```
 
 `RouteError` MUST be closed: `NotFound`, `NotPermitted`, `Invalid`,
 `Malformed`, `RedirectLoop`, and `Unmapped` (the application's mapping
-refused a match). `format` MUST produce the canonical location.
+refused a match). `format` MUST produce the canonical location. It returns a
+result only because the application's mapping could produce a value the
+table refuses, such as an integer beyond 2⁵³; for a correct mapping it is
+always `Ok`, which the round-trip property (LCP-094) proves.
 
 ### Rationale
 Engines branch on their own route type, not on strings. The table stays the

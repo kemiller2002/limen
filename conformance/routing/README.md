@@ -122,3 +122,147 @@ Together they make `LocationChanged` never cause a redundant push.
   current location there is no effect; otherwise `push(built)`.
 - A location that does not match (`Invalid`, `NotFound`, `Malformed…`) is
   adopted as-is and renders the engine's own error. It produces no effect.
+
+# URL state (LCP-088..112)
+
+[`url-state.vectors.json`](url-state.vectors.json) extends these semantics so
+that an application can keep all of its navigable state in the URL and a
+copied URL opens the same view
+([requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md),
+[DF-LIMEN-2026-0006](https://github.com/kemiller2002/limen/blob/main/research/decisions/DF-LIMEN-2026-0006--url-state-hash-routing-and-route-inventory.md)).
+Everything above still holds, and `routing.vectors.json` still passes
+unchanged. A conforming library runs both files.
+
+## Parameter types
+
+| Type | Canonical text | Path | Query | Invalid when |
+| --- | --- | --- | --- | --- |
+| `string` | the text | yes | yes | never |
+| `int` | as above | yes | yes | as above |
+| `bool` | `true` or `false` | no | yes | anything else |
+| `date` | `YYYY-MM-DD`, ASCII digits, a real calendar date | yes | yes | `2026-02-29`, `2026-2-01`, non-ASCII digits |
+| `month` | `YYYY-MM`, year 0001–9999, month 01–12 | yes | yes | `2026-13` |
+| `enum` | one of `values`, case-sensitive | yes (`{v:enum:a\|b}`) | yes | any other text |
+| `set` | members joined by `,` | no | yes | an empty member, or a member outside a non-empty `values` |
+
+A **set** is one key. Its raw value is split on `,` before each member is
+percent-decoded, so an encoded comma (`%2C`) stays inside its member. Members
+are deduplicated and sorted by UTF-16 code unit. An empty `values` list
+allows any non-empty member. The expected text of an `Invalid` result is
+`one of a|b` for an enum, `a set of a|b` or `a set of non-empty values` for a
+set, and the type name otherwise.
+
+## Defaults and the canonical form
+
+A query parameter may declare a `default` (not with `required`).
+
+- **Resolving:** an absent key resolves to its default, so the match carries
+  the full view state. A given key is converted as usual.
+- **Building:** a parameter equal to its default (same canonical text) is
+  omitted, and so is an empty set. Everything else is as above.
+
+So one view has one location, and adopting a location that spells out a
+default replaces it with the shorter canonical form.
+
+## Definitions are values
+
+`define(routes, legacy, roles)` returns the table or every problem, in this
+order: per route, depth first (its segments, repeated parameters, reserved
+names, path types, query parameters, its redirect), then legacy entries,
+then roles.
+
+| Error | When |
+| --- | --- |
+| `InvalidSegment { route, segment }` | a path segment does not parse (including `{x:bool}` and `{x:set}`), or a wildcard is not the last segment of a destination |
+| `DuplicateName { route }` | two siblings share a name |
+| `DuplicateParameter { route, parameter }` | a name is declared twice along one chain, path or query |
+| `ReservedName { route, parameter }` | the name, lower-cased without `-` and `_`, is `token`, `accesstoken`, `idtoken`, `refreshtoken`, `password`, `passwd`, `secret`, `clientsecret`, `apikey`, `key`, `session`, `sessionid`, `auth`, `authorization`, `code`, `credential` or `credentials` (LCP-109) |
+| `InvalidValues { route, parameter }` | an enum with no values, or an enum or set with an empty or repeated value |
+| `InvalidDefault { route, parameter }` | a default that is not a value of its type |
+| `RequiredWithDefault { route, parameter }` | a required parameter with a default |
+| `UnknownTarget { route, target }` | a redirect or legacy entry names no destination |
+| `UnknownParameter { route, parameter }` | a redirect template copies a parameter its pattern does not have |
+| `UnknownRole { role, route }` | `home`, `signIn` or `notFound` names no destination |
+
+**Roles** name the home route (required), and optionally the sign-in and
+not-found routes.
+
+**Legacy entries** `{ path, to, params }` become redirect routes named
+`legacy-1`, `legacy-2`, …, matched after every current route and before the
+first top-level wildcard, so a current route always wins. They follow the
+redirect rules above. An application's typed `format` never produces them.
+
+Locations longer than **8,192** characters (path and query together) are
+`TooLong` before anything is decoded.
+
+## Outcomes
+
+A resolution maps onto a closed set of route outcomes, which an engine renders
+each in its own way:
+
+| Resolution | Outcome |
+| --- | --- |
+| `Matched` of the `notFound` role, or `NotFound` | `NotFound` |
+| `Denied { route }` | `NotPermitted { route }` |
+| `Invalid { … }` | `Invalid { … }` |
+| `MalformedPath`, `MalformedQuery`, `TooLong` | `Malformed { part: "path" \| "query" \| "length" }` |
+| `RedirectLoop { chain }` | `RedirectLoop { chain }` |
+| any other `Matched` | the match, or `Unmapped` when the application's typed mapping refuses it |
+
+## Navigate, refine, replace
+
+Beside **adopt** and **navigate** (push):
+
+- **refine** builds the location and answers `replace(built)`, or nothing
+  when it is already current. Use it for in-place changes of the same view
+  (filters, sort, page, tab, date), so Back steps between places.
+- **replace** answers `replace(location)` for a location the engine decided
+  on itself, such as the result of `resume` after sign-in.
+
+The session vectors model the browser's history: a push truncates forward
+entries and appends, a replace rewrites the current entry, and Back or
+Forward adopt the entry they land on (or leave the application at either
+end).
+
+## Return targets
+
+- **capture(location)** gives the canonical location to return to after
+  sign-in, or nothing. It must be a single-slash relative location (no `//`,
+  no `\`, no control character, at most 8,192 characters) that matches,
+  guards **not** consulted, a route that is not the sign-in or not-found
+  route and whose `returnTarget` is not `false`.
+- **signIn(target)** builds the sign-in route with the target as its
+  `returnTo` query parameter.
+- **resume(target)** gives the target's canonical location when it is still
+  eligible **and its guards allow it now**, and otherwise the home route's
+  location. The engine replaces to it, so Back does not return to sign-in.
+
+## Locations and links
+
+The routed location is a path and query, `/invoices/42?tab=history`.
+
+| Mode | From the browser's `{ origin, path, query, hash }` | href | share |
+| --- | --- | --- | --- |
+| `hash` (default) | the fragment without `#`; empty is `/`, and a fragment without a leading `/` gets one | `#` + location | origin + path + query + `#` + location |
+| `path` | path (or `/`) + query | the location | origin + location |
+
+## Route inventory
+
+`inventory(mode, table)` renders `echelon.routes/v1` as JSON with keys sorted
+by UTF-16 code unit, two-space indentation, and a final newline. It is
+byte-identical in every conforming library (the vectors compare the text).
+
+- **Top level:** `schema`, `mode`, `home`, `signIn`, `notFound` (or
+  `null`), `routes` and `legacy`.
+- **`routes`:** every destination that is not a redirect, in table order,
+  with:
+  - `name`;
+  - `pattern`: `/` + segments, with `{name:type}` and `{*name}`;
+  - `params`: path parameters, then query parameters, parent first, each
+    with `name`, `in`, `type`, `required`, `default` (JSON-typed, or
+    `null`) and `values` (enum and set values, or `null`);
+  - `guards` along the chain;
+  - `requires`;
+  - `returnTarget`.
+- **`legacy`:** every redirect route, including legacy entries, with
+  `name`, `pattern`, `to` and `params`.

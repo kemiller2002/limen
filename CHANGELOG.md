@@ -16,6 +16,30 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Added — URL-state routing semantics and the F# library (WI-0168, LCP-088..096, 098..102, 105..107, 109)
+
+- `conformance/routing/url-state.vectors.json`: 104 vectors on top of the 61
+  LCP-005 vectors, which still pass unchanged. They cover:
+  - **Parameter types:** typed view parameters (`bool`, `date`, `month`,
+    `enum`, `set`).
+  - **Defaults:** reported on resolution and omitted from one canonical
+    form.
+  - **Route tables:** validated as values (duplicate and reserved
+    credential names, bad defaults, unknown targets and roles), with legacy
+    entries.
+  - **History:** `refine` (replace) beside `navigate` (push), with a history
+    model in the sessions.
+  - **Outcomes:** closed route outcomes (`NotFound`, `NotPermitted`,
+    `Invalid`, `Malformed`).
+  - **Sign-in:** safe return targets through sign-in.
+  - **Locations:** hash and path modes, and share links.
+  - **Inventory:** the `echelon.routes/v1` route inventory, byte for byte.
+- `Limen.Routing` (F#) implements all of it, with a typed codec
+  (`RouteCodec.parse`, `RouteCodec.format`), `RouteTable.define`,
+  `ReturnTo`, `Location`, `Link` and `Inventory`. Its runner adds 3,000
+  round-trip, canonical-form and totality property checks each. No protocol
+  or kernel change.
+
 ### Documentation
 
 - **Requirements for navigable state in the URL (WI-0167, LCP-005).**
