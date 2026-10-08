@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T19:14:43.000Z",
+  "updatedAt": "2026-10-08T19:25:57.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4037,13 +4037,43 @@
     {
       "id": "WI-0168",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-08T19:14:43.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Routing/Routing.fs"
+        },
+        {
+          "type": "tests",
+          "path": "conformance/routing/url-state.vectors.json"
+        }
+      ],
+      "updatedAt": "2026-10-08T19:25:57.000Z",
       "telemetryExecutionIds": [
         "EXE-20261008T191444622Z-e12edc63"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "3c45aa5c732cabb60c372a5e",
+        "recordedAt": "2026-10-08T19:25:55.000Z",
+        "executionId": "EXE-20261008T191444622Z-e12edc63",
+        "repository": "limen",
+        "branch": "urlstate/wi-0168-semantics-fsharp",
+        "commit": "35af2fef517dcadbb5ea319b3b9de790e17acf3c",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "urlstate/wi-0168-semantics-fsharp",
+        "remoteCommit": "35af2fef517dcadbb5ea319b3b9de790e17acf3c",
+        "summary": "URL-state semantics in conformance/routing (README and 104 new vectors) and Limen.Routing: typed view parameters, defaults and canonical form, RouteTable.define, legacy entries, refine and replace, RouteError outcomes, RouteCodec, ReturnTo, Location, Link, Inventory; 165/165 vectors and 3x3000 property checks pass.",
+        "nextAction": "Open the PR after #100 merges, then WI-0169 (TypeScript library and inventory schema).",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T19:25:57.000Z"
     }
   ]
 }
