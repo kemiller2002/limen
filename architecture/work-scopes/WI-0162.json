@@ -18,6 +18,13 @@
     "docs/**",
     "CHANGELOG.md"
   ],
-  "expansions": [],
+  "expansions": [
+    {
+      "paths": [
+        "README.md"
+      ],
+      "reason": "README's Release section is where publishing is documented; it now says the F# packages ship as attested release assets and how to verify a release by checksum and attestation from an empty directory."
+    }
+  ],
   "recordedAfterCompletion": false
 }
