@@ -1,0 +1,17 @@
+{
+  "workItem": "WI-0160",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-051, LCP-052, LCP-053, LCP-057, LCP-058, LCP-075, LCP-077",
+  "placement": "Tooling / Conformance. conformance/store/ holds the language-neutral store vector set (store.vectors.json and its README): sequences of requests across named tabs with expected results and facts, and named fault injections a runner either performs or reports as unsupported. One plain-JavaScript runner (test/browser/packs/store-conformance/runner.js) executes them under node over an in-memory IndexedDB with injected faults (test/store-conformance.test.ts) and in Chromium (the store-conformance page). A store-tabs page proves the multi-tab scenarios with real second tabs: concurrent compare-and-put, readers that never see half a batch, and a tab closed mid-transaction. No pack behaviour changes.",
+  "guardrail": false,
+  "paths": [
+    "conformance/store/**",
+    "test/store-conformance.test.ts",
+    "test/browser/packs/store-conformance/**",
+    "test/browser/packs/store-tabs/**",
+    "scripts/smoke-packs.ts",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
