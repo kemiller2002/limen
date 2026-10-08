@@ -15,6 +15,18 @@ So it is decided in the engine. The browser side stays mechanism:
 The kernel never parses a route, and no routing type is a Limen protocol
 type.
 
+**What comes next (0.9.0).** Every portfolio application must keep its
+navigable state in the URL, so that a copied URL opens the same view. The
+requirements for that are
+[LCP-088..112](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md),
+not yet built: typed view parameters with defaults and one canonical form, a
+typed `parse`/`format` codec in F# and TypeScript, `refine` (replace) beside
+`navigate` (push), not-found and not-permitted outcomes, return targets
+through sign-in, hash routing for static hosts such as GitHub Pages, legacy
+redirects, copy link, a route inventory (`.echelon/routes.json`), and no
+secrets in URLs. The decisions are in
+[DF-LIMEN-2026-0006](https://github.com/kemiller2002/limen/blob/main/research/decisions/DF-LIMEN-2026-0006--url-state-hash-routing-and-route-inventory.md).
+
 ## One set of semantics, any language
 
 The rules are defined once, independent of any language:
