@@ -144,6 +144,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      attestations: write # Sigstore build provenance for the F# packages
     env:
       RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
       RELEASE_COMMIT: ${{ inputs.commit }}
@@ -256,6 +257,32 @@ jobs:
         shell: bash
         run: npm run check:clean-room -- --tarball "$(ls ./release/*.tgz)"
 
+      # LCP-044, LCP-079: the F# packages ship in lockstep on the same release,
+      # as attested GitHub release assets (the interim NuGet channel Arca and
+      # Fides use, DF-ARCA-2026-0006), installed through Conditor's NuGet feed.
+      # Packing refuses a missing or mis-versioned package; the clean room
+      # proves a consumer built from the files alone. Both before anything is
+      # published.
+      - name: Pack the F# packages in lockstep and prove them in a clean room
+        shell: bash
+        run: |
+          npm run pack:nuget
+          npm run check:nuget
+
+      - name: Attest the F# packages and their checksums (Sigstore build provenance)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: |
+            dist-nuget/*.nupkg
+            dist-nuget/checksums.txt
+
+      - name: Keep the F# packages for the release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: limen-nuget-${{ env.RELEASE_TAG }}
+          path: dist-nuget
+          if-no-files-found: error
+
       # Idempotent: a version already on the registry is left alone, so a
       # re-run after a later step fails does not fail here.
       - name: Publish to npm
@@ -276,6 +303,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      attestations: read
     env:
       RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
       GH_TOKEN: ${{ github.token }}
@@ -285,13 +313,31 @@ jobs:
         with:
           ref: refs/tags/${{ env.RELEASE_TAG }}
 
-      # Notes are the version's CHANGELOG section. Idempotent: an existing
-      # release is left alone.
+      - name: Fetch the attested F# packages
+        uses: actions/download-artifact@v4
+        with:
+          name: limen-nuget-${{ env.RELEASE_TAG }}
+          path: dist-nuget
+
+      - name: Verify the F# packages against their checksums
+        working-directory: dist-nuget
+        run: sha256sum -c checksums.txt
+
+      # Notes are the version's CHANGELOG section; the F# packages and their
+      # checksums are its assets. Idempotent: an existing release keeps its
+      # notes, and only assets it lacks are added (a released asset is never
+      # replaced).
       - name: Create the GitHub release
         shell: bash
         run: |
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             echo "Release $RELEASE_TAG already exists"
+            present="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')"
+            for asset in dist-nuget/*.nupkg dist-nuget/checksums.txt; do
+              if ! grep -qx "$(basename "$asset")" <<<"$present"; then
+                gh release upload "$RELEASE_TAG" "$asset"
+              fi
+            done
             exit 0
           fi
           version="${RELEASE_TAG#v}"
@@ -301,7 +347,22 @@ jobs:
             on { print }
           ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
           if [[ -s "$RUNNER_TEMP/notes.md" ]]; then
-            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/notes.md"
+            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/notes.md" dist-nuget/*.nupkg dist-nuget/checksums.txt
           else
-            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-from-tag
+            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-from-tag dist-nuget/*.nupkg dist-nuget/checksums.txt
           fi
+
+      # What a consumer downloads is what was built and attested: the
+      # published assets, fetched back into an empty directory, match their
+      # checksums and each carries a build-provenance attestation from this
+      # workflow.
+      - name: Verify the published assets and their attestations
+        shell: bash
+        run: |
+          check="$(mktemp -d)"
+          gh release download "$RELEASE_TAG" --dir "$check" --pattern '*.nupkg' --pattern 'checksums.txt'
+          (cd "$check" && sha256sum -c checksums.txt)
+          for asset in "$check"/*.nupkg "$check"/checksums.txt; do
+            gh attestation verify "$asset" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/publish.yml" > /dev/null
+            echo "attestation verified: $(basename "$asset")"
+          done

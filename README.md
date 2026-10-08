@@ -631,6 +631,22 @@ already-published version and an existing release are each left alone. On the
 dispatch path, npm's provenance names the `main` commit the workflow ran from;
 the tag names the released commit.
 
+**F# packages.** The same run packs `EchelonFoundry.Limen.Contract` and
+`EchelonFoundry.Limen.Guest` at the npm version (lockstep), proves them in a
+clean room (`npm run pack:nuget`, `npm run check:nuget`), attests them with
+Sigstore build provenance, and attaches them, with `checksums.txt`, to the
+GitHub release. It then downloads them back and verifies each checksum and
+attestation. To check a release yourself, from an empty directory:
+
+```sh
+gh release download vX.Y.Z --repo kemiller2002/limen --pattern '*.nupkg' --pattern checksums.txt
+sha256sum -c checksums.txt
+for f in *.nupkg checksums.txt; do gh attestation verify "$f" --repo kemiller2002/limen; done
+```
+
+Consumers install them through Conditor's NuGet release-asset feed, never a
+public feed.
+
 Changes by version: [CHANGELOG.md](https://github.com/kemiller2002/limen/blob/main/CHANGELOG.md).
 
 ## License

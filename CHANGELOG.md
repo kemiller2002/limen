@@ -81,6 +81,17 @@ exhaustive lists.
   an upgrade in WebKit is no longer abandoned as `Blocked`. No contract
   change.
 
+### Added — F# packages as attested release assets (WI-0162, LCP-044, LCP-079)
+
+- `EchelonFoundry.Limen.Contract` (the generated bindings, with every
+  contract fingerprint) and `EchelonFoundry.Limen.Guest` (the engine's half
+  of the handshake) are NuGet packages at the npm version: `net8.0`,
+  trimmable, reflection-free, FSharp.Core 9.0.100 or later only.
+- The publish workflow packs them, proves them in a clean room, attests them
+  with Sigstore build provenance, attaches them and `checksums.txt` to the
+  GitHub release, and verifies the published copies. CI's "F# packages" job
+  runs the same pack and clean room on every change.
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no

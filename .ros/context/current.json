@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T16:49:34.000Z",
+  "updatedAt": "2026-10-08T16:57:47.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3774,6 +3774,51 @@
         }
       },
       "completedAt": "2026-10-08T16:49:34.000Z"
+    },
+    {
+      "id": "WI-0162",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/nuget-packages.ts"
+        },
+        {
+          "type": "implementation",
+          "path": ".github/workflows/publish.yml"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/nuget-packages.ts"
+        }
+      ],
+      "updatedAt": "2026-10-08T16:57:47.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T164955696Z-3bb3017f"
+      ],
+      "latestCheckpoint": {
+        "id": "301d7e464404f2be0297cd28",
+        "recordedAt": "2026-10-08T16:57:44.000Z",
+        "executionId": "EXE-20261008T164955696Z-3bb3017f",
+        "repository": "limen",
+        "branch": "indexeddb/wi-0162-fsharp-packages",
+        "commit": "ccbb1c8891d4f7cbf6e005a264f6d1c8d202b6c6",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "indexeddb/wi-0162-fsharp-packages",
+        "remoteCommit": "ccbb1c8891d4f7cbf6e005a264f6d1c8d202b6c6",
+        "summary": "F# Contract and Guest packages pack in lockstep and pass the clean room; CI job and publish workflow attest and verify them",
+        "nextAction": "Complete WI-0162; WI-0163 functional F# store library",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T16:57:47.000Z"
     }
   ]
 }
