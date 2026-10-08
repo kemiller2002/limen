@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T16:25:45.000Z",
+  "updatedAt": "2026-10-08T16:40:34.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3684,6 +3684,51 @@
         }
       },
       "completedAt": "2026-10-08T16:25:45.000Z"
+    },
+    {
+      "id": "WI-0160",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "conformance/store/store.vectors.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/store-conformance.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/browser/packs/store-tabs/main.js"
+        }
+      ],
+      "updatedAt": "2026-10-08T16:40:34.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T162707073Z-76f7549e"
+      ],
+      "latestCheckpoint": {
+        "id": "8eacfff6aad69989bfc19a0e",
+        "recordedAt": "2026-10-08T16:40:32.000Z",
+        "executionId": "EXE-20261008T162707073Z-76f7549e",
+        "repository": "limen",
+        "branch": "indexeddb/wi-0160-conformance-vectors",
+        "commit": "c5b13211e25ee9a788378d48b512a7f3a82f1478",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "indexeddb/wi-0160-conformance-vectors",
+        "remoteCommit": "c5b13211e25ee9a788378d48b512a7f3a82f1478",
+        "summary": "Store conformance vectors (32) pass under node; 27 pass and 5 unsupported in Chromium; real two-tab scenarios pass",
+        "nextAction": "Complete WI-0160; WI-0161 WebKit runs in CI",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T16:40:34.000Z"
     }
   ]
 }
