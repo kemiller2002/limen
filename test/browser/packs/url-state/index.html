@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limen URL state in a real browser</title>
+</head>
+<body>
+  <!-- Run by scripts/smoke-packs.ts (LCP-097, LCP-103, LCP-104, LCP-106).
+       engine.js keeps the whole navigable state in the URL fragment with
+       @echelon-foundry/limen/routing; main.js drives it and reports
+       window.__limenPackResult. The page is served under a sub-path by a
+       static server that answers 404 for any path it has no file for. -->
+  <main>
+    <p>Route: <span id="route" data-text="route"></span></p>
+    <p>Detail: <code id="detail" data-text="detail"></code></p>
+    <p>Location: <code id="location" data-text="location"></code></p>
+    <p>Signed in: <span id="signed-in" data-text="signedIn"></span></p>
+    <button id="show-lines" data-event="showLines">Lines tab</button>
+    <button id="show-list" data-event="showList">Invoice list</button>
+    <button id="sign-in" data-event="signIn">Sign in</button>
+    <button id="copy-link" data-event="copyLink">Copy link</button>
+    <a id="invoice-7" data-bind-href="invoiceSevenHref">Invoice 7</a>
+    <p id="copy-status" data-text="copyStatus"></p>
+    <p id="shared-link" data-text="sharedLink"></p>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

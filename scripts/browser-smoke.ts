@@ -129,7 +129,7 @@ try {
   await page.goto(`${BASE}/examples/08-routing/`);
   check("08 routing starts at Home", await trimmed(page, "section h2") === "Home");
   await page.click("button[data-event='goInvoices']");
-  check("08 routing pushes the invoices URL", page.url().includes("route=%2Finvoices"), page.url());
+  check("08 routing pushes the invoices URL", page.url().endsWith("#/invoices"), page.url());
   await page.click(".list li button[data-event='openInvoice']");
   check("08 routing opens an invoice", await trimmed(page, "section h2") === "Invoice 1001");
   await page.goBack();
@@ -139,9 +139,9 @@ try {
   await page.click("button[data-event='goBack']");
   await page.waitForTimeout(150);
   check("08 routing: the in-app Back button moves too", await trimmed(page, "section h2") === "Invoices");
-  await page.goto(`${BASE}/examples/08-routing/?route=%2Finvoices%2F1002`);
+  await page.goto(`${BASE}/examples/08-routing/#/invoices/1002`);
   check("08 routing: a pasted deep link opens that screen directly", await trimmed(page, "section h2") === "Invoice 1002");
-  await page.goto(`${BASE}/examples/08-routing/?route=%2Finvoices%2F9999`);
+  await page.goto(`${BASE}/examples/08-routing/#/invoices/9999`);
   check("08 routing: an unknown id is the Not found screen", await trimmed(page, "section h2") === "Not found");
 
   // --- both capabilities at once: compose a shareable link, then copy it ---

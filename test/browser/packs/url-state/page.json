@@ -1,0 +1,5 @@
+{
+  "url": "test/browser/packs/url-state/index.html#/invoices/42?tab=history&status=paid,open",
+  "engines": ["chromium", "webkit"],
+  "frames": { "allow": [], "ancestors": [] }
+}

@@ -172,6 +172,6 @@
 | WI-0167 | URL state 0: requirements, decision record and backlog for navigable state in the URL (routing / URL-state module, Limen 0.9.0) | complete | limen, routing, requirements, lcp-005 | high |
 | WI-0168 | URL state 1: routing semantics v2 and the F# library (typed definitions, view parameter types, defaults and canonical form, refine, outcomes, typed codec, legacy entries, reserved names, return targets, locations, links, inventory) | complete | limen, routing, url-state, lcp-005 | high |
 | WI-0169 | URL state 2: the TypeScript routing library @echelon-foundry/limen/routing and the route inventory schema | complete | limen, routing, url-state, lcp-005 | high |
-| WI-0170 | URL state 3: browser proof on a GitHub-Pages-like static server in Chromium and WebKit; examples/08-routing on the module | captured | limen, routing, url-state, lcp-005 | high |
+| WI-0170 | URL state 3: browser proof on a GitHub-Pages-like static server in Chromium and WebKit; examples/08-routing on the module | complete | limen, routing, url-state, lcp-005 | high |
 | WI-0171 | URL state 4: EchelonFoundry.Limen.Routing as an attested F# package; docs/31 guidance (privacy, hash mode, outcomes, sign-in) | captured | limen, routing, url-state, lcp-005 | high |
 | WI-0172 | URL state 5: release Limen 0.9.0 with the routing module, the echelon-registry entry and verification | captured | limen, routing, url-state, lcp-005 | high |

@@ -1,10 +1,13 @@
 // Routing, with the browser's history as a capability rather than an
-// authority. Three rules carry the whole example:
+// authority, on @echelon-foundry/limen/routing in hash mode (LCP-111).
+// Three rules carry the whole example:
 //
 //   1. A Route is a type, not a string comparison scattered through the code.
+//      The route table is a value; a typed codec maps it onto Route.
 //   2. The engine decides what a URL *means*; the kernel only pushes and pops.
 //   3. A move the engine asked for and a move the browser made on its own are
-//      different facts, and are handled by different code paths.
+//      different facts, and are handled by different code paths: navigate
+//      pushes, adopt never does.
 //
 // Rule 3 is the one that bites. Pushing a new URL in response to
 // LocationChanged is the classic routing bug: Back fires popstate, the engine
@@ -20,18 +23,36 @@ import type {
   SemanticEvent,
   ViewState,
 } from "../../dist/protocol.js";
+import {
+  createRouteCodec,
+  defineRoutes,
+  hrefFor,
+  initialRouterState,
+  locationFromBrowser,
+  shareLink,
+  type NavigationEffect,
+  type PageLocation,
+  type Result,
+  type RouteError,
+  type RouteMatch,
+  type RouterState,
+  type RouteTable,
+  type Target,
+} from "../../dist/routing/index.js";
 
 // ---------------------------------------------------------------------------
-// Routes — a closed set, including the failure
+// Routes — a closed set, including the failures
 // ---------------------------------------------------------------------------
 
-// "NotFound" is a route, not an error. A URL nobody recognises is an ordinary
-// thing for a user to arrive at, and it has a screen like any other.
+// "NotFound" is a route, not an exception. A URL nobody recognises is an
+// ordinary thing for a user to arrive at, and it has a screen like any other.
+// So is a link whose identifier is not a number ("InvalidLink").
 export type Route =
   | { readonly kind: "Home" }
   | { readonly kind: "Invoices" }
   | { readonly kind: "Invoice"; readonly id: string }
-  | { readonly kind: "NotFound"; readonly raw: string };
+  | { readonly kind: "NotFound"; readonly raw: string }
+  | { readonly kind: "InvalidLink"; readonly raw: string; readonly parameter: string };
 
 export type Invoice = { readonly id: string; readonly customer: string; readonly total: string };
 
@@ -41,56 +62,88 @@ export const invoices: readonly Invoice[] = [
   { id: "1003", customer: "Pell & Sons", total: "$12,300.00" },
 ];
 
-// Routes live in the query string (`?route=/invoices/1002`), not the path.
-// That is a deployment decision, not an architectural one: query routing loads
-// correctly from any static host — including GitHub Pages — with no rewrite
-// rule, because the server only ever sees this one file. Path routing gives
-// prettier URLs and needs the server to serve index.html for unknown paths.
-// Everything below except these two functions is identical either way.
-export const ROUTE_PARAM = "route=";
+// The URL space as a value. Hash mode puts the routed location in the
+// fragment (#/invoices/1002), so any static host — GitHub Pages included —
+// serves this one file for every deep link, a reload never 404s, and no
+// <base href> or knowledge of the site's sub-path is needed.
+const defined = defineRoutes({
+  routes: [
+    { name: "home", path: "" },
+    { name: "invoices", path: "invoices", children: [{ name: "list", path: "" }, { name: "invoice", path: "{id:int}" }] },
+    { name: "notFound", path: "{*rest}" },
+  ],
+  roles: { home: "home", notFound: "notFound" },
+});
+if (!defined.ok) throw new Error(`the route table is wrong: ${JSON.stringify(defined.error)}`);
+export const table: RouteTable = defined.value;
 
-export function parseRoute(location: BrowserLocation): Route {
-  const raw = readRouteParam(location.query);
-  if (raw === "" || raw === "/") return { kind: "Home" };
-  if (raw === "/invoices") return { kind: "Invoices" };
-  const invoice = /^\/invoices\/([A-Za-z0-9-]+)$/.exec(raw);
-  // A syntactically valid URL naming a row that does not exist is still
-  // NotFound. The alternative — an "Invoice" screen with nothing in it — is a
-  // state the projection would have to apologise for later.
-  if (invoice?.[1] !== undefined && invoices.some((candidate) => candidate.id === invoice[1])) {
-    return { kind: "Invoice", id: invoice[1] };
+const toTarget = (route: Route): Target => {
+  switch (route.kind) {
+    case "Home": return { route: "home" };
+    case "Invoices": return { route: "invoices.list" };
+    case "Invoice": return { route: "invoices.invoice", params: { id: route.id } };
+    case "NotFound":
+    case "InvalidLink": return { route: "notFound", params: { rest: route.raw } };
   }
-  return { kind: "NotFound", raw };
-}
-
-const readRouteParam = (query: string): string => {
-  const entry = query.replace(/^\?/, "").split("&").find((pair) => pair.startsWith(ROUTE_PARAM));
-  return entry === undefined ? "" : decodeURIComponent(entry.slice(ROUTE_PARAM.length));
 };
 
-// The inverse of parseRoute. Keeping both here, next to each other, is what
-// makes "does every route round-trip?" a question a test can answer — see
-// test/examples.test.ts.
-export function routeToPath(route: Route): string {
-  switch (route.kind) {
-    case "Home": return "/";
-    case "Invoices": return "/invoices";
-    case "Invoice": return `/invoices/${route.id}`;
-    case "NotFound": return route.raw;
+// A syntactically valid URL naming a row that does not exist is still not
+// found. The alternative — an "Invoice" screen with nothing in it — is a state
+// the projection would have to apologise for later.
+const ofMatch = (matched: RouteMatch): Result<Route, string> => {
+  switch (matched.route) {
+    case "home": return { ok: true, value: { kind: "Home" } };
+    case "invoices.list": return { ok: true, value: { kind: "Invoices" } };
+    case "invoices.invoice": {
+      const id = String(matched.chain[1]?.params["id"] ?? "");
+      return invoices.some((invoice) => invoice.id === id) ? { ok: true, value: { kind: "Invoice", id } } : { ok: false, error: "no such invoice" };
+    }
+    default: return { ok: false, error: `unmapped ${matched.route}` };
   }
+};
+
+const codec = createRouteCodec(table, { toTarget, ofMatch });
+
+// Every route error has its own screen; none is a blank page or another
+// route's view (LCP-098).
+const ofError = (raw: string, error: RouteError): Route => {
+  switch (error.kind) {
+    case "Invalid": return { kind: "InvalidLink", raw, parameter: error.parameter };
+    case "Malformed": return { kind: "InvalidLink", raw, parameter: error.part };
+    case "NotFound":
+    case "NotPermitted":
+    case "RedirectLoop":
+    case "Unmapped": return { kind: "NotFound", raw };
+  }
+};
+
+const pageOf = (location: BrowserLocation): PageLocation =>
+  ({ origin: location.origin, path: location.path, query: location.query, hash: location.hash });
+
+/** The routed location of the page ("/invoices/1002"), from the fragment. */
+export const routedLocation = (location: BrowserLocation): string => locationFromBrowser(pageOf(location));
+
+export function parseRoute(location: BrowserLocation): Route {
+  const raw = routedLocation(location);
+  const parsed = codec.parse(raw);
+  return parsed.ok ? parsed.value : ofError(raw, parsed.error);
 }
 
-// `base` is the page's own path, captured from Initialize. Without it the
-// example would push URLs at the site root and break the moment it is served
-// from a subdirectory — which is how every GitHub Pages deployment serves it.
-export const routeToUrl = (base: string, route: Route): string =>
-  route.kind === "Home" ? base : `${base}?${ROUTE_PARAM}${encodeURIComponent(routeToPath(route))}`;
+/** The canonical routed location of a route. It and parseRoute are inverses — see test/examples.test.ts. */
+export function routeToPath(route: Route): string {
+  if (route.kind === "NotFound" || route.kind === "InvalidLink") return route.raw;
+  const formatted = codec.format(route);
+  return formatted.ok ? formatted.value : "/";
+}
 
-// The absolute link to a screen. `origin` comes from Initialize.location, which
-// is the only reason an engine can build one at all — see BrowserLocation in
-// ../../src/protocol.ts. A relative path is not something anyone can share.
-export const shareUrl = (origin: string, base: string, route: Route): string =>
-  `${origin}${routeToUrl(base, route)}`;
+/** The relative URL to push, and to render as a link: "#/invoices/1002". */
+export const routeToUrl = (route: Route): string => hrefFor(routeToPath(route));
+
+// The absolute link to a screen: the page's origin, its own path and query
+// (whatever sub-path the host serves it under), and the routed fragment. The
+// origin comes from Initialize.location, which is the only reason an engine
+// can build one at all — see BrowserLocation in ../../src/protocol.ts.
+export const shareUrl = (page: PageLocation, route: Route): string => shareLink(page, routeToPath(route));
 
 // ---------------------------------------------------------------------------
 // Authoritative state
@@ -109,9 +162,13 @@ export type CopyState =
 
 export type State = {
   readonly route: Route;
-  readonly origin: string;
+  // The location the engine last adopted, pushed or replaced: the library's
+  // navigation state, so a move to where you already are is no move.
+  readonly router: RouterState;
+  // The page's own URL, captured at Initialize: the origin, and the document
+  // path and query that a shared link keeps.
+  readonly page: PageLocation;
   readonly copy: CopyState;
-  readonly base: string;
   // Set when the kernel could not perform a navigation the engine asked for.
   // The screen still changed — the engine's route is authoritative — but the
   // address bar now disagrees with it, and pretending otherwise would leave
@@ -121,8 +178,8 @@ export type State = {
 
 export const initialState: State = {
   route: { kind: "Home" },
-  origin: "",
-  base: "/",
+  router: { current: "/" },
+  page: { origin: "", path: "/", query: "", hash: "" },
   copy: { kind: "Idle" },
   urlOutOfSync: false,
 };
@@ -136,9 +193,10 @@ export type Command =
   // browser to catch up.
   | { readonly kind: "Navigate"; readonly route: Route; readonly correlationId: CorrelationId }
   | { readonly kind: "GoBack"; readonly correlationId: CorrelationId }
-  // The browser went somewhere on its own (Back, Forward). Changes state and
-  // asks for nothing: the address bar is already correct.
-  | { readonly kind: "AdoptLocation"; readonly location: BrowserLocation }
+  // The browser went somewhere on its own (a deep link, Back, Forward, a
+  // followed link). Changes state and never pushes: at most a replace that
+  // corrects the address bar to the canonical form.
+  | { readonly kind: "AdoptLocation"; readonly location: BrowserLocation; readonly correlationId: CorrelationId }
   | { readonly kind: "RecordNavigation"; readonly failed: boolean }
   | { readonly kind: "CopyLink"; readonly correlationId: CorrelationId }
   | { readonly kind: "RecordCopy"; readonly correlationId: CorrelationId; readonly outcome: ClipboardOutcome };
@@ -172,22 +230,20 @@ const stay = (state: State): TransitionResult => ({ state, effects: [], accepted
 const go = (state: State, effects: readonly EffectRequest[] = []): TransitionResult =>
   ({ state, effects, accepted: true });
 
-const sameRoute = (a: Route, b: Route): boolean => routeToPath(a) === routeToPath(b);
+const navigation = (effect: NavigationEffect, correlationId: CorrelationId): EffectRequest =>
+  ({ kind: "Navigation", correlationId, operation: effect.kind === "Push" ? "push" : "replace", url: hrefFor(effect.location) });
 
 export function transition(state: State, command: Command): TransitionResult {
   switch (command.kind) {
     case "Navigate": {
       // Navigating to where you already are would push a duplicate history
       // entry, so Back would appear to do nothing once per redundant click.
-      if (sameRoute(state.route, command.route)) return stay(state);
+      // The library answers no effect for it.
+      const moved = codec.navigate(state.router, command.route);
+      if (!moved.ok || moved.value.effect === null) return stay(state);
       return go(
-        { ...state, route: command.route, urlOutOfSync: false },
-        [{
-          kind: "Navigation",
-          correlationId: command.correlationId,
-          operation: "push",
-          url: routeToUrl(state.base, command.route),
-        }],
+        { ...state, route: command.route, router: moved.value.state, urlOutOfSync: false },
+        [navigation(moved.value.effect, command.correlationId)],
       );
     }
 
@@ -199,10 +255,16 @@ export function transition(state: State, command: Command): TransitionResult {
       return go(state, [{ kind: "Navigation", correlationId: command.correlationId, operation: "back" }]);
 
     case "AdoptLocation": {
-      const route = parseRoute(command.location);
-      // No effect. The browser has already moved; asking it to move again is
-      // the infinite loop this file's header warns about.
-      return go({ ...state, route, urlOutOfSync: false });
+      const raw = routedLocation(command.location);
+      const adopted = codec.adopt(state.router, raw);
+      const route = adopted.route.ok ? adopted.route.value : ofError(raw, adopted.route.error);
+      // Never a push: the browser has already moved, and asking it to move
+      // again is the history trap this file's header warns about. A replace
+      // only corrects the entry to its canonical form (a trailing slash).
+      return go(
+        { ...state, route, router: adopted.state, urlOutOfSync: false },
+        adopted.effect === null ? [] : [navigation(adopted.effect, command.correlationId)],
+      );
     }
 
     case "RecordNavigation":
@@ -212,7 +274,7 @@ export function transition(state: State, command: Command): TransitionResult {
       if (state.copy.kind === "Copying") return stay(state);
       // Copied from state, never read back out of the DOM: the link on screen
       // and the link on the clipboard are then the same value by construction.
-      const url = shareUrl(state.origin, state.base, state.route);
+      const url = shareUrl(state.page, state.route);
       return go(
         { ...state, copy: { kind: "Copying", correlationId: command.correlationId } },
         [{ kind: "Clipboard", correlationId: command.correlationId, operation: "writeText", text: url }],
@@ -262,19 +324,28 @@ export function project(state: State): ViewState {
     onInvoices: state.route.kind === "Invoices",
     onInvoice: state.route.kind === "Invoice",
     onNotFound: state.route.kind === "NotFound",
-    // The address bar as the engine believes it should read. Projected so the
-    // example can show it; a real application would not need to.
+    onInvalidLink: state.route.kind === "InvalidLink",
     // The absolute link, which is what a person can actually paste somewhere.
-    currentUrl: shareUrl(state.origin, state.base, state.route),
+    currentUrl: shareUrl(state.page, state.route),
     copyDisabled: state.copy.kind === "Copying",
     showCopyStatus: state.copy.kind !== "Idle",
     copyStatus: copyStatusOf(state.copy),
-    unknownPath: state.route.kind === "NotFound" ? state.route.raw : "",
+    unknownPath: state.route.kind === "NotFound" || state.route.kind === "InvalidLink" ? state.route.raw : "",
+    invalidParameter: state.route.kind === "InvalidLink" ? state.route.parameter : "",
+    homeHref: routeToUrl({ kind: "Home" }),
     invoiceId: current?.id ?? "",
     invoiceCustomer: current?.customer ?? "",
     invoiceTotal: current?.total ?? "",
     urlOutOfSync: state.urlOutOfSync,
-    invoices: invoices.map((invoice) => ({ id: invoice.id, customer: invoice.customer, total: invoice.total })),
+    // A real relative link per row (#/invoices/1001): open in a new tab,
+    // middle-click and copy-link-address all work, and a plain click reaches
+    // the engine as LocationChanged, which it adopts (LCP-104).
+    invoices: invoices.map((invoice) => ({
+      id: invoice.id,
+      customer: invoice.customer,
+      total: invoice.total,
+      href: routeToUrl({ kind: "Invoice", id: invoice.id }),
+    })),
   };
 }
 
@@ -299,27 +370,22 @@ export function createRoutingTransport(): EngineTransport {
         // is a contract violation, not evidence.
         case "CapabilityFact":
           throw new Error(`Unexpected CapabilityFact from ${message.capability}: this engine negotiated no capabilities.`);
-        case "Initialize":
+        case "Initialize": {
           // The first screen comes from the address bar, not from a default
           // that is then corrected. A user who opened a bookmark to
-          // ?route=/invoices/1002 never sees Home flash first.
-          state = {
-            route: parseRoute(message.location),
-            // The origin is the one part of the URL an engine cannot derive and
-            // cannot read for itself. It arrives here, once.
-            origin: message.location.origin,
-            base: message.location.path,
-            copy: { kind: "Idle" },
-            urlOutOfSync: false,
-          };
-          return { view: project(state), effects: [], cancellations: [] };
+          // #/invoices/1002 never sees Home flash first. Adopting it may
+          // replace the entry with its canonical form; it never pushes.
+          const page = { ...pageOf(message.location), hash: "" };
+          const start = { ...initialState, page, router: initialRouterState };
+          return respond(transition(start, { kind: "AdoptLocation", location: message.location, correlationId: nextCorrelationId() }));
+        }
 
         case "Event":
           return respond(transition(state, eventToCommand(message.event, nextCorrelationId())));
 
         case "LocationChanged":
-          // Back, Forward, or any other browser-originated move.
-          return respond(transition(state, { kind: "AdoptLocation", location: message.location }));
+          // Back, Forward, a followed link, or any other browser-originated move.
+          return respond(transition(state, { kind: "AdoptLocation", location: message.location, correlationId: nextCorrelationId() }));
 
         case "EffectResult": {
           if (message.result.kind === "ClipboardResult") {

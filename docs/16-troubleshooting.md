@@ -379,8 +379,8 @@ correct. Only an application-initiated move pushes. See
 ## A route works locally but 404s on GitHub Pages
 
 1. **Are you using path routing?** A direct load of `/invoices/42` asks the host
-   for a file that does not exist. Query routing (`?route=/invoices/42`) has no
-   such problem, which is why
+   for a file that does not exist. Hash routing (`#/invoices/42`, the default
+   in `@echelon-foundry/limen/routing`) has no such problem, which is why
    [examples/08-routing](https://github.com/kemiller2002/limen/blob/main/examples/08-routing/README.md) uses it.
 2. **Did you capture the base path?** An app served from `/my-app/` must build
    URLs from `Initialize.location.path`, not from `/`. Forgetting this is the

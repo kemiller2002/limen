@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T19:55:58.000Z",
+  "updatedAt": "2026-10-08T20:13:42.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4119,6 +4119,51 @@
         }
       },
       "completedAt": "2026-10-08T19:55:58.000Z"
+    },
+    {
+      "id": "WI-0170",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "test/browser/packs/url-state/main.js"
+        },
+        {
+          "type": "implementation",
+          "path": "examples/08-routing/engine.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/examples.test.ts"
+        }
+      ],
+      "updatedAt": "2026-10-08T20:13:42.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T200115320Z-03435fb9"
+      ],
+      "latestCheckpoint": {
+        "id": "7e52da5a4dab8128d6e6a1bd",
+        "recordedAt": "2026-10-08T20:13:39.000Z",
+        "executionId": "EXE-20261008T200115320Z-03435fb9",
+        "repository": "limen",
+        "branch": "urlstate/wi-0170-browser-proof",
+        "commit": "4f6e3bca71ea5c096f8a60dd4cc9c2be2bfa776e",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "urlstate/wi-0170-browser-proof",
+        "remoteCommit": "4f6e3bca71ea5c096f8a60dd4cc9c2be2bfa776e",
+        "summary": "test/browser/packs/url-state passes 22 checks in Chromium and WebKit on the sub-path static server; examples/08-routing on @echelon-foundry/limen/routing in hash mode with its tests and browser smoke",
+        "nextAction": "Complete WI-0170, open the PR, merge on green, then WI-0171 F# routing package",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T20:13:42.000Z"
     }
   ]
 }

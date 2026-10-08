@@ -96,12 +96,13 @@ test("every route round-trips through its URL", () => {
 engine can build an absolute URL at all:
 
 ```ts
-export const shareUrl = (origin: string, base: string, route: Route): string =>
-  `${origin}${routeToUrl(base, route)}`;
-// → "https://example.com/app/?route=%2Finvoices%2F1002"
+import { shareLink } from "@echelon-foundry/limen/routing";
+export const shareUrl = (page: PageLocation, route: Route): string => shareLink(page, routeToPath(route));
+// → "https://example.com/app/#/invoices/1002"
 ```
 
-Capture the origin at `Initialize`, next to the base, and compose from state.
+Capture the page's location (origin, path and query) at `Initialize` and
+compose from state.
 This is what makes "Copy link" possible — the combination of Navigation and
 Clipboard, which is the main reason either capability exists. Worked example:
 the `copyLink` command in
@@ -238,20 +239,22 @@ the browser can be trusted to have preserved.
 The practical consequence: **anything that must survive Back has to be
 recoverable from the URL.** That is a design constraint, and a good one.
 
-## Path routing vs. query routing, and static hosting
+## Hash routing vs. path routing, and static hosting
 
-| | Path routing | Query routing |
+| | Path routing | Hash routing (the default) |
 | --- | --- | --- |
-| URL | `/invoices/42` | `?route=/invoices/42` |
-| Looks like | a normal site | obviously an application |
-| Direct load / refresh | needs the server to serve `index.html` for unknown paths | works anywhere, unchanged |
-| GitHub Pages | needs the `404.html` trick | works as-is |
+| URL | `/invoices/42` | `#/invoices/42` |
+| Looks like | a normal site | an application |
+| Direct load / refresh | needs the server to serve `index.html` for unknown paths | works anywhere, unchanged: the fragment never reaches the server |
+| GitHub Pages | a `404.html` fallback, with a 404 status first | works as-is |
 
-Only `parseRoute` and `routeToUrl` differ between them. Everything else — the
-union, the transitions, the projection — is identical, which is why
-[08-routing](../examples/08-routing/README.md) uses query routing: it loads
-correctly from any static host with no configuration, so the example works
-where you run it.
+With `@echelon-foundry/limen/routing` the mode is a value passed to
+`locationFromBrowser`, `hrefFor` and `shareLink`. Everything else — the table,
+the union, the transitions, the projection — is identical. Hash mode is the
+default (DF-LIMEN-2026-0006), and
+[08-routing](../examples/08-routing/README.md) uses it: it loads correctly from
+any static host with no configuration, so the example works where you run
+it.
 
 **On GitHub Pages with path routing**, a direct load of `/invoices/42` returns
 the 404 page, because no such file exists. The usual workaround is a `404.html`
@@ -270,6 +273,11 @@ base: message.location.path   // e.g. "/my-app/"
 
 and build every URL from it. Forgetting this is the most common reason an
 application works locally and breaks on GitHub Pages.
+
+In hash mode none of this is needed: every link and push is a relative
+fragment (`#/invoices/42`), which stays on the page whatever sub-path it is
+served under. Only a shared link needs the page's path, and `shareLink` takes it
+from the location captured at `Initialize`.
 
 ## Do you need routing at all?
 

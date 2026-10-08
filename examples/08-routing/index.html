@@ -10,11 +10,12 @@
     <main>
       <h1>Routing</h1>
 
-      <!-- Ordinary buttons, not <a href>. An <a> would let the browser
-           navigate on its own, discarding every piece of state the engine
-           owns; here the engine decides, and then asks the browser to catch
-           up. (Leaving the site entirely is the one case an <a href> is still
-           exactly right for.) -->
+      <!-- Buttons are application-initiated moves: the engine decides, then
+           asks the browser to catch up (a push). The rows below also carry a
+           real relative link (#/invoices/1001): in hash mode a link changes
+           only the fragment, so the page and every piece of state the engine
+           owns stay put, and the move reaches the engine as LocationChanged,
+           which it adopts. -->
       <nav class="nav">
         <button data-event="goHome">Home</button>
         <button data-event="goInvoices">Invoices</button>
@@ -54,6 +55,7 @@
               <li>
                 <button data-event="openInvoice" data-text="customer"></button>
                 <code data-text="total"></code>
+                <a data-bind-href="href">link</a>
               </li>
             </template>
           </ul>
@@ -68,11 +70,23 @@
         </section>
       </template>
 
-      <!-- A URL nobody recognises is an ordinary screen, not an error page. -->
+      <!-- A URL nobody recognises is an ordinary screen, not an error page.
+           It keeps the URL, and offers a way home. -->
       <template data-if="onNotFound">
         <section class="panel">
           <h2>Not found</h2>
           <p>Nothing here answers to <code data-text="unknownPath"></code>.</p>
+          <p><a data-bind-href="homeHref">Home</a></p>
+        </section>
+      </template>
+
+      <!-- A link whose identifier is malformed is its own screen too, naming
+           the part that is wrong. -->
+      <template data-if="onInvalidLink">
+        <section class="panel">
+          <h2>Invalid link</h2>
+          <p><code data-text="unknownPath"></code> has an invalid <code data-text="invalidParameter"></code>.</p>
+          <p><a data-bind-href="homeHref">Home</a></p>
         </section>
       </template>
     </main>
