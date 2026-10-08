@@ -57,6 +57,16 @@ exhaustive lists.
   evicted). The pack never reopens on its own.
 - All version 2 only.
 
+### Added — store conformance vectors and real two-tab scenarios (WI-0160, LCP-075, LCP-077)
+
+- `conformance/store/store.vectors.json`: 32 language-neutral vectors for
+  `limen.store` version 2, with named fault injections. Every result and fact
+  variant is covered. The pack passes all 32 under node and 27 in Chromium; a
+  vector a runner cannot run is reported unsupported, never passed.
+- The `store-tabs` page proves, with a real second tab, concurrent
+  compare-and-put, that a reader never sees part of a batch, a tab closed
+  mid-transaction, and an older tab after an upgrade.
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no

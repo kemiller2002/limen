@@ -1,0 +1,7 @@
+{
+  "doc": "The store pack's two-tab page (scripts/smoke-packs.ts, LCP-051, LCP-057, LCP-058, LCP-077). Its engine is main.js; nothing is bound.",
+  "view": {},
+  "events": {
+    "poke": {}
+  }
+}

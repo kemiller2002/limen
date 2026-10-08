@@ -237,6 +237,33 @@ What to do then is the engine's decision: merge, ask the user, or retry. A
 revision field inside the record makes this cheap, but the pack does not
 require one.
 
+## Conformance vectors and real tabs (LCP-075, LCP-077)
+
+[`conformance/store/`](https://github.com/kemiller2002/limen/blob/main/conformance/store/README.md)
+defines version 2 as 32 language-neutral vectors: requests across named
+tabs, the results and facts they must produce, and named faults. The pack
+passes all 32 under node, with every fault injected, and 27 in Chromium. The
+5 it cannot run there need a fault the browser cannot be made to produce on
+demand (quota, a failing or missing `indexedDB`, no `navigator.storage`), and
+are reported unsupported, never passed. The F# fake runs the same file.
+
+Real second tabs (`openPage`, a BroadcastChannel between them) prove what
+provider instances in one page cannot:
+
+- **Compare-and-put across tabs (LCP-058).** Both tabs `putIf` the same
+  record from the same read at once: exactly one commits, and the other
+  aborts as `conflict` with the winner's value.
+- **No partial batch is ever visible (LCP-051).** A reader in the other tab
+  counts a store in a loop while this tab commits 500 records in one
+  transaction. Measured over three runs: 113 to 163 reads, every one 0 or
+  500.
+- **A tab closed mid-transaction (LCP-051, LCP-077).** The other tab starts a
+  4,000-record transaction and is closed at once. All or nothing remains;
+  measured: nothing, in every run (the close interrupted the transaction).
+- **An older tab after an upgrade (LCP-057).** The newer tab's upgrade
+  completes, the older tab hears `VersionChanged`, and its next write is
+  `NotOpen` and never applied.
+
 ## Measured limits (negative knowledge)
 
 **Quota could not be produced in real Chromium.** With the DevTools protocol's
@@ -270,6 +297,9 @@ loads none of it.
 | --- | --- |
 | Keys, JSON equality, request validation, schema differences; Unavailable; quota (commit-level abort, no operation) and cancellation mid-transaction through a scripted IndexedDB; unknown store; NotOpen; conformance suite | [`test/store.test.ts`](../test/store.test.ts) |
 | Version 2 options; the version 1 offer and its fingerprint recomputed from the frozen 0.7.1 contract; two namespaces on one origin (isolation, a delete that leaves the other intact, the physical name never shown); a separator in a name refused; values at limit−1, limit and limit+1; an over-limit transaction; default limits; invalid options — against an in-memory IndexedDB | [`test/store-namespaces.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-namespaces.test.ts) |
+| The 32 shared vectors, every one passing under node with quota, open failures, storage cleared, a missing `indexedDB` and both storage environments injected; every result and fact variant expected; the runner reports a wrong expectation as failed and a missing requirement as unsupported | [`test/store-conformance.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-conformance.test.ts), [`conformance/store/`](https://github.com/kemiller2002/limen/blob/main/conformance/store/README.md) |
+| The same vectors in Chromium: 27 passed, 5 unsupported (named), 0 failed | [`test/browser/packs/store-conformance/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-conformance/) |
+| Two real tabs: concurrent compare-and-put, a reader never seeing part of a batch, a tab closed mid-transaction, an older tab after an upgrade | [`test/browser/packs/store-tabs/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-tabs/) |
 | Compound keys: the tuple as key, lexicographic order, a tuple-prefix range, a compound unique violation, a missing part, single-to-compound as SchemaMismatch, invalid compound schemas; count against query, on a store and an index; deleteRange of a range, of the store, inside an aborted and a readonly transaction; version 1 refusing all of them as malformed — against an in-memory IndexedDB | [`test/store-compound.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-compound.test.ts) |
 | The same compound-key, count and deleteRange rules in Chromium | [`test/browser/packs/store-compound/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-compound/) |
 | persist, persisted and estimate over a scripted `navigator.storage` (granted, refused, rejected, missing counts, Unsupported); availability Missing, Available (probe deleted), Refused (thrown and reported), Broken; created on first use, not on reopen, again after deletion; ConnectionLost and NotOpen after a forced close, never reopened; version 1 refusing all of it — over scripted and in-memory IndexedDBs | [`test/store-durability.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-durability.test.ts) |
