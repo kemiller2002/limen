@@ -16,6 +16,32 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Added — store pack version 2: application namespaces and size limits (WI-0157, LCP-048, LCP-050)
+
+- `storeCapability({ namespace, limits? })` registers the IndexedDB store pack
+  inside an **application namespace** and offers `limen.store` **version 2**
+  (`STORE_CAPABILITY_V2`). Every database name the engine gives is stored as
+  `<namespace>/<name>`; a name that is empty or contains `/` is
+  `InvalidRequest`, so no request reaches another application's databases.
+  The namespace is not a security boundary: docs/41 says so, with the GitHub
+  Pages shared-origin example (LCP-069).
+- **Size limits.** A stored value is at most 1 MiB and a transaction's
+  operations at most 8 MiB of UTF-8 JSON by default, configurable up to 16 MiB
+  and 64 MiB. A request over a limit is `InvalidRequest` before the database is
+  touched. `Opened` gains an optional `limits` field reporting them.
+- `fake-indexeddb` 6.2.5 is a **dev dependency** for the node tests; the
+  package still has no runtime dependency.
+
+### Compatibility
+
+- **Nothing changes for existing consumers.** `storeCapability()` with no
+  options still offers `limen.store` version 1 with 0.7.x's fingerprint and
+  behaviour, and `STORE_CAPABILITY` is still that version 1 offer, so an
+  engine built against 0.7.x keeps negotiating. The fingerprint is recomputed
+  in the tests from the frozen 0.7.1 contract
+  (`contract/frozen/store.v1.contract.json`). The generated F#, C# and Rust
+  store bindings now describe version 2; no published package carried them.
+
 ### Documentation
 
 - **Requirements for durable IndexedDB storage from F# engines (WI-0156, LCP-018).**

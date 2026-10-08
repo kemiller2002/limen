@@ -26,6 +26,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "LCP-043..087 derived from Limen's store pack, Arca's offline queue (ARCA-OFF), Chrona, Summa, Signal, Fides, Indy and Helix requirements; coordinator brief 2026-10-08"
+    EXE-20261008T155733808Z-78843c30:
+      operations: [modified]
+      at: 2026-10-08T16:01:31.000Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Record the owner's accepted answers to OQ-LIMEN-IDB-001..006 (2026-10-08)"
 ---
 
 # Durable IndexedDB storage for F# engines, and the Arca offline-queue adapter
@@ -1652,17 +1662,17 @@ requirement IDs.
 
 ## 18. Open questions
 
-Only questions this document cannot settle. Each has a **proposed** answer for
-the user to confirm.
+All six were settled by the owner on 2026-10-08, who accepted each proposed
+answer. They are recorded here as decisions.
 
-| ID | Question | Proposed answer |
+| ID | Question | Decision |
 |---|---|---|
-| OQ-LIMEN-IDB-001 | A second tab of the same application cannot own the queue (LCP-059). Should it forward its writes to the owner tab over the coordination channel, or work without queued offline writes? | **Proposed:** v1 needs no forwarding. The second tab says that another tab holds this device's unsent changes, offers "use this tab instead" (steal the lock; the first tab is fenced), and still writes directly while online. Forwarding is a later item if real use needs it. |
-| OQ-LIMEN-IDB-002 | *Settled 2026-10-08 by Chrona WI-0058 (coordinator decision).* What is the default `sharedDevicePolicy`, and what does each value offer? | **Decided:** `ask` is the default and offers send now, keep or discard; `discardOnSignOut` offers send now or discard. LCP-070 adopts this. Still **proposed**, for the user to confirm: under `ask` with "keep", the account's read cache is kept with its unsent changes (LCP-086). |
-| OQ-LIMEN-IDB-003 | The new IDs continue the LCP numbering (LCP-043..087) outside issue #15's scorecard. Should #15 list them? | **Proposed:** yes. Add one scorecard row, "LCP-043..087 durable storage cluster (extends LCP-018)", linking this document, so the numbers cannot be reused. |
-| OQ-LIMEN-IDB-004 | When should an application call `persist`? | **Proposed:** after the first offline write is queued, when the person has something to lose and the browser's engagement heuristics are most likely to grant it. Never at first load, because Firefox prompts. |
-| OQ-LIMEN-IDB-005 | Should the F# packages share the npm version (lockstep) or have their own? | **Proposed:** lockstep (LCP-079). The contract fingerprint ties them anyway, and one version is one thing to pin. |
-| OQ-LIMEN-IDB-006 | Is Playwright WebKit enough for Indy's iPad Safari target? | **Proposed:** Playwright WebKit in CI, plus a manual iPad Safari checklist per release (open, write, reload, two tabs, private mode), until a device run exists. iOS eviction policy cannot be automated and is covered by LCP-062's detection, not by a test. |
+| OQ-LIMEN-IDB-001 | A second tab of the same application cannot own the queue (LCP-059). Should it forward its writes to the owner tab over the coordination channel, or work without queued offline writes? | **Accepted:** v1 has no forwarding. The second tab is told that another tab holds this device's unsent changes, can take over ("use this tab instead": steal the lock, and the first tab is fenced), and writes directly while online. Forwarding is a later item if real use needs it. |
+| OQ-LIMEN-IDB-002 | What is the default `sharedDevicePolicy`, and what does each value offer? | **Decided** by Chrona WI-0058: `ask` is the default and offers send now, keep or discard; `discardOnSignOut` offers send now or discard. **Accepted:** under `ask`, if the person keeps their unsent changes, that account's read cache is kept too (LCP-070, LCP-086). |
+| OQ-LIMEN-IDB-003 | The new IDs continue the LCP numbering (LCP-043..087) outside issue #15's scorecard. Should #15 list them? | **Accepted and done:** kemiller2002/limen#15's scorecard has one row, "LCP-043..087 durable storage cluster (extends LCP-018)", linking this document, so the numbers cannot be reused. |
+| OQ-LIMEN-IDB-004 | When should an application call `persist`? | **Accepted:** after the first offline write is queued, when the person has something to lose and the browser's engagement heuristics are most likely to grant it. Never at first load, because Firefox prompts. |
+| OQ-LIMEN-IDB-005 | Should the F# packages share the npm version (lockstep) or have their own? | **Accepted:** lockstep (LCP-079). The F# packages carry the npm package's version. |
+| OQ-LIMEN-IDB-006 | Is Playwright WebKit enough for Indy's iPad Safari target? | **Accepted:** Playwright WebKit in CI, plus a manual iPad Safari checklist per release (open, write, reload, two tabs, private mode) in the release documentation, until a device run exists. iOS eviction policy cannot be automated and is covered by LCP-062's detection, not by a test. |
 
 ## 19. Requirement count
 

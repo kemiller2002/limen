@@ -1,0 +1,7 @@
+{
+  "doc": "The store pack's namespace and size-limit page (scripts/smoke-packs.ts, LCP-048, LCP-050). Its engine is main.js; nothing is bound.",
+  "view": {},
+  "events": {
+    "poke": {}
+  }
+}
