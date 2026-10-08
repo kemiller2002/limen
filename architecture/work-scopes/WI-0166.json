@@ -1,0 +1,18 @@
+{
+  "workItem": "WI-0166",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-068, LCP-070, LCP-071, LCP-079, LCP-080; OQ-LIMEN-IDB-002, OQ-LIMEN-IDB-004, OQ-LIMEN-IDB-006",
+  "placement": "Release and documentation. Limen 0.8.0: the package version (package.json, package-lock.json, and Limen's own installation record through the CLI's upgrade), a dated CHANGELOG entry with the manual iPad Safari checklist (OQ-006), README's release section listing all three F# packages and the Conditor install path, and docs/41's consumer guide: what never to store, namespaces and the shared-origin caveat, what sign-out clears under both sharedDevicePolicy values (OQ-002), that nothing is encrypted at rest, when to call persist (OQ-004), that the offline-start read cache is Arca's, and how a consumer installs the F# packages through Conditor's NuGet release-asset feed (the limen-fsharp registry system). Publishing is the existing publish.yml, dispatched on request. No contract, pack, Core or workflow change.",
+  "guardrail": false,
+  "paths": [
+    "package.json",
+    "package-lock.json",
+    ".echelon/limen.json",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/**",
+    "guests/fsharp/Limen.Contract/README.md",
+    "libraries/fsharp/Limen.Store/README.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
