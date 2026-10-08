@@ -641,31 +641,50 @@ const ALL_ROUTES: readonly Route[] = [
   { kind: "NotFound", raw: "/nope" },
 ];
 
-test("08-routing: every route round-trips through its URL", () => {
+// The page's own URL under a sub-path, as GitHub Pages serves it; the routed
+// location lives in the fragment.
+const at = (hash: string) => ({ origin: "https://example.com", path: "/examples/08-routing/", query: "", hash });
+
+test("08-routing: every route round-trips through its URL, in hash mode", () => {
   for (const route of ALL_ROUTES) {
-    const url = routeToUrl("/examples/08-routing/", route);
-    const query = url.includes("?") ? `?${url.split("?")[1] ?? ""}` : "";
-    assert.deepEqual(parseRoute({ path: "/examples/08-routing/", query, hash: "" }), route,
-      `${routeToPath(route)} did not survive the trip`);
+    const url = routeToUrl(route);
+    assert.ok(url.startsWith("#/"), `${url} is a relative fragment link`);
+    assert.deepEqual(parseRoute(at(url)), route, `${routeToPath(route)} did not survive the trip`);
   }
 });
 
-test("08-routing: an unknown path and a well-formed id that does not exist are both NotFound", () => {
-  assert.deepEqual(parseRoute({ path: "/", query: "?route=%2Fwidgets", hash: "" }), { kind: "NotFound", raw: "/widgets" });
-  assert.deepEqual(parseRoute({ path: "/", query: "?route=%2Finvoices%2F9999", hash: "" }), { kind: "NotFound", raw: "/invoices/9999" });
+test("08-routing: an unknown path and a well-formed id that does not exist are both NotFound; a malformed id is an invalid link", () => {
+  assert.deepEqual(parseRoute(at("#/widgets")), { kind: "NotFound", raw: "/widgets" });
+  assert.deepEqual(parseRoute(at("#/invoices/9999")), { kind: "NotFound", raw: "/invoices/9999" });
   assert.ok(routingInvoices.every((invoice) => invoice.id !== "9999"));
+  assert.deepEqual(parseRoute(at("#/invoices/abc")), { kind: "InvalidLink", raw: "/invoices/abc", parameter: "id" });
+  assert.deepEqual(parseRoute(at("")), { kind: "Home" }, "no fragment is home");
 });
 
 test("08-routing: the first screen comes from the address bar, not from a default", async () => {
   const body = await exampleBody("08-routing");
   await withDom(body, async (document) => {
-    window.history.replaceState(null, "", "/?route=%2Finvoices%2F1002");
+    window.history.replaceState(null, "", "/#/invoices/1002");
     await new BrowserKernel(conforming("08-routing", createRoutingTransport()), document).start();
     await flush();
     // Home never flashes: Initialize carries the location.
     assert.equal(present(document, "section h2"), true);
     assert.equal(text(document, "section h2"), "Invoice 1002");
     assert.equal(text(document, "section p"), "Harbor Analytics");
+    window.history.replaceState(null, "", "/");
+  });
+});
+
+test("08-routing: a deep link that is not canonical is corrected in place, never pushed", async () => {
+  const body = await exampleBody("08-routing");
+  await withDom(body, async (document) => {
+    window.history.replaceState(null, "", "/#/invoices/1002/");
+    const before = window.history.length;
+    await new BrowserKernel(conforming("08-routing", createRoutingTransport()), document).start();
+    await flush();
+    assert.equal(text(document, "section h2"), "Invoice 1002");
+    assert.equal(window.location.hash, "#/invoices/1002");
+    assert.equal(window.history.length, before, "a replace, not a new history entry");
     window.history.replaceState(null, "", "/");
   });
 });
@@ -677,10 +696,13 @@ test("08-routing: clicking a row changes the screen and the URL together", async
     await flush();
     await click(document, "[data-event='goInvoices']");
     assert.equal(text(document, "section h2"), "Invoices");
+    assert.equal(window.location.hash, "#/invoices");
+    // Every row also carries a real relative link to the place its button opens.
+    assert.equal(document.querySelector(".list li a")?.getAttribute("href"), "#/invoices/1001");
 
     await click(document, ".list li button[data-event='openInvoice']");
     assert.equal(text(document, "section h2"), "Invoice 1001");
-    assert.match(window.location.search, /route=%2Finvoices%2F1001/);
+    assert.equal(window.location.hash, "#/invoices/1001");
     window.history.replaceState(null, "", "/");
   });
 });
@@ -703,26 +725,27 @@ test("08-routing: the browser's own Back button moves the screen back", async ()
   });
 });
 
-test("08-routing: adopting a browser-originated location requests no navigation", () => {
+test("08-routing: adopting a browser-originated location never pushes", () => {
   const onInvoices = routeTransition(
-    { ...routingInitial, base: "/" },
+    routingInitial,
     { kind: "Navigate", route: { kind: "Invoices" }, correlationId: cid("nav-1") },
   );
   assert.equal(onInvoices.effects.length, 1, "an application-initiated move asks the browser to catch up");
+  assert.equal(onInvoices.effects[0]?.kind === "Navigation" && onInvoices.effects[0].operation, "push");
 
-  const adopted = routeTransition(onInvoices.state, {
-    kind: "AdoptLocation",
-    location: { path: "/", query: "", hash: "" },
-  });
+  const adopted = routeTransition(onInvoices.state, { kind: "AdoptLocation", location: at(""), correlationId: cid("nav-2") });
   // The push-on-popstate bug in one assertion: reacting to the browser's own
   // move with another push traps the user on the page.
   assert.equal(adopted.effects.length, 0, "the browser has already moved; asking again is the history trap");
   assert.deepEqual(adopted.state.route, { kind: "Home" });
+
+  // A non-canonical location is corrected with a replace — still never a push.
+  const corrected = routeTransition(adopted.state, { kind: "AdoptLocation", location: at("#/invoices/"), correlationId: cid("nav-3") });
+  assert.deepEqual(corrected.effects, [{ kind: "Navigation", correlationId: "nav-3", operation: "replace", url: "#/invoices" }]);
 });
 
 test("08-routing: navigating to where you already are is refused, so Back never stalls", () => {
-  const onHome = { ...routingInitial, base: "/" };
-  const again = routeTransition(onHome, { kind: "Navigate", route: { kind: "Home" }, correlationId: cid("nav-2") });
+  const again = routeTransition(routingInitial, { kind: "Navigate", route: { kind: "Home" }, correlationId: cid("nav-2") });
   assert.equal(again.accepted, false);
   assert.equal(again.effects.length, 0, "a duplicate history entry makes Back look broken");
 });
@@ -743,7 +766,7 @@ test("08-routing: Copy link puts the ABSOLUTE url of the current screen on the c
       // absolute — a relative path is not something anyone can share. The
       // origin is only available because Initialize.location carries it.
       assert.deepEqual(written, [shown]);
-      assert.match(shown, /^http:\/\/localhost\/\?route=/);
+      assert.equal(shown, "http://localhost/#/invoices");
       assert.equal(text(document, ".status"), "Link copied.");
       window.history.replaceState(null, "", "/");
     });
@@ -763,18 +786,16 @@ test("08-routing: a clipboard the browser refuses is admitted; the link stays on
   });
 });
 
-test("08-routing: shareUrl composes an absolute link from the origin, the base and the route", () => {
-  assert.equal(
-    shareUrl("https://example.com", "/app/", { kind: "Invoice", id: "1002" }),
-    "https://example.com/app/?route=%2Finvoices%2F1002",
-  );
+test("08-routing: shareUrl keeps the page's sub-path and query, and puts the route in the fragment", () => {
+  const page = { origin: "https://example.com", path: "/app/", query: "?v=2", hash: "#/old" };
+  assert.equal(shareUrl(page, { kind: "Invoice", id: "1002" }), "https://example.com/app/?v=2#/invoices/1002");
   // Served from a subdirectory, which is how GitHub Pages serves everything.
-  assert.equal(shareUrl("https://example.com", "/app/", { kind: "Home" }), "https://example.com/app/");
+  assert.equal(shareUrl(page, { kind: "Home" }), "https://example.com/app/?v=2#/");
 });
 
 test("08-routing: a navigation the kernel could not perform is admitted, not hidden", () => {
   const moved = routeTransition(
-    { ...routingInitial, base: "/" },
+    routingInitial,
     { kind: "Navigate", route: { kind: "Invoices" }, correlationId: cid("nav-3") },
   );
   const failed = routeTransition(moved.state, { kind: "RecordNavigation", failed: true });

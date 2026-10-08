@@ -1,0 +1,18 @@
+{
+  "doc": "The URL-state page (scripts/smoke-packs.ts, LCP-097, LCP-103, LCP-104, LCP-106). Its engine is engine.js, on @echelon-foundry/limen/routing in hash mode.",
+  "view": {
+    "route": "string",
+    "detail": "string",
+    "location": "string",
+    "signedIn": "string",
+    "invoiceSevenHref": "string",
+    "copyStatus": "string",
+    "sharedLink": "string"
+  },
+  "events": {
+    "showLines": {},
+    "showList": {},
+    "signIn": {},
+    "copyLink": {}
+  }
+}

@@ -103,6 +103,9 @@ renders a refusal. The library performs nothing itself.
 | Malformed parameters fail deterministically | A non-canonical int, one beyond 53-bit safety, an ambiguous repeated query key, a missing required key, a bad escape and invalid UTF-8 each have one specified result. The first structural match decides, so an invalid identifier never slides to the not-found page. |
 | Guards reject or redirect without becoming an authorization boundary | A guard is an engine callback returning `Allow`, `Deny` or `Redirect`. Guard redirects share the redirect loop rule. This document and the semantics state that the server remains the authority. |
 
-The TypeScript example [`examples/08-routing`](../examples/08-routing) predates
-these semantics and keeps its own small router. Bringing it and a TypeScript
-library under the vectors is future work, not a protocol change.
+The TypeScript library [`@echelon-foundry/limen/routing`](../src/routing)
+passes the same vectors (`test/routing.test.ts`). The example
+[`examples/08-routing`](../examples/08-routing) uses it in hash mode, and
+`test/browser/packs/url-state` proves the URL-state behaviour in real Chromium
+and WebKit on a static host that answers 404 for every path it has no file
+for.

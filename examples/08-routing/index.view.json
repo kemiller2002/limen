@@ -12,7 +12,8 @@
       "list": {
         "id": "string",
         "customer": "string",
-        "total": "string"
+        "total": "string",
+        "href": "string"
       }
     },
     "onInvoice": "boolean",
@@ -20,7 +21,10 @@
     "invoiceCustomer": "string",
     "invoiceTotal": "string",
     "onNotFound": "boolean",
-    "unknownPath": "string"
+    "unknownPath": "string",
+    "onInvalidLink": "boolean",
+    "invalidParameter": "string",
+    "homeHref": "string"
   },
   "events": {
     "goHome": {},

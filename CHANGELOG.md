@@ -16,6 +16,37 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Added — URL state proven in real Chromium and WebKit; `examples/08-routing` on the library (WI-0170, LCP-097, 103, 104, 106, 111)
+
+- `test/browser/packs/url-state`, run by `smoke:packs` and
+  `smoke:packs:webkit`: an application that keeps its navigable state in the
+  fragment with `@echelon-foundry/limen/routing`. The static server serves it
+  under a sub-path and answers 404 for any other path, as GitHub Pages does.
+  22 checks in each browser:
+  - **Deep links:** a deep link opens its view, corrected to the canonical
+    form in place, and a reload restores it from the URL alone.
+  - **History:** `refine` adds no history entry, while `navigate` pushes.
+    Back and Forward step between places.
+  - **Links:** a real relative link is followed and adopted. Opened as a
+    fresh page, it shows the same view.
+  - **Sign-in:** a signed-in deep link goes through sign-in and comes back by
+    a replace, and Back skips sign-in.
+  - **Copy link:** it produces the absolute canonical URL, which reopens the
+    same view, and renders a typed clipboard outcome.
+  - **Outcomes:** not-found, not-permitted, invalid and malformed deep links
+    each render their own view and keep the URL.
+  - **Static host:** a path deep link gets a 404.
+- `examples/08-routing` now uses the library in hash mode (`#/invoices/1002`)
+  instead of its own query-string router. Changes:
+  - Its route table is a value, mapped onto the `Route` union by a typed
+    codec.
+  - Rows carry real relative links.
+  - A non-canonical deep link is corrected by a replace, never a push.
+  - A malformed identifier has its own Invalid link screen.
+  - Its tests moved to hash URLs, and `scripts/browser-smoke.ts` follows.
+- `docs/routing.md`, `docs/31-routing.md` and `docs/16-troubleshooting.md`
+  describe hash routing as the default for static hosts.
+
 ### Added — the TypeScript routing library `@echelon-foundry/limen/routing` (WI-0169, LCP-089, 093, 094, 107, 108)
 
 - `src/routing`, exported as `@echelon-foundry/limen/routing`: the same URL-state
