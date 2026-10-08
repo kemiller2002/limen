@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T18:06:40.000Z",
+  "updatedAt": "2026-10-08T18:45:09.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3946,33 +3946,47 @@
     {
       "id": "WI-0166",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-08T18:06:40.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "CHANGELOG.md"
+        },
+        {
+          "type": "implementation",
+          "path": "docs/41-indexeddb.md"
+        },
+        {
+          "type": "tests",
+          "path": "package.json"
+        }
+      ],
+      "updatedAt": "2026-10-08T18:45:09.000Z",
       "telemetryExecutionIds": [
         "EXE-20261008T180641411Z-780614cf"
       ],
       "latestCheckpoint": {
-        "id": "4092c6ce9bae1bb22dc1e224",
-        "recordedAt": "2026-10-08T18:15:37.000Z",
+        "id": "ae19ce6bef59b50a3a8ddb13",
+        "recordedAt": "2026-10-08T18:45:00.000Z",
         "executionId": "EXE-20261008T180641411Z-780614cf",
         "repository": "limen",
-        "branch": "indexeddb/wi-0166-release-0.8.0",
-        "commit": "54ebcd85c5b680d3c7b590ed4da7027f4276deb2",
+        "branch": "indexeddb/wi-0166-complete",
+        "commit": "509ef4f53c06fd6eed103170934cb58ec2b21bfc",
         "remote": {
           "name": "origin",
           "url": "https://github.com/kemiller2002/limen.git"
         },
-        "remoteBranch": "indexeddb/wi-0166-release-0.8.0",
-        "remoteCommit": "54ebcd85c5b680d3c7b590ed4da7027f4276deb2",
-        "summary": "Version 0.8.0 (package, lockfile, self-installation record), dated CHANGELOG with the iPad Safari checklist, docs/41 consumer, privacy and sign-out guide, Conditor install path as the limen-fsharp registry system (LCP-080 resolution). npm test 876/876, test:libraries, pack:nuget and check:nuget at 0.8.0 pass.",
-        "nextAction": "Merge, dispatch publish.yml for 0.8.0, verify assets, open the echelon-registry PR (limen 0.8.0, limen-fsharp 0.8.0, echelon-current), prove the Conditor install, then record completion.",
+        "remoteBranch": "main",
+        "remoteCommit": "509ef4f53c06fd6eed103170934cb58ec2b21bfc",
+        "summary": "Limen 0.8.0 released (https://github.com/kemiller2002/limen/releases/tag/v0.8.0, publish run 37824855166, commit 509ef4f): npm with provenance, three attested .nupkg assets verified by checksum and attestation from an empty directory; echelon-registry PR #52 records limen and limen-fsharp 0.8.0 in echelon-current 1.10.0; Conditor 0.6.0 installs, verifies and plans the limen-fsharp feed in scratch consumers.",
+        "nextAction": "None in Limen; Arca's IndexedDB adapter follows in Arca.",
         "verification": {
           "status": "verified",
           "mechanism": "git-remote-observation"
         }
-      }
+      },
+      "completedAt": "2026-10-08T18:45:09.000Z"
     }
   ]
 }
