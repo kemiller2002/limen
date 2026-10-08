@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0156",
+  "reference": "kemiller2002/limen#28 (LCP-018) and kemiller2002/arca WI-0016: requirements and backlog for durable IndexedDB storage consumed from F#, including the Arca offline queue-store adapter",
+  "placement": "Requirements, decision record and backlog only. A requirements document under docs/requirements, a Decision Record under research/decisions, index links in docs/README.md and docs/41-indexeddb.md, and the Praxis registry and queue. No source, contract, test, workflow or guardrail-owned path changes.",
+  "guardrail": false,
+  "paths": ["docs/**", "research/**", "registries/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

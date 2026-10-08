@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 156,
+  "nextSeq": 157,
   "items": [
     {
       "id": "WI-0001",
@@ -2312,6 +2312,32 @@
       },
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "WI-0156",
+      "title": "Requirements and backlog for Limen IndexedDB durable storage (LCP-018 extension): generic store pack, functional F# API, Arca queue-store adapter placement, decision record",
+      "description": "Write the requirements (LCP-043..LCP-079) for a thin generic IndexedDB capability (the limen.store pack plus a consumable functional F# API) and for the Arca queue-store adapter that replaces Arca's interim localStorage adapter without changing ARCA-OFF-002's port; record DF-LIMEN-2026-0005 (adapter placement, fallback policy, encryption scope); capture the dependency-ordered implementation backlog. Requirements and backlog only, no implementation.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "requirements",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:05:23Z",
+      "updatedAt": "2026-10-08T15:05:27Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "kemiller2002/limen#28"
     }
   ]
 }
