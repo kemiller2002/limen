@@ -135,9 +135,12 @@ docs/41 points to the Arca cache rather than describing a parallel one.
 **Clearing.** Clearing follows the application's `sharedDevicePolicy`
 (`ask` | `discardOnSignOut`):
 
-- the read cache is cleared at sign-out under both values;
-- the policy decides only what happens to unsent queue entries (LCP-070,
-  LCP-086).
+- under `discardOnSignOut`, the account's read cache and unsent changes
+  never stay behind;
+- under `ask`, the cache is kept only when the person keeps their unsent
+  changes on this device (LCP-070, LCP-086);
+- the policy itself, and its sign-out choices, are Chrona's (Chrona
+  WI-0058).
 
 ## Consequences
 
@@ -147,7 +150,7 @@ docs/41 points to the Arca cache rather than describing a parallel one.
   - WI-0020: migration;
   - WI-0021: the read-cache port;
   - WI-0022: the IndexedDB read cache.
-- Chrona adopts the adapter (WI-0057) and the cache (WI-0058). It can show a
+- Chrona adopts the adapter (WI-0059) and the cache (WI-0057), after its shared-device sign-out (WI-0058). It can show a
   second tab why it does not hold the queue.
 - Limen's work (WI-0157..WI-0166) is all generic, and is consumable by any F#
   engine.

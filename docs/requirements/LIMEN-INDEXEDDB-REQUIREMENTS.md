@@ -988,28 +988,33 @@ implement").
 **Status:** Required · **Priority:** P1 · **Placement:** Engine Library + Consumer adapter + application
 
 ### Requirement
-**Always cleared on sign-out, under every policy:** rebuildable caches and
-derived data held for that account. This includes the offline-start read
-cache (LCP-082..087), cached records, reference data, the roster and derived
-indexes.
-
-**Kept:** non-secret device preferences.
+The application declares a **`sharedDevicePolicy`**: `ask` (the default) or
+`discardOnSignOut`. Chrona shipped this setting in Chrona WI-0058.
 
 **Unsent queue entries** belong to the account that made them, and are never
-sent with another account's credential. What happens to them at sign-out
-follows the application's declared **`sharedDevicePolicy`**:
+sent with another account's credential. At sign-out, when unsent entries
+exist, the application MUST say how many there are. It then offers:
 
-- **`ask`** (the default for a personal device): when unsent entries exist,
-  sign-out MUST say how many there are, and offer either to keep them for
-  that account on this device, as Chrona does today, or to discard them.
-  Discarding is explicit, confirmed, and uses `deleteRange` (LCP-054).
-- **`discardOnSignOut`** (a deployment's choice for shared devices): before
-  signing out, the application MUST show how many unsent entries will be
-  discarded, and offer to synchronize first when online. On sign-out, it
-  discards them, and the discard is recorded in diagnostics. It never
-  discards silently.
+| Option | `ask` | `discardOnSignOut` |
+|---|---|---|
+| Send them now, when the provider is reachable | offered | offered |
+| Keep them on this device for that account | offered | **not offered** |
+| Discard them, after a confirmation that names how many | offered | offered |
 
-The policy is a value the adapter receives. The adapter offers both clearing
+Discarding uses `deleteRange` (LCP-054) and is recorded in diagnostics.
+Nothing is discarded silently, and nothing is left behind without the person
+knowing.
+
+**The account's read cache and other rebuildable data** (the offline-start
+cache, LCP-082..087: cached records, reference data, the roster and derived
+indexes) are cleared at sign-out with one exception. Under `ask`, if the
+person keeps their unsent changes on this device, the account's cache is kept
+with them, so that the account can open offline and see those changes in
+context. Under `discardOnSignOut`, the cache is always cleared.
+
+**Kept under both policies:** non-secret device preferences.
+
+The policy is a value the adapter receives. The adapter offers these clearing
 operations, and never chooses a policy itself.
 
 **Clear this device.** A separate action removes every database in the
@@ -1023,14 +1028,14 @@ while another tab holds a connection.
   them.
 
 ### Acceptance criteria
-- After sign-out, no cache for that account remains, under either policy.
-- Under `ask`, unsent entries remain unless the person discarded them.
-- Under `discardOnSignOut`, they are gone after sign-out, and the count was shown before.
+- Under `discardOnSignOut`, after sign-out no unsent entry and no cache for that account remains, and the count was shown first.
+- Under `ask`, with "keep" chosen, the account's unsent entries and its cache remain, and another account sees neither.
+- Under `ask`, with "send now" or "discard" chosen, the account's cache is cleared.
 - "Clear this device" leaves no database in the namespace, or reports why it could not.
 
 ### Reference tests
 - Adapter and library tests over the fake.
-- A Chrona browser test when it adopts the adapter (Chrona WI-0057).
+- Chrona's sign-out tests (WI-0058), repeated against the IndexedDB queue when Chrona adopts the adapter (Chrona WI-0059).
 
 *Sources: CHX-021, CHX-023, CHX-230; SIG ADM-071; SUM0-015 (caches rebuildable).*
 
@@ -1551,9 +1556,13 @@ for it.
 **Status:** Required · **Priority:** P1 · **Placement:** Consumer adapter + application
 
 ### Requirement
-On sign-out, the read cache for that account MUST be cleared under both
-`sharedDevicePolicy` values (`ask` and `discardOnSignOut`). It is one
-`deleteRange` over `[account, …]` (LCP-054, LCP-070).
+On sign-out, the read cache for that account MUST be cleared by one
+`deleteRange` over `[account, …]` (LCP-054), under the policy rule in
+LCP-070:
+
+- under `discardOnSignOut`, it is always cleared;
+- under `ask`, it is cleared unless the person keeps their unsent changes on
+  this device, in which case it is kept with them.
 
 "Clear this device" removes every account's cache. An entry read with
 another account's credential MUST never be shown to, or revalidated with, a
@@ -1567,12 +1576,12 @@ The cache holds the account's records in readable form on the device. It is
 rebuildable, so clearing it costs only an online re-read.
 
 ### Acceptance criteria
-- After sign-out under either policy, a `count` over the account's range is 0.
+- After a sign-out that clears the cache, a `count` over the account's range is 0.
 - A second account on the device sees none of the first account's entries.
 - A clearing failure is reported (`VersionBlocked`, `Unavailable`), never ignored.
 
 ### Reference tests
-- Over the fake: two accounts; sign-out of one under each policy; clearing blocked by another tab.
+- Over the fake: two accounts; sign-out of one under each policy and each `ask` choice; clearing blocked by another tab.
 
 *Sources: LCP-070; CHX-023; SIG ADM-071; FID-CLI-002.*
 
@@ -1637,8 +1646,9 @@ requirement IDs.
 | A3 | Arca WI-0020 | One-time localStorage-to-IndexedDB migration | LCP-066, 067 | Arca WI-0016 |
 | A4 | Arca WI-0021 | Read-cache port in `Arca.Core` (`Cached`/`Fresh`, token freshness rules), in-memory implementation and read-cache conformance suite | LCP-082..086 | — (can start now) |
 | A5 | Arca WI-0022 | IndexedDB read cache in `EchelonFoundry.Arca.Limen`: compound-keyed partitions, revalidation, policy-driven clearing, budget and eviction | LCP-082..087 | Arca WI-0016, Arca WI-0021 |
-| C1 | Chrona WI-0057 | Adopt the IndexedDB queue adapter: ownership notice for a second tab, durability mode in sync state, `sharedDevicePolicy` (`ask` \| `discardOnSignOut`) at sign-out, migration on first run | LCP-059, 065, 070, 073 | Arca WI-0020 released |
-| C2 | Chrona WI-0058 | Offline start from the read cache: activities by month, derived activity index, reference data and roster, shown "as of" their token, revalidated online, cleared on sign-out | LCP-082..087 | Arca WI-0022 released; Chrona WI-0034 for the derived index |
+| C0 | Chrona WI-0058 (complete) | Shared-device sign-out: `sharedDevicePolicy` (`ask` \| `discardOnSignOut`) on today's localStorage queue | LCP-070 | — |
+| C1 | Chrona WI-0059 | Adopt the IndexedDB queue adapter: ownership notice for a second tab, durability mode in sync state, WI-0058's policy carried over, migration on first run | LCP-059, 065, 066, 070, 073 | Arca WI-0020 released |
+| C2 | Chrona WI-0057 | Offline start from the read cache: activities by month, derived activity index, reference data and roster, shown "as of" their token, revalidated online, cleared on sign-out | LCP-082..087 | Arca WI-0022 released; Chrona WI-0034 for the derived index |
 
 ## 18. Open questions
 
@@ -1648,7 +1658,7 @@ the user to confirm.
 | ID | Question | Proposed answer |
 |---|---|---|
 | OQ-LIMEN-IDB-001 | A second tab of the same application cannot own the queue (LCP-059). Should it forward its writes to the owner tab over the coordination channel, or work without queued offline writes? | **Proposed:** v1 needs no forwarding. The second tab says that another tab holds this device's unsent changes, offers "use this tab instead" (steal the lock; the first tab is fenced), and still writes directly while online. Forwarding is a later item if real use needs it. |
-| OQ-LIMEN-IDB-002 | Which `sharedDevicePolicy` is the default when a deployment does not set one? | **Proposed:** `ask`. Unsent changes are kept for that account (Chrona's current behaviour), with a visible count and an explicit, confirmed "discard". `discardOnSignOut` is opted into per deployment for shared devices (LCP-070). The read cache is cleared on sign-out under both (LCP-086). |
+| OQ-LIMEN-IDB-002 | *Settled 2026-10-08 by Chrona WI-0058 (coordinator decision).* What is the default `sharedDevicePolicy`, and what does each value offer? | **Decided:** `ask` is the default and offers send now, keep or discard; `discardOnSignOut` offers send now or discard. LCP-070 adopts this. Still **proposed**, for the user to confirm: under `ask` with "keep", the account's read cache is kept with its unsent changes (LCP-086). |
 | OQ-LIMEN-IDB-003 | The new IDs continue the LCP numbering (LCP-043..087) outside issue #15's scorecard. Should #15 list them? | **Proposed:** yes. Add one scorecard row, "LCP-043..087 durable storage cluster (extends LCP-018)", linking this document, so the numbers cannot be reused. |
 | OQ-LIMEN-IDB-004 | When should an application call `persist`? | **Proposed:** after the first offline write is queued, when the person has something to lose and the browser's engagement heuristics are most likely to grant it. Never at first load, because Firefox prompts. |
 | OQ-LIMEN-IDB-005 | Should the F# packages share the npm version (lockstep) or have their own? | **Proposed:** lockstep (LCP-079). The contract fingerprint ties them anyway, and one version is one thing to pin. |
