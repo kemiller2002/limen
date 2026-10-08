@@ -28,7 +28,8 @@ with bindings for TypeScript, F#, C# and Rust.
 
 | Registration | Offer | Behaviour |
 | --- | --- | --- |
-| `storeCapability({ namespace, limits? })` | `limen.store` **version 2** (`STORE_CAPABILITY_V2`) | Database names resolve inside the namespace; values and transactions are bounded by size; `Opened` reports the limits. Later additions (compound keys, `count`, `deleteRange`, durability evidence) are version 2 only. |
+| `storeCapability({ namespace, limits? })` | `limen.store` **version 2** (`STORE_CAPABILITY_V2`) | Database names resolve inside the namespace; values and transactions are bounded by size; `Opened` reports the limits; compound keys, `count` and `deleteRange`. Later additions (durability evidence) are version 2 only too. |
+| | | A version 1 registration refuses every version 2 field and operation as a malformed request, exactly as 0.7.x's decoder did. |
 | `storeCapability()` | `limen.store` **version 1** (`STORE_CAPABILITY`, `STORE_CAPABILITY_V1`) | Exactly 0.7.x: the same fingerprint (`sha256:0ba8d199…`), names used as given, no size limits. |
 
 The handshake accepts a capability only with an identical id, version and
@@ -120,6 +121,33 @@ closes its own connection, so the other page is not blocked. The engine hears
 `VersionChanged { database, newVersion }` (`0` for a deletion) and reopens
 when its code understands the new version.
 
+## Compound keys (LCP-047, version 2)
+
+A store or an index may be keyed on several fields. Give `keyPaths`, two or
+more dotted paths, and leave `keyPath` empty:
+
+```text
+{ name: "entries", keyPath: "", keyPaths: ["ns", "seq"], indexes: [
+  { name: "bySlot", keyPath: "", keyPaths: ["owner", "slot"], unique: true, multiEntry: false } ] }
+```
+
+- The key is the list of the values at each path, for example `["a", 2]`.
+  `Put` answers with that list, and `get` and `delete` take one.
+- Keys compare element by element, so records sort by `ns` and then by `seq`,
+  with numbers compared as numbers (`["a", 2]` before `["a", 10]`).
+- A range over a tuple prefix selects one group: from `["a"]` to `["a", []]`
+  holds every key whose first element is `"a"`, because a list sorts after
+  every string and number.
+- A record that lacks any part of a compound key aborts as `invalidKey`; a
+  duplicate tuple in a compound unique index aborts as `constraint`.
+- A compound index cannot be `multiEntry` (IndexedDB allows only one); that,
+  one part only, or both `keyPath` and `keyPaths` is `InvalidRequest`.
+- Changing a key path between single and compound is a key path change like
+  any other: `SchemaMismatch`.
+
+Keys are strings, finite numbers or lists of keys. Dates, binary data and
+`NaN` are not keys.
+
 ## Transactions are atomic and fully answered
 
 ```text
@@ -134,7 +162,14 @@ The operations run in order in one transaction:
 - `putIf { store, value, expected }` → `Put { key }`;
 - `delete { store, key }` → `Deleted`;
 - `query { store, index?, range?, limit, reverse }` → `Queried { values }`.
-  Records come in key order, at most `limit` (1–1000) of them.
+  Records come in key order, at most `limit` (1–1000) of them;
+- `count { store, index?, range? }` → `Counted { count }` (version 2): how
+  many records are in the range, or in the store when `range` is absent. It
+  agrees with a `query` of the same range, without reading the records;
+- `deleteRange { store, range? }` → `RangeDeleted` (version 2): delete every
+  record in the range, or clear the store when `range` is absent. It is a
+  write, so it is refused in a readonly transaction, and an aborted
+  transaction removes nothing.
 
 The answer is one of two things, and never partly applied:
 
@@ -192,6 +227,8 @@ loads none of it.
 | --- | --- |
 | Keys, JSON equality, request validation, schema differences; Unavailable; quota (commit-level abort, no operation) and cancellation mid-transaction through a scripted IndexedDB; unknown store; NotOpen; conformance suite | [`test/store.test.ts`](../test/store.test.ts) |
 | Version 2 options; the version 1 offer and its fingerprint recomputed from the frozen 0.7.1 contract; two namespaces on one origin (isolation, a delete that leaves the other intact, the physical name never shown); a separator in a name refused; values at limit−1, limit and limit+1; an over-limit transaction; default limits; invalid options — against an in-memory IndexedDB | [`test/store-namespaces.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-namespaces.test.ts) |
+| Compound keys: the tuple as key, lexicographic order, a tuple-prefix range, a compound unique violation, a missing part, single-to-compound as SchemaMismatch, invalid compound schemas; count against query, on a store and an index; deleteRange of a range, of the store, inside an aborted and a readonly transaction; version 1 refusing all of them as malformed — against an in-memory IndexedDB | [`test/store-compound.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-compound.test.ts) |
+| The same compound-key, count and deleteRange rules in Chromium | [`test/browser/packs/store-compound/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-compound/) |
 | Version 2 negotiated through the kernel; namespaces `a` and `b` isolated, physical names, a delete confined to its namespace; a value at the limit and one byte over; a second tab's upgrade reported under the engine's own name — in Chromium | [`test/browser/packs/store-namespaces/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-namespaces/) |
 | Creation; a committed batch with typed results; atomic rollback; upgrade; a unique constraint; schema mismatch; version conflict; a refused `keyPath` change leaving the version unchanged; a stale write from a second tab rejected as conflict; insert-if-absent; another tab's upgrade with `VersionChanged`; a holdout connection making an upgrade `Blocked`; persistence across a real reload; delete — in Chromium under a strict CSP with Trusted Types | [`test/browser/packs/store/`](../test/browser/packs/store/), `npm run smoke:packs` |
 

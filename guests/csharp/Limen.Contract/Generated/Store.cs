@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:067cd126cdbf5a5aaa86bfcc4260c23b79c8c5b9b381d37ea0ad945c797d4f9e
+// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:3d213bc43222ea749e048ba8d1701a83bb22b97d81941ad44d8d0df94ca92082
+// content-hash: sha256:cbf14ec1bc14a702ef256966a6e9708ce8663269d773ede54c5bacac24384aae
 // </auto-generated>
 #nullable enable
 
@@ -17,13 +17,14 @@ public static class Contract
 {
     public const string Unit = "limen.store";
     public const long Version = 2;
-    public const string Fingerprint = "sha256:067cd126cdbf5a5aaa86bfcc4260c23b79c8c5b9b381d37ea0ad945c797d4f9e";
+    public const string Fingerprint = "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254";
 }
 
-public sealed record IndexSchema(string Name, string KeyPath, bool Unique, bool MultiEntry);
+/// <summary>keyPath is one dotted path. A compound index (version 2) gives keyPaths, two or more dotted paths, with keyPath empty; its key is the list of their values, compared element by element. A compound index cannot be multiEntry.</summary>
+public sealed record IndexSchema(string Name, string KeyPath, bool Unique, bool MultiEntry, global::System.Collections.Generic.IReadOnlyList<string>? KeyPaths);
 
-/// <summary>keyPath names the field that holds each record's key (a dotted path for a nested field).</summary>
-public sealed record StoreSchema(string Name, string KeyPath, global::System.Collections.Generic.IReadOnlyList<global::Limen.Contract.Store.IndexSchema> Indexes);
+/// <summary>keyPath names the field that holds each record's key (a dotted path for a nested field). A compound key (version 2) gives keyPaths, two or more dotted paths, with keyPath empty: the record's key is the list of their values, so records sort by the first, then the second, and so on.</summary>
+public sealed record StoreSchema(string Name, string KeyPath, global::System.Collections.Generic.IReadOnlyList<global::Limen.Contract.Store.IndexSchema> Indexes, global::System.Collections.Generic.IReadOnlyList<string>? KeyPaths);
 
 /// <summary>The serialized-size limits this pack enforces, in bytes of UTF-8 JSON: one stored value, and all of one transaction's operations together. A request over either is InvalidRequest before the database is touched.</summary>
 public sealed record StoreLimits(long MaxValueBytes, long MaxTransactionBytes);
@@ -65,15 +66,21 @@ public abstract record Operation
     public sealed record Delete(string Store, global::Limen.Contract.RawJson Key) : Operation;
     /// <summary>Records in key order (of the index, when given), at most limit (1 to 1000).</summary>
     public sealed record Query(string Store, string? Index, global::Limen.Contract.Store.KeyRange? Range, long Limit, bool Reverse) : Operation;
+    /// <summary>Version 2. How many records are in the range (of the index, when given); all of them when range is absent. Agrees with a query of the same range.</summary>
+    public sealed record Count(string Store, string? Index, global::Limen.Contract.Store.KeyRange? Range) : Operation;
+    /// <summary>Version 2. Delete every record whose key is in the range; an absent range clears the store. A write: refused in a readonly transaction, and undone with the rest of an aborted one.</summary>
+    public sealed record DeleteRange(string Store, global::Limen.Contract.Store.KeyRange? Range) : Operation;
 
     /// <summary>Exhaustive by construction: one handler per variant, so a new variant is a compile error at every call site.</summary>
-    public TResult Match<TResult>(global::System.Func<Get, TResult> get, global::System.Func<Put, TResult> put, global::System.Func<PutIf, TResult> putIf, global::System.Func<Delete, TResult> delete, global::System.Func<Query, TResult> query) => this switch
+    public TResult Match<TResult>(global::System.Func<Get, TResult> get, global::System.Func<Put, TResult> put, global::System.Func<PutIf, TResult> putIf, global::System.Func<Delete, TResult> delete, global::System.Func<Query, TResult> query, global::System.Func<Count, TResult> count, global::System.Func<DeleteRange, TResult> deleteRange) => this switch
     {
         Get value => get(value),
         Put value => put(value),
         PutIf value => putIf(value),
         Delete value => delete(value),
         Query value => query(value),
+        Count value => count(value),
+        DeleteRange value => deleteRange(value),
         _ => throw new global::System.InvalidOperationException("Operation is a closed hierarchy."),
     };
 }
@@ -88,15 +95,19 @@ public abstract record OperationResult
     public sealed record Put(global::Limen.Contract.RawJson Key) : OperationResult;
     public sealed record Deleted() : OperationResult;
     public sealed record Queried(global::System.Collections.Generic.IReadOnlyList<global::Limen.Contract.RawJson> Values) : OperationResult;
+    public sealed record Counted(long Count) : OperationResult;
+    public sealed record RangeDeleted() : OperationResult;
 
     /// <summary>Exhaustive by construction: one handler per variant, so a new variant is a compile error at every call site.</summary>
-    public TResult Match<TResult>(global::System.Func<Found, TResult> found, global::System.Func<Missing, TResult> missing, global::System.Func<Put, TResult> put, global::System.Func<Deleted, TResult> deleted, global::System.Func<Queried, TResult> queried) => this switch
+    public TResult Match<TResult>(global::System.Func<Found, TResult> found, global::System.Func<Missing, TResult> missing, global::System.Func<Put, TResult> put, global::System.Func<Deleted, TResult> deleted, global::System.Func<Queried, TResult> queried, global::System.Func<Counted, TResult> counted, global::System.Func<RangeDeleted, TResult> rangeDeleted) => this switch
     {
         Found value => found(value),
         Missing value => missing(value),
         Put value => put(value),
         Deleted value => deleted(value),
         Queried value => queried(value),
+        Counted value => counted(value),
+        RangeDeleted value => rangeDeleted(value),
         _ => throw new global::System.InvalidOperationException("OperationResult is a closed hierarchy."),
     };
 }
@@ -265,21 +276,23 @@ public static class Codec
 
     internal static global::Limen.Contract.Store.IndexSchema ReadIndexSchema(global::System.Text.Json.JsonElement element, string path)
     {
-        var props = Wire.Closed(Wire.Properties(element, path), path, "name", "keyPath", "unique", "multiEntry");
+        var props = Wire.Closed(Wire.Properties(element, path), path, "name", "keyPath", "unique", "multiEntry", "keyPaths");
         var f_name = Wire.Required(props, path, "name", (e0, p0) => Wire.String(e0, p0));
         var f_keyPath = Wire.Required(props, path, "keyPath", (e0, p0) => Wire.String(e0, p0));
         var f_unique = Wire.Required(props, path, "unique", (e0, p0) => Wire.Boolean(e0, p0));
         var f_multiEntry = Wire.Required(props, path, "multiEntry", (e0, p0) => Wire.Boolean(e0, p0));
-        return new global::Limen.Contract.Store.IndexSchema(f_name, f_keyPath, f_unique, f_multiEntry);
+        var f_keyPaths = Wire.OptionalReference<global::System.Collections.Generic.IReadOnlyList<string>>(props, path, "keyPaths", (e0, p0) => Wire.List(e0, p0, (e1, p1) => Wire.String(e1, p1)));
+        return new global::Limen.Contract.Store.IndexSchema(f_name, f_keyPath, f_unique, f_multiEntry, f_keyPaths);
     }
 
     internal static global::Limen.Contract.Store.StoreSchema ReadStoreSchema(global::System.Text.Json.JsonElement element, string path)
     {
-        var props = Wire.Closed(Wire.Properties(element, path), path, "name", "keyPath", "indexes");
+        var props = Wire.Closed(Wire.Properties(element, path), path, "name", "keyPath", "indexes", "keyPaths");
         var f_name = Wire.Required(props, path, "name", (e0, p0) => Wire.String(e0, p0));
         var f_keyPath = Wire.Required(props, path, "keyPath", (e0, p0) => Wire.String(e0, p0));
         var f_indexes = Wire.Required(props, path, "indexes", (e0, p0) => Wire.List(e0, p0, (e1, p1) => ReadIndexSchema(e1, p1)));
-        return new global::Limen.Contract.Store.StoreSchema(f_name, f_keyPath, f_indexes);
+        var f_keyPaths = Wire.OptionalReference<global::System.Collections.Generic.IReadOnlyList<string>>(props, path, "keyPaths", (e0, p0) => Wire.List(e0, p0, (e1, p1) => Wire.String(e1, p1)));
+        return new global::Limen.Contract.Store.StoreSchema(f_name, f_keyPath, f_indexes, f_keyPaths);
     }
 
     internal static global::Limen.Contract.Store.StoreLimits ReadStoreLimits(global::System.Text.Json.JsonElement element, string path)
@@ -351,6 +364,23 @@ public static class Codec
                 var f_reverse = Wire.Required(props, path, "reverse", (e0, p0) => Wire.Boolean(e0, p0));
                 return new global::Limen.Contract.Store.Operation.Query(f_store, f_index, f_range, f_limit, f_reverse);
             }
+            case "count":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "op", "store", "index", "range");
+                Wire.Required(props, path, "op", (e0, p0) => Wire.LiteralString(e0, p0, "count"));
+                var f_store = Wire.Required(props, path, "store", (e0, p0) => Wire.String(e0, p0));
+                var f_index = Wire.OptionalReference<string>(props, path, "index", (e0, p0) => Wire.String(e0, p0));
+                var f_range = Wire.OptionalReference<global::Limen.Contract.Store.KeyRange>(props, path, "range", (e0, p0) => ReadKeyRange(e0, p0));
+                return new global::Limen.Contract.Store.Operation.Count(f_store, f_index, f_range);
+            }
+            case "deleteRange":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "op", "store", "range");
+                Wire.Required(props, path, "op", (e0, p0) => Wire.LiteralString(e0, p0, "deleteRange"));
+                var f_store = Wire.Required(props, path, "store", (e0, p0) => Wire.String(e0, p0));
+                var f_range = Wire.OptionalReference<global::Limen.Contract.Store.KeyRange>(props, path, "range", (e0, p0) => ReadKeyRange(e0, p0));
+                return new global::Limen.Contract.Store.Operation.DeleteRange(f_store, f_range);
+            }
             case var other:
                 throw Wire.UnknownVariant(path + ".op", other);
         }
@@ -392,6 +422,19 @@ public static class Codec
                 Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Queried"));
                 var f_values = Wire.Required(props, path, "values", (e0, p0) => Wire.List(e0, p0, (e1, p1) => Wire.Json(e1, p1)));
                 return new global::Limen.Contract.Store.OperationResult.Queried(f_values);
+            }
+            case "Counted":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "count");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Counted"));
+                var f_count = Wire.Required(props, path, "count", (e0, p0) => Wire.Int(e0, p0));
+                return new global::Limen.Contract.Store.OperationResult.Counted(f_count);
+            }
+            case "RangeDeleted":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "RangeDeleted"));
+                return new global::Limen.Contract.Store.OperationResult.RangeDeleted();
             }
             case var other:
                 throw Wire.UnknownVariant(path + ".kind", other);
@@ -553,10 +596,10 @@ public static class Codec
     }
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeIndexSchema(global::Limen.Contract.Store.IndexSchema value) =>
-        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyPath", Wire.OfString(value.KeyPath)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("unique", Wire.OfBool(value.Unique)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("multiEntry", Wire.OfBool(value.MultiEntry)));
+        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyPath", Wire.OfString(value.KeyPath)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("unique", Wire.OfBool(value.Unique)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("multiEntry", Wire.OfBool(value.MultiEntry)), (value.KeyPaths is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyPaths", Wire.OfList(value.KeyPaths, x0 => Wire.OfString(x0)))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeStoreSchema(global::Limen.Contract.Store.StoreSchema value) =>
-        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyPath", Wire.OfString(value.KeyPath)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("indexes", Wire.OfList(value.Indexes, x0 => EncodeIndexSchema(x0))));
+        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("name", Wire.OfString(value.Name)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyPath", Wire.OfString(value.KeyPath)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("indexes", Wire.OfList(value.Indexes, x0 => EncodeIndexSchema(x0))), (value.KeyPaths is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("keyPaths", Wire.OfList(value.KeyPaths, x0 => Wire.OfString(x0)))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeStoreLimits(global::Limen.Contract.Store.StoreLimits value) =>
         Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("maxValueBytes", Wire.OfInt(value.MaxValueBytes)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("maxTransactionBytes", Wire.OfInt(value.MaxTransactionBytes)));
@@ -578,7 +621,9 @@ public static class Codec
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("op", Wire.OfString("put")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("store", Wire.OfString(v.Store)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("value", Wire.OfJson(v.Value))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("op", Wire.OfString("putIf")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("store", Wire.OfString(v.Store)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("value", Wire.OfJson(v.Value)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("expected", Wire.OfJson(v.Expected))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("op", Wire.OfString("delete")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("store", Wire.OfString(v.Store)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("key", Wire.OfJson(v.Key))),
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("op", Wire.OfString("query")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("store", Wire.OfString(v.Store)), (v.Index is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("index", Wire.OfString(v.Index))), (v.Range is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("range", EncodeKeyRange(v.Range))), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("limit", Wire.OfInt(v.Limit)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reverse", Wire.OfBool(v.Reverse))));
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("op", Wire.OfString("query")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("store", Wire.OfString(v.Store)), (v.Index is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("index", Wire.OfString(v.Index))), (v.Range is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("range", EncodeKeyRange(v.Range))), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("limit", Wire.OfInt(v.Limit)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reverse", Wire.OfBool(v.Reverse))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("op", Wire.OfString("count")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("store", Wire.OfString(v.Store)), (v.Index is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("index", Wire.OfString(v.Index))), (v.Range is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("range", EncodeKeyRange(v.Range)))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("op", Wire.OfString("deleteRange")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("store", Wire.OfString(v.Store)), (v.Range is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("range", EncodeKeyRange(v.Range)))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeOperationResult(global::Limen.Contract.Store.OperationResult value) =>
         value.Match(
@@ -586,7 +631,9 @@ public static class Codec
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Missing"))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Put")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("key", Wire.OfJson(v.Key))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Deleted"))),
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Queried")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("values", Wire.OfList(v.Values, x0 => Wire.OfJson(x0)))));
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Queried")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("values", Wire.OfList(v.Values, x0 => Wire.OfJson(x0)))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Counted")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("count", Wire.OfInt(v.Count))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("RangeDeleted"))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeAbortReason(global::Limen.Contract.Store.AbortReason value) =>
         value switch

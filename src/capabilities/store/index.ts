@@ -21,7 +21,7 @@
 import { defineCapability, type CapabilityHost, type CapabilityProvider, type CapabilityRequestContext } from "../../kernel/capabilities.js";
 import { CAPABILITY_OFFER, type AbortReason, type KeyRange, type Operation, type OperationResult, type StoreFact, type StoreLimits, type StoreRequest, type StoreResult, type StoreSchema } from "./generated/store.js";
 import { decodeStoreRequest } from "./generated/store.codec.js";
-import { abortReason, atKeyPath, isKey, jsonEqual, requestProblem, schemaProblems, storesOf, type StoredSchema } from "./schema.js";
+import { abortReason, declaredKeyPath, isKey, jsonEqual, keyAt, keyPathLabel, pathFields, requestProblem, sameKeyPath, schemaProblems, storesOf, usesVersion2, type StoredSchema } from "./schema.js";
 import { databaseNameProblem, limitsOf, physicalName, sizeProblem, storeOptionsProblem, type StoreOptions } from "./options.js";
 import { STORE_CAPABILITY_V1 } from "./v1.js";
 
@@ -52,8 +52,6 @@ const once = <T>(start: (settle: (value: T) => void) => void): Promise<T> =>
     });
   });
 
-const keyPathOf = (keyPath: string | string[] | null): string => (typeof keyPath === "string" ? keyPath : Array.isArray(keyPath) ? keyPath.join(",") : "");
-
 // What an open database holds, read from its stores (inside the upgrade
 // transaction, or a short readonly one).
 const storedSchema = (database: IDBDatabase, transaction: IDBTransaction): readonly StoredSchema[] =>
@@ -61,13 +59,16 @@ const storedSchema = (database: IDBDatabase, transaction: IDBTransaction): reado
     const store = transaction.objectStore(name);
     return {
       name,
-      keyPath: keyPathOf(store.keyPath),
+      ...pathFields(store.keyPath),
       indexes: Array.from(store.indexNames, (indexName) => {
         const index = store.index(indexName);
-        return { name: indexName, keyPath: keyPathOf(index.keyPath), unique: index.unique, multiEntry: index.multiEntry };
+        return { name: indexName, ...pathFields(index.keyPath), unique: index.unique, multiEntry: index.multiEntry };
       }),
     };
   });
+
+// IndexedDB takes a compound key path as a mutable array.
+const idbPath = (path: string | readonly string[]): string | string[] => (typeof path === "string" ? path : [...path]);
 
 // The upgrade: create what is declared and missing, rebuild an index whose
 // definition changed, drop what the engine named. A store whose keyPath
@@ -76,14 +77,15 @@ const upgrade = (database: IDBDatabase, transaction: IDBTransaction, stores: rea
   dropStores.filter((name) => database.objectStoreNames.contains(name)).forEach((name) => database.deleteObjectStore(name));
   return stores.flatMap((declared): readonly string[] => {
     const exists = database.objectStoreNames.contains(declared.name);
-    const store = exists ? transaction.objectStore(declared.name) : database.createObjectStore(declared.name, { keyPath: declared.keyPath });
-    if (keyPathOf(store.keyPath) !== declared.keyPath) return [`store ${declared.name} keyPath is ${keyPathOf(store.keyPath)}, declared ${declared.keyPath}; drop it to change it`];
+    const store = exists ? transaction.objectStore(declared.name) : database.createObjectStore(declared.name, { keyPath: idbPath(declaredKeyPath(declared)) });
+    const stored = declaredKeyPath(pathFields(store.keyPath));
+    if (!sameKeyPath(stored, declaredKeyPath(declared))) return [`store ${declared.name} keyPath is ${keyPathLabel(stored)}, declared ${keyPathLabel(declaredKeyPath(declared))}; drop it to change it`];
     declared.indexes.forEach((index) => {
       const existing = store.indexNames.contains(index.name) ? store.index(index.name) : undefined;
-      const same = existing !== undefined && keyPathOf(existing.keyPath) === index.keyPath && existing.unique === index.unique && existing.multiEntry === index.multiEntry;
+      const same = existing !== undefined && sameKeyPath(declaredKeyPath(pathFields(existing.keyPath)), declaredKeyPath(index)) && existing.unique === index.unique && existing.multiEntry === index.multiEntry;
       if (same) return;
       if (existing !== undefined) store.deleteIndex(index.name);
-      store.createIndex(index.name, index.keyPath, { unique: index.unique, multiEntry: index.multiEntry });
+      store.createIndex(index.name, idbPath(declaredKeyPath(index)), { unique: index.unique, multiEntry: index.multiEntry });
     });
     return [];
   });
@@ -118,6 +120,12 @@ const registrationProblem = (registration: Registration, request: StoreRequest):
     case "invalid": return `the host registered the store pack with invalid options: ${registration.problem}`;
     case "v2": return databaseNameProblem(request.database) ?? sizeProblem(request, registration.limits);
   }
+};
+
+// Version 1's decoder: what 0.7.x accepted, and nothing version 2 added.
+const decodeVersion1 = (value: unknown, path?: string): ReturnType<typeof decodeStoreRequest> => {
+  const decoded = decodeStoreRequest(value, path);
+  return decoded.ok && usesVersion2(decoded.value) ? { ok: false, error: { path: path ?? "$", expected: "a limen.store version 1 request", found: "a version 2 field or operation" } } : decoded;
 };
 
 export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
@@ -242,12 +250,12 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
             track(store.delete(operation.key as IDBValidKey), () => next({ kind: "Deleted" }));
             return;
           case "put": {
-            if (!isKey(atKeyPath(operation.value, keyPathOf(store.keyPath)))) { fail({ reason: "invalidKey", operation: index }); return; }
+            if (!isKey(keyAt(operation.value, declaredKeyPath(pathFields(store.keyPath))))) { fail({ reason: "invalidKey", operation: index }); return; }
             track(store.put(operation.value), (key) => next({ kind: "Put", key }));
             return;
           }
           case "putIf": {
-            const key = atKeyPath(operation.value, keyPathOf(store.keyPath));
+            const key = keyAt(operation.value, declaredKeyPath(pathFields(store.keyPath)));
             if (!isKey(key)) { fail({ reason: "invalidKey", operation: index }); return; }
             track(store.get(key as IDBValidKey), (current: unknown) => {
               const stored = current === undefined ? null : current;
@@ -269,6 +277,17 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
               }
               next({ kind: "Queried", values });
             });
+            return;
+          }
+          case "count": {
+            const source = operation.index === undefined ? store : store.indexNames.contains(operation.index) ? store.index(operation.index) : undefined;
+            if (source === undefined) { fail({ reason: "unknownStore", operation: index }); return; }
+            track(source.count(keyRange(view, operation.range)), (count) => next({ kind: "Counted", count }));
+            return;
+          }
+          case "deleteRange": {
+            const range = keyRange(view, operation.range);
+            track(range === undefined ? store.clear() : store.delete(range), () => next({ kind: "RangeDeleted" }));
             return;
           }
         }
@@ -317,7 +336,7 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
 
   return defineCapability<StoreRequest, StoreResult, StoreFact>({
     offer: registration.kind === "v1" ? STORE_CAPABILITY_V1 : CAPABILITY_OFFER,
-    decodeRequest: decodeStoreRequest,
+    decodeRequest: registration.kind === "v1" ? decodeVersion1 : decodeStoreRequest,
     execute,
     activate: (host) => { wiring.host = host; },
   });

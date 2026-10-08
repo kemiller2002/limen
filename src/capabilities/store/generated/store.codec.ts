@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:067cd126cdbf5a5aaa86bfcc4260c23b79c8c5b9b381d37ea0ad945c797d4f9e
+// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:909ee7b48692e04a43ddb49b25d563b2f51724b6eb05a82c8282a7876cb2acfc
+// content-hash: sha256:09f76b693d04fe8f03a6afd0e2259db359a20b57f40b772ac3fb5df3f39f61da
 // </auto-generated>
 import type { IndexSchema, StoreSchema, StoreLimits, TransactionMode, KeyRange, Operation, OperationResult, AbortReason, StoreRequest, StoreResult, StoreFact } from "./store.js";
 
@@ -103,7 +103,7 @@ const mapOf = <T>(value: unknown, path: Path, item: (value: unknown, path: Path)
 };
 
 export const decodeIndexSchema = (value: unknown, path: Path = "$"): Decoded<IndexSchema> => {
-  const object = objectValue(value, path, ["name","keyPath","unique","multiEntry"]);
+  const object = objectValue(value, path, ["name","keyPath","unique","multiEntry","keyPaths"]);
   if (!object.ok) return object;
   const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
@@ -113,11 +113,13 @@ export const decodeIndexSchema = (value: unknown, path: Path = "$"): Decoded<Ind
   if (!field_unique.ok) return field_unique;
   const field_multiEntry = boolValue(object.value["multiEntry"], at(path, ".multiEntry"));
   if (!field_multiEntry.ok) return field_multiEntry;
-  return ok<IndexSchema>({ name: field_name.value, keyPath: field_keyPath.value, unique: field_unique.value, multiEntry: field_multiEntry.value });
+  const field_keyPaths = object.value["keyPaths"] === undefined ? ok(undefined) : listOf(object.value["keyPaths"], at(path, ".keyPaths"), (item, at) => stringValue(item, at));
+  if (!field_keyPaths.ok) return field_keyPaths;
+  return ok<IndexSchema>({ name: field_name.value, keyPath: field_keyPath.value, unique: field_unique.value, multiEntry: field_multiEntry.value, ...(field_keyPaths.value !== undefined ? { keyPaths: field_keyPaths.value } : {}) });
 };
 
 export const decodeStoreSchema = (value: unknown, path: Path = "$"): Decoded<StoreSchema> => {
-  const object = objectValue(value, path, ["name","keyPath","indexes"]);
+  const object = objectValue(value, path, ["name","keyPath","indexes","keyPaths"]);
   if (!object.ok) return object;
   const field_name = stringValue(object.value["name"], at(path, ".name"));
   if (!field_name.ok) return field_name;
@@ -125,7 +127,9 @@ export const decodeStoreSchema = (value: unknown, path: Path = "$"): Decoded<Sto
   if (!field_keyPath.ok) return field_keyPath;
   const field_indexes = listOf(object.value["indexes"], at(path, ".indexes"), (item, at) => decodeIndexSchema(item, at));
   if (!field_indexes.ok) return field_indexes;
-  return ok<StoreSchema>({ name: field_name.value, keyPath: field_keyPath.value, indexes: field_indexes.value });
+  const field_keyPaths = object.value["keyPaths"] === undefined ? ok(undefined) : listOf(object.value["keyPaths"], at(path, ".keyPaths"), (item, at) => stringValue(item, at));
+  if (!field_keyPaths.ok) return field_keyPaths;
+  return ok<StoreSchema>({ name: field_name.value, keyPath: field_keyPath.value, indexes: field_indexes.value, ...(field_keyPaths.value !== undefined ? { keyPaths: field_keyPaths.value } : {}) });
 };
 
 export const decodeStoreLimits = (value: unknown, path: Path = "$"): Decoded<StoreLimits> => {
@@ -164,7 +168,9 @@ export const decodeOperation = (value: unknown, path: Path = "$"): Decoded<Opera
     case "putIf": return decodeOperation_putIf(value, path);
     case "delete": return decodeOperation_delete(value, path);
     case "query": return decodeOperation_query(value, path);
-    default: return unknownVariant(at(path, ".op"), ["get","put","putIf","delete","query"], tag);
+    case "count": return decodeOperation_count(value, path);
+    case "deleteRange": return decodeOperation_deleteRange(value, path);
+    default: return unknownVariant(at(path, ".op"), ["get","put","putIf","delete","query","count","deleteRange"], tag);
   }
 };
 
@@ -236,6 +242,32 @@ const decodeOperation_query = (value: unknown, path: Path): Decoded<Operation> =
   return ok<Operation>({ op: "query", store: field_store.value, ...(field_index.value !== undefined ? { index: field_index.value } : {}), ...(field_range.value !== undefined ? { range: field_range.value } : {}), limit: field_limit.value, reverse: field_reverse.value });
 };
 
+const decodeOperation_count = (value: unknown, path: Path): Decoded<Operation> => {
+  const object = objectValue(value, path, ["op","store","index","range"]);
+  if (!object.ok) return object;
+  const opTag = literalValue(object.value["op"], at(path, ".op"), "count");
+  if (!opTag.ok) return opTag;
+  const field_store = stringValue(object.value["store"], at(path, ".store"));
+  if (!field_store.ok) return field_store;
+  const field_index = object.value["index"] === undefined ? ok(undefined) : stringValue(object.value["index"], at(path, ".index"));
+  if (!field_index.ok) return field_index;
+  const field_range = object.value["range"] === undefined ? ok(undefined) : decodeKeyRange(object.value["range"], at(path, ".range"));
+  if (!field_range.ok) return field_range;
+  return ok<Operation>({ op: "count", store: field_store.value, ...(field_index.value !== undefined ? { index: field_index.value } : {}), ...(field_range.value !== undefined ? { range: field_range.value } : {}) });
+};
+
+const decodeOperation_deleteRange = (value: unknown, path: Path): Decoded<Operation> => {
+  const object = objectValue(value, path, ["op","store","range"]);
+  if (!object.ok) return object;
+  const opTag = literalValue(object.value["op"], at(path, ".op"), "deleteRange");
+  if (!opTag.ok) return opTag;
+  const field_store = stringValue(object.value["store"], at(path, ".store"));
+  if (!field_store.ok) return field_store;
+  const field_range = object.value["range"] === undefined ? ok(undefined) : decodeKeyRange(object.value["range"], at(path, ".range"));
+  if (!field_range.ok) return field_range;
+  return ok<Operation>({ op: "deleteRange", store: field_store.value, ...(field_range.value !== undefined ? { range: field_range.value } : {}) });
+};
+
 export const decodeOperationResult = (value: unknown, path: Path = "$"): Decoded<OperationResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
@@ -246,7 +278,9 @@ export const decodeOperationResult = (value: unknown, path: Path = "$"): Decoded
     case "Put": return decodeOperationResult_Put(value, path);
     case "Deleted": return decodeOperationResult_Deleted(value, path);
     case "Queried": return decodeOperationResult_Queried(value, path);
-    default: return unknownVariant(at(path, ".kind"), ["Found","Missing","Put","Deleted","Queried"], tag);
+    case "Counted": return decodeOperationResult_Counted(value, path);
+    case "RangeDeleted": return decodeOperationResult_RangeDeleted(value, path);
+    default: return unknownVariant(at(path, ".kind"), ["Found","Missing","Put","Deleted","Queried","Counted","RangeDeleted"], tag);
   }
 };
 
@@ -294,6 +328,24 @@ const decodeOperationResult_Queried = (value: unknown, path: Path): Decoded<Oper
   const field_values = listOf(object.value["values"], at(path, ".values"), (item, at) => jsonValue(item, at));
   if (!field_values.ok) return field_values;
   return ok<OperationResult>({ kind: "Queried", values: field_values.value });
+};
+
+const decodeOperationResult_Counted = (value: unknown, path: Path): Decoded<OperationResult> => {
+  const object = objectValue(value, path, ["kind","count"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Counted");
+  if (!kindTag.ok) return kindTag;
+  const field_count = intValue(object.value["count"], at(path, ".count"));
+  if (!field_count.ok) return field_count;
+  return ok<OperationResult>({ kind: "Counted", count: field_count.value });
+};
+
+const decodeOperationResult_RangeDeleted = (value: unknown, path: Path): Decoded<OperationResult> => {
+  const object = objectValue(value, path, ["kind"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "RangeDeleted");
+  if (!kindTag.ok) return kindTag;
+  return ok<OperationResult>({ kind: "RangeDeleted" });
 };
 
 export const decodeAbortReason = (value: unknown, path: Path = "$"): Decoded<AbortReason> => enumValue(value, path, ["conflict","constraint","invalidKey","quota","unknownStore","other"] as const);

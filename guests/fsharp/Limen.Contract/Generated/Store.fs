@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:067cd126cdbf5a5aaa86bfcc4260c23b79c8c5b9b381d37ea0ad945c797d4f9e
+// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:0714a7e7143037663eece263dc6d10c8f7c1d763afa730b3968a5c5fdfed6191
+// content-hash: sha256:4d5e8546801e6489014c31a7efdd535cb8a78c1b4dc3b1fccdc6e156abf31366
 // </auto-generated>
 namespace Limen.Contract.Store
 
@@ -15,20 +15,23 @@ open Limen.Contract
 /// Durable structured browser storage over IndexedDB (LCP-018; version 2 adds LCP-043..064). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged. Version 2 is offered by a pack registered with an application namespace (every database name resolves inside it) and serialized-size limits; a pack registered without options still offers version 1, unchanged.
 [<AutoOpen>]
 module Types =
+    /// keyPath is one dotted path. A compound index (version 2) gives keyPaths, two or more dotted paths, with keyPath empty; its key is the list of their values, compared element by element. A compound index cannot be multiEntry.
     type IndexSchema =
         {
             Name: string
             KeyPath: string
             Unique: bool
             MultiEntry: bool
+            KeyPaths: string list option
         }
 
-    /// keyPath names the field that holds each record's key (a dotted path for a nested field).
+    /// keyPath names the field that holds each record's key (a dotted path for a nested field). A compound key (version 2) gives keyPaths, two or more dotted paths, with keyPath empty: the record's key is the list of their values, so records sort by the first, then the second, and so on.
     and StoreSchema =
         {
             Name: string
             KeyPath: string
             Indexes: IndexSchema list
+            KeyPaths: string list option
         }
 
     /// The serialized-size limits this pack enforces, in bytes of UTF-8 JSON: one stored value, and all of one transaction's operations together. A request over either is InvalidRequest before the database is touched.
@@ -60,6 +63,10 @@ module Types =
         | Delete of Store: string * Key: RawJson
         /// Records in key order (of the index, when given), at most limit (1 to 1000).
         | Query of Store: string * Index: string option * Range: KeyRange option * Limit: int64 * Reverse: bool
+        /// Version 2. How many records are in the range (of the index, when given); all of them when range is absent. Agrees with a query of the same range.
+        | Count of Store: string * Index: string option * Range: KeyRange option
+        /// Version 2. Delete every record whose key is in the range; an absent range clears the store. A write: refused in a readonly transaction, and undone with the rest of an aborted one.
+        | DeleteRange of Store: string * Range: KeyRange option
 
     and [<RequireQualifiedAccess>] OperationResult =
         | Found of Value: RawJson
@@ -67,6 +74,8 @@ module Types =
         | Put of Key: RawJson
         | Deleted
         | Queried of Values: RawJson list
+        | Counted of Count: int64
+        | RangeDeleted
 
     /// conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.
     and [<RequireQualifiedAccess>] AbortReason =
@@ -117,7 +126,7 @@ module Types =
 module Contract =
     let [<Literal>] Unit = "limen.store"
     let [<Literal>] Version = 2L
-    let [<Literal>] Fingerprint = "sha256:067cd126cdbf5a5aaa86bfcc4260c23b79c8c5b9b381d37ea0ad945c797d4f9e"
+    let [<Literal>] Fingerprint = "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254"
 
 /// Strict decoders (untrusted JSON → contract values) and encoders.
 [<RequireQualifiedAccess>]
@@ -125,22 +134,24 @@ module Codec =
     let rec decodeIndexSchema (path: string) (element: JsonElement) : Result<IndexSchema, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
-            let! props = Wire.closed [ "name"; "keyPath"; "unique"; "multiEntry" ] path props
+            let! props = Wire.closed [ "name"; "keyPath"; "unique"; "multiEntry"; "keyPaths" ] path props
             let! f_name = Wire.required "name" Wire.string path props
             let! f_keyPath = Wire.required "keyPath" Wire.string path props
             let! f_unique = Wire.required "unique" Wire.boolean path props
             let! f_multiEntry = Wire.required "multiEntry" Wire.boolean path props
-            return { Name = f_name; KeyPath = f_keyPath; Unique = f_unique; MultiEntry = f_multiEntry }
+            let! f_keyPaths = Wire.optional "keyPaths" (Wire.list Wire.string) path props
+            return { Name = f_name; KeyPath = f_keyPath; Unique = f_unique; MultiEntry = f_multiEntry; KeyPaths = f_keyPaths }
         }
 
     and decodeStoreSchema (path: string) (element: JsonElement) : Result<StoreSchema, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
-            let! props = Wire.closed [ "name"; "keyPath"; "indexes" ] path props
+            let! props = Wire.closed [ "name"; "keyPath"; "indexes"; "keyPaths" ] path props
             let! f_name = Wire.required "name" Wire.string path props
             let! f_keyPath = Wire.required "keyPath" Wire.string path props
             let! f_indexes = Wire.required "indexes" (Wire.list decodeIndexSchema) path props
-            return { Name = f_name; KeyPath = f_keyPath; Indexes = f_indexes }
+            let! f_keyPaths = Wire.optional "keyPaths" (Wire.list Wire.string) path props
+            return { Name = f_name; KeyPath = f_keyPath; Indexes = f_indexes; KeyPaths = f_keyPaths }
         }
 
     and decodeStoreLimits (path: string) (element: JsonElement) : Result<StoreLimits, DecodeError> =
@@ -209,6 +220,21 @@ module Codec =
                 let! f_limit = Wire.required "limit" Wire.int path props
                 let! f_reverse = Wire.required "reverse" Wire.boolean path props
                 return Operation.Query(f_store, f_index, f_range, f_limit, f_reverse)
+            | "count" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "op"; "store"; "index"; "range" ] path props
+                let! () = Wire.required "op" (Wire.literalString "count") path props
+                let! f_store = Wire.required "store" Wire.string path props
+                let! f_index = Wire.optional "index" Wire.string path props
+                let! f_range = Wire.optional "range" decodeKeyRange path props
+                return Operation.Count(f_store, f_index, f_range)
+            | "deleteRange" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "op"; "store"; "range" ] path props
+                let! () = Wire.required "op" (Wire.literalString "deleteRange") path props
+                let! f_store = Wire.required "store" Wire.string path props
+                let! f_range = Wire.optional "range" decodeKeyRange path props
+                return Operation.DeleteRange(f_store, f_range)
             | other -> return! Wire.unknownVariant (path + ".op") other
         }
 
@@ -244,6 +270,17 @@ module Codec =
                 let! () = Wire.required "kind" (Wire.literalString "Queried") path props
                 let! f_values = Wire.required "values" (Wire.list Wire.json) path props
                 return OperationResult.Queried(f_values)
+            | "Counted" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind"; "count" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "Counted") path props
+                let! f_count = Wire.required "count" Wire.int path props
+                return OperationResult.Counted(f_count)
+            | "RangeDeleted" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "RangeDeleted") path props
+                return OperationResult.RangeDeleted
             | other -> return! Wire.unknownVariant (path + ".kind") other
         }
 
@@ -379,10 +416,10 @@ module Codec =
         }
 
     and encodeIndexSchema (value: IndexSchema) : JsonNode =
-        Wire.ofObject [ Some("name", Wire.ofString value.Name); Some("keyPath", Wire.ofString value.KeyPath); Some("unique", Wire.ofBool value.Unique); Some("multiEntry", Wire.ofBool value.MultiEntry) ]
+        Wire.ofObject [ Some("name", Wire.ofString value.Name); Some("keyPath", Wire.ofString value.KeyPath); Some("unique", Wire.ofBool value.Unique); Some("multiEntry", Wire.ofBool value.MultiEntry); value.KeyPaths |> Option.map (fun value -> "keyPaths", (Wire.ofList Wire.ofString) value) ]
 
     and encodeStoreSchema (value: StoreSchema) : JsonNode =
-        Wire.ofObject [ Some("name", Wire.ofString value.Name); Some("keyPath", Wire.ofString value.KeyPath); Some("indexes", (Wire.ofList encodeIndexSchema) value.Indexes) ]
+        Wire.ofObject [ Some("name", Wire.ofString value.Name); Some("keyPath", Wire.ofString value.KeyPath); Some("indexes", (Wire.ofList encodeIndexSchema) value.Indexes); value.KeyPaths |> Option.map (fun value -> "keyPaths", (Wire.ofList Wire.ofString) value) ]
 
     and encodeStoreLimits (value: StoreLimits) : JsonNode =
         Wire.ofObject [ Some("maxValueBytes", Wire.ofInt value.MaxValueBytes); Some("maxTransactionBytes", Wire.ofInt value.MaxTransactionBytes) ]
@@ -402,6 +439,8 @@ module Codec =
         | Operation.PutIf(f_store, f_value, f_expected) -> Wire.ofObject [ Some("op", Wire.ofString "putIf"); Some("store", Wire.ofString f_store); Some("value", Wire.ofJson f_value); Some("expected", Wire.ofJson f_expected) ]
         | Operation.Delete(f_store, f_key) -> Wire.ofObject [ Some("op", Wire.ofString "delete"); Some("store", Wire.ofString f_store); Some("key", Wire.ofJson f_key) ]
         | Operation.Query(f_store, f_index, f_range, f_limit, f_reverse) -> Wire.ofObject [ Some("op", Wire.ofString "query"); Some("store", Wire.ofString f_store); f_index |> Option.map (fun value -> "index", Wire.ofString value); f_range |> Option.map (fun value -> "range", encodeKeyRange value); Some("limit", Wire.ofInt f_limit); Some("reverse", Wire.ofBool f_reverse) ]
+        | Operation.Count(f_store, f_index, f_range) -> Wire.ofObject [ Some("op", Wire.ofString "count"); Some("store", Wire.ofString f_store); f_index |> Option.map (fun value -> "index", Wire.ofString value); f_range |> Option.map (fun value -> "range", encodeKeyRange value) ]
+        | Operation.DeleteRange(f_store, f_range) -> Wire.ofObject [ Some("op", Wire.ofString "deleteRange"); Some("store", Wire.ofString f_store); f_range |> Option.map (fun value -> "range", encodeKeyRange value) ]
 
     and encodeOperationResult (value: OperationResult) : JsonNode =
         match value with
@@ -410,6 +449,8 @@ module Codec =
         | OperationResult.Put(f_key) -> Wire.ofObject [ Some("kind", Wire.ofString "Put"); Some("key", Wire.ofJson f_key) ]
         | OperationResult.Deleted -> Wire.ofObject [ Some("kind", Wire.ofString "Deleted") ]
         | OperationResult.Queried(f_values) -> Wire.ofObject [ Some("kind", Wire.ofString "Queried"); Some("values", (Wire.ofList Wire.ofJson) f_values) ]
+        | OperationResult.Counted(f_count) -> Wire.ofObject [ Some("kind", Wire.ofString "Counted"); Some("count", Wire.ofInt f_count) ]
+        | OperationResult.RangeDeleted -> Wire.ofObject [ Some("kind", Wire.ofString "RangeDeleted") ]
 
     and encodeAbortReason (value: AbortReason) : JsonNode =
         match value with
