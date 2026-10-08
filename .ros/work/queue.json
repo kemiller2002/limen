@@ -2499,10 +2499,10 @@
         "lcp-018"
       ],
       "priority": "high",
-      "status": "captured",
+      "status": "ready",
       "attachments": [],
       "createdAt": "2026-10-08T15:06:30Z",
-      "updatedAt": "2026-10-08T15:06:30Z",
+      "updatedAt": "2026-10-08T16:59:43.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
