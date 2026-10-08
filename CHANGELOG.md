@@ -16,6 +16,20 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Documentation
+
+- **Requirements for durable IndexedDB storage from F# engines (WI-0156, LCP-018).**
+  [docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
+  states LCP-043..087, extending the store pack. The requirements cover:
+  - namespaces, compound keys, size policy, persistence and eviction evidence;
+  - a functional F# API, an in-memory fake, shared conformance vectors and
+    WebKit runs;
+  - Arca's IndexedDB queue and read-cache adapters.
+
+  DF-LIMEN-2026-0005 records where the adapters live, the fallback policy and
+  that encryption is out of scope. WI-0157..WI-0166 slice the build. Nothing
+  is implemented yet.
+
 ## [0.7.1] — 2026-10-06
 
 ### Fixed — a form submit no longer re-sends unchecked radios and checkboxes (WI-0150, #80)

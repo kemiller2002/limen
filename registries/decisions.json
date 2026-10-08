@@ -144,5 +144,65 @@
       "WI-0043",
       "WI-0045"
     ]
+  },
+  {
+    "author_agent": "claude-code",
+    "created": "2026-10-08",
+    "external_references": [
+      "kemiller2002/limen#28",
+      "kemiller2002/arca WI-0016",
+      "kemiller2002/arca WI-0014",
+      "DF-ARCA-2026-0005",
+      "DF-ARCA-2026-0002"
+    ],
+    "id": "DF-LIMEN-2026-0005",
+    "path": "research/decisions/DF-LIMEN-2026-0005--indexeddb-adapter-placement-fallback-and-encryption-scope.md",
+    "provenance": {
+      "contributions": {
+        "EXE-20261008T150528666Z-2b2b06eb": {
+          "actor": {
+            "id": "anthropic/claude-code",
+            "kind": "agent",
+            "model": "unknown",
+            "provider": "anthropic",
+            "runtime": "claude-code"
+          },
+          "at": "2026-10-08T15:13:03.474Z",
+          "operations": [
+            "created"
+          ],
+          "reason": "Adapter placement, fallback policy, encryption scope and read-cache placement for LCP-043..087"
+        }
+      }
+    },
+    "related_documents": [
+      "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md",
+      "docs/41-indexeddb.md",
+      "contract/store.contract.json"
+    ],
+    "related_projects": [
+      "limen",
+      "arca",
+      "chrona"
+    ],
+    "status": "accepted",
+    "superseded_by": [],
+    "supersedes": [],
+    "tags": [
+      "indexeddb",
+      "storage",
+      "offline",
+      "arca",
+      "fallback",
+      "encryption",
+      "lcp-018"
+    ],
+    "title": "The Arca IndexedDB adapters live in an Arca bridge package; Limen never falls back silently; no at-rest encryption for now",
+    "type": "decision-record",
+    "updated": "2026-10-08",
+    "version": "1.0.0",
+    "work_items": [
+      "WI-0156"
+    ]
   }
 ]

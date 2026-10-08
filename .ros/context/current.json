@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T07:26:15.185Z",
+  "updatedAt": "2026-10-08T15:13:32Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3507,6 +3507,48 @@
       },
       "completedAt": "2026-10-08T07:26:15.185Z",
       "conclusion": "Ordo 1.5.0 through echelon-current 1.2.0; local checks passed (log: /tmp/claude-0/-home-user-praxis/7bcb3038-90cc-534e-8e5b-9be62aa1de8c/scratchpad/sweep/logs/limen.log)"
+    },
+    {
+      "id": "WI-0156",
+      "type": "research",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "research-record",
+          "path": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+        },
+        {
+          "type": "research-record",
+          "path": "research/decisions/DF-LIMEN-2026-0005--indexeddb-adapter-placement-fallback-and-encryption-scope.md"
+        }
+      ],
+      "updatedAt": "2026-10-08T15:13:32Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T150528666Z-2b2b06eb"
+      ],
+      "latestCheckpoint": {
+        "id": "6a7236f119b3ec0dd4293186",
+        "recordedAt": "2026-10-08T15:13:30Z",
+        "executionId": "EXE-20261008T150528666Z-2b2b06eb",
+        "repository": "limen",
+        "branch": "requirements/indexeddb-durable-storage",
+        "commit": "d484d60db2a83bcdcbb46dff636f7f09d59a8672",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "requirements/indexeddb-durable-storage",
+        "remoteCommit": "d484d60db2a83bcdcbb46dff636f7f09d59a8672",
+        "summary": "LCP-043..087 requirements, DF-LIMEN-2026-0005 and WI-0157..WI-0166 committed and pushed",
+        "nextAction": "complete WI-0156, open the PR, then cross-reference Arca and Chrona",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T15:13:32Z",
+      "conclusion": "inconclusive"
     }
   ]
 }
