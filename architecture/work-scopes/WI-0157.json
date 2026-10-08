@@ -1,0 +1,25 @@
+{
+  "workItem": "WI-0157",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-043, LCP-048, LCP-050, LCP-069",
+  "placement": "Capability Pack: src/capabilities/store/ and its contract unit (limen.store, now version 2). storeCapability(options) registers the pack with an application namespace and size limits and offers limen.store version 2; storeCapability() with no options keeps offering version 1 with 0.7.1's fingerprint and behaviour, so existing engines and hosts are unaffected. Every database name an engine gives resolves inside the namespace; a value or transaction over its serialized-size limit is InvalidRequest before the database is touched; Opened reports the limits. The 0.7.1 contract is kept as a frozen copy to prove the v1 fingerprint. Bindings regenerated (TypeScript, F#, C#, Rust); the generated F#/C#/Rust files are not guardrail paths. A dev-only in-memory IndexedDB (fake-indexeddb) lets the namespace and limit rules run under node. Core, the kernel, contract/targets.json and every guardrail path are unchanged.",
+  "guardrail": false,
+  "paths": [
+    "contract/store.contract.json",
+    "contract/frozen/store.v1.contract.json",
+    "src/capabilities/store/**",
+    "guests/fsharp/Limen.Contract/Generated/Store.fs",
+    "guests/csharp/Limen.Contract/Generated/Store.cs",
+    "guests/rust/limen-contract/src/limen_store.rs",
+    "test/store.test.ts",
+    "test/store-namespaces.test.ts",
+    "test/browser/packs/store/**",
+    "test/browser/packs/store-namespaces/**",
+    "bench/budgets.json",
+    "package.json",
+    "package-lock.json",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
