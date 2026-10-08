@@ -17,6 +17,13 @@
     "docs/**",
     "CHANGELOG.md"
   ],
-  "expansions": [],
+  "expansions": [
+    {
+      "paths": [
+        "architecture/core.json"
+      ],
+      "reason": "check:architecture requires every layer in architecture/layers.json to be Core or in exactly one optional group (layer-unclassified). The new engine-library layer is classified as the optional group engine-libraries; Core's files, exports, entrypoints and budget are unchanged."
+    }
+  ],
   "recordedAfterCompletion": false
 }

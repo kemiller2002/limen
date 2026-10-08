@@ -16,6 +16,30 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Added — the TypeScript routing library `@echelon-foundry/limen/routing` (WI-0169, LCP-089, 093, 094, 107, 108)
+
+- `src/routing`, exported as `@echelon-foundry/limen/routing`: the same URL-state
+  semantics as the F# library, passing every vector in
+  `conformance/routing/routing.vectors.json` and `url-state.vectors.json`.
+  - **Tables:** `defineRoutes` validates a table as a value and returns every
+    problem (never throws).
+  - **Resolving and building:** `resolve`, `build` (the canonical location).
+  - **History:** `adopt` (never a push), `navigate` (push), `refine` (replace).
+  - **Typed codec:** `createRouteCodec` maps the table onto the application's
+    own route union, with `parse` and `format` and the closed `RouteError`.
+  - **Locations and links:** `locationFromBrowser`, `hrefFor` (hash mode by
+    default), `shareLink`.
+  - **Sign-in:** `captureReturnTo`, `resumeReturnTo` (no open redirect).
+  - **Inventory:** `renderRouteInventory`, byte-identical to the F# library.
+- `contract/routes.schema.json`: the `echelon.routes/v1` JSON Schema
+  (2020-12), shipped in the package. Every vector table's inventory validates
+  against it.
+- `test/routing.test.ts` runs every vector, then 3,000 round-trip, 3,000
+  canonical-form and 3,000 totality property cases.
+- A new `engine-library` layer (`src/routing/**`, optional group
+  `engine-libraries`) under the engine boundary. It imports nothing outside
+  itself. No protocol, contract fingerprint, kernel or pack change.
+
 ### Added — URL-state routing semantics and the F# library (WI-0168, LCP-088..096, 098..102, 105..107, 109)
 
 - `conformance/routing/url-state.vectors.json`: 104 vectors on top of the 61

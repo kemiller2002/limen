@@ -24,7 +24,8 @@
       "federation": ["federation-host"],
       "capability-packs": ["capability-pack", "capability-support"],
       "hosts-renderers": ["host-adapter", "renderer"],
-      "tooling-conformance": ["tooling"]
+      "tooling-conformance": ["tooling"],
+      "engine-libraries": ["engine-library"]
     }
   },
   "files": {

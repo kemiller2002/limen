@@ -9,9 +9,16 @@ Routing is **application meaning**, so it lives in the engine. The browser
 side stays mechanism: the kernel reports locations (`Initialize.location`,
 `LocationChanged`) and performs `Navigation` effects (`push`, `replace`,
 `back`, `forward`). It never parses a route. Nothing here is a Limen protocol
-type, and no library's API shape is canonical. The F# reference library
-([`libraries/fsharp/Limen.Routing`](../../libraries/fsharp/Limen.Routing)) is
-one conforming implementation.
+type, and no library's API shape is canonical. Two libraries conform, and run
+every vector in both files:
+
+- **F#:** [`libraries/fsharp/Limen.Routing`](../../libraries/fsharp/Limen.Routing)
+  (`EchelonFoundry.Limen.Routing`), in `npm run test:libraries`;
+- **TypeScript:** [`src/routing`](../../src/routing)
+  (`@echelon-foundry/limen/routing`), in `npm test` (`test/routing.test.ts`).
+
+Each also proves the round-trip, canonical-form and totality properties
+(LCP-094) on 3,000 generated cases per property.
 
 ## Route tables
 
@@ -251,6 +258,8 @@ The routed location is a path and query, `/invoices/42?tab=history`.
 `inventory(mode, table)` renders `echelon.routes/v1` as JSON with keys sorted
 by UTF-16 code unit, two-space indentation, and a final newline. It is
 byte-identical in every conforming library (the vectors compare the text).
+Its JSON Schema is [`contract/routes.schema.json`](../../contract/routes.schema.json),
+shipped in the npm package as `@echelon-foundry/limen/contract/routes.schema.json`.
 
 - **Top level:** `schema`, `mode`, `home`, `signIn`, `notFound` (or
   `null`), `routes` and `legacy`.

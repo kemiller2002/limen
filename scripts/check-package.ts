@@ -45,6 +45,10 @@ const REQUIRED = [
   "dist/kernel/diagnostics.js", "dist/kernel/diagnostics.d.ts",
   "dist/engine/index.js", "dist/engine/index.d.ts",
   "dist/engine/transport.js", "dist/engine/transport.d.ts",
+  "dist/routing/index.js", "dist/routing/index.d.ts",
+  // The route inventory schema (LCP-108): Praxis and Conditor validate
+  // .echelon/routes.json against it without running the application.
+  "contract/routes.schema.json",
   // The documentation set. README.md alone leaves a consumer with links they
   // cannot follow offline; these six are the ones worth carrying.
   "docs/core-mental-model.md",
@@ -87,8 +91,9 @@ const FORBIDDEN: readonly { readonly pattern: RegExp; readonly why: string }[] =
 // necessarily wrong, but it is unintended, and saying so is the point.
 const ALLOWED_PREFIXES = ["dist/", "bin/", "runtimes/", "docs/", "examples/minimal/"];
 const ALLOWED_ROOT_FILES = new Set(["package.json", "README.md", "CHANGELOG.md", "LICENSE", "architecture.yaml"]);
-// Forced in by npm, see the note in FORBIDDEN above.
-const ALLOWED_EXTRA = new Set(["examples/README.md"]);
+// examples/README.md is forced in by npm (see the note in FORBIDDEN above); the
+// route inventory schema ships on purpose (LCP-108).
+const ALLOWED_EXTRA = new Set(["examples/README.md", "contract/routes.schema.json"]);
 
 type PackEntry = { readonly path: string };
 type PackResult = readonly { readonly files: readonly PackEntry[]; readonly size: number; readonly unpackedSize: number }[];
