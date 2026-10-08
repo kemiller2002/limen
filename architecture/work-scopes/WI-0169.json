@@ -1,0 +1,22 @@
+{
+  "workItem": "WI-0169",
+  "reference": "kemiller2002/limen#20 (LCP-005); docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md LCP-089, LCP-093, LCP-094, LCP-107, LCP-108",
+  "placement": "Engine Library + Contract (tooling). The TypeScript routing library src/routing (exported as @echelon-foundry/limen/routing) implements the language-neutral semantics in conformance/routing and passes every vector the F# library passes, with round-trip, canonical-form and totality property tests; contract/routes.schema.json (echelon.routes/v1, JSON Schema 2020-12) ships in the npm package. Pure, no browser authority; no protocol, contract-fingerprint, kernel or pack change. Guardrail-scoped only to declare the new engine-library layer (architecture/layers.json), place src/routing under the engine boundary (limen.config.json) and the restricted TypeScript subset (architecture/typescript-boundary.json); no existing rule is loosened.",
+  "guardrail": true,
+  "paths": [
+    "src/routing/**",
+    "test/routing*.test.ts",
+    "test/fixtures/routing/**",
+    "contract/routes.schema.json",
+    "package.json",
+    "architecture/layers.json",
+    "limen.config.json",
+    "architecture/typescript-boundary.json",
+    "scripts/check-package.ts",
+    "conformance/routing/**",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
