@@ -24,12 +24,20 @@ const open = { operation: "open", database: "queue", version: 1, stores: [{ name
 const put = { operation: "transact", database: "queue", mode: "readwrite", operations: [{ op: "put", store: "entries", value: { id: 1 } }] };
 const isCount = (value) => Number.isInteger(value) && value >= 0;
 
+// Each answer must match what this browser has: its decision where the API
+// exists, Unsupported where it does not (Playwright's WebKit on Linux has no
+// persist, persisted or estimate; measured, docs/41).
+const engine = window.__limenPackEngine ?? "chromium";
+const api = (name) => typeof navigator.storage?.[name] === "function";
 const persisted = await ask({ operation: "persisted" });
 const persist = await ask({ operation: "persist" });
-expect("persisted and persist answer with the browser's decision (Persistence, Persisted), not Unsupported", persisted.kind === "Persistence" && typeof persisted.persistent === "boolean" && persist.kind === "Persisted" && typeof persist.granted === "boolean", { persisted, persist });
+expect(`persisted and persist answer the browser's decision where it has the API, Unsupported where it has none (${engine}: persist ${api("persist") ? "present" : "absent"}, persisted ${api("persisted") ? "present" : "absent"})`,
+  (api("persisted") ? persisted.kind === "Persistence" && typeof persisted.persistent === "boolean" : persisted.kind === "Unsupported")
+  && (api("persist") ? persist.kind === "Persisted" && typeof persist.granted === "boolean" : persist.kind === "Unsupported"), { persisted, persist });
 
 const estimate = await ask({ operation: "estimate" });
-expect("estimate reports the browser's usage and quota as non-negative integer bytes", estimate.kind === "Estimate" && isCount(estimate.usage) && isCount(estimate.quota) && estimate.quota > 0, estimate);
+expect(`estimate reports non-negative integer bytes where the browser has the API, Unsupported where it has none (${engine}: estimate ${api("estimate") ? "present" : "absent"})`,
+  api("estimate") ? estimate.kind === "Estimate" && isCount(estimate.usage) && isCount(estimate.quota) && estimate.quota > 0 : estimate.kind === "Unsupported", estimate);
 
 const available = await ask({ operation: "availability" });
 const probes = (await indexedDB.databases()).filter((info) => info.name === "durable/");
@@ -42,14 +50,20 @@ expect("Opened says created on first use, and not on a reopen", first.kind === "
 const wrote = await ask(put);
 
 await trusted({ kind: "clearSiteData" });
-await new Promise((resolve) => setTimeout(resolve, 200));
-const lost = facts.find((fact) => fact.kind === "ConnectionLost");
-const afterLoss = await ask(put);
-expect("clearing site data mid-session is ConnectionLost for the open database, and the next write is NotOpen, never silently reopened", wrote.kind === "Committed" && window.__limenPackActionError === null && lost?.database === "queue" && afterLoss.kind === "NotOpen", { wrote, actionError: window.__limenPackActionError, facts, afterLoss });
+if (window.__limenPackActionError === "Unsupported") {
+  // WebKit: Playwright gives WebKit no DevTools protocol, so the runner
+  // cannot clear site data under the page. A named skip, never a pass.
+  expect(`${engine}: storage cleared mid-session NOT RUN: the runner has no DevTools protocol for ${engine} to clear site data (evidence: docs/41-indexeddb.md, "Measured limits"; Chromium runs it)`, wrote.kind === "Committed", { wrote, actionError: window.__limenPackActionError });
+} else {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  const lost = facts.find((fact) => fact.kind === "ConnectionLost");
+  const afterLoss = await ask(put);
+  expect("clearing site data mid-session is ConnectionLost for the open database, and the next write is NotOpen, never silently reopened", wrote.kind === "Committed" && window.__limenPackActionError === null && lost?.database === "queue" && afterLoss.kind === "NotOpen", { wrote, actionError: window.__limenPackActionError, facts, afterLoss });
 
-const reopened = await ask(open);
-const read = await ask({ operation: "transact", database: "queue", mode: "readonly", operations: [{ op: "count", store: "entries" }] });
-expect("reopening after the loss finds the database newly created and empty: the evidence an application needs to tell 'lost' from 'first use'", reopened.kind === "Opened" && reopened.created === true && read.results?.[0]?.count === 0, { reopened, read });
+  const reopened = await ask(open);
+  const read = await ask({ operation: "transact", database: "queue", mode: "readonly", operations: [{ op: "count", store: "entries" }] });
+  expect("reopening after the loss finds the database newly created and empty: the evidence an application needs to tell 'lost' from 'first use'", reopened.kind === "Opened" && reopened.created === true && read.results?.[0]?.count === 0, { reopened, read });
+}
 
 await ask({ operation: "close", database: "queue" });
 await ask({ operation: "deleteDatabase", database: "queue" });

@@ -137,8 +137,44 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
   const connections = new Map<string, IDBDatabase>();
   const wiring: { host?: CapabilityHost<StoreFact> } = {};
 
+  // A closed connection is not gone until its transactions finish. WebKit
+  // reports an upgrade as blocked by this page's own closing connection while
+  // one is still in flight (measured, docs/41), so before opening or deleting
+  // a database the pack waits for the transactions of every connection it
+  // closed. Owned by this provider instance.
+  const running = new WeakMap<IDBDatabase, Set<Promise<void>>>();
+  const closing = new Set<Promise<void>>();
+  // Registers a transaction on its connection; the returned function marks
+  // it finished, and is called from the transaction's own handlers.
+  const track = (database: IDBDatabase): (() => void) => {
+    const set = running.get(database) ?? new Set<Promise<void>>();
+    running.set(database, set);
+    const settled: { resolve?: () => void } = {};
+    const finished = new Promise<void>((resolve) => { settled.resolve = resolve; });
+    set.add(finished);
+    return () => { set.delete(finished); settled.resolve?.(); };
+  };
+  // A transaction that only reads the stored schema, tracked until it ends.
+  const schemaReader = (database: IDBDatabase, names: readonly string[]): IDBTransaction => {
+    const transaction = database.transaction([...names], "readonly");
+    const done = track(database);
+    transaction.oncomplete = done;
+    transaction.onabort = done;
+    transaction.onerror = done;
+    return transaction;
+  };
+  const close = (database: IDBDatabase): void => {
+    database.close();
+    (running.get(database) ?? new Set()).forEach((finished) => {
+      closing.add(finished);
+      void finished.then(() => closing.delete(finished));
+    });
+  };
+  const quiesced = (): Promise<unknown> => Promise.all([...closing]);
+
   const forget = (name: string): void => {
-    connections.get(name)?.close();
+    const database = connections.get(name);
+    if (database !== undefined) close(database);
     connections.delete(name);
   };
 
@@ -167,8 +203,9 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
     request.onerror = () => settle(0);
   });
 
-  const open = (view: View, request: Extract<StoreRequest, { operation: "open" }>): Promise<StoreResult> => {
+  const open = async (view: View, request: Extract<StoreRequest, { operation: "open" }>): Promise<StoreResult> => {
     forget(request.database);
+    await quiesced();
     return once<StoreResult>((settle) => {
       const state = { from: request.version, abandoned: false, problems: [] as readonly string[] };
       const opening = view.indexedDB.open(physical(request.database), request.version);
@@ -186,11 +223,11 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
       };
       opening.onsuccess = () => {
         const database = opening.result;
-        if (state.abandoned) { database.close(); return; }
+        if (state.abandoned) { close(database); return; }
         const names = Array.from(database.objectStoreNames);
-        const problems = names.length === 0 ? schemaProblems(request.stores, []) : schemaProblems(request.stores, storedSchema(database, database.transaction(names, "readonly")));
+        const problems = names.length === 0 ? schemaProblems(request.stores, []) : schemaProblems(request.stores, storedSchema(database, schemaReader(database, names)));
         if (problems.length > 0) {
-          database.close();
+          close(database);
           settle({ kind: "SchemaMismatch", problems: [...problems] });
           return;
         }
@@ -215,6 +252,7 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
     if (unknown >= 0) return Promise.resolve({ kind: "Aborted", reason: "unknownStore", operation: unknown });
     return once<StoreResult>((settle) => {
       const transaction = database.transaction([...stores], request.mode);
+      const finished = track(database);
       const state: { results: OperationResult[]; failure?: Failure; cancelled: boolean } = { results: [], cancelled: false };
       const fail = (failure: Failure): void => {
         state.failure ??= failure;
@@ -224,10 +262,12 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
       signal.addEventListener("abort", cancel, { once: true });
 
       transaction.oncomplete = () => {
+        finished();
         signal.removeEventListener("abort", cancel);
         settle({ kind: "Committed", results: state.results });
       };
       transaction.onabort = () => {
+        finished();
         signal.removeEventListener("abort", cancel);
         if (state.cancelled) { settle({ kind: "Cancelled" }); return; }
         // No operation failed: the browser aborted the whole transaction at commit.
@@ -305,8 +345,9 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
     });
   };
 
-  const deleteDatabase = (view: View, name: string): Promise<StoreResult> => {
+  const deleteDatabase = async (view: View, name: string): Promise<StoreResult> => {
     forget(name);
+    await quiesced();
     return once((settle) => {
       const deleting = view.indexedDB.deleteDatabase(physical(name));
       deleting.onsuccess = () => settle({ kind: "DatabaseDeleted" });

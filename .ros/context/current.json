@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T16:40:34.000Z",
+  "updatedAt": "2026-10-08T16:49:34.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3729,6 +3729,51 @@
         }
       },
       "completedAt": "2026-10-08T16:40:34.000Z"
+    },
+    {
+      "id": "WI-0161",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/smoke-packs.ts"
+        },
+        {
+          "type": "implementation",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "type": "tests",
+          "path": "test/store-durability.test.ts"
+        }
+      ],
+      "updatedAt": "2026-10-08T16:49:34.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T164058723Z-30dd2677"
+      ],
+      "latestCheckpoint": {
+        "id": "c78b3828edc9a9e680e97d1e",
+        "recordedAt": "2026-10-08T16:49:32.000Z",
+        "executionId": "EXE-20261008T164058723Z-30dd2677",
+        "repository": "limen",
+        "branch": "indexeddb/wi-0161-webkit",
+        "commit": "b390030504eb25c6b461375bfdeba73f2acf4306",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "indexeddb/wi-0161-webkit",
+        "remoteCommit": "b390030504eb25c6b461375bfdeba73f2acf4306",
+        "summary": "Store pages run in Playwright WebKit in CI; WebKit self-blocking upgrade fixed",
+        "nextAction": "Complete WI-0161; WI-0162 F# packages as attested release assets",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T16:49:34.000Z"
     }
   ]
 }

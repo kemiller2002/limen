@@ -60,11 +60,12 @@ value of that kind; it is used only where the browser decides the value
 | `holdOpen` | hold a raw connection that ignores version changes | yes | yes | yes |
 | `inject:quota` | fail the tab's next transaction at commit with `QuotaExceededError`, after its operations ran | yes | no: not producible on demand (docs/41) | no |
 | `inject:openFails` | fail the tab's next `indexedDB.open` with a named error | yes | no | no |
-| `inject:storageCleared` | clear the origin's IndexedDB under open connections, as clearing site data or eviction does | yes | yes: DevTools `Storage.clearDataForOrigin` | no: no DevTools protocol |
+| `inject:storageCleared` | clear the origin's IndexedDB under open connections, as clearing site data or eviction does | yes | yes: DevTools `Storage.clearDataForOrigin` | no: no DevTools protocol in Playwright WebKit |
 | `inject:missing` | run the tab with no `indexedDB` | yes | no | no |
-| `storage:present` | the browser has `navigator.storage` persist, persisted and estimate | scripted | yes | as measured |
+| `storage:present` | the browser has `navigator.storage` persist, persisted and estimate | scripted | yes | no: absent in Playwright WebKit on Linux (measured) |
 | `storage:absent` | the browser has no `navigator.storage` | yes | no | no |
 
 A runner that cannot meet a vector's requirement reports the vector
 **unsupported, never passed**, and every run reports its passed, failed and
-unsupported counts separately.
+unsupported counts separately. Today: node 32 passed; Chromium 27 passed and
+5 unsupported; WebKit 25 passed and 7 unsupported; none failed.

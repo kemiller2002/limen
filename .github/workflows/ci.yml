@@ -187,6 +187,36 @@ jobs:
         env:
           LIMEN_REQUIRE_BROWSER: "1"
 
+  # LCP-076: the store pack's pages in Playwright WebKit (Indy targets iPad
+  # Safari; Forma's QD-BROWSER-001 requires WebKit). Same strict CSP; WebKit
+  # does not enforce Trusted Types, and the run says so. A WebKit-only skip is
+  # a named check that links its evidence. Playwright WebKit on Linux is
+  # WebKit's engine, not iOS storage policy: the release adds a manual iPad
+  # Safari checklist (docs/41).
+  store-webkit:
+    name: Store pack in WebKit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright's WebKit (not a package dependency)
+        run: npm install --no-save playwright@1.56.1 && npx playwright install --with-deps webkit
+
+      - name: Store pack pages in WebKit
+        run: npm run smoke:packs:webkit
+        env:
+          LIMEN_REQUIRE_BROWSER: "1"
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.

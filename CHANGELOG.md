@@ -67,6 +67,20 @@ exhaustive lists.
   compare-and-put, that a reader never sees part of a batch, a tab closed
   mid-transaction, and an older tab after an upgrade.
 
+### Added — the store pack runs in WebKit in CI (WI-0161, LCP-076)
+
+- `npm run smoke:packs:webkit` runs every store page in Playwright WebKit,
+  and the CI job "Store pack in WebKit" fails if it fails. WebKit-only skips
+  are named checks that link their evidence.
+
+### Fixed — WebKit: the pack no longer blocks its own upgrade (WI-0161)
+
+- WebKit reports an upgrade as blocked while the page's own just-closed
+  connection still has a transaction in flight. The pack now waits for the
+  transactions of connections it closed before opening or deleting again, so
+  an upgrade in WebKit is no longer abandoned as `Blocked`. No contract
+  change.
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no

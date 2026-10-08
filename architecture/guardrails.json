@@ -79,7 +79,8 @@
       "npm run check:core-budget -- --verify-reference",
       "npm run smoke:guests",
       "npm run smoke:security",
-      "npm run smoke:packs"
+      "npm run smoke:packs",
+      "npm run smoke:packs:webkit"
     ],
     "tsconfigCompilerOptions": {
       "strict": true,

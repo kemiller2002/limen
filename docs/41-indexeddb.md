@@ -264,6 +264,37 @@ provider instances in one page cannot:
   completes, the older tab hears `VersionChanged`, and its next write is
   `NotOpen` and never applied.
 
+## WebKit (LCP-076)
+
+Every store page also runs in Playwright **WebKit** in CI
+(`npm run smoke:packs:webkit`, the "Store pack in WebKit" job), under the
+same strict policy. WebKit does not enforce Trusted Types; the run says so.
+The shared vectors: 25 passed, 7 unsupported (named), 0 failed. The two-tab
+page: a reader in the other tab saw only 0 or 500 in 187 reads, and a tab
+closed mid-transaction left nothing.
+
+What differs from Chromium, measured with WebKit 26.0 (Playwright 1.56.1, on
+Linux):
+
+- **WebKit reports `blocked` for the page's own closing connection.** A
+  connection the pack has closed still counts while a transaction on it is in
+  flight, even one that only read the schema. The first WebKit run turned the
+  pack's own upgrades into `Blocked`. The pack now waits for the transactions
+  of every connection it closed before it opens or deletes again, in both
+  engines (`test/store-durability.test.ts` pins the order).
+- **No `navigator.storage` persist, persisted or estimate.** `persist`,
+  `persisted` and `estimate` answer `Unsupported` there, which is the
+  contract's answer for a missing API.
+- **No DevTools protocol**, so the runner cannot clear site data under the
+  page. The `ConnectionLost` scenario is a named "NOT RUN" check in WebKit,
+  and runs in Chromium.
+
+**Playwright WebKit on Linux is not iPad Safari.** It runs WebKit's IndexedDB
+engine, not iOS storage policy such as the 7-day eviction of script-writable
+storage. Each release therefore adds a manual iPad Safari checklist
+(OQ-LIMEN-IDB-006; see the release notes). Eviction itself is covered by
+detection (`Opened { created }`, `ConnectionLost`), not by a test.
+
 ## Measured limits (negative knowledge)
 
 **Quota could not be produced in real Chromium.** With the DevTools protocol's
@@ -299,6 +330,7 @@ loads none of it.
 | Version 2 options; the version 1 offer and its fingerprint recomputed from the frozen 0.7.1 contract; two namespaces on one origin (isolation, a delete that leaves the other intact, the physical name never shown); a separator in a name refused; values at limit−1, limit and limit+1; an over-limit transaction; default limits; invalid options — against an in-memory IndexedDB | [`test/store-namespaces.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-namespaces.test.ts) |
 | The 32 shared vectors, every one passing under node with quota, open failures, storage cleared, a missing `indexedDB` and both storage environments injected; every result and fact variant expected; the runner reports a wrong expectation as failed and a missing requirement as unsupported | [`test/store-conformance.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-conformance.test.ts), [`conformance/store/`](https://github.com/kemiller2002/limen/blob/main/conformance/store/README.md) |
 | The same vectors in Chromium: 27 passed, 5 unsupported (named), 0 failed | [`test/browser/packs/store-conformance/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-conformance/) |
+| Every store page in WebKit: 76 checks, with the vectors at 25 passed and 7 unsupported, and each WebKit-only skip named | `npm run smoke:packs:webkit` (CI job "Store pack in WebKit") |
 | Two real tabs: concurrent compare-and-put, a reader never seeing part of a batch, a tab closed mid-transaction, an older tab after an upgrade | [`test/browser/packs/store-tabs/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-tabs/) |
 | Compound keys: the tuple as key, lexicographic order, a tuple-prefix range, a compound unique violation, a missing part, single-to-compound as SchemaMismatch, invalid compound schemas; count against query, on a store and an index; deleteRange of a range, of the store, inside an aborted and a readonly transaction; version 1 refusing all of them as malformed — against an in-memory IndexedDB | [`test/store-compound.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-compound.test.ts) |
 | The same compound-key, count and deleteRange rules in Chromium | [`test/browser/packs/store-compound/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-compound/) |
