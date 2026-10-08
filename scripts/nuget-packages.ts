@@ -30,6 +30,7 @@ const VERSION = (JSON.parse(await readFile(join(ROOT, "package.json"), "utf8")) 
 export const PACKAGES: readonly { readonly id: string; readonly project: string }[] = [
   { id: "EchelonFoundry.Limen.Contract", project: "guests/fsharp/Limen.Contract/Limen.Contract.fsproj" },
   { id: "EchelonFoundry.Limen.Guest", project: "guests/fsharp/Limen.Guest/Limen.Guest.fsproj" },
+  { id: "EchelonFoundry.Limen.Store", project: "libraries/fsharp/Limen.Store/Limen.Store.fsproj" },
 ];
 
 const ALLOWED_DEPENDENCIES = new Set(["FSharp.Core", ...PACKAGES.map((entry) => entry.id)]);
@@ -102,6 +103,7 @@ const CONSUMER_PROJECT = (version: string): string => `<Project Sdk="Microsoft.N
   <ItemGroup>
     <PackageReference Include="EchelonFoundry.Limen.Contract" Version="[${version}]" />
     <PackageReference Include="EchelonFoundry.Limen.Guest" Version="[${version}]" />
+    <PackageReference Include="EchelonFoundry.Limen.Store" Version="[${version}]" />
   </ItemGroup>
 </Project>
 `;
@@ -138,11 +140,18 @@ let main _ =
         match Codec.parseStoreRequest (Codec.serializeStoreRequest request) with
         | Ok decoded -> decoded = request
         | Error _ -> false
+    // The functional library builds the same request and offers the same
+    // capability identity.
+    let library =
+        Limen.Store.Store.capability = store
+        && (Limen.Store.Schema.create "queue" 1L [ { Name = "entries"; KeyPath = Limen.Store.KeyPath.Compound [ "ns"; "seq" ]; Indexes = [] } ] []
+            |> Result.map Limen.Store.Store.openRequest) = Ok request
     System.Console.WriteLine(Limen.Contract.Store.Contract.Fingerprint)
     System.Console.WriteLine(if selected then "selected" else "NOT SELECTED")
     System.Console.WriteLine(if mismatchRefused then "mismatch-refused" else "MISMATCH ACCEPTED")
     System.Console.WriteLine(if roundTrip then "round-trip" else "ROUND-TRIP FAILED")
-    if selected && mismatchRefused && roundTrip then 0 else 1
+    System.Console.WriteLine(if library then "library" else "LIBRARY DISAGREES")
+    if selected && mismatchRefused && roundTrip && library then 0 else 1
 `;
 
 const verify = async (): Promise<void> => {
@@ -176,13 +185,13 @@ const verify = async (): Promise<void> => {
     const { STORE_CAPABILITY_V2 } = await import(join(ROOT, "dist/capabilities/store/index.js")) as { readonly STORE_CAPABILITY_V2: { readonly fingerprint: string } };
     const problems = [
       ...(output[0] === STORE_CAPABILITY_V2.fingerprint ? [] : [`the package's limen.store fingerprint ${String(output[0])} differs from the TypeScript pack's ${STORE_CAPABILITY_V2.fingerprint}`]),
-      ...output.slice(1).filter((line) => line !== "selected" && line !== "mismatch-refused" && line !== "round-trip"),
+      ...output.slice(1).filter((line) => line !== "selected" && line !== "mismatch-refused" && line !== "round-trip" && line !== "library"),
     ];
     if (problems.length > 0) {
       console.error(`The clean-room consumer failed:\n${problems.join("\n")}`);
       process.exit(1);
     }
-    console.log(`Clean room: a consumer built from the ${String(PACKAGES.length)} packages alone selects limen.store ${STORE_CAPABILITY_V2.fingerprint} (the TypeScript pack's), has a mismatched fingerprint refused at the handshake, and round-trips a store request.`);
+    console.log(`Clean room: a consumer built from the ${String(PACKAGES.length)} packages alone selects limen.store ${STORE_CAPABILITY_V2.fingerprint} (the TypeScript pack's), has a mismatched fingerprint refused at the handshake, round-trips a store request, and builds the same request through EchelonFoundry.Limen.Store.`);
   } finally {
     await rm(room, { recursive: true, force: true });
   }

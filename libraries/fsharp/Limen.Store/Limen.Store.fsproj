@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The functional F# API over the limen.store capability (LCP-045). An
+       engine library: pure, no browser, interop, network or I/O
+       (architecture/boundary-rules.json, limen.config.json boundary.engine).
+       Its only effect is the StoreExecutor the host supplies. It depends on
+       the generated contract binding, FSharp.Core and the BCL only. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+    <!-- 25: incomplete matches are errors (LCP-053). reflectionfree: no %A
+         and no reflection-generated ToString, as the WASM guests (WI-0143). -->
+    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25 --reflectionfree</OtherFlags>
+    <!-- NuGet package (LCP-079), in lockstep with package.json; the version
+         is passed by scripts/nuget-packages.ts. -->
+    <PackageId>EchelonFoundry.Limen.Store</PackageId>
+    <Version>0.0.0</Version>
+    <Authors>Echelon Foundry</Authors>
+    <Description>A pure functional F# API for Limen's IndexedDB store capability (limen.store): schemas, keys and transactions as immutable values, mode-typed transactions, explicit JSON codecs, closed Result outcomes, structured errors, a connection state machine, a migration planner and diagnostics. The only effect is the StoreExecutor the host supplies.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/kemiller2002/limen</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kemiller2002/limen</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>limen;webassembly;wasm;fsharp;indexeddb;offline</PackageTags>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Store.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../guests/fsharp/Limen.Contract/Limen.Contract.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests for libraries/fsharp/Limen.Store (LCP-045, 049, 052, 053, 055..057,
+       072, 073). A test harness, not a library: it may read files, reflect and
+       start processes, which libraries/** may not. Run by npm run
+       test:libraries, after npm run build (the builder property tests check
+       every request the library builds against the TypeScript pack's own
+       validator in dist/). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25</OtherFlags>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../libraries/fsharp/Limen.Store/Limen.Store.fsproj" />
+  </ItemGroup>
+</Project>

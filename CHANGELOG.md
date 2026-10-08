@@ -92,6 +92,24 @@ exhaustive lists.
   GitHub release, and verifies the published copies. CI's "F# packages" job
   runs the same pack and clean room on every change.
 
+### Added — the functional F# store API, `EchelonFoundry.Limen.Store` (WI-0163, LCP-045, LCP-049, LCP-052, LCP-053, LCP-055..057, LCP-072, LCP-073)
+
+- A pure F# library over `limen.store`. Its only effect is the host's
+  `StoreExecutor`.
+  - Total builders, with an `Error` before any request exists.
+  - Transactions whose mode is a type: a write in a readonly transaction does
+    not compile.
+  - Explicit JSON codecs that round-trip, refuse non-finite numbers, and fail
+    as `Undecodable` without value content.
+  - One closed failure union per request kind, with `QuotaExceeded` as its
+    own case.
+  - A connection value that refuses writes locally after `Outdated`,
+    `VersionChanged` or `ConnectionLost`.
+  - A forward-only migration planner, structured `StoreError` codes and
+    `StoreDiagnostics`.
+- Released as the third F# package in lockstep. The clean room builds the
+  same request through it.
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no

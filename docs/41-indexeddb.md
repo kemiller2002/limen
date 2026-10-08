@@ -237,6 +237,47 @@ What to do then is the engine's decision: merge, ask the user, or retry. A
 revision field inside the record makes this cheap, but the pack does not
 require one.
 
+## The functional F# API (LCP-045, `EchelonFoundry.Limen.Store`)
+
+[`libraries/fsharp/Limen.Store`](https://github.com/kemiller2002/limen/blob/main/libraries/fsharp/Limen.Store/Store.fs)
+is a pure F# library over the store binding. Its only effect is the
+`StoreExecutor` the host supplies (`StoreRequest -> Async<StoreResult>`): the
+engine's Limen request loop in the browser, or the in-memory fake in tests.
+
+```fsharp
+open Limen.Store
+
+type Entry = { Id: string; At: System.DateTimeOffset }
+
+let entry : Codec<Entry> =
+    Codec.record
+        (fun e -> Codec.fields [ Codec.field "id" Codec.string e.Id; Codec.field "at" Codec.dateTimeOffset e.At ])
+        (fun fields ->
+            match Codec.required "id" Codec.string fields, Codec.required "at" Codec.dateTimeOffset fields with
+            | Ok id, Ok at -> Ok { Id = id; At = at }
+            | Error e, _ | _, Error e -> Error e)
+
+let schema = Schema.create "queue" 1L [ { Name = "entries"; KeyPath = KeyPath.Path "id"; Indexes = [] } ] []
+
+let save execute connection e =
+    match Transaction.readWrite "queue" [ Op.put "entries" entry e ] with
+    | Ok transaction -> Store.transact execute connection transaction
+    | Error problem -> async { return Error(TransactFailure.Invalid problem.Problem) }
+```
+
+| Requirement | How |
+| --- | --- |
+| Values, total builders | `Schema.create`, `Range.*`, `Op.*` and `Transaction.*` return `Result`: an invalid schema, key or limit is an `Error` before any request exists. A property test checks every request they build against the pack's own validator. |
+| The mode is a type (LCP-052) | Reads are `Op<'Mode>`; writes are `Op<ReadWrite>`. A `put` inside `Transaction.readOnly` does not compile (FS0001; a fixture proves it). |
+| Codecs (LCP-049) | `Codec<'T>`: an encoder to JSON and a decoder to `Result`. 64-bit integers beyond ±(2^53 − 1) travel as strings, timestamps as ISO-8601 with an offset, and non-finite numbers are refused. A stored value that does not decode is `Undecodable`, naming the store, the key and the field path, never the value. |
+| Closed outcomes (LCP-053) | `OpenFailure` (`VersionBlocked`, `Outdated`, `SchemaMismatch`, …), `TransactFailure` (`Aborted`, `QuotaExceeded` as its own case, `NotOpen`, …), and one union for each other request. Each pack variant maps to exactly one case; a variant the pack never sends for that request is `Unexpected`, named. |
+| Versions (LCP-055..057) | `Connection` is a value the engine keeps. After `Outdated`, `VersionChanged` or `ConnectionLost`, `Store.transact` answers `NotOpen` without sending anything, and no function turns `Outdated` into a delete. `Migration.plan` is forward-only and refuses gaps and repeats. `Migration.step` commits a step and its marker together. |
+| Errors and diagnostics (LCP-072, LCP-073) | `StoreError` names the operation, database, store, class and a stable code (`limen.store.quota.exceeded`), and never holds a stored value. `StoreDiagnostics` holds the estimate, persistence and the connections, and an unknown measurement is `None`. |
+
+The library renders JSON by hand, without a serializer or options object, so
+nothing in it needs reflection in a trimmed WebAssembly publish. Its tests
+are `conformance/store/fsharp/Limen.Store.Tests` (`npm run test:libraries`).
+
 ## F# packages (LCP-044, LCP-079)
 
 F# engines consume the store through NuGet packages released with Limen, at
@@ -246,6 +287,7 @@ the npm package's version (lockstep, OQ-LIMEN-IDB-005):
 | --- | --- |
 | `EchelonFoundry.Limen.Contract` | The generated bindings for Core and every pack, including `Limen.Contract.Store`, each with its contract fingerprint (`Contract.Fingerprint`). |
 | `EchelonFoundry.Limen.Guest` | The engine's half of the handshake (`Limen.Guest.Handshake.answer`). |
+| `EchelonFoundry.Limen.Store` | The functional store API above. |
 
 Both target `net8.0`, are trimmable and reflection-free, and depend on
 nothing beyond FSharp.Core (9.0.100 or later) and the BCL. An engine selects
