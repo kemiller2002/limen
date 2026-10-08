@@ -16,6 +16,34 @@ exhaustive lists.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-10-08
+
+Navigable state in the URL (LCP-088..112), so that a copied URL opens the same
+view. The routing semantics gain typed view parameters, defaults and one
+canonical form. They also gain refinements, closed route outcomes, safe return
+targets through sign-in, hash routing for static hosts such as GitHub Pages,
+legacy redirects, copy link and a route inventory. Two conforming libraries
+ship at this version:
+
+- `@echelon-foundry/limen/routing`, a new npm subpath;
+- `EchelonFoundry.Limen.Routing`, a fourth Sigstore-attested F# package.
+
+Both pass the same 165 vectors and render byte-identical
+`echelon.routes/v1` inventories, whose schema ships as
+`contract/routes.schema.json`.
+
+### Compatibility
+
+- **Nothing existing changed.** No protocol, contract, kernel or capability
+  pack change, and the Core contract fingerprint is unchanged. Every addition
+  is a new subpath, a new package or a new file.
+- The F# `Limen.Routing` API is additive: `Route.create` still throws on a
+  path that does not parse, as before. `RouteTable.define` and `Route.define`
+  are the total forms. `QueryParam` gained `Default`, and `Route` gained
+  `ReturnTarget`.
+- `examples/08-routing` moved from `?route=` query routing to hash routing
+  (`#/invoices/1002`). Links to the old example URLs open its home screen.
+
 ### Added — `EchelonFoundry.Limen.Routing`, the fourth lockstep F# package, and the URL-state guide (WI-0171, LCP-099, 109, 110)
 
 - `libraries/fsharp/Limen.Routing` is packed as `EchelonFoundry.Limen.Routing`
