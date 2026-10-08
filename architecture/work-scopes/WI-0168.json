@@ -1,0 +1,14 @@
+{
+  "workItem": "WI-0168",
+  "reference": "kemiller2002/limen#20 (LCP-005); docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md LCP-088, LCP-090..096, LCP-098..102, LCP-105..107, LCP-109",
+  "placement": "Engine Library + Tooling / Conformance. The language-neutral routing semantics (conformance/routing README and vectors) gain typed definitions, view parameter types with defaults and one canonical form, refine, closed route outcomes, a typed codec, legacy entries, reserved credential names, return targets, location modes, share links and the route inventory; the F# reference library (libraries/fsharp/Limen.Routing) implements them with property tests in its conformance runner. Pure, no browser authority; no protocol, contract, kernel or pack change.",
+  "guardrail": false,
+  "paths": [
+    "conformance/routing/**",
+    "libraries/fsharp/Limen.Routing/**",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
