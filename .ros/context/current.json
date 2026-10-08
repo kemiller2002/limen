@@ -3952,7 +3952,27 @@
       "updatedAt": "2026-10-08T18:06:40.000Z",
       "telemetryExecutionIds": [
         "EXE-20261008T180641411Z-780614cf"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "4092c6ce9bae1bb22dc1e224",
+        "recordedAt": "2026-10-08T18:15:37.000Z",
+        "executionId": "EXE-20261008T180641411Z-780614cf",
+        "repository": "limen",
+        "branch": "indexeddb/wi-0166-release-0.8.0",
+        "commit": "54ebcd85c5b680d3c7b590ed4da7027f4276deb2",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "indexeddb/wi-0166-release-0.8.0",
+        "remoteCommit": "54ebcd85c5b680d3c7b590ed4da7027f4276deb2",
+        "summary": "Version 0.8.0 (package, lockfile, self-installation record), dated CHANGELOG with the iPad Safari checklist, docs/41 consumer, privacy and sign-out guide, Conditor install path as the limen-fsharp registry system (LCP-080 resolution). npm test 876/876, test:libraries, pack:nuget and check:nuget at 0.8.0 pass.",
+        "nextAction": "Merge, dispatch publish.yml for 0.8.0, verify assets, open the echelon-registry PR (limen 0.8.0, limen-fsharp 0.8.0, echelon-current), prove the Conditor install, then record completion.",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      }
     }
   ]
 }
