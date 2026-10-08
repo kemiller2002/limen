@@ -122,6 +122,18 @@ exhaustive lists.
   executors it passes 31, with 1 unsupported (`holdOpen`). It is total over
   3,000 generated requests (`npm run test:libraries`).
 
+### Added — measured store performance budgets (WI-0165, LCP-078)
+
+- `npm run bench -- --only store` measures every LCP-078 row through the
+  kernel and the JSON boundary, in Chromium and WebKit. It fails when a p95
+  is over budget or an engine did not run.
+- The provisional budgets are replaced with measured ones (twice the worse
+  engine's p95, over five runs): from 7 ms for a small get to 90 ms for a
+  1 MB snapshot save. The query budget rises to 52 ms, because WebKit's p95
+  is 26 ms, above the provisional 25 ms.
+- The F# store package adds 94,570 bytes brotli to a full-trimmed
+  WebAssembly publish and raises no trim warning.
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no
