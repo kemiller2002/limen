@@ -1,0 +1,16 @@
+{
+  "workItem": "WI-0170",
+  "reference": "kemiller2002/limen#20 (LCP-005); docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md LCP-097, LCP-103, LCP-104, LCP-106, LCP-111",
+  "placement": "Browser proof + Example. A test/browser/packs/url-state page, run by the existing smoke:packs and smoke:packs:webkit steps, proves in real Chromium and WebKit on a static server that answers 404 for every path it has no file for (as GitHub Pages does), with the application under a sub-path: deep link, reload, navigate with Back and Forward, refine without a history entry, not-found, not-permitted and invalid-link outcomes from deep links, sign-in return without Back to sign-in, real relative links (click and a fresh load of the href), and copy link reopened as a fresh page. examples/08-routing moves from its own query-string router to @echelon-foundry/limen/routing in hash mode, keeping its tests. No library, protocol, kernel or guardrail change.",
+  "guardrail": false,
+  "paths": [
+    "test/browser/packs/url-state/**",
+    "examples/08-routing/**",
+    "test/examples.test.ts",
+    "scripts/browser-smoke.ts",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
