@@ -632,7 +632,8 @@ dispatch path, npm's provenance names the `main` commit the workflow ran from;
 the tag names the released commit.
 
 **F# packages.** The same run packs `EchelonFoundry.Limen.Contract`,
-`EchelonFoundry.Limen.Guest` and `EchelonFoundry.Limen.Store` at the npm
+`EchelonFoundry.Limen.Guest`, `EchelonFoundry.Limen.Store` and
+`EchelonFoundry.Limen.Routing` at the npm
 version (lockstep), proves them in a
 clean room (`npm run pack:nuget`, `npm run check:nuget`), attests them with
 Sigstore build provenance, and attaches them, with `checksums.txt`, to the

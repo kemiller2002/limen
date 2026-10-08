@@ -1,15 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- The F# reference implementation of Limen's language-neutral routing
        semantics (conformance/routing/). An engine library: pure, no browser,
-       interop, network or I/O (architecture/layers.json engineLibraries). It
-       depends on nothing but FSharp.Core and the BCL's text encoding. -->
+       interop, network or I/O (architecture/boundary-rules.json,
+       limen.config.json boundary.engine). It depends on nothing but
+       FSharp.Core and the BCL's text encoding. -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
-    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25</OtherFlags>
+    <!-- 25: incomplete matches are errors (LCP-093). reflectionfree: no %A
+         and no reflection-generated ToString, as the WASM guests. -->
+    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25 --reflectionfree</OtherFlags>
+    <!-- NuGet package (LCP-110), in lockstep with package.json; the version
+         is passed by scripts/nuget-packages.ts. -->
+    <PackageId>EchelonFoundry.Limen.Routing</PackageId>
+    <Version>0.0.0</Version>
+    <Authors>Echelon Foundry</Authors>
+    <Description>URL state for Limen engines in F#: route tables validated as values, typed view parameters with defaults and one canonical form, a typed parse/format codec over the application's own union, navigate (push), refine (replace) and adopt (never a push), closed route outcomes, safe return targets through sign-in, hash and path location modes, copy link and the echelon.routes/v1 route inventory. Pure and total; the same semantics and vectors as @echelon-foundry/limen/routing.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/kemiller2002/limen</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kemiller2002/limen</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>limen;webassembly;wasm;fsharp;routing;url;deep-linking</PackageTags>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Routing.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
