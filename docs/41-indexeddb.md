@@ -237,6 +237,31 @@ What to do then is the engine's decision: merge, ask the user, or retry. A
 revision field inside the record makes this cheap, but the pack does not
 require one.
 
+## F# packages (LCP-044, LCP-079)
+
+F# engines consume the store through NuGet packages released with Limen, at
+the npm package's version (lockstep, OQ-LIMEN-IDB-005):
+
+| Package | Contents |
+| --- | --- |
+| `EchelonFoundry.Limen.Contract` | The generated bindings for Core and every pack, including `Limen.Contract.Store`, each with its contract fingerprint (`Contract.Fingerprint`). |
+| `EchelonFoundry.Limen.Guest` | The engine's half of the handshake (`Limen.Guest.Handshake.answer`). |
+
+Both target `net8.0`, are trimmable and reflection-free, and depend on
+nothing beyond FSharp.Core (9.0.100 or later) and the BCL. An engine selects
+`limen.store` by putting `Limen.Contract.Store.Contract`'s identity in its
+required capabilities. A kernel offering a different fingerprint is refused
+at the handshake, never at the first request.
+
+They ship as **Sigstore-attested GitHub release assets** on the Limen release,
+with `checksums.txt`, the interim channel Arca and Fides use until nuget.org
+Trusted Publishing exists. Consumers install them through Conditor's NuGet
+release-asset feed. `npm run pack:nuget` and `npm run check:nuget` (CI's "F#
+packages" job, and the publish workflow before it attests) pack them, refuse a
+missing or mis-versioned one, and build a consumer from the files alone. That
+consumer selects `limen.store` with the TypeScript pack's fingerprint, has a
+mismatched fingerprint refused, and round-trips a request.
+
 ## Conformance vectors and real tabs (LCP-075, LCP-077)
 
 [`conformance/store/`](https://github.com/kemiller2002/limen/blob/main/conformance/store/README.md)

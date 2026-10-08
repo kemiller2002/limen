@@ -12,6 +12,7 @@ examples/[0-9][0-9]-*/*.js
 # emitted import specifiers stay valid in the deployed tree. Build output.
 site/app/*.js
 dist-site/
+dist-nuget/
 
 # The F# lifecycle CLI compiles to platform binaries staged for npm packaging.
 # They are build output: `npm run build:cli:all` regenerates them, and the

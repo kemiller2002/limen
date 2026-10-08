@@ -80,7 +80,9 @@
       "npm run smoke:guests",
       "npm run smoke:security",
       "npm run smoke:packs",
-      "npm run smoke:packs:webkit"
+      "npm run smoke:packs:webkit",
+      "npm run pack:nuget",
+      "npm run check:nuget"
     ],
     "tsconfigCompilerOptions": {
       "strict": true,

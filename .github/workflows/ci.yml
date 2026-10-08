@@ -217,6 +217,42 @@ jobs:
         env:
           LIMEN_REQUIRE_BROWSER: "1"
 
+  # LCP-044, LCP-079: the F# packages (EchelonFoundry.Limen.Contract and
+  # .Guest) packed at package.json's version, checked for lockstep versions
+  # and allowed dependencies, and proven in a clean room: a consumer built
+  # from the .nupkg files alone selects limen.store with the same fingerprint
+  # as the TypeScript pack and has a mismatched one refused at the handshake.
+  # The publish workflow runs the same two commands before it attests them.
+  fsharp-packages:
+    name: F# packages (pack and clean-room consumer)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the TypeScript pack (the fingerprint the packages must match)
+        run: npm run build
+
+      - name: Pack the F# packages in lockstep
+        run: npm run pack:nuget
+
+      - name: A clean-room consumer built from the packages alone
+        run: npm run check:nuget
+
   # The npm package ships a binary per platform, so the launcher has to be
   # exercised on each of them. Testing only Linux would leave the Windows and
   # macOS paths — different executable name, different permissions — unproven.
