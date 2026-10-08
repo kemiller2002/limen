@@ -137,3 +137,32 @@ test("a version 1 registration refuses the durability requests as malformed and 
   assert.deepEqual(facts, []);
   assert.deepEqual(await ask(put), { kind: "NotOpen" });
 });
+
+test("before opening or deleting again, the pack waits for the transactions of a connection it closed (WebKit reports blocked otherwise)", async () => {
+  const factory = new IDBFactory();
+  const log: string[] = [];
+  const watched = {
+    open: (name: string, version?: number) => {
+      log.push(`open ${String(version ?? "")}`);
+      const request = factory.open(name, version);
+      request.addEventListener("success", () => {
+        const database = request.result;
+        const transaction = database.transaction.bind(database);
+        Reflect.set(database, "transaction", (...args: Parameters<IDBDatabase["transaction"]>) => {
+          const made = transaction(...args);
+          made.addEventListener("complete", () => log.push("transaction finished"));
+          return made;
+        });
+      });
+      return request;
+    },
+    deleteDatabase: (name: string) => { log.push("delete"); return factory.deleteDatabase(name); },
+    databases: () => factory.databases(),
+    cmp: (left: unknown, right: unknown) => factory.cmp(left, right),
+  };
+  const { ask } = tab({ indexedDB: watched });
+  assert.deepEqual(await ask(open), { kind: "Opened", version: 1, upgradedFrom: 0, limits, created: true });
+  assert.deepEqual(await ask({ ...open, version: 2 }), { kind: "Opened", version: 2, upgradedFrom: 1, limits, created: false });
+  assert.deepEqual(await ask({ operation: "deleteDatabase", database: "queue" }), { kind: "DatabaseDeleted" });
+  assert.deepEqual(log, ["open 1", "transaction finished", "open 2", "transaction finished", "delete"]);
+});

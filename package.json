@@ -266,6 +266,7 @@
     "build:guests": "node --experimental-strip-types scripts/build-guests-site.ts",
     "smoke:guests": "node --experimental-strip-types scripts/smoke-guests.ts",
     "smoke:packs": "npm run build && npm run build:examples && node --experimental-strip-types scripts/smoke-packs.ts",
+    "smoke:packs:webkit": "npm run build && npm run build:examples && node --experimental-strip-types scripts/smoke-packs.ts --browser=webkit",
     "smoke:security": "npm run build && node --experimental-strip-types scripts/smoke-security.ts",
     "check:views": "node --experimental-strip-types scripts/check-views.ts",
     "build:bench": "tsc -p tsconfig.bench.json",

@@ -19,6 +19,14 @@
     "docs/**",
     "CHANGELOG.md"
   ],
-  "expansions": [],
+  "expansions": [
+    {
+      "paths": [
+        "src/capabilities/store/index.ts",
+        "test/store-durability.test.ts"
+      ],
+      "reason": "The first WebKit run found that WebKit reports blocked while the pack's own just-closed connection still has its schema-read transaction in flight, so the pack abandoned its own upgrades as Blocked. The pack now waits for the transactions of connections it closed before opening or deleting again; a node test pins the ordering."
+    }
+  ],
   "recordedAfterCompletion": false
 }

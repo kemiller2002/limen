@@ -12,6 +12,13 @@
 //
 // Needs Playwright; locally a skip is reported, and LIMEN_REQUIRE_BROWSER=1
 // forbids skipping.
+//
+// --browser=webkit (npm run smoke:packs:webkit) runs, in Playwright WebKit,
+// the pages whose page.json lists "webkit" in "engines" (LCP-076). WebKit
+// has no DevTools protocol in Playwright, so pages are read with ordinary
+// evaluation and the actions that need the protocol fail, which the page
+// reports. WebKit does not enforce Trusted Types; the policy is still served
+// and every other directive still applies.
 
 import { readdir, readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
@@ -50,6 +57,8 @@ type Context = {
 };
 type Browser = { newContext(): Promise<Context>; close(): Promise<void> };
 type Chromium = { launch(options?: { channel?: string; ignoreDefaultArgs?: readonly string[]; args?: readonly string[] }): Promise<Browser> };
+type Engine = "chromium" | "webkit";
+const ENGINE: Engine = process.argv.includes("--browser=webkit") ? "webkit" : "chromium";
 type Check = { readonly name: string; readonly ok: boolean; readonly detail: string };
 
 const ROOT = process.cwd();
@@ -276,7 +285,8 @@ const drive = async (page: Page, context: Context, cdp: () => Promise<CdpSession
 // What a pack directory's optional page.json may say.
 // frames: origins this folder's pages may frame (frame-src) and be framed by
 // (frame-ancestors), each an exact origin.
-type PageConfig = { readonly url?: string; readonly host?: "localhost"; readonly backForwardCache?: boolean; readonly fakeMedia?: boolean; readonly trustedTypes?: readonly string[]; readonly frames?: { readonly allow: readonly string[]; readonly ancestors: readonly string[] } };
+// engines: where the page runs; Chromium only when absent.
+type PageConfig = { readonly url?: string; readonly host?: "localhost"; readonly backForwardCache?: boolean; readonly fakeMedia?: boolean; readonly trustedTypes?: readonly string[]; readonly frames?: { readonly allow: readonly string[]; readonly ancestors: readonly string[] }; readonly engines?: readonly Engine[] };
 
 const configOf = (pack: string): Promise<PageConfig> =>
   readFile(join(ROOT, PACKS, pack, "page.json"), "utf8").then((text): PageConfig => {
@@ -286,6 +296,7 @@ const configOf = (pack: string): Promise<PageConfig> =>
     const trustedTypes = field("trustedTypes");
     const names = Array.isArray(trustedTypes) ? trustedTypes.filter((name): name is string => typeof name === "string" && /^[A-Za-z0-9-]+$/.test(name)) : [];
     const frames = field("frames");
+    const engines = field("engines");
     const origins = (name: string): readonly string[] => {
       const list: unknown = typeof frames === "object" && frames !== null ? Reflect.get(frames, name) : undefined;
       return Array.isArray(list) ? list.filter((origin): origin is string => typeof origin === "string" && /^https?:\/\/[a-z0-9.-]+(:\d+)?$/.test(origin)) : [];
@@ -293,6 +304,7 @@ const configOf = (pack: string): Promise<PageConfig> =>
     return {
       ...(typeof url === "string" ? { url } : {}), ...(field("host") === "localhost" ? { host: "localhost" as const } : {}), backForwardCache: field("backForwardCache") === true, fakeMedia: field("fakeMedia") === true, ...(names.length > 0 ? { trustedTypes: names } : {}),
       ...(frames !== undefined ? { frames: { allow: origins("allow"), ancestors: origins("ancestors") } } : {}),
+      ...(Array.isArray(engines) ? { engines: engines.filter((engine): engine is Engine => engine === "chromium" || engine === "webkit") } : {}),
     };
   }, () => ({}));
 
@@ -300,8 +312,11 @@ const runPack = async (browser: Browser, pack: string, config: PageConfig): Prom
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
-    const session = await context.newCDPSession(page);
-    const quiet = quietly(session);
+    // WebKit: no DevTools protocol, so ordinary evaluation; the actions that
+    // need the protocol fail and the page is told.
+    const session = ENGINE === "chromium" ? await context.newCDPSession(page) : undefined;
+    const quiet: Quiet = session !== undefined ? quietly(session) : async <T>(expression: string): Promise<T> => page.evaluate<T>(expression);
+    const cdp = async (): Promise<CdpSession> => { if (session === undefined) throw Object.assign(new Error("no DevTools protocol in WebKit"), { name: "Unsupported" }); return session; };
     const errors: string[] = [];
     page.on("pageerror", (error) => { errors.push(error.message ?? "page error"); });
     // A download the page starts is handed back to it as window.__limenDownloads.
@@ -311,13 +326,13 @@ const runPack = async (browser: Browser, pack: string, config: PageConfig): Prom
         await quiet(`(window.__limenDownloads ??= []).push(${JSON.stringify({ name: download.suggestedFilename(), text })})`);
       });
     });
-    await page.addInitScript({ content: RECORD_VIOLATIONS });
+    await page.addInitScript({ content: `${RECORD_VIOLATIONS}\n  window.__limenPackEngine = ${JSON.stringify(ENGINE)};` });
     // A pack directory may point at a page elsewhere in the repository (an
     // example that runs its own checks) with page.json: { "url": "…" }, and
     // ask for localhost (a WebAuthn relying party cannot be an IP address)
     // with { "host": "localhost" }.
     await page.goto(`http://${config.host ?? "127.0.0.1"}:${PORT}/${config.url ?? `${PACKS}/${pack}/index.html`}`);
-    const reported = await drive(page, context, async () => session, quiet, 30000);
+    const reported = await drive(page, context, cdp, quiet, 30000);
     const checks = reported ? await quiet<readonly Check[]>("window.__limenPackResult.checks") : [];
     const violations = await quiet<readonly string[]>("window.__limenViolations.slice()");
     checks.forEach((check) => { console.log(`${check.ok ? "PASS" : "FAIL"}  ${pack}: ${check.name}`); });
@@ -335,7 +350,7 @@ const runPack = async (browser: Browser, pack: string, config: PageConfig): Prom
 
 const chromium = await (async (): Promise<Chromium | undefined> => {
   try {
-    return (await import("playwright") as { chromium: Chromium }).chromium;
+    return (await import("playwright") as Record<Engine, Chromium>)[ENGINE];
   } catch {
     return undefined;
   }
@@ -344,7 +359,8 @@ const chromium = await (async (): Promise<Chromium | undefined> => {
 // LIMEN_PACKS=media,files runs only those pages, for a quick local loop. CI
 // never sets it, so every page always runs there.
 const only = (process.env.LIMEN_PACKS ?? "").split(",").map((name) => name.trim()).filter((name) => name !== "");
-const packs = (await readdir(join(ROOT, PACKS), { withFileTypes: true })).filter((entry) => entry.isDirectory()).map((entry) => entry.name).filter((name) => only.length === 0 || only.includes(name)).sort();
+const allPacks = (await readdir(join(ROOT, PACKS), { withFileTypes: true })).filter((entry) => entry.isDirectory()).map((entry) => entry.name).filter((name) => only.length === 0 || only.includes(name)).sort();
+const packs = (await Promise.all(allPacks.map(async (pack) => ((await configOf(pack)).engines ?? ["chromium"]).includes(ENGINE) ? [pack] : []))).flat();
 
 if (chromium === undefined) {
   if (process.env.LIMEN_REQUIRE_BROWSER === "1") {
@@ -353,6 +369,9 @@ if (chromium === undefined) {
   } else {
     console.log("Playwright is not installed, so the capability pack smoke was skipped.");
   }
+} else if (packs.length === 0) {
+  console.error(`No capability pack page runs in ${ENGINE}${only.length > 0 ? ` among ${only.join(", ")}` : ""}; an empty run proves nothing.`);
+  process.exitCode = 1;
 } else {
   const configs = new Map(await Promise.all(packs.map(async (pack) => [pack, await configOf(pack)] as const)));
   const server = await serve(configs);
@@ -381,7 +400,9 @@ if (chromium === undefined) {
       console.error(`\n${failures.length} capability pack check(s) failed:\n${failures.join("\n")}`);
       process.exitCode = 1;
     } else {
-      console.log(`\nCapability packs passed in Chromium under a strict CSP with Trusted Types (${packs.join(", ")}).`);
+      console.log(ENGINE === "chromium"
+        ? `\nCapability packs passed in Chromium under a strict CSP with Trusted Types (${packs.join(", ")}).`
+        : `\nCapability packs passed in WebKit under the same strict CSP; WebKit does not enforce Trusted Types (${packs.join(", ")}).`);
     }
   } finally {
     await browser.close();
