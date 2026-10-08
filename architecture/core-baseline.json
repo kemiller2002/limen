@@ -195,6 +195,14 @@
           "inMinimalGraph": false
         },
         {
+          "group": "engine-libraries",
+          "layers": [
+            "engine-library"
+          ],
+          "present": false,
+          "inMinimalGraph": false
+        },
+        {
           "group": "federation",
           "layers": [
             "federation-host"
@@ -583,6 +591,10 @@
     {
       "workItem": "WI-0122",
       "change": "Recorded the #59 reference (9a835cc) from Git and approved the freeze-point baseline; see approved.authority."
+    },
+    {
+      "workItem": "WI-0169",
+      "change": "Re-measured the #59 reference from Git with `npm run check:core-budget -- --reference` after the engine-library layer (src/routing) was classified as the optional group engine-libraries in architecture/core.json. Only optionalModules gained that group (absent at the reference commit); every Core number is unchanged, and approved is untouched."
     }
   ]
 }

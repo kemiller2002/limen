@@ -20,9 +20,10 @@
   "expansions": [
     {
       "paths": [
-        "architecture/core.json"
+        "architecture/core.json",
+        "architecture/core-baseline.json"
       ],
-      "reason": "check:architecture requires every layer in architecture/layers.json to be Core or in exactly one optional group (layer-unclassified). The new engine-library layer is classified as the optional group engine-libraries; Core's files, exports, entrypoints and budget are unchanged."
+      "reason": "check:architecture requires every layer in architecture/layers.json to be Core or in exactly one optional group (layer-unclassified). The new engine-library layer is classified as the optional group engine-libraries; Core's files, exports, entrypoints and budget are unchanged. The #59 reference report in architecture/core-baseline.json is re-measured from Git by the tool (check:core-budget -- --reference) because its optionalModules list now names that group; only that list changed, and approved is untouched."
     }
   ],
   "recordedAfterCompletion": false
