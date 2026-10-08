@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
+// contract-fingerprint: sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:4d5e8546801e6489014c31a7efdd535cb8a78c1b4dc3b1fccdc6e156abf31366
+// content-hash: sha256:9833246facd19c53154cddc517675f7857a28692bbcedb9290af6e9d045c0d3e
 // </auto-generated>
 namespace Limen.Contract.Store
 
@@ -77,6 +77,13 @@ module Types =
         | Counted of Count: int64
         | RangeDeleted
 
+    /// Available: a probe database opened and closed inside the namespace. Missing: no indexedDB. Refused: a SecurityError, or an open refused in a private mode or with storage blocked. Broken: an open that failed for any other reason. Ephemeral, memory-backed private storage is deliberately hidden by browsers and is not detected.
+    and [<RequireQualifiedAccess>] AvailabilityClass =
+        | Available
+        | Missing
+        | Refused
+        | Broken
+
     /// conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.
     and [<RequireQualifiedAccess>] AbortReason =
         | Conflict
@@ -93,10 +100,18 @@ module Types =
         | Transact of Database: string * Mode: TransactionMode * Operations: Operation list
         | Close of Database: string
         | DeleteDatabase of Database: string
+        /// Version 2. Ask the browser to exempt this origin's storage from best-effort eviction (navigator.storage.persist). The pack never asks on its own; when to ask is the engine's decision.
+        | Persist
+        /// Version 2. Whether this origin's storage is already persistent (navigator.storage.persisted).
+        | Persisted
+        /// Version 2. The browser's own approximation of this origin's usage and quota (navigator.storage.estimate). Advisory only.
+        | Estimate
+        /// Version 2. Classify whether IndexedDB is usable here, by opening and deleting a probe database inside the namespace.
+        | Availability
 
     /// Every outcome the engine must handle; the pack retries nothing.
     and [<RequireQualifiedAccess>] StoreResult =
-        | Opened of Version: int64 * UpgradedFrom: int64 * Limits: StoreLimits option
+        | Opened of Version: int64 * UpgradedFrom: int64 * Limits: StoreLimits option * Created: bool option
         /// The stored database is newer than the version asked for: this page is out of date.
         | VersionConflict of Stored: int64
         /// At the stored version, the declared schema and the stored one differ; the connection is not kept. Each problem names a store or index.
@@ -116,17 +131,29 @@ module Types =
         | Unavailable of Reason: string
         /// The engine cancelled the request. A transaction cancelled while running is aborted, so nothing in it was applied.
         | Cancelled
+        /// The answer to persist. A refusal, or a rejected promise, is granted false.
+        | Persisted of Granted: bool
+        /// The answer to persisted: whether storage is persistent now.
+        | Persistence of Persistent: bool
+        /// The answer to estimate: non-negative byte counts the browser approximates. A count the browser did not report is absent, never zero.
+        | Estimate of Usage: int64 option * Quota: int64 option
+        /// The answer to availability. reason is an exception name only, for Refused and Broken.
+        | Availability of Availability: AvailabilityClass * Reason: string option
+        /// This browser has no such API (for example no navigator.storage.persist): never reported as a refusal.
+        | Unsupported
 
     and [<RequireQualifiedAccess>] StoreFact =
         /// Another page upgraded or deleted this database. The pack closed this page's connection so it would not block; the engine reopens at the new version when its code understands it. newVersion is 0 for a deletion.
         | VersionChanged of Database: string * NewVersion: int64
+        /// Version 2. The browser closed this page's connection abnormally: the origin's storage was cleared or evicted while it was open. The pack does not reopen; later requests on it are NotOpen until the engine opens it again.
+        | ConnectionLost of Database: string
 
 /// The identity of this generated contract unit, exchanged in the handshake.
 [<RequireQualifiedAccess>]
 module Contract =
     let [<Literal>] Unit = "limen.store"
     let [<Literal>] Version = 2L
-    let [<Literal>] Fingerprint = "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254"
+    let [<Literal>] Fingerprint = "sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a"
 
 /// Strict decoders (untrusted JSON → contract values) and encoders.
 [<RequireQualifiedAccess>]
@@ -284,6 +311,9 @@ module Codec =
             | other -> return! Wire.unknownVariant (path + ".kind") other
         }
 
+    and decodeAvailabilityClass (path: string) (element: JsonElement) : Result<AvailabilityClass, DecodeError> =
+        Wire.enumeration [ "Available", AvailabilityClass.Available; "Missing", AvailabilityClass.Missing; "Refused", AvailabilityClass.Refused; "Broken", AvailabilityClass.Broken ] path element
+
     and decodeAbortReason (path: string) (element: JsonElement) : Result<AbortReason, DecodeError> =
         Wire.enumeration [ "conflict", AbortReason.Conflict; "constraint", AbortReason.Constraint; "invalidKey", AbortReason.InvalidKey; "quota", AbortReason.Quota; "unknownStore", AbortReason.UnknownStore; "other", AbortReason.Other ] path element
 
@@ -320,6 +350,26 @@ module Codec =
                 let! () = Wire.required "operation" (Wire.literalString "deleteDatabase") path props
                 let! f_database = Wire.required "database" Wire.string path props
                 return StoreRequest.DeleteDatabase(f_database)
+            | "persist" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "operation" ] path props
+                let! () = Wire.required "operation" (Wire.literalString "persist") path props
+                return StoreRequest.Persist
+            | "persisted" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "operation" ] path props
+                let! () = Wire.required "operation" (Wire.literalString "persisted") path props
+                return StoreRequest.Persisted
+            | "estimate" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "operation" ] path props
+                let! () = Wire.required "operation" (Wire.literalString "estimate") path props
+                return StoreRequest.Estimate
+            | "availability" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "operation" ] path props
+                let! () = Wire.required "operation" (Wire.literalString "availability") path props
+                return StoreRequest.Availability
             | other -> return! Wire.unknownVariant (path + ".operation") other
         }
 
@@ -329,12 +379,13 @@ module Codec =
             match tag with
             | "Opened" ->
                 let! props = Wire.properties path element
-                let! props = Wire.closed [ "kind"; "version"; "upgradedFrom"; "limits" ] path props
+                let! props = Wire.closed [ "kind"; "version"; "upgradedFrom"; "limits"; "created" ] path props
                 let! () = Wire.required "kind" (Wire.literalString "Opened") path props
                 let! f_version = Wire.required "version" Wire.int path props
                 let! f_upgradedFrom = Wire.required "upgradedFrom" Wire.int path props
                 let! f_limits = Wire.optional "limits" decodeStoreLimits path props
-                return StoreResult.Opened(f_version, f_upgradedFrom, f_limits)
+                let! f_created = Wire.optional "created" Wire.boolean path props
+                return StoreResult.Opened(f_version, f_upgradedFrom, f_limits, f_created)
             | "VersionConflict" ->
                 let! props = Wire.properties path element
                 let! props = Wire.closed [ "kind"; "stored" ] path props
@@ -398,6 +449,37 @@ module Codec =
                 let! props = Wire.closed [ "kind" ] path props
                 let! () = Wire.required "kind" (Wire.literalString "Cancelled") path props
                 return StoreResult.Cancelled
+            | "Persisted" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind"; "granted" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "Persisted") path props
+                let! f_granted = Wire.required "granted" Wire.boolean path props
+                return StoreResult.Persisted(f_granted)
+            | "Persistence" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind"; "persistent" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "Persistence") path props
+                let! f_persistent = Wire.required "persistent" Wire.boolean path props
+                return StoreResult.Persistence(f_persistent)
+            | "Estimate" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind"; "usage"; "quota" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "Estimate") path props
+                let! f_usage = Wire.optional "usage" Wire.int path props
+                let! f_quota = Wire.optional "quota" Wire.int path props
+                return StoreResult.Estimate(f_usage, f_quota)
+            | "Availability" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind"; "availability"; "reason" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "Availability") path props
+                let! f_availability = Wire.required "availability" decodeAvailabilityClass path props
+                let! f_reason = Wire.optional "reason" Wire.string path props
+                return StoreResult.Availability(f_availability, f_reason)
+            | "Unsupported" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "Unsupported") path props
+                return StoreResult.Unsupported
             | other -> return! Wire.unknownVariant (path + ".kind") other
         }
 
@@ -412,6 +494,12 @@ module Codec =
                 let! f_database = Wire.required "database" Wire.string path props
                 let! f_newVersion = Wire.required "newVersion" Wire.int path props
                 return StoreFact.VersionChanged(f_database, f_newVersion)
+            | "ConnectionLost" ->
+                let! props = Wire.properties path element
+                let! props = Wire.closed [ "kind"; "database" ] path props
+                let! () = Wire.required "kind" (Wire.literalString "ConnectionLost") path props
+                let! f_database = Wire.required "database" Wire.string path props
+                return StoreFact.ConnectionLost(f_database)
             | other -> return! Wire.unknownVariant (path + ".kind") other
         }
 
@@ -452,6 +540,13 @@ module Codec =
         | OperationResult.Counted(f_count) -> Wire.ofObject [ Some("kind", Wire.ofString "Counted"); Some("count", Wire.ofInt f_count) ]
         | OperationResult.RangeDeleted -> Wire.ofObject [ Some("kind", Wire.ofString "RangeDeleted") ]
 
+    and encodeAvailabilityClass (value: AvailabilityClass) : JsonNode =
+        match value with
+        | AvailabilityClass.Available -> Wire.ofString "Available"
+        | AvailabilityClass.Missing -> Wire.ofString "Missing"
+        | AvailabilityClass.Refused -> Wire.ofString "Refused"
+        | AvailabilityClass.Broken -> Wire.ofString "Broken"
+
     and encodeAbortReason (value: AbortReason) : JsonNode =
         match value with
         | AbortReason.Conflict -> Wire.ofString "conflict"
@@ -467,10 +562,14 @@ module Codec =
         | StoreRequest.Transact(f_database, f_mode, f_operations) -> Wire.ofObject [ Some("operation", Wire.ofString "transact"); Some("database", Wire.ofString f_database); Some("mode", encodeTransactionMode f_mode); Some("operations", (Wire.ofList encodeOperation) f_operations) ]
         | StoreRequest.Close(f_database) -> Wire.ofObject [ Some("operation", Wire.ofString "close"); Some("database", Wire.ofString f_database) ]
         | StoreRequest.DeleteDatabase(f_database) -> Wire.ofObject [ Some("operation", Wire.ofString "deleteDatabase"); Some("database", Wire.ofString f_database) ]
+        | StoreRequest.Persist -> Wire.ofObject [ Some("operation", Wire.ofString "persist") ]
+        | StoreRequest.Persisted -> Wire.ofObject [ Some("operation", Wire.ofString "persisted") ]
+        | StoreRequest.Estimate -> Wire.ofObject [ Some("operation", Wire.ofString "estimate") ]
+        | StoreRequest.Availability -> Wire.ofObject [ Some("operation", Wire.ofString "availability") ]
 
     and encodeStoreResult (value: StoreResult) : JsonNode =
         match value with
-        | StoreResult.Opened(f_version, f_upgradedFrom, f_limits) -> Wire.ofObject [ Some("kind", Wire.ofString "Opened"); Some("version", Wire.ofInt f_version); Some("upgradedFrom", Wire.ofInt f_upgradedFrom); f_limits |> Option.map (fun value -> "limits", encodeStoreLimits value) ]
+        | StoreResult.Opened(f_version, f_upgradedFrom, f_limits, f_created) -> Wire.ofObject [ Some("kind", Wire.ofString "Opened"); Some("version", Wire.ofInt f_version); Some("upgradedFrom", Wire.ofInt f_upgradedFrom); f_limits |> Option.map (fun value -> "limits", encodeStoreLimits value); f_created |> Option.map (fun value -> "created", Wire.ofBool value) ]
         | StoreResult.VersionConflict(f_stored) -> Wire.ofObject [ Some("kind", Wire.ofString "VersionConflict"); Some("stored", Wire.ofInt f_stored) ]
         | StoreResult.SchemaMismatch(f_problems) -> Wire.ofObject [ Some("kind", Wire.ofString "SchemaMismatch"); Some("problems", (Wire.ofList Wire.ofString) f_problems) ]
         | StoreResult.Blocked -> Wire.ofObject [ Some("kind", Wire.ofString "Blocked") ]
@@ -482,16 +581,30 @@ module Codec =
         | StoreResult.InvalidRequest(f_problem) -> Wire.ofObject [ Some("kind", Wire.ofString "InvalidRequest"); Some("problem", Wire.ofString f_problem) ]
         | StoreResult.Unavailable(f_reason) -> Wire.ofObject [ Some("kind", Wire.ofString "Unavailable"); Some("reason", Wire.ofString f_reason) ]
         | StoreResult.Cancelled -> Wire.ofObject [ Some("kind", Wire.ofString "Cancelled") ]
+        | StoreResult.Persisted(f_granted) -> Wire.ofObject [ Some("kind", Wire.ofString "Persisted"); Some("granted", Wire.ofBool f_granted) ]
+        | StoreResult.Persistence(f_persistent) -> Wire.ofObject [ Some("kind", Wire.ofString "Persistence"); Some("persistent", Wire.ofBool f_persistent) ]
+        | StoreResult.Estimate(f_usage, f_quota) -> Wire.ofObject [ Some("kind", Wire.ofString "Estimate"); f_usage |> Option.map (fun value -> "usage", Wire.ofInt value); f_quota |> Option.map (fun value -> "quota", Wire.ofInt value) ]
+        | StoreResult.Availability(f_availability, f_reason) -> Wire.ofObject [ Some("kind", Wire.ofString "Availability"); Some("availability", encodeAvailabilityClass f_availability); f_reason |> Option.map (fun value -> "reason", Wire.ofString value) ]
+        | StoreResult.Unsupported -> Wire.ofObject [ Some("kind", Wire.ofString "Unsupported") ]
 
     and encodeStoreFact (value: StoreFact) : JsonNode =
         match value with
         | StoreFact.VersionChanged(f_database, f_newVersion) -> Wire.ofObject [ Some("kind", Wire.ofString "VersionChanged"); Some("database", Wire.ofString f_database); Some("newVersion", Wire.ofInt f_newVersion) ]
+        | StoreFact.ConnectionLost(f_database) -> Wire.ofObject [ Some("kind", Wire.ofString "ConnectionLost"); Some("database", Wire.ofString f_database) ]
 
     /// The wire text of a TransactionMode value.
     let wireTransactionMode (value: TransactionMode) : string =
         match value with
         | TransactionMode.Readonly -> "readonly"
         | TransactionMode.Readwrite -> "readwrite"
+
+    /// The wire text of a AvailabilityClass value.
+    let wireAvailabilityClass (value: AvailabilityClass) : string =
+        match value with
+        | AvailabilityClass.Available -> "Available"
+        | AvailabilityClass.Missing -> "Missing"
+        | AvailabilityClass.Refused -> "Refused"
+        | AvailabilityClass.Broken -> "Broken"
 
     /// The wire text of a AbortReason value.
     let wireAbortReason (value: AbortReason) : string =
@@ -517,6 +630,8 @@ module Codec =
     let serializeOperation (value: Operation) = (encodeOperation value).ToJsonString()
     let parseOperationResult (json: string) = Wire.parse decodeOperationResult json
     let serializeOperationResult (value: OperationResult) = (encodeOperationResult value).ToJsonString()
+    let parseAvailabilityClass (json: string) = Wire.parse decodeAvailabilityClass json
+    let serializeAvailabilityClass (value: AvailabilityClass) = (encodeAvailabilityClass value).ToJsonString()
     let parseAbortReason (json: string) = Wire.parse decodeAbortReason json
     let serializeAbortReason (value: AbortReason) = (encodeAbortReason value).ToJsonString()
     let parseStoreRequest (json: string) = Wire.parse decodeStoreRequest json
@@ -538,6 +653,7 @@ module Conformance =
             "KeyRange", (fun path element -> Codec.decodeKeyRange path element |> Result.map Codec.encodeKeyRange)
             "Operation", (fun path element -> Codec.decodeOperation path element |> Result.map Codec.encodeOperation)
             "OperationResult", (fun path element -> Codec.decodeOperationResult path element |> Result.map Codec.encodeOperationResult)
+            "AvailabilityClass", (fun path element -> Codec.decodeAvailabilityClass path element |> Result.map Codec.encodeAvailabilityClass)
             "AbortReason", (fun path element -> Codec.decodeAbortReason path element |> Result.map Codec.encodeAbortReason)
             "StoreRequest", (fun path element -> Codec.decodeStoreRequest path element |> Result.map Codec.encodeStoreRequest)
             "StoreResult", (fun path element -> Codec.decodeStoreResult path element |> Result.map Codec.encodeStoreResult)

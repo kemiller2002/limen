@@ -76,8 +76,8 @@ test("LCP-048: two applications on one origin, namespaces a and b, each open 'qu
   const origin = new IDBFactory();
   const a = tab(origin, { namespace: "a" });
   const b = tab(origin, { namespace: "b" });
-  assert.deepEqual(await a.ask(open("queue")), { kind: "Opened", version: 1, upgradedFrom: 0, limits: DEFAULT_LIMITS });
-  assert.deepEqual(await b.ask(open("queue")), { kind: "Opened", version: 1, upgradedFrom: 0, limits: DEFAULT_LIMITS });
+  assert.deepEqual(await a.ask(open("queue")), { kind: "Opened", version: 1, upgradedFrom: 0, limits: DEFAULT_LIMITS, created: true });
+  assert.deepEqual(await b.ask(open("queue")), { kind: "Opened", version: 1, upgradedFrom: 0, limits: DEFAULT_LIMITS, created: true });
   assert.deepEqual(await a.ask(put("queue", { id: 1, from: "a" })), { kind: "Committed", results: [{ kind: "Put", key: 1 }] });
   assert.deepEqual(await b.ask(get("queue", 1)), { kind: "Committed", results: [{ kind: "Missing" }] });
   assert.deepEqual(await a.ask(get("queue", 1)), { kind: "Committed", results: [{ kind: "Found", value: { id: 1, from: "a" } }] });
@@ -91,7 +91,7 @@ test("LCP-048: the engine never names or sees the physical name; another tab's u
   const first = tab(origin, { namespace: "app" });
   const second = tab(origin, { namespace: "app" });
   await first.ask(open("queue"));
-  assert.deepEqual(await second.ask(open("queue", 2)), { kind: "Opened", version: 2, upgradedFrom: 1, limits: DEFAULT_LIMITS });
+  assert.deepEqual(await second.ask(open("queue", 2)), { kind: "Opened", version: 2, upgradedFrom: 1, limits: DEFAULT_LIMITS, created: false });
   assert.deepEqual(first.facts, [{ kind: "VersionChanged", database: "queue", newVersion: 2 }]);
   assert.deepEqual(await first.ask(open("app/queue")), { kind: "InvalidRequest", problem: 'a database name may not contain "/" (the namespace separator)' });
   assert.deepEqual(await first.ask({ operation: "deleteDatabase", database: "../queue" }), { kind: "InvalidRequest", problem: 'a database name may not contain "/" (the namespace separator)' });
@@ -105,7 +105,7 @@ const sized = (bytes: number): Record<string, unknown> => ({ id: 1, pad: "x".rep
 test("LCP-050: a value at limit-1 and at the limit commits; at limit+1 it is InvalidRequest and the database is unchanged", async () => {
   const limits = { maxValueBytes: 64, maxTransactionBytes: 4096 };
   const app = tab(new IDBFactory(), { namespace: "app", limits });
-  assert.deepEqual(await app.ask(open("db")), { kind: "Opened", version: 1, upgradedFrom: 0, limits });
+  assert.deepEqual(await app.ask(open("db")), { kind: "Opened", version: 1, upgradedFrom: 0, limits, created: true });
   assert.equal(serializedBytes(sized(64)), 64);
   assert.deepEqual(await app.ask(put("db", sized(63))), { kind: "Committed", results: [{ kind: "Put", key: 1 }] });
   assert.deepEqual(await app.ask(put("db", sized(64))), { kind: "Committed", results: [{ kind: "Put", key: 1 }] });

@@ -1,0 +1,24 @@
+{
+  "workItem": "WI-0159",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-061, LCP-062, LCP-063, LCP-064",
+  "placement": "Capability Pack: src/capabilities/store/ and its contract unit (limen.store version 2, additive). New requests persist, persisted, estimate and availability over navigator.storage and indexedDB, answered Persisted, Persistence, Estimate, Availability or Unsupported; the pack never asks for persistence on its own. Opened reports whether this open created the database. A connection the browser closes abnormally (storage cleared or evicted) is forgotten and reported as the fact ConnectionLost; later requests on it are NotOpen. Version 1 registrations refuse all of it as malformed and keep 0.7.x behaviour. The packs smoke runner gains a DevTools clear-site-data action for the Chromium ConnectionLost scenario. Bindings regenerated. Core, the kernel, contract/targets.json and every guardrail path are unchanged.",
+  "guardrail": false,
+  "paths": [
+    "contract/store.contract.json",
+    "src/capabilities/store/**",
+    "guests/fsharp/Limen.Contract/Generated/Store.fs",
+    "guests/csharp/Limen.Contract/Generated/Store.cs",
+    "guests/rust/limen-contract/src/limen_store.rs",
+    "test/store.test.ts",
+    "test/store-namespaces.test.ts",
+    "test/store-compound.test.ts",
+    "test/store-durability.test.ts",
+    "test/browser/packs/store-durability/**",
+    "scripts/smoke-packs.ts",
+    "bench/budgets.json",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

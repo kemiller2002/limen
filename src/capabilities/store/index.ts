@@ -21,7 +21,7 @@
 import { defineCapability, type CapabilityHost, type CapabilityProvider, type CapabilityRequestContext } from "../../kernel/capabilities.js";
 import { CAPABILITY_OFFER, type AbortReason, type KeyRange, type Operation, type OperationResult, type StoreFact, type StoreLimits, type StoreRequest, type StoreResult, type StoreSchema } from "./generated/store.js";
 import { decodeStoreRequest } from "./generated/store.codec.js";
-import { abortReason, declaredKeyPath, isKey, jsonEqual, keyAt, keyPathLabel, pathFields, requestProblem, sameKeyPath, schemaProblems, storesOf, usesVersion2, type StoredSchema } from "./schema.js";
+import { abortReason, availabilityOf, byteCount, declaredKeyPath, isDatabaseRequest, isKey, jsonEqual, keyAt, keyPathLabel, pathFields, requestProblem, sameKeyPath, schemaProblems, storesOf, usesVersion2, type DatabaseRequest, type StoredSchema } from "./schema.js";
 import { databaseNameProblem, limitsOf, physicalName, sizeProblem, storeOptionsProblem, type StoreOptions } from "./options.js";
 import { STORE_CAPABILITY_V1 } from "./v1.js";
 
@@ -118,7 +118,7 @@ const registrationProblem = (registration: Registration, request: StoreRequest):
   switch (registration.kind) {
     case "v1": return undefined;
     case "invalid": return `the host registered the store pack with invalid options: ${registration.problem}`;
-    case "v2": return databaseNameProblem(request.database) ?? sizeProblem(request, registration.limits);
+    case "v2": return (isDatabaseRequest(request) ? databaseNameProblem(request.database) : undefined) ?? sizeProblem(request, registration.limits);
   }
 };
 
@@ -148,6 +148,15 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
       forget(name);
       wiring.host?.emitFact({ kind: "VersionChanged", database: name, newVersion: event.newVersion ?? 0 });
     };
+    // The browser closing it under the page (storage cleared or evicted):
+    // forget it, never reopen, say so (version 2 only; LCP-062).
+    if (registration.kind === "v2") {
+      database.onclose = () => {
+        if (connections.get(name) !== database) return;
+        connections.delete(name);
+        wiring.host?.emitFact({ kind: "ConnectionLost", database: name });
+      };
+    }
     connections.set(name, database);
   };
 
@@ -186,7 +195,7 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
           return;
         }
         keep(request.database, database);
-        settle({ kind: "Opened", version: database.version, upgradedFrom: state.from, ...limits });
+        settle({ kind: "Opened", version: database.version, upgradedFrom: state.from, ...limits, ...(registration.kind === "v2" ? { created: state.from === 0 } : {}) });
       };
       opening.onerror = (event) => {
         event.preventDefault();
@@ -306,9 +315,55 @@ export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
     });
   };
 
+  // The origin's storage (LCP-061, LCP-063): navigator.storage, asked only
+  // when the engine asks. A missing API is Unsupported, never a refusal.
+  const storage = async (request: Exclude<StoreRequest, DatabaseRequest>, view: View): Promise<StoreResult> => {
+    const manager: Partial<StorageManager> | undefined = view.navigator.storage;
+    switch (request.operation) {
+      case "persist":
+        return typeof manager?.persist === "function" ? { kind: "Persisted", granted: await manager.persist().then((granted) => granted, () => false) } : { kind: "Unsupported" };
+      case "persisted":
+        return typeof manager?.persisted === "function" ? manager.persisted().then((persistent): StoreResult => ({ kind: "Persistence", persistent }), (): StoreResult => ({ kind: "Unsupported" })) : { kind: "Unsupported" };
+      case "estimate": {
+        if (typeof manager?.estimate !== "function") return { kind: "Unsupported" };
+        const estimate = await manager.estimate().then((value): StorageEstimate | undefined => value, () => undefined);
+        if (estimate === undefined) return { kind: "Unsupported" };
+        const usage = byteCount(estimate.usage);
+        const quota = byteCount(estimate.quota);
+        return { kind: "Estimate", ...(usage !== undefined ? { usage } : {}), ...(quota !== undefined ? { quota } : {}) };
+      }
+      case "availability":
+        return availability(view);
+    }
+  };
+
+  // Available only when a probe database opens and is deleted inside the
+  // namespace (LCP-064). Its name, "<namespace>/", is one no engine can give.
+  const availability = (view: View): Promise<StoreResult> => {
+    if (typeof view.indexedDB !== "object" || view.indexedDB === null) return Promise.resolve({ kind: "Availability", availability: "Missing" });
+    const probe = registration.kind === "v2" ? physicalName(registration.namespace, "") : "";
+    const refused = (name: string): StoreResult => ({ kind: "Availability", availability: availabilityOf(name), reason: name });
+    return once<StoreResult>((settle) => {
+      try {
+        const opening = view.indexedDB.open(probe);
+        opening.onsuccess = () => {
+          opening.result.close();
+          const deleting = view.indexedDB.deleteDatabase(probe);
+          deleting.onsuccess = () => settle({ kind: "Availability", availability: "Available" });
+          deleting.onerror = () => settle(refused(nameOf(deleting.error)));
+          deleting.onblocked = () => settle({ kind: "Availability", availability: "Available" });
+        };
+        opening.onerror = (event) => { event.preventDefault(); settle(refused(nameOf(opening.error))); };
+      } catch (error) {
+        settle(refused(nameOf(error)));
+      }
+    });
+  };
+
   const perform = async (request: StoreRequest, view: View, signal: AbortSignal): Promise<StoreResult> => {
     const problem = requestProblem(request) ?? registrationProblem(registration, request);
     if (problem !== undefined) return { kind: "InvalidRequest", problem };
+    if (!isDatabaseRequest(request)) return storage(request, view).catch((): StoreResult => ({ kind: "Unsupported" }));
     if (typeof view.indexedDB !== "object" || view.indexedDB === null) return { kind: "Unavailable", reason: "unsupported" };
     try {
       switch (request.operation) {

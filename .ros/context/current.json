@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T16:17:32.000Z",
+  "updatedAt": "2026-10-08T16:25:45.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3639,6 +3639,51 @@
         }
       },
       "completedAt": "2026-10-08T16:17:32.000Z"
+    },
+    {
+      "id": "WI-0159",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/store/index.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/store-durability.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/browser/packs/store-durability/main.js"
+        }
+      ],
+      "updatedAt": "2026-10-08T16:25:45.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T161814782Z-13585284"
+      ],
+      "latestCheckpoint": {
+        "id": "2c163de1f3a58a0041c29c0e",
+        "recordedAt": "2026-10-08T16:25:43.000Z",
+        "executionId": "EXE-20261008T161814782Z-13585284",
+        "repository": "limen",
+        "branch": "indexeddb/wi-0159-durability-availability",
+        "commit": "61a1241b12d2a4f3c9f0c8c3b7eeaf69d22eb1b1",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "indexeddb/wi-0159-durability-availability",
+        "remoteCommit": "61a1241b12d2a4f3c9f0c8c3b7eeaf69d22eb1b1",
+        "summary": "Durability and availability evidence implemented; node and Chromium tests pass",
+        "nextAction": "Complete WI-0159; then WI-0160 conformance vectors and multi-tab scenarios",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T16:25:45.000Z"
     }
   ]
 }

@@ -122,6 +122,9 @@ type Action =
   // browser says something else would receive it (an inert page, a cover).
   | { readonly kind: "click"; readonly selector: string; readonly force?: boolean }
   | { readonly kind: "reload" }
+  // Clear the origin's IndexedDB through the DevTools protocol while the page
+  // runs, as a person clearing site data (or the browser evicting it) does.
+  | { readonly kind: "clearSiteData" }
   // The browser's network: offline or online (real online/offline events), or
   // emulated conditions (which change the Network Information API's estimate).
   | { readonly kind: "offline"; readonly offline: boolean }
@@ -185,6 +188,11 @@ const perform = async (page: Page, context: Context, cdp: () => Promise<CdpSessi
     case "reload":
       await page.reload();
       return;
+    case "clearSiteData": {
+      const session = await cdp();
+      await session.send("Storage.clearDataForOrigin", { origin: new URL(page.url()).origin, storageTypes: "indexeddb" });
+      return;
+    }
     case "offline":
       await context.setOffline(action.offline);
       return;

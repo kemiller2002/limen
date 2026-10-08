@@ -37,6 +37,7 @@
         { "name": "RangeDeleted", "fields": [] }
       ]
     },
+    { "name": "AvailabilityClass", "kind": "enum", "doc": "Available: a probe database opened and closed inside the namespace. Missing: no indexedDB. Refused: a SecurityError, or an open refused in a private mode or with storage blocked. Broken: an open that failed for any other reason. Ephemeral, memory-backed private storage is deliberately hidden by browsers and is not detected.", "values": ["Available", "Missing", "Refused", "Broken"] },
     { "name": "AbortReason", "kind": "enum", "doc": "conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.", "values": ["conflict", "constraint", "invalidKey", "quota", "unknownStore", "other"] },
     {
       "name": "StoreRequest",
@@ -46,7 +47,11 @@
         { "name": "open", "doc": "Open database at version. Opening at a higher version than the stored one upgrades it: every declared store and index that does not exist is created, and every store in dropStores is deleted — nothing else changes. Opening at the stored version checks the declared schema against the stored one.", "fields": [ { "name": "database", "type": "string" }, { "name": "version", "type": "int" }, { "name": "stores", "type": { "list": "StoreSchema" } }, { "name": "dropStores", "type": { "list": "string" } } ] },
         { "name": "transact", "doc": "Run the operations, in order, in one transaction over the stores they name.", "fields": [ { "name": "database", "type": "string" }, { "name": "mode", "type": "TransactionMode" }, { "name": "operations", "type": { "list": "Operation" } } ] },
         { "name": "close", "fields": [ { "name": "database", "type": "string" } ] },
-        { "name": "deleteDatabase", "fields": [ { "name": "database", "type": "string" } ] }
+        { "name": "deleteDatabase", "fields": [ { "name": "database", "type": "string" } ] },
+        { "name": "persist", "doc": "Version 2. Ask the browser to exempt this origin's storage from best-effort eviction (navigator.storage.persist). The pack never asks on its own; when to ask is the engine's decision.", "fields": [] },
+        { "name": "persisted", "doc": "Version 2. Whether this origin's storage is already persistent (navigator.storage.persisted).", "fields": [] },
+        { "name": "estimate", "doc": "Version 2. The browser's own approximation of this origin's usage and quota (navigator.storage.estimate). Advisory only.", "fields": [] },
+        { "name": "availability", "doc": "Version 2. Classify whether IndexedDB is usable here, by opening and deleting a probe database inside the namespace.", "fields": [] }
       ]
     },
     {
@@ -55,7 +60,7 @@
       "tag": "kind",
       "doc": "Every outcome the engine must handle; the pack retries nothing.",
       "variants": [
-        { "name": "Opened", "fields": [ { "name": "version", "type": "int" }, { "name": "upgradedFrom", "type": "int", "doc": "The version before this open; equal to version when nothing was upgraded, 0 for a new database." }, { "name": "limits", "type": "StoreLimits", "optional": true, "doc": "The size limits in force. Present whenever the pack was registered with options (version 2)." } ] },
+        { "name": "Opened", "fields": [ { "name": "version", "type": "int" }, { "name": "upgradedFrom", "type": "int", "doc": "The version before this open; equal to version when nothing was upgraded, 0 for a new database." }, { "name": "limits", "type": "StoreLimits", "optional": true, "doc": "The size limits in force. Present whenever the pack was registered with options (version 2)." }, { "name": "created", "type": "bool", "optional": true, "doc": "Whether this open created the database (it did not exist before). Present in version 2. A database found newly created where the engine's other evidence says it existed was lost: cleared or evicted." } ] },
         { "name": "VersionConflict", "doc": "The stored database is newer than the version asked for: this page is out of date.", "fields": [ { "name": "stored", "type": "int" } ] },
         { "name": "SchemaMismatch", "doc": "At the stored version, the declared schema and the stored one differ; the connection is not kept. Each problem names a store or index.", "fields": [ { "name": "problems", "type": { "list": "string" } } ] },
         { "name": "Blocked", "doc": "Another page holds an older version open and did not close it; nothing was upgraded. The pack abandons the attempt.", "fields": [] },
@@ -66,7 +71,12 @@
         { "name": "DatabaseDeleted", "fields": [] },
         { "name": "InvalidRequest", "doc": "A malformed schema, key, range or limit, a database name outside the rules of the pack's namespace, or a value or transaction over its size limit, found before touching the database.", "fields": [ { "name": "problem", "type": "string" } ] },
         { "name": "Unavailable", "doc": "This browser or context has no usable IndexedDB (for example some private modes). The exception's name only.", "fields": [ { "name": "reason", "type": "string" } ] },
-        { "name": "Cancelled", "doc": "The engine cancelled the request. A transaction cancelled while running is aborted, so nothing in it was applied.", "fields": [] }
+        { "name": "Cancelled", "doc": "The engine cancelled the request. A transaction cancelled while running is aborted, so nothing in it was applied.", "fields": [] },
+        { "name": "Persisted", "doc": "The answer to persist. A refusal, or a rejected promise, is granted false.", "fields": [ { "name": "granted", "type": "bool" } ] },
+        { "name": "Persistence", "doc": "The answer to persisted: whether storage is persistent now.", "fields": [ { "name": "persistent", "type": "bool" } ] },
+        { "name": "Estimate", "doc": "The answer to estimate: non-negative byte counts the browser approximates. A count the browser did not report is absent, never zero.", "fields": [ { "name": "usage", "type": "int", "optional": true }, { "name": "quota", "type": "int", "optional": true } ] },
+        { "name": "Availability", "doc": "The answer to availability. reason is an exception name only, for Refused and Broken.", "fields": [ { "name": "availability", "type": "AvailabilityClass" }, { "name": "reason", "type": "string", "optional": true } ] },
+        { "name": "Unsupported", "doc": "This browser has no such API (for example no navigator.storage.persist): never reported as a refusal.", "fields": [] }
       ]
     },
     {
@@ -74,7 +84,8 @@
       "kind": "union",
       "tag": "kind",
       "variants": [
-        { "name": "VersionChanged", "doc": "Another page upgraded or deleted this database. The pack closed this page's connection so it would not block; the engine reopens at the new version when its code understands it. newVersion is 0 for a deletion.", "fields": [ { "name": "database", "type": "string" }, { "name": "newVersion", "type": "int" } ] }
+        { "name": "VersionChanged", "doc": "Another page upgraded or deleted this database. The pack closed this page's connection so it would not block; the engine reopens at the new version when its code understands it. newVersion is 0 for a deletion.", "fields": [ { "name": "database", "type": "string" }, { "name": "newVersion", "type": "int" } ] },
+        { "name": "ConnectionLost", "doc": "Version 2. The browser closed this page's connection abnormally: the origin's storage was cleared or evicted while it was open. The pack does not reopen; later requests on it are NotOpen until the engine opens it again.", "fields": [ { "name": "database", "type": "string" } ] }
       ]
     }
   ]

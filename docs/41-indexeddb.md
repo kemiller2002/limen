@@ -185,6 +185,42 @@ A request the engine cancels while it runs is aborted, and the answer is
 `InvalidRequest { problem }` before the database is touched. That covers a
 write in a readonly transaction, an invalid key, and a limit outside 1–1000.
 
+## Durability and availability evidence (LCP-061..064, version 2)
+
+Browsers evict best-effort storage silently, and some contexts refuse
+IndexedDB. The pack reports what it can observe and decides nothing.
+
+| Request | Answer |
+| --- | --- |
+| `persist` | `Persisted { granted }`: the browser's answer to `navigator.storage.persist()`. A rejected promise is `granted: false`. |
+| `persisted` | `Persistence { persistent }`: whether storage is persistent now. |
+| `estimate` | `Estimate { usage?, quota? }`: the browser's own approximation, in non-negative integer bytes. A count the browser did not report is absent, never `0`. Advisory only: the hard answers stay `InvalidRequest` (size limits) and `Aborted { reason: quota }`. |
+| `availability` | `Availability { availability, reason? }`, one of `Available` (a probe database opened and was deleted inside the namespace), `Missing` (no `indexedDB`), `Refused` (a `SecurityError`, or the `InvalidStateError` some private modes give), `Broken` (any other failure). `reason` is the exception name only. |
+
+Each of the first three answers `Unsupported` when the browser has no such
+API, never a refusal. **The pack never asks for persistence on its own.**
+Ask after the first offline write is queued, when the person has something
+to lose and the browser's heuristics are most likely to grant it, and never
+at first load: Firefox prompts (OQ-LIMEN-IDB-004).
+
+Browsers deliberately hide whether private-mode storage is memory-backed, so
+`availability` never claims to detect it.
+
+**Connection loss.** When the browser closes a connection under the page
+(site data cleared, or storage evicted while open), the pack forgets it and
+the engine hears `ConnectionLost { database }`. The pack never reopens on its
+own: later requests on that database are `NotOpen` until the engine opens it
+again.
+
+**Creation evidence.** `Opened { created }` says whether this open created the
+database. A database found newly created where the engine's other evidence
+says it existed (a marker kept elsewhere, a sign-in record) was lost. Only the
+engine has that evidence, so only it can tell "lost" from "first use", and it
+should never claim a loss it cannot know.
+
+Version 1 registrations refuse all of these requests as malformed and emit
+no `ConnectionLost`, exactly as 0.7.x.
+
 ## Stale writes: compare-and-put
 
 Two tabs read the same record, and both edit it. Without a guard, the second
@@ -214,6 +250,13 @@ own transaction code against a scripted IndexedDB that aborts the commit with
 This matches the earlier finding for `localStorage`: storage failure cannot
 be produced on demand in real Chromium.
 
+**`Refused` could not be produced in Chromium on demand.** No DevTools
+protocol command blocks IndexedDB for an origin, and an opaque-origin
+(sandboxed) frame cannot load the pack's modules under the strict policy. The
+`Refused` class is proven through scripted IndexedDBs that throw or report
+`SecurityError` and `InvalidStateError`
+([`test/store-durability.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-durability.test.ts)).
+
 **Chromium compresses stored values.** A repeated character never
 approaches any quota, so a quota test needs incompressible data.
 
@@ -229,6 +272,8 @@ loads none of it.
 | Version 2 options; the version 1 offer and its fingerprint recomputed from the frozen 0.7.1 contract; two namespaces on one origin (isolation, a delete that leaves the other intact, the physical name never shown); a separator in a name refused; values at limit−1, limit and limit+1; an over-limit transaction; default limits; invalid options — against an in-memory IndexedDB | [`test/store-namespaces.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-namespaces.test.ts) |
 | Compound keys: the tuple as key, lexicographic order, a tuple-prefix range, a compound unique violation, a missing part, single-to-compound as SchemaMismatch, invalid compound schemas; count against query, on a store and an index; deleteRange of a range, of the store, inside an aborted and a readonly transaction; version 1 refusing all of them as malformed — against an in-memory IndexedDB | [`test/store-compound.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-compound.test.ts) |
 | The same compound-key, count and deleteRange rules in Chromium | [`test/browser/packs/store-compound/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-compound/) |
+| persist, persisted and estimate over a scripted `navigator.storage` (granted, refused, rejected, missing counts, Unsupported); availability Missing, Available (probe deleted), Refused (thrown and reported), Broken; created on first use, not on reopen, again after deletion; ConnectionLost and NotOpen after a forced close, never reopened; version 1 refusing all of it — over scripted and in-memory IndexedDBs | [`test/store-durability.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-durability.test.ts) |
+| persisted, persist, estimate and availability against real Chromium; creation evidence; site data cleared through the DevTools protocol mid-session giving ConnectionLost, NotOpen, and a reopen that finds the database newly created | [`test/browser/packs/store-durability/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-durability/) |
 | Version 2 negotiated through the kernel; namespaces `a` and `b` isolated, physical names, a delete confined to its namespace; a value at the limit and one byte over; a second tab's upgrade reported under the engine's own name — in Chromium | [`test/browser/packs/store-namespaces/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-namespaces/) |
 | Creation; a committed batch with typed results; atomic rollback; upgrade; a unique constraint; schema mismatch; version conflict; a refused `keyPath` change leaving the version unchanged; a stale write from a second tab rejected as conflict; insert-if-absent; another tab's upgrade with `VersionChanged`; a holdout connection making an upgrade `Blocked`; persistence across a real reload; delete — in Chromium under a strict CSP with Trusted Types | [`test/browser/packs/store/`](../test/browser/packs/store/), `npm run smoke:packs` |
 

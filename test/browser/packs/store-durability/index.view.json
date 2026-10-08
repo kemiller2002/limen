@@ -1,0 +1,7 @@
+{
+  "doc": "The store pack's durability and availability page (scripts/smoke-packs.ts, LCP-061..064). Its engine is main.js; nothing is bound.",
+  "view": {},
+  "events": {
+    "poke": {}
+  }
+}
