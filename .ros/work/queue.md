@@ -158,4 +158,14 @@
 | WI-0153 | Move limen to Ordo 1.4.1 | complete | ordo, toolchain | medium |
 | WI-0154 | Move limen to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | complete | praxis, ordo, toolchain | medium |
 | WI-0155 | Move limen to Ordo 1.5.0 via echelon-current 1.2.0 (conditor upgrade --current) | complete |  | medium |
-| WI-0156 | Requirements and backlog for Limen IndexedDB durable storage (LCP-018 extension): generic store pack, functional F# API, Arca queue-store adapter placement, decision record | ready | limen, indexeddb, requirements, lcp-018 | high |
+| WI-0156 | Requirements and backlog for Limen IndexedDB durable storage (LCP-018 extension): generic store pack, functional F# API, Arca queue-store adapter placement, decision record | active | limen, indexeddb, requirements, lcp-018 | high |
+| WI-0157 | IndexedDB 1: store pack application namespaces and size policy (LCP-043, LCP-048, LCP-050, LCP-069) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0158 | IndexedDB 2: store pack compound key paths, count and range delete (LCP-043, LCP-047, LCP-054) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0159 | IndexedDB 3: store pack durability and availability evidence - persist, estimate, connection loss, creation evidence, availability classification (LCP-061..LCP-064) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0160 | IndexedDB 4: language-neutral store conformance vectors; the TypeScript pack passes them, with multi-tab, quota and interruption scenarios in Chromium (LCP-051..LCP-053, LCP-057, LCP-058, LCP-075, LCP-077) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0161 | IndexedDB 5: store pack real-browser runs in WebKit as well as Chromium (LCP-076) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0162 | IndexedDB 6: publish Limen's F# contract bindings as a consumable package, released as Sigstore-attested NuGet release assets (LCP-044, LCP-079) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0163 | IndexedDB 7: functional F# store API (Limen.Store engine library): schema values, codecs, Result outcomes, migration planner, structured errors and diagnostics (LCP-045, LCP-049, LCP-053, LCP-055..LCP-057, LCP-072, LCP-073) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0164 | IndexedDB 8: F# in-memory store fake with the same contract, and the F# conformance runner over the shared vectors (LCP-074, LCP-075) | captured | limen, indexeddb, lcp-018 | medium |
+| WI-0165 | IndexedDB 9: store performance baseline and budgets in Chromium and WebKit (LCP-078) | captured | limen, indexeddb, lcp-018 | medium |
+| WI-0166 | IndexedDB 10: release Limen 0.8.0 with the F# store packages, echelon-registry entry and Conditor consumption proof; consumer and privacy guidance in docs/41 (LCP-068, LCP-070, LCP-071, LCP-079, LCP-080) | captured | limen, indexeddb, lcp-018 | medium |

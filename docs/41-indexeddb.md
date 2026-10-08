@@ -22,6 +22,15 @@ await new BrowserKernel(transport, document, diagnostics, { capabilities: [store
 The contract is [`contract/store.contract.json`](../contract/store.contract.json),
 with bindings for TypeScript, F#, C# and Rust.
 
+**What comes next.** The requirements for making this store durable and
+consumable from F# engines are in
+[the IndexedDB durable-storage requirements](requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
+(LCP-043..087, not yet built). They cover application namespaces, compound key
+paths, size limits, persistence and eviction evidence, a functional F# API
+with an in-memory fake, WebKit runs, and Arca's IndexedDB adapters for its
+offline queue and read cache. The decisions are in
+[DF-LIMEN-2026-0005](../research/decisions/DF-LIMEN-2026-0005--indexeddb-adapter-placement-fallback-and-encryption-scope.md).
+
 ## The engine declares the schema; the pack enforces only what is declared
 
 ```text

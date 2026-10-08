@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 157,
+  "nextSeq": 167,
   "items": [
     {
       "id": "WI-0001",
@@ -2338,6 +2338,256 @@
       },
       "source": "manual",
       "sourceReference": "kemiller2002/limen#28"
+    },
+    {
+      "id": "WI-0157",
+      "title": "IndexedDB 1: store pack application namespaces and size policy (LCP-043, LCP-048, LCP-050, LCP-069)",
+      "description": "Order 1 of 10 (docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md, section 17). Depends on WI-0156. Placement: Capability Pack. Additive limen.store contract change: the host registers the pack with an application namespace and every database name is resolved inside it (open, transact, close and deleteDatabase cannot name a database outside it; the database list is limited to it); per-value and per-transaction serialized-size limits answered as InvalidRequest before the database is touched; the browser's quota failure stays Aborted quota. Unit tests plus the Chromium pack smoke. Regenerate F#, C# and Rust bindings; Core untouched.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:27Z",
+      "updatedAt": "2026-10-08T15:06:27Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0158",
+      "title": "IndexedDB 2: store pack compound key paths, count and range delete (LCP-043, LCP-047, LCP-054)",
+      "description": "Order 2 of 10. Depends on WI-0157 (same contract unit; serialized to avoid conflicting contract versions). Placement: Capability Pack. Additive limen.store contract change: a store or index keyPath may be a list of paths (a compound key); count { store, index?, range? } and deleteRange { store, range } operations inside transactions, with the same atomicity and typed results; schema comparison understands compound key paths. Unit tests and Chromium pack smoke.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:28Z",
+      "updatedAt": "2026-10-08T15:06:28Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0159",
+      "title": "IndexedDB 3: store pack durability and availability evidence - persist, estimate, connection loss, creation evidence, availability classification (LCP-061..LCP-064)",
+      "description": "Order 3 of 10. Depends on WI-0158. Placement: Capability Pack. Requests persist, persisted and estimate (navigator.storage), each answering Unsupported where the API is missing; a ConnectionLost fact when the browser closes a connection abnormally (storage cleared or evicted); Opened carries whether the database was created by this open; an availability request that classifies missing, refused (security or private mode) and broken IndexedDB without claiming to detect ephemeral private storage. Unit tests with a scripted IndexedDB and Chromium pack smoke (ConnectionLost through the DevTools protocol's storage clearing).",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:28Z",
+      "updatedAt": "2026-10-08T15:06:28Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0160",
+      "title": "IndexedDB 4: language-neutral store conformance vectors; the TypeScript pack passes them, with multi-tab, quota and interruption scenarios in Chromium (LCP-051..LCP-053, LCP-057, LCP-058, LCP-075, LCP-077)",
+      "description": "Order 4 of 10. Depends on WI-0159. Placement: Tooling / Conformance. conformance/store/ with README and store.vectors.json in the style of conformance/outbox: request sequences across one or two connections with expected results, covering every outcome variant, atomic rollback, readonly refusal, putIf conflict, versionchange and blocked, compound keys, count and range delete, size limits and namespaces. The pack runs them under jsdom with a scripted IndexedDB and in real Chromium. Scenario smokes: two tabs writing the same store, a tab closed mid-transaction (all or nothing after reload), quota through the scripted IndexedDB (real-Chromium quota cannot be produced: docs/41 negative knowledge).",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:29Z",
+      "updatedAt": "2026-10-08T15:06:29Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0161",
+      "title": "IndexedDB 5: store pack real-browser runs in WebKit as well as Chromium (LCP-076)",
+      "description": "Order 5 of 10. Depends on WI-0160. Guardrail item (CI workflow and smoke runner). Placement: Tooling / Conformance. Run the store pack smoke and the conformance vectors in Playwright WebKit as well as Chromium in CI, under the same strict CSP and Trusted Types policy (WebKit lacks Trusted Types: record what is and is not enforced there). Record WebKit differences found (quota behaviour, persist, private mode) as negative knowledge in docs/41. Indy targets iPad Safari; Playwright WebKit is not a device, so a manual iPad checklist accompanies each release until a device run exists.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:29Z",
+      "updatedAt": "2026-10-08T15:06:29Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0162",
+      "title": "IndexedDB 6: publish Limen's F# contract bindings as a consumable package, released as Sigstore-attested NuGet release assets (LCP-044, LCP-079)",
+      "description": "Order 6 of 10. Depends on WI-0156 only; may run in parallel with WI-0157..WI-0161. Guardrail item (guest project files, publish workflow). Placement: Tooling / release. Make guests/fsharp/Limen.Contract packable as EchelonFoundry.Limen.Contract (trimmed, reflection-free, net8.0, the generated bindings for every contract unit including limen.store), versioned in lockstep with the npm package and carrying each unit's contract fingerprint; publish.yml packs it, attests it with actions/attest-build-provenance and attaches the .nupkg to the GitHub release (the Arca and Fides pattern, DF-ARCA-2026-0006, DF-FIDES-2026-0006). nuget.org stays dormant until Trusted Publishing exists.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:29Z",
+      "updatedAt": "2026-10-08T15:06:29Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0163",
+      "title": "IndexedDB 7: functional F# store API (Limen.Store engine library): schema values, codecs, Result outcomes, migration planner, structured errors and diagnostics (LCP-045, LCP-049, LCP-053, LCP-055..LCP-057, LCP-072, LCP-073)",
+      "description": "Order 7 of 10. Depends on WI-0159 and WI-0162. Placement: Engine Library (libraries/fsharp/Limen.Store, packaged as EchelonFoundry.Limen.Store). Pure F#: immutable schema and request values, a codec pair per stored type (encode to JSON, decode to Result), every pack outcome as a closed union returned in Result, never an exception; the only effect is a StoreExecutor function the host supplies (StoreRequest -> Async<StoreResult>); a pure migration planner for forward-only, idempotent data migrations; typed downgrade and blocked handling; structured StoreError; diagnostics values. No mutable state exposed. Passes limen verify's engine-authority rules.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:30Z",
+      "updatedAt": "2026-10-08T15:06:30Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0164",
+      "title": "IndexedDB 8: F# in-memory store fake with the same contract, and the F# conformance runner over the shared vectors (LCP-074, LCP-075)",
+      "description": "Order 8 of 10. Depends on WI-0160 and WI-0163. Placement: Tooling / Conformance (shipped in EchelonFoundry.Limen.Store as a test support module, or a separate EchelonFoundry.Limen.Store.Testing package). The fake is a pure state machine (state -> request -> state * result) wrapped as a StoreExecutor, modelling several connections (tabs), versionchange, blocked, quota, unavailable and connection loss on demand. It and the real pack pass the same conformance/store vectors; a vector the fake cannot express is reported as unsupported, never as passed.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:30Z",
+      "updatedAt": "2026-10-08T15:06:30Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0165",
+      "title": "IndexedDB 9: store performance baseline and budgets in Chromium and WebKit (LCP-078)",
+      "description": "Order 9 of 10. Depends on WI-0161 and WI-0163. Placement: Tooling / Conformance (bench/). Measure open, single get/put, a 100-record query and a whole-queue snapshot save and load at 64 KB, 256 KB and 1 MB through the F# WASM boundary, in Chromium and WebKit; record the baseline and set budgets in bench/budgets.json with the headroom convention. The LCP-078 numbers are provisional targets until this baseline exists; a miss is recorded as evidence, not hidden.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:31Z",
+      "updatedAt": "2026-10-08T15:06:31Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0166",
+      "title": "IndexedDB 10: release Limen 0.8.0 with the F# store packages, echelon-registry entry and Conditor consumption proof; consumer and privacy guidance in docs/41 (LCP-068, LCP-070, LCP-071, LCP-079, LCP-080)",
+      "description": "Order 10 of 10. Depends on WI-0161, WI-0164 and WI-0165. Placement: release and documentation. Cut the release with npm (provenance) and the attested .nupkg assets; add releases/limen/0.8.0.release.json to echelon-registry with the NuGet artifacts and digests and select it in echelon-current; prove a consumer installs EchelonFoundry.Limen.Contract and EchelonFoundry.Limen.Store through Conditor's NuGet release-asset feed. docs/41 gains the consumer guide: what never to store (tokens), namespaces and the shared-origin caveat, what sign-out clears, and that nothing is encrypted at rest. Unblocks Arca WI-0016. The release tag is pushed by the owner or by dispatching publish.yml on request; never by an agent on its own initiative. docs/41 also explains that the offline-start read cache is Arca's (LCP-082..087, DF-LIMEN-2026-0005 section 4), built on the generic namespaces, compound keys and deleteRange, and that it is cleared at sign-out under both sharedDevicePolicy values.",
+      "tags": [
+        "limen",
+        "indexeddb",
+        "lcp-018"
+      ],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T15:06:31Z",
+      "updatedAt": "2026-10-08T15:12:55Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
     }
   ]
 }
