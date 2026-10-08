@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T20:13:42.000Z",
+  "updatedAt": "2026-10-08T20:27:41.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4164,6 +4164,51 @@
         }
       },
       "completedAt": "2026-10-08T20:13:42.000Z"
+    },
+    {
+      "id": "WI-0171",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "libraries/fsharp/Limen.Routing/Limen.Routing.fsproj"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/nuget-packages.ts"
+        },
+        {
+          "type": "documentation",
+          "path": "docs/31-routing.md"
+        }
+      ],
+      "updatedAt": "2026-10-08T20:27:41.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T201420988Z-306ccdea"
+      ],
+      "latestCheckpoint": {
+        "id": "f89f6ee93b9f968bd54f982f",
+        "recordedAt": "2026-10-08T20:27:39.000Z",
+        "executionId": "EXE-20261008T201420988Z-306ccdea",
+        "repository": "limen",
+        "branch": "urlstate/wi-0171-fsharp-routing-package",
+        "commit": "80b64614f9e5383cca41c408ec23c2498d6ce17e",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "urlstate/wi-0171-fsharp-routing-package",
+        "remoteCommit": "80b64614f9e5383cca41c408ec23c2498d6ce17e",
+        "summary": "EchelonFoundry.Limen.Routing packed in lockstep (4 packages), clean-room consumer parses/formats a typed route and renders an inventory byte-identical to the TypeScript library; docs/31 URL-state guide and library README",
+        "nextAction": "Complete WI-0171, PR, merge on green, then WI-0172 release 0.9.0",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T20:27:41.000Z"
     }
   ]
 }

@@ -16,6 +16,28 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Added — `EchelonFoundry.Limen.Routing`, the fourth lockstep F# package, and the URL-state guide (WI-0171, LCP-099, 109, 110)
+
+- `libraries/fsharp/Limen.Routing` is packed as `EchelonFoundry.Limen.Routing`
+  at the npm version, beside Contract, Guest and Store. It is built
+  `--reflectionfree` and has a README.
+  - `npm run pack:nuget` produces it, and the publish workflow attests it and
+    attaches it to the GitHub release.
+  - The `npm run check:nuget` clean-room consumer, built from the four
+    packages alone, uses it to:
+    - parse a legacy URL into a typed route and format the canonical one;
+    - carry a return target through sign-in;
+    - render a route inventory, which must be byte-identical to
+      `@echelon-foundry/limen/routing`'s for the same table.
+- `docs/31-routing.md` gains the URL-state guide, covering:
+  - what belongs in the URL and the canonical form;
+  - hash routing on static hosts;
+  - push, replace and adopt;
+  - rendering every outcome, and that guards are not security;
+  - deep links through sign-in without an open redirect;
+  - copy link, legacy routes and the route inventory;
+  - no secrets, tokens or sensitive data in URLs.
+
 ### Added — URL state proven in real Chromium and WebKit; `examples/08-routing` on the library (WI-0170, LCP-097, 103, 104, 106, 111)
 
 - `test/browser/packs/url-state`, run by `smoke:packs` and

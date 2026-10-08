@@ -1,0 +1,15 @@
+{
+  "workItem": "WI-0171",
+  "reference": "kemiller2002/limen#20 (LCP-005); docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md LCP-099, LCP-109, LCP-110",
+  "placement": "Tooling / release + Documentation. EchelonFoundry.Limen.Routing becomes the fourth lockstep F# package: package metadata and a README on libraries/fsharp/Limen.Routing, an entry in scripts/nuget-packages.ts, and a clean-room consumer that parses and formats a typed route through the packaged library and renders an inventory byte-identical to the TypeScript library's. docs/31-routing.md gains the URL-state guidance: hash routing on static hosts, push versus replace, outcomes, return targets through sign-in, copy link, the route inventory, guards are not security, and no secrets in URLs. No change to the routing semantics, protocol, kernel or guardrails.",
+  "guardrail": false,
+  "paths": [
+    "libraries/fsharp/Limen.Routing/**",
+    "scripts/nuget-packages.ts",
+    "docs/**",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
