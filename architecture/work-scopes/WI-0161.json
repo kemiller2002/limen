@@ -1,0 +1,24 @@
+{
+  "workItem": "WI-0161",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-076; OQ-LIMEN-IDB-006 (accepted: Playwright WebKit in CI plus a manual iPad Safari checklist per release)",
+  "placement": "Guardrail / Tooling. The packs smoke runner gains a WebKit mode (npm run smoke:packs:webkit): Playwright WebKit, the same strict CSP, evaluation without the DevTools protocol, and only the pages whose page.json lists webkit (the store pages). CI gains a job that runs it and fails if it fails, and the required CI gates include it. WebKit-only skips are named checks that link their evidence. Trusted Types is not enforced in WebKit and the run says so. No pack behaviour changes.",
+  "guardrail": true,
+  "paths": [
+    ".github/workflows/ci.yml",
+    "architecture/guardrails.json",
+    "scripts/smoke-packs.ts",
+    "package.json",
+    "test/guardrails.test.ts",
+    "test/browser/packs/store/**",
+    "test/browser/packs/store-namespaces/**",
+    "test/browser/packs/store-compound/**",
+    "test/browser/packs/store-durability/**",
+    "test/browser/packs/store-conformance/**",
+    "test/browser/packs/store-tabs/**",
+    "conformance/store/README.md",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
