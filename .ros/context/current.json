@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T17:18:32.000Z",
+  "updatedAt": "2026-10-08T18:04:41.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3901,6 +3901,47 @@
         }
       },
       "completedAt": "2026-10-08T17:18:32.000Z"
+    },
+    {
+      "id": "WI-0165",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "bench/pages/store/store.js"
+        },
+        {
+          "type": "tests",
+          "path": "bench/results/store-baseline-2026-10-08.json"
+        }
+      ],
+      "updatedAt": "2026-10-08T18:04:41.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T171951354Z-87948557"
+      ],
+      "latestCheckpoint": {
+        "id": "75245d22a28bc33ea40132d9",
+        "recordedAt": "2026-10-08T18:04:35.000Z",
+        "executionId": "EXE-20261008T171951354Z-87948557",
+        "repository": "limen",
+        "branch": "indexeddb/wi-0165-performance",
+        "commit": "5340fd8f6bde8f76ddf05857b203f10e20ceade0",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "indexeddb/wi-0165-performance",
+        "remoteCommit": "5340fd8f6bde8f76ddf05857b203f10e20ceade0",
+        "summary": "Store benchmark page and bench runner for every LCP-078 row in Chromium and WebKit; budgets set to twice the worse engine's 5-run p95; F# package trimmed WASM size recorded; independent 3-run re-check within budget in both engines.",
+        "nextAction": "Open the WI-0165 PR after WI-0163 and WI-0164 merge, then start the WI-0166 0.8.0 release.",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T18:04:41.000Z"
     }
   ]
 }

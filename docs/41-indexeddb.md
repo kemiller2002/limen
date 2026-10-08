@@ -392,6 +392,35 @@ storage. Each release therefore adds a manual iPad Safari checklist
 (OQ-LIMEN-IDB-006; see the release notes). Eviction itself is covered by
 detection (`Opened { created }`, `ConnectionLost`), not by a test.
 
+## Performance (LCP-078)
+
+`npm run bench -- --only store` drives every LCP-078 row through the real
+kernel and the JSON boundary every WebAssembly transport pays
+([`bench/pages/store/`](https://github.com/kemiller2002/limen/blob/main/bench/pages/store/store.js)),
+in Chromium and in WebKit. It fails when a p95 is over its budget in
+`bench/budgets.json`, or when an engine did not run. Timings are not gated
+in CI, as for every bench timing. The measured baseline, 2026-10-08, takes the
+worst p95 of five runs per engine, and each budget is twice the worse engine's:
+
+| Row | Chromium p95 | WebKit p95 | Budget |
+| --- | ---: | ---: | ---: |
+| open an existing database (5 stores) | 1.57 ms | 5.26 ms | 11 ms |
+| open and create (5 stores) | 2.12 ms | 5.24 ms | 11 ms |
+| put, 4 KB | 2.67 ms | 4.26 ms | 9 ms |
+| get, 4 KB | 2.71 ms | 3.26 ms | 7 ms |
+| query 100 × 1 KB | 9.62 ms | 25.92 ms | 52 ms |
+| snapshot save, 64 KB | 9.91 ms | 5.92 ms | 20 ms |
+| snapshot load, 64 KB | 8.70 ms | 3.48 ms | 18 ms |
+| snapshot save, 1 MB | 44.93 ms | 29.54 ms | 90 ms |
+| snapshot load, 1 MB | 12.48 ms | 7.70 ms | 25 ms |
+| localStorage migration, 1 MB | 42.12 ms | 42.96 ms | 86 ms |
+
+Using `EchelonFoundry.Limen.Store` adds 94,570 bytes (brotli) to a
+full-trimmed F# WebAssembly publish. That is 238,950 bytes raw, of which
+117,013 are the library and 83,456 are the store codec in the contract
+package that it makes reachable. The publish raised no trim-analysis warning
+beyond the declared IL2040.
+
 ## Measured limits (negative knowledge)
 
 **Quota could not be produced in real Chromium.** With the DevTools protocol's
@@ -404,6 +433,11 @@ own transaction code against a scripted IndexedDB that aborts the commit with
 ([`test/store.test.ts`](../test/store.test.ts)), not in the browser smoke.
 This matches the earlier finding for `localStorage`: storage failure cannot
 be produced on demand in real Chromium.
+
+**WebKit refuses some ports.** It will not load a page from port 4190 (a
+restricted network port), so the store bench serves its page on 4197.
+Playwright's `waitForFunction` never resolved in WebKit for that page, so the
+bench polls instead.
 
 **`Refused` could not be produced in Chromium on demand.** No DevTools
 protocol command blocks IndexedDB for an origin, and an opaque-origin

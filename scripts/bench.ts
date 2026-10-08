@@ -6,13 +6,16 @@
 //                                              also compare medians; exit 1 past the tolerance
 //   npm run bench -- --runs 5 --only list-10k  more runs, fewer scenarios
 //
-// Three parts, each recorded with the machine, browser and runtime it ran on:
+// Four parts, each recorded with the machine, browser and runtime it ran on:
 //   1. bench/pages scenarios in real Chromium, direct and through the JSON
 //      boundary every WebAssembly transport pays;
 //   2. the F#, C# and Rust minimal guests (dist-guests/, from `npm run
 //      build:guests`) — download, cold and warm start to a verified handshake,
 //      and an event → effect → projection round trip — through one host;
-//   3. payload size per consumer profile (bench/budgets.json).
+//   3. payload size per consumer profile (bench/budgets.json);
+//   4. the store pack's LCP-078 rows (bench/pages/store/) through the kernel
+//      and the JSON boundary, in Chromium and WebKit, each p95 against its
+//      measured budget in bench/budgets.json (`--only store`); a miss exits 1.
 //
 // Timings are recorded, not enforced in CI: shared runners are too noisy for a
 // timing gate to mean anything. Sizes are enforced by test/bench-size.test.ts.
@@ -53,6 +56,9 @@ const COMPARE = argument("compare");
 const TOLERANCE = Number(argument("tolerance") ?? "2");
 
 const PAGE_PORT = 4190;
+// WebKit refuses 4190 as a restricted network port (it is ManageSieve's), so
+// the store pages, which run in WebKit too, are served on their own port.
+const STORE_PORT = 4197;
 const GUEST_PORT = 4191;
 
 const CONTENT_TYPES: Readonly<Record<string, string>> = {
@@ -275,7 +281,85 @@ const guests = async (browser: Browser): Promise<Readonly<Record<string, unknown
 };
 
 // ---------------------------------------------------------------------------
-// 3. Sizes, then the record
+// 3. The store pack (LCP-078), in Chromium and WebKit
+// ---------------------------------------------------------------------------
+
+type StoreBudgets = { readonly doc: string; readonly rows: Readonly<Record<string, { readonly p95Ms: number }>> };
+// --engines chromium,webkit (the default) narrows a local run; the budget
+// check still names every engine that did not run.
+const ALL_STORE_ENGINES = ["chromium", "webkit"] as const;
+const STORE_ENGINES = ALL_STORE_ENGINES;
+const RUN_ENGINES = (argument("engines") ?? "chromium,webkit").split(",");
+
+const storeRun = async (browser: Browser): Promise<Metrics> => {
+  const context = await browser.newContext();
+  try {
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on("pageerror", (error) => { errors.push(error.message); });
+    if (process.env.LIMEN_BENCH_DEBUG === "1") (page as unknown as { on(event: string, handler: (message: { text(): string }) => void): void }).on("console", (message) => { console.log(`    page: ${message.text()}`); });
+    await page.goto(`http://127.0.0.1:${STORE_PORT}/bench/pages/store/index.html`);
+    // Polled with evaluate: Playwright's waitForFunction never resolved in
+    // WebKit here (measured), while the page itself had finished.
+    const deadline = Date.now() + 600000;
+    const poll = async (): Promise<{ result?: Metrics; error?: string } | undefined> => {
+      const value = await page.evaluate<{ result?: Metrics; error?: string } | null>("window.limenBench ?? null");
+      if (value !== null) return value;
+      if (Date.now() > deadline) return undefined;
+      await new Promise((resolve) => { setTimeout(resolve, 250); });
+      return poll();
+    };
+    const outcome = await poll() ?? { error: "timed out after 600 s" };
+    if (outcome.result === undefined) throw new Error(`store: ${outcome.error ?? "no result"} ${errors.join("; ")}`);
+    return outcome.result;
+  } finally {
+    await context.close();
+  }
+};
+
+const storeBench = async (): Promise<Readonly<Record<string, unknown>>> => {
+  const engines = await (async (): Promise<Record<string, Chromium> | undefined> => {
+    try { return await import("playwright") as Record<string, Chromium>; } catch { return undefined; }
+  })();
+  if (engines === undefined) return { skipped: "Playwright is not installed" };
+  const server = await serve(ROOT, STORE_PORT);
+  try {
+  const results = await STORE_ENGINES.filter((engine) => RUN_ENGINES.includes(engine)).reduce<Promise<readonly (readonly [string, unknown])[]>>(async (done, engine) => {
+    const previous = await done;
+    const browser = await engines[engine]?.launch().catch((error: unknown) => (error instanceof Error ? error.message.split("\n")[0] ?? "launch failed" : "launch failed"));
+    if (browser === undefined || typeof browser === "string") return [...previous, [engine, { unavailable: browser ?? "not in this Playwright" }]];
+    try {
+      const runs = await Array.from({ length: RUNS }).reduce<Promise<readonly Metrics[]>>(async (collected) => [...(await collected), await storeRun(browser)], Promise.resolve([]));
+      console.log(`  store (${engine} ${browser.version()}): ${RUNS} run(s)`);
+      return [...previous, [engine, { browser: `${engine} ${browser.version()}`, summary: combine(runs), runs }]];
+    } finally {
+      await browser.close();
+    }
+  }, Promise.resolve([]));
+  return Object.fromEntries(results);
+  } finally {
+    server.close();
+  }
+};
+
+// Every measured p95 against its budget; an engine that did not run is
+// reported, never counted as within budget.
+const storeMisses = (budgets: StoreBudgets | undefined, store: Readonly<Record<string, unknown>>): readonly string[] => {
+  if (budgets === undefined) return ["bench/budgets.json has no store budgets"];
+  return STORE_ENGINES.flatMap((engine) => {
+    const entry = store[engine] as { summary?: Metrics; unavailable?: string } | undefined;
+    if (entry?.summary === undefined) return [`store in ${engine} did not run: ${entry?.unavailable ?? "no result"}`];
+    const summary = entry.summary;
+    return Object.entries(budgets.rows).flatMap(([row, budget]) => {
+      const measured = summary[row];
+      if (!isSummary(measured)) return [`store ${row} in ${engine}: not measured`];
+      return measured.p95 > budget.p95Ms ? [`store ${row} in ${engine}: p95 ${measured.p95}ms over its budget of ${budget.p95Ms}ms`] : [];
+    });
+  });
+};
+
+// ---------------------------------------------------------------------------
+// 4. Sizes, then the record
 // ---------------------------------------------------------------------------
 
 const sizes = async (): Promise<readonly unknown[]> => {
@@ -315,10 +399,23 @@ const main = async (): Promise<void> => {
     const scenarios = browser === undefined ? {} : await pageScenarios(browser);
     console.log("Guest engines:");
     const guestResults = browser === undefined || (ONLY !== undefined && !ONLY.split(",").some((name) => ["guests", "fsharp", "csharp", "rust"].includes(name))) ? {} : await guests(browser);
-    const record = { environment: { ...environment, browser: browser === undefined ? "none" : `chromium ${browser.version()}` }, sizes: measuredSizes, scenarios, guests: guestResults };
+    const runStore = ONLY === undefined || ONLY.split(",").includes("store");
+    console.log("Store pack:");
+    const store = runStore ? await storeBench() : {};
+    const record = { environment: { ...environment, browser: browser === undefined ? "none" : `chromium ${browser.version()}` }, sizes: measuredSizes, scenarios, guests: guestResults, store };
     await mkdir(dirname(join(ROOT, OUT)), { recursive: true });
     await writeFile(join(ROOT, OUT), `${JSON.stringify(record, null, 2)}\n`);
     console.log(`Recorded ${OUT}`);
+    if (runStore) {
+      const budgets = (await readBudgets(ROOT) as unknown as { store?: StoreBudgets }).store;
+      const misses = storeMisses(budgets, store);
+      if (misses.length > 0) {
+        console.error(`Store budgets (LCP-078):\n${misses.join("\n")}`);
+        process.exitCode = 1;
+      } else {
+        console.log(`Every store row is within its p95 budget in ${STORE_ENGINES.join(" and ")}.`);
+      }
+    }
     if (COMPARE !== undefined) {
       const baseline = JSON.parse(await readFile(join(ROOT, COMPARE), "utf8")) as { scenarios: Readonly<Record<string, { summary: Metrics }>> };
       const regressions = comparison(baseline.scenarios, scenarios);

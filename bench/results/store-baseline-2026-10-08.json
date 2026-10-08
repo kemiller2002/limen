@@ -1,0 +1,1568 @@
+{
+  "environment": {
+    "recordedAt": "2026-10-08T17:56:51.129Z",
+    "commit": "af28248ff972f3fcb9ef56fc4afa3ed4ca7452d6",
+    "dirty": true,
+    "os": "linux 6.18.44-fc-v80",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cores": 4,
+    "memoryGiB": 15.7,
+    "node": "v22.22.0",
+    "playwright": "1.56.1",
+    "runsPerScenario": 5,
+    "browser": "chromium 141.0.7390.37"
+  },
+  "sizes": [
+    {
+      "profile": "minimal-consumer",
+      "modules": [
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/guest/handshake.js",
+        "dist/index.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 79141,
+      "gzipBytesPerModule": 24076,
+      "gzipBytesBundled": 21872,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 125952,
+        "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "profile": "kernel-only",
+      "modules": [
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 74513,
+      "gzipBytesPerModule": 22017,
+      "gzipBytesBundled": 20540,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 121856,
+        "gzipBytesBundled": 25600
+      }
+    },
+    {
+      "profile": "kernel-with-handles",
+      "modules": [
+        "dist/capability-support/handles.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 77277,
+      "gzipBytesPerModule": 23174,
+      "gzipBytesBundled": 21484,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 124928,
+        "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "profile": "kernel-with-dotnet-host",
+      "modules": [
+        "dist/generated/core.codec.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/hosts/dotnet-wasm-transport.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 118747,
+      "gzipBytesPerModule": 27305,
+      "gzipBytesBundled": 25025,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 124928,
+        "gzipBytesBundled": 26624
+      }
+    },
+    {
+      "profile": "kernel-with-raw-host",
+      "modules": [
+        "dist/generated/core.codec.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/hosts/dotnet-wasm-transport.js",
+        "dist/hosts/raw-wasm-transport.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 121855,
+      "gzipBytesPerModule": 28524,
+      "gzipBytesBundled": 25846,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 128000,
+        "gzipBytesBundled": 27648
+      }
+    },
+    {
+      "profile": "kernel-with-worker-host",
+      "modules": [
+        "dist/generated/core.codec.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/hosts/dotnet-wasm-transport.js",
+        "dist/hosts/worker-transport.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 123917,
+      "gzipBytesPerModule": 29161,
+      "gzipBytesBundled": 26353,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 130048,
+        "gzipBytesBundled": 27648
+      }
+    },
+    {
+      "profile": "kernel-with-focus",
+      "modules": [
+        "dist/capabilities/focus/generated/focus.codec.js",
+        "dist/capabilities/focus/generated/focus.js",
+        "dist/capabilities/focus/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 97785,
+      "gzipBytesPerModule": 28071,
+      "gzipBytesBundled": 24081,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 146432,
+        "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "profile": "kernel-with-schedule",
+      "modules": [
+        "dist/capabilities/schedule/generated/schedule.codec.js",
+        "dist/capabilities/schedule/generated/schedule.js",
+        "dist/capabilities/schedule/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 90245,
+      "gzipBytesPerModule": 26778,
+      "gzipBytesBundled": 22925,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 138240,
+        "gzipBytesBundled": 28672
+      }
+    },
+    {
+      "profile": "kernel-with-measure",
+      "modules": [
+        "dist/capabilities/measure/generated/measure.codec.js",
+        "dist/capabilities/measure/generated/measure.js",
+        "dist/capabilities/measure/index.js",
+        "dist/capability-support/handles.js",
+        "dist/capability-support/targets.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 107202,
+      "gzipBytesPerModule": 30293,
+      "gzipBytesBundled": 25822,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 156672,
+        "gzipBytesBundled": 31744
+      }
+    },
+    {
+      "profile": "kernel-with-events",
+      "modules": [
+        "dist/capabilities/events/generated/events.codec.js",
+        "dist/capabilities/events/generated/events.js",
+        "dist/capabilities/events/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 107425,
+      "gzipBytesPerModule": 30841,
+      "gzipBytesBundled": 26699,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 157696,
+        "gzipBytesBundled": 32768
+      }
+    },
+    {
+      "profile": "kernel-with-overlay",
+      "modules": [
+        "dist/capabilities/overlay/generated/overlay.codec.js",
+        "dist/capabilities/overlay/generated/overlay.js",
+        "dist/capabilities/overlay/index.js",
+        "dist/capability-support/targets.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 106975,
+      "gzipBytesPerModule": 30150,
+      "gzipBytesBundled": 25773,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 156672,
+        "gzipBytesBundled": 31744
+      }
+    },
+    {
+      "profile": "kernel-with-realtime",
+      "modules": [
+        "dist/capabilities/realtime/generated/realtime.codec.js",
+        "dist/capabilities/realtime/generated/realtime.js",
+        "dist/capabilities/realtime/index.js",
+        "dist/capability-support/handles.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 108079,
+      "gzipBytesPerModule": 30354,
+      "gzipBytesBundled": 25978,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 157696,
+        "gzipBytesBundled": 31744
+      }
+    },
+    {
+      "profile": "kernel-with-files",
+      "modules": [
+        "dist/capabilities/files/generated/files.codec.js",
+        "dist/capabilities/files/generated/files.js",
+        "dist/capabilities/files/index.js",
+        "dist/capability-support/handles.js",
+        "dist/capability-support/targets.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 109258,
+      "gzipBytesPerModule": 31206,
+      "gzipBytesBundled": 27472,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 158720,
+        "gzipBytesBundled": 32768
+      }
+    },
+    {
+      "profile": "kernel-with-store",
+      "modules": [
+        "dist/capabilities/store/generated/store.codec.js",
+        "dist/capabilities/store/generated/store.js",
+        "dist/capabilities/store/index.js",
+        "dist/capabilities/store/options.js",
+        "dist/capabilities/store/schema.js",
+        "dist/capabilities/store/v1.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 154057,
+      "gzipBytesPerModule": 39198,
+      "gzipBytesBundled": 35280,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 178176,
+        "gzipBytesBundled": 35840
+      }
+    },
+    {
+      "profile": "kernel-with-adapters",
+      "modules": [
+        "dist/capabilities/adapters/generated/adapters.codec.js",
+        "dist/capabilities/adapters/generated/adapters.js",
+        "dist/capabilities/adapters/index.js",
+        "dist/capability-support/handles.js",
+        "dist/capability-support/targets.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 112431,
+      "gzipBytesPerModule": 31532,
+      "gzipBytesBundled": 27783,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 162816,
+        "gzipBytesBundled": 33792
+      }
+    },
+    {
+      "profile": "kernel-with-transfer",
+      "modules": [
+        "dist/capabilities/transfer/generated/transfer.codec.js",
+        "dist/capabilities/transfer/generated/transfer.js",
+        "dist/capabilities/transfer/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 105651,
+      "gzipBytesPerModule": 30005,
+      "gzipBytesBundled": 25697,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 155648,
+        "gzipBytesBundled": 31744
+      }
+    },
+    {
+      "profile": "kernel-with-fallback-host",
+      "modules": [
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/hosts/fallback.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 82299,
+      "gzipBytesPerModule": 24806,
+      "gzipBytesBundled": 22880,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 130048,
+        "gzipBytesBundled": 27648
+      }
+    },
+    {
+      "profile": "kernel-with-presentation",
+      "modules": [
+        "dist/capabilities/presentation/generated/presentation.codec.js",
+        "dist/capabilities/presentation/generated/presentation.js",
+        "dist/capabilities/presentation/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 96334,
+      "gzipBytesPerModule": 28168,
+      "gzipBytesBundled": 24212,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 145408,
+        "gzipBytesBundled": 29696
+      }
+    },
+    {
+      "profile": "kernel-with-environment",
+      "modules": [
+        "dist/capabilities/environment/generated/environment.codec.js",
+        "dist/capabilities/environment/generated/environment.js",
+        "dist/capabilities/environment/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 105792,
+      "gzipBytesPerModule": 29312,
+      "gzipBytesBundled": 25202,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 155648,
+        "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "profile": "kernel-with-lifecycle",
+      "modules": [
+        "dist/capabilities/lifecycle/generated/lifecycle.codec.js",
+        "dist/capabilities/lifecycle/generated/lifecycle.js",
+        "dist/capabilities/lifecycle/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 104397,
+      "gzipBytesPerModule": 28703,
+      "gzipBytesBundled": 24640,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 153600,
+        "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "profile": "kernel-with-offline",
+      "modules": [
+        "dist/capabilities/offline/generated/offline.codec.js",
+        "dist/capabilities/offline/generated/offline.js",
+        "dist/capabilities/offline/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 103667,
+      "gzipBytesPerModule": 28624,
+      "gzipBytesBundled": 24529,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 153600,
+        "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "profile": "kernel-with-geolocation",
+      "modules": [
+        "dist/capabilities/geolocation/generated/geolocation.codec.js",
+        "dist/capabilities/geolocation/generated/geolocation.js",
+        "dist/capabilities/geolocation/index.js",
+        "dist/capability-support/permissions.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 102390,
+      "gzipBytesPerModule": 29523,
+      "gzipBytesBundled": 25048,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 151552,
+        "gzipBytesBundled": 30720
+      }
+    },
+    {
+      "profile": "kernel-with-credentials",
+      "modules": [
+        "dist/capabilities/credentials/generated/credentials.codec.js",
+        "dist/capabilities/credentials/generated/credentials.js",
+        "dist/capabilities/credentials/index.js",
+        "dist/capability-support/permissions.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 111271,
+      "gzipBytesPerModule": 31311,
+      "gzipBytesBundled": 27706,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 161792,
+        "gzipBytesBundled": 33792
+      }
+    },
+    {
+      "profile": "kernel-with-coordination",
+      "modules": [
+        "dist/capabilities/coordination/generated/coordination.codec.js",
+        "dist/capabilities/coordination/generated/coordination.js",
+        "dist/capabilities/coordination/index.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 119063,
+      "gzipBytesPerModule": 31085,
+      "gzipBytesBundled": 27862,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 169984,
+        "gzipBytesBundled": 33792
+      }
+    },
+    {
+      "profile": "renderer",
+      "modules": [
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js",
+        "dist/renderer/html.js",
+        "dist/renderer/index.js",
+        "dist/renderer/render.js",
+        "dist/renderer/server.js"
+      ],
+      "rawBytes": 47452,
+      "gzipBytesPerModule": 15884,
+      "gzipBytesBundled": 13357,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 96256,
+        "gzipBytesBundled": 18432
+      }
+    },
+    {
+      "profile": "kernel-with-media",
+      "modules": [
+        "dist/capabilities/media/generated/media.codec.js",
+        "dist/capabilities/media/generated/media.js",
+        "dist/capabilities/media/index.js",
+        "dist/capability-support/handles.js",
+        "dist/capability-support/permissions.js",
+        "dist/capability-support/targets.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 140334,
+      "gzipBytesPerModule": 36207,
+      "gzipBytesBundled": 32470,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 193536,
+        "gzipBytesBundled": 38912
+      }
+    },
+    {
+      "profile": "kernel-with-peer",
+      "modules": [
+        "dist/capabilities/peer/generated/peer.codec.js",
+        "dist/capabilities/peer/generated/peer.js",
+        "dist/capabilities/peer/index.js",
+        "dist/capability-support/handles.js",
+        "dist/capability-support/targets.js",
+        "dist/generated/core.handshake.codec.js",
+        "dist/generated/core.js",
+        "dist/kernel/binding-policy.js",
+        "dist/kernel/browser-kernel.js",
+        "dist/kernel/capabilities.js",
+        "dist/kernel/diagnostics.js",
+        "dist/kernel/handshake.js",
+        "dist/protocol.js"
+      ],
+      "rawBytes": 118241,
+      "gzipBytesPerModule": 31848,
+      "gzipBytesBundled": 28197,
+      "forbiddenPresent": [],
+      "budget": {
+        "rawBytes": 168960,
+        "gzipBytesBundled": 33792
+      }
+    }
+  ],
+  "scenarios": {},
+  "guests": {},
+  "store": {
+    "chromium": {
+      "browser": "chromium 141.0.7390.37",
+      "summary": {
+        "open-existing": {
+          "n": 200,
+          "median": 0.745,
+          "p95": 1.575,
+          "min": 0.44,
+          "max": 6.52
+        },
+        "open-create": {
+          "n": 125,
+          "median": 1.475,
+          "p95": 2.115,
+          "min": 0.88,
+          "max": 2.235
+        },
+        "put-4k": {
+          "n": 500,
+          "median": 0.605,
+          "p95": 2.675,
+          "min": 0.36,
+          "max": 4.645
+        },
+        "get-4k": {
+          "n": 500,
+          "median": 0.4,
+          "p95": 2.71,
+          "min": 0.215,
+          "max": 6.29
+        },
+        "query-100": {
+          "n": 300,
+          "median": 3.365,
+          "p95": 9.615,
+          "min": 2.32,
+          "max": 20.015
+        },
+        "snapshot-64k-save": {
+          "n": 300,
+          "median": 2.825,
+          "p95": 9.915,
+          "min": 1.86,
+          "max": 29.595
+        },
+        "snapshot-64k-load": {
+          "n": 300,
+          "median": 0.815,
+          "p95": 8.7,
+          "min": 0.555,
+          "max": 34.135
+        },
+        "snapshot-64k-bytes": 63574,
+        "snapshot-1m-save": {
+          "n": 125,
+          "median": 31.54,
+          "p95": 44.93,
+          "min": 16.52,
+          "max": 61.485
+        },
+        "snapshot-1m-load": {
+          "n": 125,
+          "median": 3.885,
+          "p95": 12.485,
+          "min": 3.435,
+          "max": 19.01
+        },
+        "snapshot-1m-bytes": 975176,
+        "migration-1m": {
+          "n": 60,
+          "median": 26.325,
+          "p95": 42.125,
+          "min": 19.255,
+          "max": 42.125
+        }
+      },
+      "runs": [
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.78,
+            "p95": 1.195,
+            "min": 0.44,
+            "max": 1.565
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.475,
+            "p95": 2.035,
+            "min": 0.985,
+            "max": 2.235
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.605,
+            "p95": 1.77,
+            "min": 0.36,
+            "max": 2.87
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.4,
+            "p95": 0.865,
+            "min": 0.295,
+            "max": 5.24
+          },
+          "query-100": {
+            "n": 60,
+            "median": 3.365,
+            "p95": 4.59,
+            "min": 2.635,
+            "max": 5.59
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 3.195,
+            "p95": 6.905,
+            "min": 2.28,
+            "max": 29.595
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.8,
+            "p95": 3.575,
+            "min": 0.62,
+            "max": 34.135
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 29.1,
+            "p95": 44.175,
+            "min": 17.51,
+            "max": 61.485
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 3.85,
+            "p95": 8.225,
+            "min": 3.575,
+            "max": 11.87
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 25.09,
+            "p95": 40.015,
+            "min": 22.39,
+            "max": 40.015
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.74,
+            "p95": 1.165,
+            "min": 0.47,
+            "max": 1.675
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.47,
+            "p95": 2.11,
+            "min": 1.005,
+            "max": 2.19
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.575,
+            "p95": 1.4,
+            "min": 0.375,
+            "max": 2.69
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.29,
+            "p95": 0.555,
+            "min": 0.215,
+            "max": 1.245
+          },
+          "query-100": {
+            "n": 60,
+            "median": 2.775,
+            "p95": 6.685,
+            "min": 2.385,
+            "max": 7.29
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.825,
+            "p95": 7.3,
+            "min": 1.98,
+            "max": 8.82
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.745,
+            "p95": 1.8,
+            "min": 0.555,
+            "max": 25.35
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 31.54,
+            "p95": 44.93,
+            "min": 16.52,
+            "max": 45.31
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 3.885,
+            "p95": 12.485,
+            "min": 3.57,
+            "max": 12.91
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 23.905,
+            "p95": 35.45,
+            "min": 19.255,
+            "max": 35.45
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.745,
+            "p95": 1.275,
+            "min": 0.535,
+            "max": 1.74
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.58,
+            "p95": 2.005,
+            "min": 0.885,
+            "max": 2.21
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.665,
+            "p95": 1.195,
+            "min": 0.495,
+            "max": 3.295
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.375,
+            "p95": 0.86,
+            "min": 0.315,
+            "max": 6.29
+          },
+          "query-100": {
+            "n": 60,
+            "median": 2.97,
+            "p95": 5.38,
+            "min": 2.32,
+            "max": 7.67
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.61,
+            "p95": 6.71,
+            "min": 1.86,
+            "max": 7.435
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.86,
+            "p95": 5.09,
+            "min": 0.605,
+            "max": 8.085
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 31.44,
+            "p95": 42.44,
+            "min": 18.32,
+            "max": 43.235
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 3.825,
+            "p95": 9.255,
+            "min": 3.435,
+            "max": 19.01
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 26.325,
+            "p95": 33.51,
+            "min": 21.38,
+            "max": 33.51
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.74,
+            "p95": 1.485,
+            "min": 0.52,
+            "max": 1.605
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.53,
+            "p95": 2.115,
+            "min": 1.065,
+            "max": 2.16
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.625,
+            "p95": 2.675,
+            "min": 0.36,
+            "max": 3.99
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.55,
+            "p95": 2.71,
+            "min": 0.29,
+            "max": 5.04
+          },
+          "query-100": {
+            "n": 60,
+            "median": 5.07,
+            "p95": 9.615,
+            "min": 2.745,
+            "max": 20.015
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.695,
+            "p95": 9.915,
+            "min": 1.905,
+            "max": 13.31
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.815,
+            "p95": 8.7,
+            "min": 0.56,
+            "max": 13.615
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 33.31,
+            "p95": 43.89,
+            "min": 26.875,
+            "max": 51.57
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 4.03,
+            "p95": 10.455,
+            "min": 3.445,
+            "max": 16.395
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 27.61,
+            "p95": 36.91,
+            "min": 21.435,
+            "max": 36.91
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.77,
+            "p95": 1.575,
+            "min": 0.49,
+            "max": 6.52
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.395,
+            "p95": 1.69,
+            "min": 0.88,
+            "max": 1.895
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.57,
+            "p95": 1.235,
+            "min": 0.37,
+            "max": 4.645
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.46,
+            "p95": 1.695,
+            "min": 0.26,
+            "max": 3.935
+          },
+          "query-100": {
+            "n": 60,
+            "median": 3.86,
+            "p95": 9.14,
+            "min": 2.635,
+            "max": 10.815
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 3.175,
+            "p95": 5.805,
+            "min": 2.31,
+            "max": 9.955
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.92,
+            "p95": 6.365,
+            "min": 0.71,
+            "max": 10.445
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 33.77,
+            "p95": 43.225,
+            "min": 18.61,
+            "max": 51.74
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 4.46,
+            "p95": 10.545,
+            "min": 3.63,
+            "max": 10.55
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 29.925,
+            "p95": 42.125,
+            "min": 23.71,
+            "max": 42.125
+          }
+        }
+      ]
+    },
+    "webkit": {
+      "browser": "webkit 26.0",
+      "summary": {
+        "open-existing": {
+          "n": 200,
+          "median": 0.88,
+          "p95": 5.26,
+          "min": 0.42,
+          "max": 22.48
+        },
+        "open-create": {
+          "n": 125,
+          "median": 1.04,
+          "p95": 5.24,
+          "min": 0.78,
+          "max": 5.3
+        },
+        "put-4k": {
+          "n": 500,
+          "median": 0.88,
+          "p95": 4.26,
+          "min": 0.44,
+          "max": 9.42
+        },
+        "get-4k": {
+          "n": 500,
+          "median": 0.62,
+          "p95": 3.26,
+          "min": 0.38,
+          "max": 14.64
+        },
+        "query-100": {
+          "n": 300,
+          "median": 15.08,
+          "p95": 25.92,
+          "min": 8.82,
+          "max": 40.42
+        },
+        "snapshot-64k-save": {
+          "n": 300,
+          "median": 2.5,
+          "p95": 5.92,
+          "min": 1.38,
+          "max": 8.54
+        },
+        "snapshot-64k-load": {
+          "n": 300,
+          "median": 0.74,
+          "p95": 3.48,
+          "min": 0.4,
+          "max": 8
+        },
+        "snapshot-64k-bytes": 63574,
+        "snapshot-1m-save": {
+          "n": 125,
+          "median": 20.06,
+          "p95": 29.54,
+          "min": 13.88,
+          "max": 33.74
+        },
+        "snapshot-1m-load": {
+          "n": 125,
+          "median": 2.8,
+          "p95": 7.7,
+          "min": 1.62,
+          "max": 15.58
+        },
+        "snapshot-1m-bytes": 975176,
+        "migration-1m": {
+          "n": 60,
+          "median": 16.66,
+          "p95": 42.96,
+          "min": 12.9,
+          "max": 42.96
+        }
+      },
+      "runs": [
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.84,
+            "p95": 1.6,
+            "min": 0.5,
+            "max": 2.66
+          },
+          "open-create": {
+            "n": 25,
+            "median": 0.96,
+            "p95": 2.94,
+            "min": 0.84,
+            "max": 3.34
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.78,
+            "p95": 3.52,
+            "min": 0.56,
+            "max": 4.74
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.62,
+            "p95": 3.1,
+            "min": 0.46,
+            "max": 7.8
+          },
+          "query-100": {
+            "n": 60,
+            "median": 15.08,
+            "p95": 25.92,
+            "min": 9.42,
+            "max": 40.42
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.78,
+            "p95": 5.88,
+            "min": 1.78,
+            "max": 8.26
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.72,
+            "p95": 1.86,
+            "min": 0.48,
+            "max": 4.32
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 19.64,
+            "p95": 29.54,
+            "min": 13.88,
+            "max": 32.16
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 3.38,
+            "p95": 6.4,
+            "min": 1.82,
+            "max": 15.58
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 14.5,
+            "p95": 17.82,
+            "min": 12.9,
+            "max": 17.82
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.88,
+            "p95": 5.26,
+            "min": 0.5,
+            "max": 6.22
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.06,
+            "p95": 2.56,
+            "min": 0.8,
+            "max": 5.26
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.88,
+            "p95": 2.32,
+            "min": 0.54,
+            "max": 9.42
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.58,
+            "p95": 3.06,
+            "min": 0.44,
+            "max": 5.18
+          },
+          "query-100": {
+            "n": 60,
+            "median": 15.6,
+            "p95": 20.68,
+            "min": 9.76,
+            "max": 24.54
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.02,
+            "p95": 5.4,
+            "min": 1.38,
+            "max": 7.46
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.84,
+            "p95": 2.82,
+            "min": 0.54,
+            "max": 4.72
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 21.62,
+            "p95": 28.58,
+            "min": 16.04,
+            "max": 33.74
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 2.62,
+            "p95": 6.48,
+            "min": 1.9,
+            "max": 7.24
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 17.44,
+            "p95": 27.28,
+            "min": 13.46,
+            "max": 27.28
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 1.06,
+            "p95": 3.18,
+            "min": 0.52,
+            "max": 22.48
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.02,
+            "p95": 1.68,
+            "min": 0.78,
+            "max": 3.4
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.72,
+            "p95": 2.84,
+            "min": 0.44,
+            "max": 5.44
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.64,
+            "p95": 2.8,
+            "min": 0.42,
+            "max": 7.36
+          },
+          "query-100": {
+            "n": 60,
+            "median": 14.98,
+            "p95": 22.8,
+            "min": 8.92,
+            "max": 34.18
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.5,
+            "p95": 5.92,
+            "min": 1.58,
+            "max": 8.5
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.76,
+            "p95": 1.82,
+            "min": 0.46,
+            "max": 4.94
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 20.06,
+            "p95": 27.46,
+            "min": 16.46,
+            "max": 29.24
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 2.8,
+            "p95": 5.22,
+            "min": 1.84,
+            "max": 9.84
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 16.18,
+            "p95": 22.02,
+            "min": 13.36,
+            "max": 22.02
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.92,
+            "p95": 3.16,
+            "min": 0.5,
+            "max": 3.72
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.28,
+            "p95": 3.98,
+            "min": 0.88,
+            "max": 4.58
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.92,
+            "p95": 3.68,
+            "min": 0.5,
+            "max": 5.06
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.72,
+            "p95": 3.26,
+            "min": 0.38,
+            "max": 8.08
+          },
+          "query-100": {
+            "n": 60,
+            "median": 15.88,
+            "p95": 22.32,
+            "min": 9.22,
+            "max": 31.52
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.72,
+            "p95": 5.08,
+            "min": 1.56,
+            "max": 7.28
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.74,
+            "p95": 3.48,
+            "min": 0.4,
+            "max": 8
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 20.36,
+            "p95": 27.42,
+            "min": 15.6,
+            "max": 28.06
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 2.92,
+            "p95": 7.7,
+            "min": 1.96,
+            "max": 11.52
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 18.88,
+            "p95": 24.76,
+            "min": 13.88,
+            "max": 24.76
+          }
+        },
+        {
+          "open-existing": {
+            "n": 40,
+            "median": 0.88,
+            "p95": 5.18,
+            "min": 0.42,
+            "max": 10.42
+          },
+          "open-create": {
+            "n": 25,
+            "median": 1.04,
+            "p95": 5.24,
+            "min": 0.78,
+            "max": 5.3
+          },
+          "put-4k": {
+            "n": 100,
+            "median": 0.88,
+            "p95": 4.26,
+            "min": 0.54,
+            "max": 6.48
+          },
+          "get-4k": {
+            "n": 100,
+            "median": 0.62,
+            "p95": 2.56,
+            "min": 0.48,
+            "max": 14.64
+          },
+          "query-100": {
+            "n": 60,
+            "median": 14,
+            "p95": 22.38,
+            "min": 8.82,
+            "max": 31.22
+          },
+          "snapshot-64k-save": {
+            "n": 60,
+            "median": 2.02,
+            "p95": 4.82,
+            "min": 1.4,
+            "max": 8.54
+          },
+          "snapshot-64k-load": {
+            "n": 60,
+            "median": 0.72,
+            "p95": 2.66,
+            "min": 0.48,
+            "max": 3.3
+          },
+          "snapshot-64k-bytes": 63574,
+          "snapshot-1m-save": {
+            "n": 25,
+            "median": 19.74,
+            "p95": 25.22,
+            "min": 14.18,
+            "max": 26.48
+          },
+          "snapshot-1m-load": {
+            "n": 25,
+            "median": 2.58,
+            "p95": 6.56,
+            "min": 1.62,
+            "max": 9.84
+          },
+          "snapshot-1m-bytes": 975176,
+          "migration-1m": {
+            "n": 12,
+            "median": 16.66,
+            "p95": 42.96,
+            "min": 13.76,
+            "max": 42.96
+          }
+        }
+      ]
+    }
+  }
+}

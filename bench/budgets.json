@@ -116,6 +116,10 @@
     {
       "workItem": "WI-0136",
       "change": "Re-baselined every profile that loads the kernel (absolute root). kernel-with-files had gone 31 bytes over after WI-0043 (compare-before-write) and WI-0044 (remove before reorder); its baseline, like most, predated in-budget kernel growth since WI-0085: protocol 1.4 (WI-0103), head binding and the metadata policy (WI-0116), and those two. Every budget again keeps 10% headroom over what ships. Gzip bundled, old baseline -> new: kernel-only 22584->22677; kernel-with-handles 23561->23729; kernel-with-dotnet-host 20967->23459; kernel-with-raw-host 21780->24278; kernel-with-worker-host 24619->24792; kernel-with-focus 24028->26553; kernel-with-schedule 22850->25375; kernel-with-measure 25765->28320; kernel-with-events 26679->29198; kernel-with-overlay 25769->28324; kernel-with-realtime 25994->28545; kernel-with-files 26528->29727; kernel-with-store 29607->32118; kernel-with-adapters 27612->30132; kernel-with-transfer 25489->28047; kernel-with-fallback-host 23831->25021; kernel-with-presentation 25551->26763; kernel-with-environment 26470->27693; kernel-with-lifecycle 26916->27099; kernel-with-offline 26831->27013; kernel-with-geolocation 27434->27601; kernel-with-credentials 29804->29966; kernel-with-coordination 29992->30152; kernel-with-media 34341->34535; kernel-with-peer 30371->30533."
+    },
+    {
+      "workItem": "WI-0165",
+      "change": "Added the store timing budgets (LCP-078), measured with npm run bench -- --only store --runs 5 on 2026-10-08 (bench/results/store-baseline-2026-10-08.json: Linux, 4-core Xeon @ 2.80 GHz, Chromium 141.0.7390.37 and WebKit 26.0 through Playwright 1.56.1). Each budget is twice the worse engine's p95 (the worst of five runs), rounded up to a whole millisecond, replacing the provisional LCP-078 numbers. A first 3-run baseline under-sampled the tail: a re-run exceeded two of its budgets, so the baseline was retaken with five runs before any budget was recorded. The F# package's cost in a full-trimmed WebAssembly publish was measured the same day (+94,570 bytes brotli, +238,950 raw) and is budgeted at 10% headroom."
     }
   ],
   "profiles": [
@@ -1123,5 +1127,65 @@
         "gzipBytesBundled": 33792
       }
     }
-  ]
+  ],
+  "store": {
+    "doc": "LCP-078: p95 budgets for the IndexedDB store pack, in milliseconds, for every row in Chromium and in WebKit. Measured through the real kernel and the JSON boundary every WebAssembly transport pays (bench/pages/store/), as bench's json boundary: an engine's request is serialized, parsed and strictly decoded both ways. Each budget is twice the worse engine's measured p95 (the worst of five runs), rounded up to a whole millisecond. npm run bench -- --only store fails when a p95 exceeds its budget, or when an engine did not run; a miss is fixed or recorded as evidence with a decision, never silently re-baselined. Timings are not gated in CI (shared runners are too noisy), as for every other bench timing.",
+    "measured": "bench/results/store-baseline-2026-10-08.json",
+    "rows": {
+      "open-existing": {
+        "p95Ms": 11,
+        "doc": "Open an existing database whose schema matches, 5 stores. Provisional: 50."
+      },
+      "open-create": {
+        "p95Ms": 11,
+        "doc": "Open and create a new database, 5 stores. Provisional: 100."
+      },
+      "put-4k": {
+        "p95Ms": 9,
+        "doc": "One put of a 4 KB record. Provisional: 10."
+      },
+      "get-4k": {
+        "p95Ms": 7,
+        "doc": "One get of a 4 KB record. Provisional: 10."
+      },
+      "query-100": {
+        "p95Ms": 52,
+        "doc": "A query of 100 records of 1 KB each. Provisional: 25. WebKit's p95 is 25.92 ms, above the provisional figure itself."
+      },
+      "snapshot-64k-save": {
+        "p95Ms": 20,
+        "doc": "Arca's snapshot save (putIf against the stored value), about 100 entries in 64 KB. Provisional: 20."
+      },
+      "snapshot-64k-load": {
+        "p95Ms": 18,
+        "doc": "The same snapshot loaded with get. Provisional: 20."
+      },
+      "snapshot-1m-save": {
+        "p95Ms": 90,
+        "doc": "A 1 MB snapshot save (975,176 bytes of JSON). Provisional: 100."
+      },
+      "snapshot-1m-load": {
+        "p95Ms": 25,
+        "doc": "A 1 MB snapshot load. Provisional: 100."
+      },
+      "migration-1m": {
+        "p95Ms": 86,
+        "doc": "The one-time localStorage migration of a 1 MB snapshot: read the text, putIf it with its marker, read it back, remove the key. Provisional: 250."
+      }
+    },
+    "fsharpPackage": {
+      "doc": "What using EchelonFoundry.Limen.Store adds to a full-trimmed .NET WebAssembly publish: the minimal F# guest (guests/minimal/fsharp) published as-is and with an engine that uses a schema, a codec, a readwrite transaction, the outcome mappings, a read, the connection, an error and a migration plan, compared by the wwwroot/_framework total. Measured, not gated: it needs the .NET WebAssembly workload. Budget: 10% headroom over the measurement.",
+      "measured": {
+        "brotliBytes": 94570,
+        "gzipBytes": 112253,
+        "rawBytes": 238950,
+        "limenStoreWasmRawBytes": 117013,
+        "limenContractGrowthRawBytes": 83456
+      },
+      "budget": {
+        "brotliBytes": 104027,
+        "rawBytes": 262845
+      }
+    }
+  }
 }

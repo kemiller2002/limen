@@ -36,6 +36,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "Record the owner's accepted answers to OQ-LIMEN-IDB-001..006 (2026-10-08)"
+    EXE-20261008T171951354Z-87948557:
+      operations: [modified]
+      at: 2026-10-08T17:56:18.000Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "LCP-078: replace the provisional budgets with WI-0165's measured ones"
 ---
 
 # Durable IndexedDB storage for F# engines, and the Arca offline-queue adapter
@@ -1274,24 +1284,39 @@ data is lost.
 ## 15. Performance
 
 ## LCP-078 — Performance budgets
-**Status:** Required (provisional numbers) · **Priority:** P2 · **Placement:** Tooling / Conformance
+**Status:** Required (measured, WI-0165) · **Priority:** P2 · **Placement:** Tooling / Conformance
 
 ### Requirement
-The budgets below are p95, measured through the F# WASM boundary on CI's
-runners. They are **provisional** until WI-0165's baseline, and are then set
-in `bench/budgets.json` with the repository's headroom convention. WebKit
-gets the same numbers, and its baseline is recorded.
+The budgets below are p95, set in `bench/budgets.json` from WI-0165's
+baseline (`bench/results/store-baseline-2026-10-08.json`), replacing the
+provisional numbers. They were measured through the real kernel and the JSON
+boundary every WebAssembly transport pays: an engine's request is
+serialized, parsed and strictly decoded both ways. They were measured in
+Chromium 141 and WebKit 26 on a Linux host with a 4-core Xeon at 2.80 GHz.
+Each budget is twice the worse engine's p95 (the worst of five runs),
+rounded up to a whole millisecond. The same budget applies to both engines.
 
-| Operation | Typical size | Budget (p95) |
-|---|---|---|
-| Open an existing database, schema matches | up to 5 stores | ≤ 50 ms |
-| Open and create a new database | up to 5 stores | ≤ 100 ms |
-| One small `get` or `put` round trip | ≤ 4 KB value | ≤ 10 ms |
-| `query` of 100 records | ≤ 1 KB each | ≤ 25 ms |
-| Arca snapshot `Load` or `Save` | 64 KB (about 100 entries) | ≤ 20 ms |
-| Arca snapshot `Load` or `Save` | 1 MB (the localStorage budget's size) | ≤ 100 ms |
-| One-time localStorage migration | 1 MB snapshot | ≤ 250 ms |
-| Payload: `kernel-with-store` bundle | — | the existing `bench/budgets.json` profile; the F# package adds ≤ 100 KB to a trimmed WASM publish |
+| Operation | Size | Measured p95, Chromium / WebKit | Budget (p95) | Provisional |
+|---|---|---|---|---|
+| Open an existing database, schema matches | 5 stores | 1.57 / 5.26 ms | ≤ 11 ms | 50 ms |
+| Open and create a new database | 5 stores | 2.12 / 5.24 ms | ≤ 11 ms | 100 ms |
+| One small `put` | 4 KB value | 2.67 / 4.26 ms | ≤ 9 ms | 10 ms |
+| One small `get` | 4 KB value | 2.71 / 3.26 ms | ≤ 7 ms | 10 ms |
+| `query` of 100 records | 1 KB each | 9.62 / 25.92 ms | ≤ 52 ms | 25 ms |
+| Arca snapshot `Save` (putIf) | 64 KB, about 100 entries | 9.91 / 5.92 ms | ≤ 20 ms | 20 ms |
+| Arca snapshot `Load` | 64 KB | 8.70 / 3.48 ms | ≤ 18 ms | 20 ms |
+| Arca snapshot `Save` (putIf) | 1 MB (975,176 bytes) | 44.93 / 29.54 ms | ≤ 90 ms | 100 ms |
+| Arca snapshot `Load` | 1 MB | 12.48 / 7.70 ms | ≤ 25 ms | 100 ms |
+| One-time localStorage migration | 1 MB snapshot | 42.12 / 42.96 ms | ≤ 86 ms | 250 ms |
+| Payload: `kernel-with-store` bundle | — | the existing `bench/budgets.json` profile | unchanged | — |
+| Payload: the F# store package in a full-trimmed WebAssembly publish | — | +94,570 bytes brotli (+238,950 raw) | ≤ 104,027 bytes brotli (10% headroom) | 100 KB |
+
+The query budget is above the provisional 25 ms: WebKit's measured p95,
+25.92 ms, is above the provisional figure itself. Every other measured budget
+is tighter than its provisional number. The F# runtime's own JSON work inside the .NET
+WebAssembly runtime is not in these rows. For a small message, the recorded
+F# guest round trip (event to effect to projection) has a p95 of 4.8 ms
+(`bench/results/baseline-2026-09-29.json`).
 
 ### Rationale
 Chrona must sync the queue "when the records open, without blocking the first
@@ -1307,6 +1332,7 @@ rebuildable index (SUM0-015) is not sized yet.
 ### Acceptance criteria
 - `npm run bench` reports every row in both engines.
 - A budget miss fails the bench gate, or is recorded as evidence with a decision. It is never silently re-baselined.
+- An engine that did not run is reported as a miss, never as within budget.
 
 ### Reference tests
 - `npm run bench -- --only store` (added by WI-0165).

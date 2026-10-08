@@ -1,0 +1,14 @@
+{
+  "workItem": "WI-0165",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-078",
+  "placement": "Tooling / Conformance. A store benchmark page (bench/pages/store/) drives limen.store version 2 through the real kernel and the JSON boundary every WebAssembly transport pays (serialize, parse, strict decode with the generated codecs, as bench's json boundary), for every LCP-078 row: open existing and new, a small put and get, a 100-record query, a 64 KB and a 1 MB snapshot load and save, and a 1 MB one-time localStorage migration. scripts/bench.ts runs it in Chromium and WebKit (npm run bench -- --only store), records the results, and fails when a p95 exceeds its budget. The provisional LCP-078 budgets are replaced with measured ones in bench/budgets.json, the requirements and docs/41; the F# package's size in a trimmed WebAssembly publish is measured and recorded. Timings stay out of CI, as for every other bench. No pack, contract or Core change.",
+  "guardrail": false,
+  "paths": [
+    "bench/**",
+    "scripts/bench.ts",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

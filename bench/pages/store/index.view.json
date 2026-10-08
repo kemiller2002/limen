@@ -1,0 +1,7 @@
+{
+  "doc": "What the engine in bench/pages/store/store.js projects and accepts. Its view is empty; the one event asks it to emit the queued store request. Checked against index.html by npm run check:views.",
+  "view": {},
+  "events": {
+    "poke": {}
+  }
+}
