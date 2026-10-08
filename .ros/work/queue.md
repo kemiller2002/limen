@@ -158,7 +158,7 @@
 | WI-0153 | Move limen to Ordo 1.4.1 | complete | ordo, toolchain | medium |
 | WI-0154 | Move limen to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | complete | praxis, ordo, toolchain | medium |
 | WI-0155 | Move limen to Ordo 1.5.0 via echelon-current 1.2.0 (conditor upgrade --current) | complete |  | medium |
-| WI-0156 | Requirements and backlog for Limen IndexedDB durable storage (LCP-018 extension): generic store pack, functional F# API, Arca queue-store adapter placement, decision record | active | limen, indexeddb, requirements, lcp-018 | high |
+| WI-0156 | Requirements and backlog for Limen IndexedDB durable storage (LCP-018 extension): generic store pack, functional F# API, Arca queue-store adapter placement, decision record | complete | limen, indexeddb, requirements, lcp-018 | high |
 | WI-0157 | IndexedDB 1: store pack application namespaces and size policy (LCP-043, LCP-048, LCP-050, LCP-069) | captured | limen, indexeddb, lcp-018 | high |
 | WI-0158 | IndexedDB 2: store pack compound key paths, count and range delete (LCP-043, LCP-047, LCP-054) | captured | limen, indexeddb, lcp-018 | high |
 | WI-0159 | IndexedDB 3: store pack durability and availability evidence - persist, estimate, connection loss, creation evidence, availability classification (LCP-061..LCP-064) | captured | limen, indexeddb, lcp-018 | high |
