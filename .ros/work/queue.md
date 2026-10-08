@@ -167,5 +167,5 @@
 | WI-0162 | IndexedDB 6: publish Limen's F# contract bindings as a consumable package, released as Sigstore-attested NuGet release assets (LCP-044, LCP-079) | complete | limen, indexeddb, lcp-018 | high |
 | WI-0163 | IndexedDB 7: functional F# store API (Limen.Store engine library): schema values, codecs, Result outcomes, migration planner, structured errors and diagnostics (LCP-045, LCP-049, LCP-053, LCP-055..LCP-057, LCP-072, LCP-073) | complete | limen, indexeddb, lcp-018 | high |
 | WI-0164 | IndexedDB 8: F# in-memory store fake with the same contract, and the F# conformance runner over the shared vectors (LCP-074, LCP-075) | complete | limen, indexeddb, lcp-018 | medium |
-| WI-0165 | IndexedDB 9: store performance baseline and budgets in Chromium and WebKit (LCP-078) | captured | limen, indexeddb, lcp-018 | medium |
+| WI-0165 | IndexedDB 9: store performance baseline and budgets in Chromium and WebKit (LCP-078) | ready | limen, indexeddb, lcp-018 | medium |
 | WI-0166 | IndexedDB 10: release Limen 0.8.0 with the F# store packages, echelon-registry entry and Conditor consumption proof; consumer and privacy guidance in docs/41 (LCP-068, LCP-070, LCP-071, LCP-079, LCP-080) | captured | limen, indexeddb, lcp-018 | medium |
