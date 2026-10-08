@@ -127,7 +127,7 @@ Then, for depth:
 | [Documentation audit](https://github.com/kemiller2002/limen/blob/main/docs/DOCUMENTATION-AUDIT.md) | Findings from the documentation audit, including unresolved ambiguities |
 | [Lifecycle conversion report](https://github.com/kemiller2002/limen/blob/main/docs/22-lifecycle-conversion-report.md) | What adding the CLI changed, and what was proven about it |
 | [Usage (legacy)](https://github.com/kemiller2002/limen/blob/main/docs/USAGE.md) | The original consumer walkthrough, kept for continuity |
-| [IndexedDB durable-storage requirements](requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md) | LCP-043..087: what the store pack, the F# store API and Arca's IndexedDB adapters (offline queue and read cache) must do, and the ordered work items. Requirements only; not yet built |
+| [IndexedDB durable-storage requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md) | LCP-043..087: what the store pack, the F# store API and Arca's IndexedDB adapters (offline queue and read cache) must do, and the ordered work items. Requirements only; not yet built |
 
 ## The website
 

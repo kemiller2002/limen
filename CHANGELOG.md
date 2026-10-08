@@ -19,7 +19,7 @@ exhaustive lists.
 ### Documentation
 
 - **Requirements for durable IndexedDB storage from F# engines (WI-0156, LCP-018).**
-  [docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md](docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
+  [docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
   states LCP-043..087, extending the store pack. The requirements cover:
   - namespaces, compound keys, size policy, persistence and eviction evidence;
   - a functional F# API, an in-memory fake, shared conformance vectors and

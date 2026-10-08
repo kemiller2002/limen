@@ -1030,7 +1030,7 @@ while another tab holds a connection.
 
 ### Reference tests
 - Adapter and library tests over the fake.
-- A Chrona browser test when it adopts the adapter (Chrona WI-0056).
+- A Chrona browser test when it adopts the adapter (Chrona WI-0057).
 
 *Sources: CHX-021, CHX-023, CHX-230; SIG ADM-071; SUM0-015 (caches rebuildable).*
 
@@ -1637,8 +1637,8 @@ requirement IDs.
 | A3 | Arca WI-0020 | One-time localStorage-to-IndexedDB migration | LCP-066, 067 | Arca WI-0016 |
 | A4 | Arca WI-0021 | Read-cache port in `Arca.Core` (`Cached`/`Fresh`, token freshness rules), in-memory implementation and read-cache conformance suite | LCP-082..086 | — (can start now) |
 | A5 | Arca WI-0022 | IndexedDB read cache in `EchelonFoundry.Arca.Limen`: compound-keyed partitions, revalidation, policy-driven clearing, budget and eviction | LCP-082..087 | Arca WI-0016, Arca WI-0021 |
-| C1 | Chrona WI-0056 | Adopt the IndexedDB queue adapter: ownership notice for a second tab, durability mode in sync state, `sharedDevicePolicy` (`ask` \| `discardOnSignOut`) at sign-out, migration on first run | LCP-059, 065, 070, 073 | Arca WI-0020 released |
-| C2 | Chrona WI-0057 | Offline start from the read cache: activities by month, derived activity index, reference data and roster, shown "as of" their token, revalidated online, cleared on sign-out | LCP-082..087 | Arca WI-0022 released; Chrona WI-0034 for the derived index |
+| C1 | Chrona WI-0057 | Adopt the IndexedDB queue adapter: ownership notice for a second tab, durability mode in sync state, `sharedDevicePolicy` (`ask` \| `discardOnSignOut`) at sign-out, migration on first run | LCP-059, 065, 070, 073 | Arca WI-0020 released |
+| C2 | Chrona WI-0058 | Offline start from the read cache: activities by month, derived activity index, reference data and roster, shown "as of" their token, revalidated online, cleared on sign-out | LCP-082..087 | Arca WI-0022 released; Chrona WI-0034 for the derived index |
 
 ## 18. Open questions
 
