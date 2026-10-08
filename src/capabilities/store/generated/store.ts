@@ -2,19 +2,19 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
+// contract-fingerprint: sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a
 // generator: limen-contract-gen/1 (typescript-types)
-// content-hash: sha256:3e7158daee79060384726e762adbf83e33ac2ad8d1d6907542a120e7cfc156c9
+// content-hash: sha256:925c355d1280960a89c1c9e10a42992e093952344a9275905d37d61a2cd94065
 // </auto-generated>
 /** Durable structured browser storage over IndexedDB (LCP-018; version 2 adds LCP-043..064). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged. Version 2 is offered by a pack registered with an application namespace (every database name resolves inside it) and serialized-size limits; a pack registered without options still offers version 1, unchanged. */
 
 
 
 /** The identity of this generated contract unit, exchanged in the handshake. */
-export const CONTRACT_IDENTITY = { unit: "limen.store", version: 2, fingerprint: "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254" } as const;
+export const CONTRACT_IDENTITY = { unit: "limen.store", version: 2, fingerprint: "sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a" } as const;
 
 /** What a host offers, and an engine selects, to use this capability. */
-export const CAPABILITY_OFFER = { id: "limen.store", version: 2, fingerprint: "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254" } as const;
+export const CAPABILITY_OFFER = { id: "limen.store", version: 2, fingerprint: "sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a" } as const;
 
 /** keyPath is one dotted path. A compound index (version 2) gives keyPaths, two or more dotted paths, with keyPath empty; its key is the list of their values, compared element by element. A compound index cannot be multiEntry. */
 export type IndexSchema = { readonly name: string; readonly keyPath: string; readonly unique: boolean; readonly multiEntry: boolean; readonly keyPaths?: readonly string[] };
@@ -48,6 +48,9 @@ export type OperationResult =
   | { readonly kind: "Counted"; readonly count: number }
   | { readonly kind: "RangeDeleted" };
 
+/** Available: a probe database opened and closed inside the namespace. Missing: no indexedDB. Refused: a SecurityError, or an open refused in a private mode or with storage blocked. Broken: an open that failed for any other reason. Ephemeral, memory-backed private storage is deliberately hidden by browsers and is not detected. */
+export type AvailabilityClass = "Available" | "Missing" | "Refused" | "Broken";
+
 /** conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason. */
 export type AbortReason = "conflict" | "constraint" | "invalidKey" | "quota" | "unknownStore" | "other";
 
@@ -55,11 +58,15 @@ export type StoreRequest =
   | { readonly operation: "open"; readonly database: string; readonly version: number; readonly stores: readonly StoreSchema[]; readonly dropStores: readonly string[] }
   | { readonly operation: "transact"; readonly database: string; readonly mode: "readonly" | "readwrite"; readonly operations: readonly Operation[] }
   | { readonly operation: "close"; readonly database: string }
-  | { readonly operation: "deleteDatabase"; readonly database: string };
+  | { readonly operation: "deleteDatabase"; readonly database: string }
+  | { readonly operation: "persist" }
+  | { readonly operation: "persisted" }
+  | { readonly operation: "estimate" }
+  | { readonly operation: "availability" };
 
 /** Every outcome the engine must handle; the pack retries nothing. */
 export type StoreResult =
-  | { readonly kind: "Opened"; readonly version: number; readonly upgradedFrom: number; readonly limits?: StoreLimits }
+  | { readonly kind: "Opened"; readonly version: number; readonly upgradedFrom: number; readonly limits?: StoreLimits; readonly created?: boolean }
   | { readonly kind: "VersionConflict"; readonly stored: number }
   | { readonly kind: "SchemaMismatch"; readonly problems: readonly string[] }
   | { readonly kind: "Blocked" }
@@ -70,7 +77,13 @@ export type StoreResult =
   | { readonly kind: "DatabaseDeleted" }
   | { readonly kind: "InvalidRequest"; readonly problem: string }
   | { readonly kind: "Unavailable"; readonly reason: string }
-  | { readonly kind: "Cancelled" };
+  | { readonly kind: "Cancelled" }
+  | { readonly kind: "Persisted"; readonly granted: boolean }
+  | { readonly kind: "Persistence"; readonly persistent: boolean }
+  | { readonly kind: "Estimate"; readonly usage?: number; readonly quota?: number }
+  | { readonly kind: "Availability"; readonly availability: "Available" | "Missing" | "Refused" | "Broken"; readonly reason?: string }
+  | { readonly kind: "Unsupported" };
 
 export type StoreFact =
-  | { readonly kind: "VersionChanged"; readonly database: string; readonly newVersion: number };
+  | { readonly kind: "VersionChanged"; readonly database: string; readonly newVersion: number }
+  | { readonly kind: "ConnectionLost"; readonly database: string };

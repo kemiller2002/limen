@@ -117,12 +117,30 @@ export const usesVersion2 = (request: StoreRequest): boolean => {
     case "close":
     case "deleteDatabase":
       return false;
+    case "persist":
+    case "persisted":
+    case "estimate":
+    case "availability":
+      return true;
   }
 };
 
+// The requests about a database, as opposed to the origin's storage.
+export type DatabaseRequest = Extract<StoreRequest, { readonly database: string }>;
+export const isDatabaseRequest = (request: StoreRequest): request is DatabaseRequest => "database" in request;
+
+// How an open that failed classifies (LCP-064). A SecurityError, or the
+// InvalidStateError some private modes give, means storage is refused here.
+export const availabilityOf = (errorName: string): "Refused" | "Broken" =>
+  errorName === "SecurityError" || errorName === "InvalidStateError" ? "Refused" : "Broken";
+
+// A byte count the browser reported, or undefined when it did not.
+export const byteCount = (value: unknown): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.round(value) : undefined;
+
 // Everything checkable before touching the database. undefined: valid.
 export const requestProblem = (request: StoreRequest): string | undefined => {
-  if (request.database === "") return "a database needs a name";
+  if (isDatabaseRequest(request) && request.database === "") return "a database needs a name";
   switch (request.operation) {
     case "open":
       if (!Number.isInteger(request.version) || request.version < 1) return "version must be a positive integer";
@@ -132,6 +150,10 @@ export const requestProblem = (request: StoreRequest): string | undefined => {
       return request.operations.map((operation, index) => operationProblem(operation, index, request.mode === "readonly")).find((problem) => problem !== undefined);
     case "close":
     case "deleteDatabase":
+    case "persist":
+    case "persisted":
+    case "estimate":
+    case "availability":
       return undefined;
   }
 };

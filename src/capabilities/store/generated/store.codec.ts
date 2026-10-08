@@ -2,11 +2,11 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
+// contract-fingerprint: sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:09f76b693d04fe8f03a6afd0e2259db359a20b57f40b772ac3fb5df3f39f61da
+// content-hash: sha256:830d59c1cb41918b947e20bd947197d6441437e29df84c97c008888a960bb59f
 // </auto-generated>
-import type { IndexSchema, StoreSchema, StoreLimits, TransactionMode, KeyRange, Operation, OperationResult, AbortReason, StoreRequest, StoreResult, StoreFact } from "./store.js";
+import type { IndexSchema, StoreSchema, StoreLimits, TransactionMode, KeyRange, Operation, OperationResult, AvailabilityClass, AbortReason, StoreRequest, StoreResult, StoreFact } from "./store.js";
 
 /** Where decoding stopped, and what the contract expected there. */
 export type DecodeError = { readonly path: string; readonly expected: string; readonly found: string };
@@ -348,6 +348,8 @@ const decodeOperationResult_RangeDeleted = (value: unknown, path: Path): Decoded
   return ok<OperationResult>({ kind: "RangeDeleted" });
 };
 
+export const decodeAvailabilityClass = (value: unknown, path: Path = "$"): Decoded<AvailabilityClass> => enumValue(value, path, ["Available","Missing","Refused","Broken"] as const);
+
 export const decodeAbortReason = (value: unknown, path: Path = "$"): Decoded<AbortReason> => enumValue(value, path, ["conflict","constraint","invalidKey","quota","unknownStore","other"] as const);
 
 export const decodeStoreRequest = (value: unknown, path: Path = "$"): Decoded<StoreRequest> => {
@@ -359,7 +361,11 @@ export const decodeStoreRequest = (value: unknown, path: Path = "$"): Decoded<St
     case "transact": return decodeStoreRequest_transact(value, path);
     case "close": return decodeStoreRequest_close(value, path);
     case "deleteDatabase": return decodeStoreRequest_deleteDatabase(value, path);
-    default: return unknownVariant(at(path, ".operation"), ["open","transact","close","deleteDatabase"], tag);
+    case "persist": return decodeStoreRequest_persist(value, path);
+    case "persisted": return decodeStoreRequest_persisted(value, path);
+    case "estimate": return decodeStoreRequest_estimate(value, path);
+    case "availability": return decodeStoreRequest_availability(value, path);
+    default: return unknownVariant(at(path, ".operation"), ["open","transact","close","deleteDatabase","persist","persisted","estimate","availability"], tag);
   }
 };
 
@@ -413,6 +419,38 @@ const decodeStoreRequest_deleteDatabase = (value: unknown, path: Path): Decoded<
   return ok<StoreRequest>({ operation: "deleteDatabase", database: field_database.value });
 };
 
+const decodeStoreRequest_persist = (value: unknown, path: Path): Decoded<StoreRequest> => {
+  const object = objectValue(value, path, ["operation"]);
+  if (!object.ok) return object;
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "persist");
+  if (!operationTag.ok) return operationTag;
+  return ok<StoreRequest>({ operation: "persist" });
+};
+
+const decodeStoreRequest_persisted = (value: unknown, path: Path): Decoded<StoreRequest> => {
+  const object = objectValue(value, path, ["operation"]);
+  if (!object.ok) return object;
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "persisted");
+  if (!operationTag.ok) return operationTag;
+  return ok<StoreRequest>({ operation: "persisted" });
+};
+
+const decodeStoreRequest_estimate = (value: unknown, path: Path): Decoded<StoreRequest> => {
+  const object = objectValue(value, path, ["operation"]);
+  if (!object.ok) return object;
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "estimate");
+  if (!operationTag.ok) return operationTag;
+  return ok<StoreRequest>({ operation: "estimate" });
+};
+
+const decodeStoreRequest_availability = (value: unknown, path: Path): Decoded<StoreRequest> => {
+  const object = objectValue(value, path, ["operation"]);
+  if (!object.ok) return object;
+  const operationTag = literalValue(object.value["operation"], at(path, ".operation"), "availability");
+  if (!operationTag.ok) return operationTag;
+  return ok<StoreRequest>({ operation: "availability" });
+};
+
 export const decodeStoreResult = (value: unknown, path: Path = "$"): Decoded<StoreResult> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
@@ -430,12 +468,17 @@ export const decodeStoreResult = (value: unknown, path: Path = "$"): Decoded<Sto
     case "InvalidRequest": return decodeStoreResult_InvalidRequest(value, path);
     case "Unavailable": return decodeStoreResult_Unavailable(value, path);
     case "Cancelled": return decodeStoreResult_Cancelled(value, path);
-    default: return unknownVariant(at(path, ".kind"), ["Opened","VersionConflict","SchemaMismatch","Blocked","Committed","Aborted","NotOpen","Closed","DatabaseDeleted","InvalidRequest","Unavailable","Cancelled"], tag);
+    case "Persisted": return decodeStoreResult_Persisted(value, path);
+    case "Persistence": return decodeStoreResult_Persistence(value, path);
+    case "Estimate": return decodeStoreResult_Estimate(value, path);
+    case "Availability": return decodeStoreResult_Availability(value, path);
+    case "Unsupported": return decodeStoreResult_Unsupported(value, path);
+    default: return unknownVariant(at(path, ".kind"), ["Opened","VersionConflict","SchemaMismatch","Blocked","Committed","Aborted","NotOpen","Closed","DatabaseDeleted","InvalidRequest","Unavailable","Cancelled","Persisted","Persistence","Estimate","Availability","Unsupported"], tag);
   }
 };
 
 const decodeStoreResult_Opened = (value: unknown, path: Path): Decoded<StoreResult> => {
-  const object = objectValue(value, path, ["kind","version","upgradedFrom","limits"]);
+  const object = objectValue(value, path, ["kind","version","upgradedFrom","limits","created"]);
   if (!object.ok) return object;
   const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Opened");
   if (!kindTag.ok) return kindTag;
@@ -445,7 +488,9 @@ const decodeStoreResult_Opened = (value: unknown, path: Path): Decoded<StoreResu
   if (!field_upgradedFrom.ok) return field_upgradedFrom;
   const field_limits = object.value["limits"] === undefined ? ok(undefined) : decodeStoreLimits(object.value["limits"], at(path, ".limits"));
   if (!field_limits.ok) return field_limits;
-  return ok<StoreResult>({ kind: "Opened", version: field_version.value, upgradedFrom: field_upgradedFrom.value, ...(field_limits.value !== undefined ? { limits: field_limits.value } : {}) });
+  const field_created = object.value["created"] === undefined ? ok(undefined) : boolValue(object.value["created"], at(path, ".created"));
+  if (!field_created.ok) return field_created;
+  return ok<StoreResult>({ kind: "Opened", version: field_version.value, upgradedFrom: field_upgradedFrom.value, ...(field_limits.value !== undefined ? { limits: field_limits.value } : {}), ...(field_created.value !== undefined ? { created: field_created.value } : {}) });
 };
 
 const decodeStoreResult_VersionConflict = (value: unknown, path: Path): Decoded<StoreResult> => {
@@ -552,13 +597,66 @@ const decodeStoreResult_Cancelled = (value: unknown, path: Path): Decoded<StoreR
   return ok<StoreResult>({ kind: "Cancelled" });
 };
 
+const decodeStoreResult_Persisted = (value: unknown, path: Path): Decoded<StoreResult> => {
+  const object = objectValue(value, path, ["kind","granted"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Persisted");
+  if (!kindTag.ok) return kindTag;
+  const field_granted = boolValue(object.value["granted"], at(path, ".granted"));
+  if (!field_granted.ok) return field_granted;
+  return ok<StoreResult>({ kind: "Persisted", granted: field_granted.value });
+};
+
+const decodeStoreResult_Persistence = (value: unknown, path: Path): Decoded<StoreResult> => {
+  const object = objectValue(value, path, ["kind","persistent"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Persistence");
+  if (!kindTag.ok) return kindTag;
+  const field_persistent = boolValue(object.value["persistent"], at(path, ".persistent"));
+  if (!field_persistent.ok) return field_persistent;
+  return ok<StoreResult>({ kind: "Persistence", persistent: field_persistent.value });
+};
+
+const decodeStoreResult_Estimate = (value: unknown, path: Path): Decoded<StoreResult> => {
+  const object = objectValue(value, path, ["kind","usage","quota"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Estimate");
+  if (!kindTag.ok) return kindTag;
+  const field_usage = object.value["usage"] === undefined ? ok(undefined) : intValue(object.value["usage"], at(path, ".usage"));
+  if (!field_usage.ok) return field_usage;
+  const field_quota = object.value["quota"] === undefined ? ok(undefined) : intValue(object.value["quota"], at(path, ".quota"));
+  if (!field_quota.ok) return field_quota;
+  return ok<StoreResult>({ kind: "Estimate", ...(field_usage.value !== undefined ? { usage: field_usage.value } : {}), ...(field_quota.value !== undefined ? { quota: field_quota.value } : {}) });
+};
+
+const decodeStoreResult_Availability = (value: unknown, path: Path): Decoded<StoreResult> => {
+  const object = objectValue(value, path, ["kind","availability","reason"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Availability");
+  if (!kindTag.ok) return kindTag;
+  const field_availability = decodeAvailabilityClass(object.value["availability"], at(path, ".availability"));
+  if (!field_availability.ok) return field_availability;
+  const field_reason = object.value["reason"] === undefined ? ok(undefined) : stringValue(object.value["reason"], at(path, ".reason"));
+  if (!field_reason.ok) return field_reason;
+  return ok<StoreResult>({ kind: "Availability", availability: field_availability.value, ...(field_reason.value !== undefined ? { reason: field_reason.value } : {}) });
+};
+
+const decodeStoreResult_Unsupported = (value: unknown, path: Path): Decoded<StoreResult> => {
+  const object = objectValue(value, path, ["kind"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Unsupported");
+  if (!kindTag.ok) return kindTag;
+  return ok<StoreResult>({ kind: "Unsupported" });
+};
+
 export const decodeStoreFact = (value: unknown, path: Path = "$"): Decoded<StoreFact> => {
   const object = objectValue(value, path, null);
   if (!object.ok) return object;
   const tag = object.value["kind"];
   switch (tag) {
     case "VersionChanged": return decodeStoreFact_VersionChanged(value, path);
-    default: return unknownVariant(at(path, ".kind"), ["VersionChanged"], tag);
+    case "ConnectionLost": return decodeStoreFact_ConnectionLost(value, path);
+    default: return unknownVariant(at(path, ".kind"), ["VersionChanged","ConnectionLost"], tag);
   }
 };
 
@@ -572,4 +670,14 @@ const decodeStoreFact_VersionChanged = (value: unknown, path: Path): Decoded<Sto
   const field_newVersion = intValue(object.value["newVersion"], at(path, ".newVersion"));
   if (!field_newVersion.ok) return field_newVersion;
   return ok<StoreFact>({ kind: "VersionChanged", database: field_database.value, newVersion: field_newVersion.value });
+};
+
+const decodeStoreFact_ConnectionLost = (value: unknown, path: Path): Decoded<StoreFact> => {
+  const object = objectValue(value, path, ["kind","database"]);
+  if (!object.ok) return object;
+  const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "ConnectionLost");
+  if (!kindTag.ok) return kindTag;
+  const field_database = stringValue(object.value["database"], at(path, ".database"));
+  if (!field_database.ok) return field_database;
+  return ok<StoreFact>({ kind: "ConnectionLost", database: field_database.value });
 };

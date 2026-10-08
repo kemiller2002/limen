@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
+// contract-fingerprint: sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:cbf14ec1bc14a702ef256966a6e9708ce8663269d773ede54c5bacac24384aae
+// content-hash: sha256:9717d24b73aaa3c3cb24476d0941e9ccf32f2abff6c8faa2a73075a17c198af2
 // </auto-generated>
 #nullable enable
 
@@ -17,7 +17,7 @@ public static class Contract
 {
     public const string Unit = "limen.store";
     public const long Version = 2;
-    public const string Fingerprint = "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254";
+    public const string Fingerprint = "sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a";
 }
 
 /// <summary>keyPath is one dotted path. A compound index (version 2) gives keyPaths, two or more dotted paths, with keyPath empty; its key is the list of their values, compared element by element. A compound index cannot be multiEntry.</summary>
@@ -112,6 +112,32 @@ public abstract record OperationResult
     };
 }
 
+/// <summary>Available: a probe database opened and closed inside the namespace. Missing: no indexedDB. Refused: a SecurityError, or an open refused in a private mode or with storage blocked. Broken: an open that failed for any other reason. Ephemeral, memory-backed private storage is deliberately hidden by browsers and is not detected.</summary>
+[global::Limen.Contract.ClosedUnion]
+public enum AvailabilityClass
+{
+    Available,
+    Missing,
+    Refused,
+    Broken,
+}
+
+/// <summary>Exhaustive handling of AvailabilityClass: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class AvailabilityClassMatch
+{
+    public static TResult Match<TResult>(this AvailabilityClass value, global::System.Func<TResult> available, global::System.Func<TResult> missing, global::System.Func<TResult> refused, global::System.Func<TResult> broken) => value switch
+    {
+        AvailabilityClass.Available => available(),
+        AvailabilityClass.Missing => missing(),
+        AvailabilityClass.Refused => refused(),
+        AvailabilityClass.Broken => broken(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a AvailabilityClass value."),
+    };
+
+    /// <summary>The wire text of a AvailabilityClass value.</summary>
+    public static string ToWire(this AvailabilityClass value) => value.Match(() => "Available", () => "Missing", () => "Refused", () => "Broken");
+}
+
 /// <summary>conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.</summary>
 [global::Limen.Contract.ClosedUnion]
 public enum AbortReason
@@ -153,14 +179,26 @@ public abstract record StoreRequest
     public sealed record Transact(string Database, global::Limen.Contract.Store.TransactionMode Mode, global::System.Collections.Generic.IReadOnlyList<global::Limen.Contract.Store.Operation> Operations) : StoreRequest;
     public sealed record Close(string Database) : StoreRequest;
     public sealed record DeleteDatabase(string Database) : StoreRequest;
+    /// <summary>Version 2. Ask the browser to exempt this origin's storage from best-effort eviction (navigator.storage.persist). The pack never asks on its own; when to ask is the engine's decision.</summary>
+    public sealed record Persist() : StoreRequest;
+    /// <summary>Version 2. Whether this origin's storage is already persistent (navigator.storage.persisted).</summary>
+    public sealed record Persisted() : StoreRequest;
+    /// <summary>Version 2. The browser's own approximation of this origin's usage and quota (navigator.storage.estimate). Advisory only.</summary>
+    public sealed record Estimate() : StoreRequest;
+    /// <summary>Version 2. Classify whether IndexedDB is usable here, by opening and deleting a probe database inside the namespace.</summary>
+    public sealed record Availability() : StoreRequest;
 
     /// <summary>Exhaustive by construction: one handler per variant, so a new variant is a compile error at every call site.</summary>
-    public TResult Match<TResult>(global::System.Func<Open, TResult> open, global::System.Func<Transact, TResult> transact, global::System.Func<Close, TResult> close, global::System.Func<DeleteDatabase, TResult> deleteDatabase) => this switch
+    public TResult Match<TResult>(global::System.Func<Open, TResult> open, global::System.Func<Transact, TResult> transact, global::System.Func<Close, TResult> close, global::System.Func<DeleteDatabase, TResult> deleteDatabase, global::System.Func<Persist, TResult> persist, global::System.Func<Persisted, TResult> persisted, global::System.Func<Estimate, TResult> estimate, global::System.Func<Availability, TResult> availability) => this switch
     {
         Open value => open(value),
         Transact value => transact(value),
         Close value => close(value),
         DeleteDatabase value => deleteDatabase(value),
+        Persist value => persist(value),
+        Persisted value => persisted(value),
+        Estimate value => estimate(value),
+        Availability value => availability(value),
         _ => throw new global::System.InvalidOperationException("StoreRequest is a closed hierarchy."),
     };
 }
@@ -171,7 +209,7 @@ public abstract record StoreResult
 {
     private StoreResult() { }
 
-    public sealed record Opened(long Version, long UpgradedFrom, global::Limen.Contract.Store.StoreLimits? Limits) : StoreResult;
+    public sealed record Opened(long Version, long UpgradedFrom, global::Limen.Contract.Store.StoreLimits? Limits, bool? Created) : StoreResult;
     /// <summary>The stored database is newer than the version asked for: this page is out of date.</summary>
     public sealed record VersionConflict(long Stored) : StoreResult;
     /// <summary>At the stored version, the declared schema and the stored one differ; the connection is not kept. Each problem names a store or index.</summary>
@@ -191,9 +229,19 @@ public abstract record StoreResult
     public sealed record Unavailable(string Reason) : StoreResult;
     /// <summary>The engine cancelled the request. A transaction cancelled while running is aborted, so nothing in it was applied.</summary>
     public sealed record Cancelled() : StoreResult;
+    /// <summary>The answer to persist. A refusal, or a rejected promise, is granted false.</summary>
+    public sealed record Persisted(bool Granted) : StoreResult;
+    /// <summary>The answer to persisted: whether storage is persistent now.</summary>
+    public sealed record Persistence(bool Persistent) : StoreResult;
+    /// <summary>The answer to estimate: non-negative byte counts the browser approximates. A count the browser did not report is absent, never zero.</summary>
+    public sealed record Estimate(long? Usage, long? Quota) : StoreResult;
+    /// <summary>The answer to availability. reason is an exception name only, for Refused and Broken.</summary>
+    public sealed record Availability(global::Limen.Contract.Store.AvailabilityClass AvailabilityValue, string? Reason) : StoreResult;
+    /// <summary>This browser has no such API (for example no navigator.storage.persist): never reported as a refusal.</summary>
+    public sealed record Unsupported() : StoreResult;
 
     /// <summary>Exhaustive by construction: one handler per variant, so a new variant is a compile error at every call site.</summary>
-    public TResult Match<TResult>(global::System.Func<Opened, TResult> opened, global::System.Func<VersionConflict, TResult> versionConflict, global::System.Func<SchemaMismatch, TResult> schemaMismatch, global::System.Func<Blocked, TResult> blocked, global::System.Func<Committed, TResult> committed, global::System.Func<Aborted, TResult> aborted, global::System.Func<NotOpen, TResult> notOpen, global::System.Func<Closed, TResult> closed, global::System.Func<DatabaseDeleted, TResult> databaseDeleted, global::System.Func<InvalidRequest, TResult> invalidRequest, global::System.Func<Unavailable, TResult> unavailable, global::System.Func<Cancelled, TResult> cancelled) => this switch
+    public TResult Match<TResult>(global::System.Func<Opened, TResult> opened, global::System.Func<VersionConflict, TResult> versionConflict, global::System.Func<SchemaMismatch, TResult> schemaMismatch, global::System.Func<Blocked, TResult> blocked, global::System.Func<Committed, TResult> committed, global::System.Func<Aborted, TResult> aborted, global::System.Func<NotOpen, TResult> notOpen, global::System.Func<Closed, TResult> closed, global::System.Func<DatabaseDeleted, TResult> databaseDeleted, global::System.Func<InvalidRequest, TResult> invalidRequest, global::System.Func<Unavailable, TResult> unavailable, global::System.Func<Cancelled, TResult> cancelled, global::System.Func<Persisted, TResult> persisted, global::System.Func<Persistence, TResult> persistence, global::System.Func<Estimate, TResult> estimate, global::System.Func<Availability, TResult> availability, global::System.Func<Unsupported, TResult> unsupported) => this switch
     {
         Opened value => opened(value),
         VersionConflict value => versionConflict(value),
@@ -207,6 +255,11 @@ public abstract record StoreResult
         InvalidRequest value => invalidRequest(value),
         Unavailable value => unavailable(value),
         Cancelled value => cancelled(value),
+        Persisted value => persisted(value),
+        Persistence value => persistence(value),
+        Estimate value => estimate(value),
+        Availability value => availability(value),
+        Unsupported value => unsupported(value),
         _ => throw new global::System.InvalidOperationException("StoreResult is a closed hierarchy."),
     };
 }
@@ -218,11 +271,14 @@ public abstract record StoreFact
 
     /// <summary>Another page upgraded or deleted this database. The pack closed this page's connection so it would not block; the engine reopens at the new version when its code understands it. newVersion is 0 for a deletion.</summary>
     public sealed record VersionChanged(string Database, long NewVersion) : StoreFact;
+    /// <summary>Version 2. The browser closed this page's connection abnormally: the origin's storage was cleared or evicted while it was open. The pack does not reopen; later requests on it are NotOpen until the engine opens it again.</summary>
+    public sealed record ConnectionLost(string Database) : StoreFact;
 
     /// <summary>Exhaustive by construction: one handler per variant, so a new variant is a compile error at every call site.</summary>
-    public TResult Match<TResult>(global::System.Func<VersionChanged, TResult> versionChanged) => this switch
+    public TResult Match<TResult>(global::System.Func<VersionChanged, TResult> versionChanged, global::System.Func<ConnectionLost, TResult> connectionLost) => this switch
     {
         VersionChanged value => versionChanged(value),
+        ConnectionLost value => connectionLost(value),
         _ => throw new global::System.InvalidOperationException("StoreFact is a closed hierarchy."),
     };
 }
@@ -257,6 +313,10 @@ public static class Codec
     public static Decoded<global::Limen.Contract.Store.OperationResult> DecodeOperationResult(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadOperationResult(element, path));
     public static Decoded<global::Limen.Contract.Store.OperationResult> ParseOperationResult(string json) => Wire.Parse(json, ReadOperationResult);
     public static string SerializeOperationResult(global::Limen.Contract.Store.OperationResult value) => Wire.Serialize(EncodeOperationResult(value));
+
+    public static Decoded<global::Limen.Contract.Store.AvailabilityClass> DecodeAvailabilityClass(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadAvailabilityClass(element, path));
+    public static Decoded<global::Limen.Contract.Store.AvailabilityClass> ParseAvailabilityClass(string json) => Wire.Parse(json, ReadAvailabilityClass);
+    public static string SerializeAvailabilityClass(global::Limen.Contract.Store.AvailabilityClass value) => Wire.Serialize(EncodeAvailabilityClass(value));
 
     public static Decoded<global::Limen.Contract.Store.AbortReason> DecodeAbortReason(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadAbortReason(element, path));
     public static Decoded<global::Limen.Contract.Store.AbortReason> ParseAbortReason(string json) => Wire.Parse(json, ReadAbortReason);
@@ -441,6 +501,9 @@ public static class Codec
         }
     }
 
+    internal static global::Limen.Contract.Store.AvailabilityClass ReadAvailabilityClass(global::System.Text.Json.JsonElement element, string path) =>
+        Wire.Enumeration(element, path, ("Available", global::Limen.Contract.Store.AvailabilityClass.Available), ("Missing", global::Limen.Contract.Store.AvailabilityClass.Missing), ("Refused", global::Limen.Contract.Store.AvailabilityClass.Refused), ("Broken", global::Limen.Contract.Store.AvailabilityClass.Broken));
+
     internal static global::Limen.Contract.Store.AbortReason ReadAbortReason(global::System.Text.Json.JsonElement element, string path) =>
         Wire.Enumeration(element, path, ("conflict", global::Limen.Contract.Store.AbortReason.Conflict), ("constraint", global::Limen.Contract.Store.AbortReason.Constraint), ("invalidKey", global::Limen.Contract.Store.AbortReason.InvalidKey), ("quota", global::Limen.Contract.Store.AbortReason.Quota), ("unknownStore", global::Limen.Contract.Store.AbortReason.UnknownStore), ("other", global::Limen.Contract.Store.AbortReason.Other));
 
@@ -481,6 +544,30 @@ public static class Codec
                 var f_database = Wire.Required(props, path, "database", (e0, p0) => Wire.String(e0, p0));
                 return new global::Limen.Contract.Store.StoreRequest.DeleteDatabase(f_database);
             }
+            case "persist":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "operation");
+                Wire.Required(props, path, "operation", (e0, p0) => Wire.LiteralString(e0, p0, "persist"));
+                return new global::Limen.Contract.Store.StoreRequest.Persist();
+            }
+            case "persisted":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "operation");
+                Wire.Required(props, path, "operation", (e0, p0) => Wire.LiteralString(e0, p0, "persisted"));
+                return new global::Limen.Contract.Store.StoreRequest.Persisted();
+            }
+            case "estimate":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "operation");
+                Wire.Required(props, path, "operation", (e0, p0) => Wire.LiteralString(e0, p0, "estimate"));
+                return new global::Limen.Contract.Store.StoreRequest.Estimate();
+            }
+            case "availability":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "operation");
+                Wire.Required(props, path, "operation", (e0, p0) => Wire.LiteralString(e0, p0, "availability"));
+                return new global::Limen.Contract.Store.StoreRequest.Availability();
+            }
             case var other:
                 throw Wire.UnknownVariant(path + ".operation", other);
         }
@@ -492,12 +579,13 @@ public static class Codec
         {
             case "Opened":
             {
-                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "version", "upgradedFrom", "limits");
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "version", "upgradedFrom", "limits", "created");
                 Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Opened"));
                 var f_version = Wire.Required(props, path, "version", (e0, p0) => Wire.Int(e0, p0));
                 var f_upgradedFrom = Wire.Required(props, path, "upgradedFrom", (e0, p0) => Wire.Int(e0, p0));
                 var f_limits = Wire.OptionalReference<global::Limen.Contract.Store.StoreLimits>(props, path, "limits", (e0, p0) => ReadStoreLimits(e0, p0));
-                return new global::Limen.Contract.Store.StoreResult.Opened(f_version, f_upgradedFrom, f_limits);
+                var f_created = Wire.OptionalValue<bool>(props, path, "created", (e0, p0) => Wire.Boolean(e0, p0));
+                return new global::Limen.Contract.Store.StoreResult.Opened(f_version, f_upgradedFrom, f_limits, f_created);
             }
             case "VersionConflict":
             {
@@ -573,6 +661,42 @@ public static class Codec
                 Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Cancelled"));
                 return new global::Limen.Contract.Store.StoreResult.Cancelled();
             }
+            case "Persisted":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "granted");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Persisted"));
+                var f_granted = Wire.Required(props, path, "granted", (e0, p0) => Wire.Boolean(e0, p0));
+                return new global::Limen.Contract.Store.StoreResult.Persisted(f_granted);
+            }
+            case "Persistence":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "persistent");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Persistence"));
+                var f_persistent = Wire.Required(props, path, "persistent", (e0, p0) => Wire.Boolean(e0, p0));
+                return new global::Limen.Contract.Store.StoreResult.Persistence(f_persistent);
+            }
+            case "Estimate":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "usage", "quota");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Estimate"));
+                var f_usage = Wire.OptionalValue<long>(props, path, "usage", (e0, p0) => Wire.Int(e0, p0));
+                var f_quota = Wire.OptionalValue<long>(props, path, "quota", (e0, p0) => Wire.Int(e0, p0));
+                return new global::Limen.Contract.Store.StoreResult.Estimate(f_usage, f_quota);
+            }
+            case "Availability":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "availability", "reason");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Availability"));
+                var f_availability = Wire.Required(props, path, "availability", (e0, p0) => ReadAvailabilityClass(e0, p0));
+                var f_reason = Wire.OptionalReference<string>(props, path, "reason", (e0, p0) => Wire.String(e0, p0));
+                return new global::Limen.Contract.Store.StoreResult.Availability(f_availability, f_reason);
+            }
+            case "Unsupported":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Unsupported"));
+                return new global::Limen.Contract.Store.StoreResult.Unsupported();
+            }
             case var other:
                 throw Wire.UnknownVariant(path + ".kind", other);
         }
@@ -589,6 +713,13 @@ public static class Codec
                 var f_database = Wire.Required(props, path, "database", (e0, p0) => Wire.String(e0, p0));
                 var f_newVersion = Wire.Required(props, path, "newVersion", (e0, p0) => Wire.Int(e0, p0));
                 return new global::Limen.Contract.Store.StoreFact.VersionChanged(f_database, f_newVersion);
+            }
+            case "ConnectionLost":
+            {
+                var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "database");
+                Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "ConnectionLost"));
+                var f_database = Wire.Required(props, path, "database", (e0, p0) => Wire.String(e0, p0));
+                return new global::Limen.Contract.Store.StoreFact.ConnectionLost(f_database);
             }
             case var other:
                 throw Wire.UnknownVariant(path + ".kind", other);
@@ -635,6 +766,16 @@ public static class Codec
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Counted")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("count", Wire.OfInt(v.Count))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("RangeDeleted"))));
 
+    public static global::System.Text.Json.Nodes.JsonNode? EncodeAvailabilityClass(global::Limen.Contract.Store.AvailabilityClass value) =>
+        value switch
+        {
+            global::Limen.Contract.Store.AvailabilityClass.Available => Wire.OfString("Available"),
+            global::Limen.Contract.Store.AvailabilityClass.Missing => Wire.OfString("Missing"),
+            global::Limen.Contract.Store.AvailabilityClass.Refused => Wire.OfString("Refused"),
+            global::Limen.Contract.Store.AvailabilityClass.Broken => Wire.OfString("Broken"),
+            _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a AvailabilityClass value."),
+        };
+
     public static global::System.Text.Json.Nodes.JsonNode? EncodeAbortReason(global::Limen.Contract.Store.AbortReason value) =>
         value switch
         {
@@ -652,11 +793,15 @@ public static class Codec
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("open")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("version", Wire.OfInt(v.Version)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("stores", Wire.OfList(v.Stores, x0 => EncodeStoreSchema(x0))), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("dropStores", Wire.OfList(v.DropStores, x0 => Wire.OfString(x0)))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("transact")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("mode", EncodeTransactionMode(v.Mode)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("operations", Wire.OfList(v.Operations, x0 => EncodeOperation(x0)))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("close")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database))),
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("deleteDatabase")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database))));
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("deleteDatabase")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("persist"))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("persisted"))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("estimate"))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("operation", Wire.OfString("availability"))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeStoreResult(global::Limen.Contract.Store.StoreResult value) =>
         value.Match(
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Opened")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("version", Wire.OfInt(v.Version)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("upgradedFrom", Wire.OfInt(v.UpgradedFrom)), (v.Limits is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("limits", EncodeStoreLimits(v.Limits)))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Opened")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("version", Wire.OfInt(v.Version)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("upgradedFrom", Wire.OfInt(v.UpgradedFrom)), (v.Limits is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("limits", EncodeStoreLimits(v.Limits))), (v.Created.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("created", Wire.OfBool(v.Created.Value)) : null)),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("VersionConflict")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("stored", Wire.OfInt(v.Stored))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("SchemaMismatch")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("problems", Wire.OfList(v.Problems, x0 => Wire.OfString(x0)))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Blocked"))),
@@ -667,11 +812,17 @@ public static class Codec
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("DatabaseDeleted"))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("InvalidRequest")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("problem", Wire.OfString(v.Problem))),
             v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Unavailable")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reason", Wire.OfString(v.Reason))),
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Cancelled"))));
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Cancelled"))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Persisted")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("granted", Wire.OfBool(v.Granted))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Persistence")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("persistent", Wire.OfBool(v.Persistent))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Estimate")), (v.Usage.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("usage", Wire.OfInt(v.Usage.Value)) : null), (v.Quota.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("quota", Wire.OfInt(v.Quota.Value)) : null)),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Availability")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("availability", EncodeAvailabilityClass(v.AvailabilityValue)), (v.Reason is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("reason", Wire.OfString(v.Reason)))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Unsupported"))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeStoreFact(global::Limen.Contract.Store.StoreFact value) =>
         value.Match(
-            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("VersionChanged")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("newVersion", Wire.OfInt(v.NewVersion))));
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("VersionChanged")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("newVersion", Wire.OfInt(v.NewVersion))),
+            v => Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("ConnectionLost")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("database", Wire.OfString(v.Database))));
 
 }
 
@@ -688,6 +839,7 @@ public static class Conformance
             ["KeyRange"] = element => Wire.Run(() => Codec.EncodeKeyRange(Codec.ReadKeyRange(element, "$"))),
             ["Operation"] = element => Wire.Run(() => Codec.EncodeOperation(Codec.ReadOperation(element, "$"))),
             ["OperationResult"] = element => Wire.Run(() => Codec.EncodeOperationResult(Codec.ReadOperationResult(element, "$"))),
+            ["AvailabilityClass"] = element => Wire.Run(() => Codec.EncodeAvailabilityClass(Codec.ReadAvailabilityClass(element, "$"))),
             ["AbortReason"] = element => Wire.Run(() => Codec.EncodeAbortReason(Codec.ReadAbortReason(element, "$"))),
             ["StoreRequest"] = element => Wire.Run(() => Codec.EncodeStoreRequest(Codec.ReadStoreRequest(element, "$"))),
             ["StoreResult"] = element => Wire.Run(() => Codec.EncodeStoreResult(Codec.ReadStoreResult(element, "$"))),

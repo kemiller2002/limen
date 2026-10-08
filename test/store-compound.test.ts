@@ -39,7 +39,7 @@ const transact = (operations: readonly Operation[], mode: "readonly" | "readwrit
 const row = (ns: string, seq: number, owner = "o", slot = seq): Record<string, unknown> => ({ ns, seq, owner, slot });
 const seeded = async (): Promise<(request: unknown) => Promise<unknown>> => {
   const ask = tab(new IDBFactory());
-  assert.deepEqual(await ask(open()), { kind: "Opened", version: 1, upgradedFrom: 0, limits: { maxValueBytes: 1048576, maxTransactionBytes: 8388608 } });
+  assert.deepEqual(await ask(open()), { kind: "Opened", version: 1, upgradedFrom: 0, limits: { maxValueBytes: 1048576, maxTransactionBytes: 8388608 }, created: true });
   const rows = [row("b", 1, "p"), row("a", 10), row("a", 2), row("b", 0, "p"), row("a", 1)];
   const put = await ask(transact(rows.map((value) => ({ op: "put", store: "entries", value }))));
   assert.equal((put as { kind: string }).kind, "Committed");
@@ -85,7 +85,7 @@ test("LCP-047: a change from a single to a compound key path is SchemaMismatch, 
   await ask(open([single]));
   assert.deepEqual(await ask(open([compound])), { kind: "SchemaMismatch", problems: ["store entries keyPath is ns, declared [ns,seq]"] });
   assert.deepEqual(await ask(open([compound], 2)), { kind: "SchemaMismatch", problems: ["store entries keyPath is ns, declared [ns,seq]; drop it to change it"] });
-  assert.deepEqual(await ask(open([single])), { kind: "Opened", version: 1, upgradedFrom: 1, limits: { maxValueBytes: 1048576, maxTransactionBytes: 8388608 } });
+  assert.deepEqual(await ask(open([single])), { kind: "Opened", version: 1, upgradedFrom: 1, limits: { maxValueBytes: 1048576, maxTransactionBytes: 8388608 }, created: false });
 });
 
 test("LCP-047: a compound path needs two or more non-empty parts and an empty keyPath; a compound index cannot be multiEntry", () => {

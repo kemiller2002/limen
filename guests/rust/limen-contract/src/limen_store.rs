@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
+// contract-fingerprint: sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:01c311f251ad29a2b984e64978e12816c20d195b05941a6c669488a6eb406e92
+// content-hash: sha256:4e9c77488258be15f7cebecef2c7ebeda65cc2235df3db4d09a0de61dc2077ea
 // </auto-generated>
 //! Durable structured browser storage over IndexedDB (LCP-018; version 2 adds LCP-043..064). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged. Version 2 is offered by a pack registered with an application namespace (every database name resolves inside it) and serialized-size limits; a pack registered without options still offers version 1, unchanged.
 
@@ -17,7 +17,7 @@ use crate::runtime::{wire, DecodeError, RawJson};
 pub mod contract {
     pub const UNIT: &str = "limen.store";
     pub const VERSION: i64 = 2;
-    pub const FINGERPRINT: &str = "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254";
+    pub const FINGERPRINT: &str = "sha256:c964a8c86b6f372fecacf50617c4f88595403c2521addbc412d528b0947c903a";
 }
 
 /// keyPath is one dotted path. A compound index (version 2) gives keyPaths, two or more dotted paths, with keyPath empty; its key is the list of their values, compared element by element. A compound index cannot be multiEntry.
@@ -132,6 +132,27 @@ pub enum OperationResult {
     RangeDeleted,
 }
 
+/// Available: a probe database opened and closed inside the namespace. Missing: no indexedDB. Refused: a SecurityError, or an open refused in a private mode or with storage blocked. Broken: an open that failed for any other reason. Ephemeral, memory-backed private storage is deliberately hidden by browsers and is not detected.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AvailabilityClass {
+    Available,
+    Missing,
+    Refused,
+    Broken,
+}
+
+impl AvailabilityClass {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            AvailabilityClass::Available => "Available",
+            AvailabilityClass::Missing => "Missing",
+            AvailabilityClass::Refused => "Refused",
+            AvailabilityClass::Broken => "Broken",
+        }
+    }
+}
+
 /// conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AbortReason {
@@ -178,6 +199,14 @@ pub enum StoreRequest {
     DeleteDatabase {
         database: String,
     },
+    /// Version 2. Ask the browser to exempt this origin's storage from best-effort eviction (navigator.storage.persist). The pack never asks on its own; when to ask is the engine's decision.
+    Persist,
+    /// Version 2. Whether this origin's storage is already persistent (navigator.storage.persisted).
+    Persisted,
+    /// Version 2. The browser's own approximation of this origin's usage and quota (navigator.storage.estimate). Advisory only.
+    Estimate,
+    /// Version 2. Classify whether IndexedDB is usable here, by opening and deleting a probe database inside the namespace.
+    Availability,
 }
 
 /// Every outcome the engine must handle; the pack retries nothing.
@@ -189,6 +218,8 @@ pub enum StoreResult {
         upgraded_from: i64,
         /// The size limits in force. Present whenever the pack was registered with options (version 2).
         limits: Option<StoreLimits>,
+        /// Whether this open created the database (it did not exist before). Present in version 2. A database found newly created where the engine's other evidence says it existed was lost: cleared or evicted.
+        created: Option<bool>,
     },
     /// The stored database is newer than the version asked for: this page is out of date.
     VersionConflict {
@@ -223,6 +254,26 @@ pub enum StoreResult {
     },
     /// The engine cancelled the request. A transaction cancelled while running is aborted, so nothing in it was applied.
     Cancelled,
+    /// The answer to persist. A refusal, or a rejected promise, is granted false.
+    Persisted {
+        granted: bool,
+    },
+    /// The answer to persisted: whether storage is persistent now.
+    Persistence {
+        persistent: bool,
+    },
+    /// The answer to estimate: non-negative byte counts the browser approximates. A count the browser did not report is absent, never zero.
+    Estimate {
+        usage: Option<i64>,
+        quota: Option<i64>,
+    },
+    /// The answer to availability. reason is an exception name only, for Refused and Broken.
+    Availability {
+        availability: AvailabilityClass,
+        reason: Option<String>,
+    },
+    /// This browser has no such API (for example no navigator.storage.persist): never reported as a refusal.
+    Unsupported,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -231,6 +282,10 @@ pub enum StoreFact {
     VersionChanged {
         database: String,
         new_version: i64,
+    },
+    /// Version 2. The browser closed this page's connection abnormally: the origin's storage was cleared or evicted while it was open. The pack does not reopen; later requests on it are NotOpen until the engine opens it again.
+    ConnectionLost {
+        database: String,
     },
 }
 
@@ -378,6 +433,10 @@ pub fn decode_operation_result(value: &Value, path: &str) -> Result<OperationRes
     }
 }
 
+pub fn decode_availability_class(value: &Value, path: &str) -> Result<AvailabilityClass, DecodeError> {
+    wire::enumeration(value, path, &[("Available", AvailabilityClass::Available), ("Missing", AvailabilityClass::Missing), ("Refused", AvailabilityClass::Refused), ("Broken", AvailabilityClass::Broken)])
+}
+
 pub fn decode_abort_reason(value: &Value, path: &str) -> Result<AbortReason, DecodeError> {
     wire::enumeration(value, path, &[("conflict", AbortReason::Conflict), ("constraint", AbortReason::Constraint), ("invalidKey", AbortReason::InvalidKey), ("quota", AbortReason::Quota), ("unknownStore", AbortReason::UnknownStore), ("other", AbortReason::Other)])
 }
@@ -413,6 +472,26 @@ pub fn decode_store_request(value: &Value, path: &str) -> Result<StoreRequest, D
             let f_database = wire::required(props, path, "database", |v0: &Value, p0: &str| wire::string(v0, p0))?;
             Ok(StoreRequest::DeleteDatabase { database: f_database })
         }
+        "persist" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["operation"])?;
+            wire::required(props, path, "operation", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "persist"))?;
+            Ok(StoreRequest::Persist)
+        }
+        "persisted" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["operation"])?;
+            wire::required(props, path, "operation", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "persisted"))?;
+            Ok(StoreRequest::Persisted)
+        }
+        "estimate" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["operation"])?;
+            wire::required(props, path, "operation", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "estimate"))?;
+            Ok(StoreRequest::Estimate)
+        }
+        "availability" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["operation"])?;
+            wire::required(props, path, "operation", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "availability"))?;
+            Ok(StoreRequest::Availability)
+        }
         other => Err(wire::unknown_variant(&format!("{}.operation", path), other)),
     }
 }
@@ -420,12 +499,13 @@ pub fn decode_store_request(value: &Value, path: &str) -> Result<StoreRequest, D
 pub fn decode_store_result(value: &Value, path: &str) -> Result<StoreResult, DecodeError> {
     match wire::tag(value, path, "kind")?.as_str() {
         "Opened" => {
-            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "version", "upgradedFrom", "limits"])?;
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "version", "upgradedFrom", "limits", "created"])?;
             wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Opened"))?;
             let f_version = wire::required(props, path, "version", |v0: &Value, p0: &str| wire::int(v0, p0))?;
             let f_upgraded_from = wire::required(props, path, "upgradedFrom", |v0: &Value, p0: &str| wire::int(v0, p0))?;
             let f_limits = wire::optional(props, path, "limits", |v0: &Value, p0: &str| decode_store_limits(v0, p0))?;
-            Ok(StoreResult::Opened { version: f_version, upgraded_from: f_upgraded_from, limits: f_limits })
+            let f_created = wire::optional(props, path, "created", |v0: &Value, p0: &str| wire::boolean(v0, p0))?;
+            Ok(StoreResult::Opened { version: f_version, upgraded_from: f_upgraded_from, limits: f_limits, created: f_created })
         }
         "VersionConflict" => {
             let props = wire::closed(wire::properties(value, path)?, path, &["kind", "stored"])?;
@@ -490,6 +570,37 @@ pub fn decode_store_result(value: &Value, path: &str) -> Result<StoreResult, Dec
             wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Cancelled"))?;
             Ok(StoreResult::Cancelled)
         }
+        "Persisted" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "granted"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Persisted"))?;
+            let f_granted = wire::required(props, path, "granted", |v0: &Value, p0: &str| wire::boolean(v0, p0))?;
+            Ok(StoreResult::Persisted { granted: f_granted })
+        }
+        "Persistence" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "persistent"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Persistence"))?;
+            let f_persistent = wire::required(props, path, "persistent", |v0: &Value, p0: &str| wire::boolean(v0, p0))?;
+            Ok(StoreResult::Persistence { persistent: f_persistent })
+        }
+        "Estimate" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "usage", "quota"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Estimate"))?;
+            let f_usage = wire::optional(props, path, "usage", |v0: &Value, p0: &str| wire::int(v0, p0))?;
+            let f_quota = wire::optional(props, path, "quota", |v0: &Value, p0: &str| wire::int(v0, p0))?;
+            Ok(StoreResult::Estimate { usage: f_usage, quota: f_quota })
+        }
+        "Availability" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "availability", "reason"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Availability"))?;
+            let f_availability = wire::required(props, path, "availability", |v0: &Value, p0: &str| decode_availability_class(v0, p0))?;
+            let f_reason = wire::optional(props, path, "reason", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+            Ok(StoreResult::Availability { availability: f_availability, reason: f_reason })
+        }
+        "Unsupported" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Unsupported"))?;
+            Ok(StoreResult::Unsupported)
+        }
         other => Err(wire::unknown_variant(&format!("{}.kind", path), other)),
     }
 }
@@ -502,6 +613,12 @@ pub fn decode_store_fact(value: &Value, path: &str) -> Result<StoreFact, DecodeE
             let f_database = wire::required(props, path, "database", |v0: &Value, p0: &str| wire::string(v0, p0))?;
             let f_new_version = wire::required(props, path, "newVersion", |v0: &Value, p0: &str| wire::int(v0, p0))?;
             Ok(StoreFact::VersionChanged { database: f_database, new_version: f_new_version })
+        }
+        "ConnectionLost" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "database"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "ConnectionLost"))?;
+            let f_database = wire::required(props, path, "database", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+            Ok(StoreFact::ConnectionLost { database: f_database })
         }
         other => Err(wire::unknown_variant(&format!("{}.kind", path), other)),
     }
@@ -554,6 +671,15 @@ pub fn encode_operation_result(value: &OperationResult) -> Value {
     }
 }
 
+pub fn encode_availability_class(value: &AvailabilityClass) -> Value {
+    match value {
+        AvailabilityClass::Available => wire::of_string("Available"),
+        AvailabilityClass::Missing => wire::of_string("Missing"),
+        AvailabilityClass::Refused => wire::of_string("Refused"),
+        AvailabilityClass::Broken => wire::of_string("Broken"),
+    }
+}
+
 pub fn encode_abort_reason(value: &AbortReason) -> Value {
     match value {
         AbortReason::Conflict => wire::of_string("conflict"),
@@ -571,12 +697,16 @@ pub fn encode_store_request(value: &StoreRequest) -> Value {
         StoreRequest::Transact { database: f_database, mode: f_mode, operations: f_operations } => wire::of_object(vec![Some(("operation", wire::of_string("transact"))), Some(("database", wire::of_string(f_database))), Some(("mode", encode_transaction_mode(f_mode))), Some(("operations", wire::of_list(f_operations, |x0| encode_operation(x0))))]),
         StoreRequest::Close { database: f_database } => wire::of_object(vec![Some(("operation", wire::of_string("close"))), Some(("database", wire::of_string(f_database)))]),
         StoreRequest::DeleteDatabase { database: f_database } => wire::of_object(vec![Some(("operation", wire::of_string("deleteDatabase"))), Some(("database", wire::of_string(f_database)))]),
+        StoreRequest::Persist => wire::of_object(vec![Some(("operation", wire::of_string("persist")))]),
+        StoreRequest::Persisted => wire::of_object(vec![Some(("operation", wire::of_string("persisted")))]),
+        StoreRequest::Estimate => wire::of_object(vec![Some(("operation", wire::of_string("estimate")))]),
+        StoreRequest::Availability => wire::of_object(vec![Some(("operation", wire::of_string("availability")))]),
     }
 }
 
 pub fn encode_store_result(value: &StoreResult) -> Value {
     match value {
-        StoreResult::Opened { version: f_version, upgraded_from: f_upgraded_from, limits: f_limits } => wire::of_object(vec![Some(("kind", wire::of_string("Opened"))), Some(("version", wire::of_int(*f_version))), Some(("upgradedFrom", wire::of_int(*f_upgraded_from))), (f_limits).as_ref().map(|x0| ("limits", encode_store_limits(x0)))]),
+        StoreResult::Opened { version: f_version, upgraded_from: f_upgraded_from, limits: f_limits, created: f_created } => wire::of_object(vec![Some(("kind", wire::of_string("Opened"))), Some(("version", wire::of_int(*f_version))), Some(("upgradedFrom", wire::of_int(*f_upgraded_from))), (f_limits).as_ref().map(|x0| ("limits", encode_store_limits(x0))), (f_created).as_ref().map(|x0| ("created", wire::of_bool(*x0)))]),
         StoreResult::VersionConflict { stored: f_stored } => wire::of_object(vec![Some(("kind", wire::of_string("VersionConflict"))), Some(("stored", wire::of_int(*f_stored)))]),
         StoreResult::SchemaMismatch { problems: f_problems } => wire::of_object(vec![Some(("kind", wire::of_string("SchemaMismatch"))), Some(("problems", wire::of_list(f_problems, |x0| wire::of_string(x0))))]),
         StoreResult::Blocked => wire::of_object(vec![Some(("kind", wire::of_string("Blocked")))]),
@@ -588,12 +718,18 @@ pub fn encode_store_result(value: &StoreResult) -> Value {
         StoreResult::InvalidRequest { problem: f_problem } => wire::of_object(vec![Some(("kind", wire::of_string("InvalidRequest"))), Some(("problem", wire::of_string(f_problem)))]),
         StoreResult::Unavailable { reason: f_reason } => wire::of_object(vec![Some(("kind", wire::of_string("Unavailable"))), Some(("reason", wire::of_string(f_reason)))]),
         StoreResult::Cancelled => wire::of_object(vec![Some(("kind", wire::of_string("Cancelled")))]),
+        StoreResult::Persisted { granted: f_granted } => wire::of_object(vec![Some(("kind", wire::of_string("Persisted"))), Some(("granted", wire::of_bool(*f_granted)))]),
+        StoreResult::Persistence { persistent: f_persistent } => wire::of_object(vec![Some(("kind", wire::of_string("Persistence"))), Some(("persistent", wire::of_bool(*f_persistent)))]),
+        StoreResult::Estimate { usage: f_usage, quota: f_quota } => wire::of_object(vec![Some(("kind", wire::of_string("Estimate"))), (f_usage).as_ref().map(|x0| ("usage", wire::of_int(*x0))), (f_quota).as_ref().map(|x0| ("quota", wire::of_int(*x0)))]),
+        StoreResult::Availability { availability: f_availability, reason: f_reason } => wire::of_object(vec![Some(("kind", wire::of_string("Availability"))), Some(("availability", encode_availability_class(f_availability))), (f_reason).as_ref().map(|x0| ("reason", wire::of_string(x0)))]),
+        StoreResult::Unsupported => wire::of_object(vec![Some(("kind", wire::of_string("Unsupported")))]),
     }
 }
 
 pub fn encode_store_fact(value: &StoreFact) -> Value {
     match value {
         StoreFact::VersionChanged { database: f_database, new_version: f_new_version } => wire::of_object(vec![Some(("kind", wire::of_string("VersionChanged"))), Some(("database", wire::of_string(f_database))), Some(("newVersion", wire::of_int(*f_new_version)))]),
+        StoreFact::ConnectionLost { database: f_database } => wire::of_object(vec![Some(("kind", wire::of_string("ConnectionLost"))), Some(("database", wire::of_string(f_database)))]),
     }
 }
 
@@ -667,6 +803,16 @@ pub fn serialize_operation_result(value: &OperationResult) -> String {
     encode_operation_result(value).to_string()
 }
 
+/// Parses untrusted JSON text into a AvailabilityClass, or says where and why it is not one.
+pub fn parse_availability_class(json: &str) -> Result<AvailabilityClass, DecodeError> {
+    wire::parse(json, decode_availability_class)
+}
+
+/// Serializes a AvailabilityClass to wire JSON text.
+pub fn serialize_availability_class(value: &AvailabilityClass) -> String {
+    encode_availability_class(value).to_string()
+}
+
 /// Parses untrusted JSON text into a AbortReason, or says where and why it is not one.
 pub fn parse_abort_reason(json: &str) -> Result<AbortReason, DecodeError> {
     wire::parse(json, decode_abort_reason)
@@ -717,6 +863,7 @@ pub fn conformance_round_trip(type_name: &str, value: &Value) -> Option<Result<V
         "KeyRange" => Some(decode_key_range(value, "$").map(|decoded| encode_key_range(&decoded))),
         "Operation" => Some(decode_operation(value, "$").map(|decoded| encode_operation(&decoded))),
         "OperationResult" => Some(decode_operation_result(value, "$").map(|decoded| encode_operation_result(&decoded))),
+        "AvailabilityClass" => Some(decode_availability_class(value, "$").map(|decoded| encode_availability_class(&decoded))),
         "AbortReason" => Some(decode_abort_reason(value, "$").map(|decoded| encode_abort_reason(&decoded))),
         "StoreRequest" => Some(decode_store_request(value, "$").map(|decoded| encode_store_request(&decoded))),
         "StoreResult" => Some(decode_store_result(value, "$").map(|decoded| encode_store_result(&decoded))),

@@ -44,6 +44,19 @@ exhaustive lists.
 - All three are version 2 only. A version 1 registration refuses them as a
   malformed request, as 0.7.x did.
 
+### Added — durability and availability evidence (WI-0159, LCP-061..064)
+
+- `persist`, `persisted` and `estimate` over `navigator.storage`, answered
+  `Persisted { granted }`, `Persistence { persistent }`,
+  `Estimate { usage?, quota? }` or `Unsupported`. The pack never asks for
+  persistence on its own.
+- `availability` answers `Available`, `Missing`, `Refused` or `Broken`, with
+  the exception name only, from a probe database inside the namespace.
+- `Opened` gains `created`, and the new fact `ConnectionLost { database }`
+  reports a connection the browser closed under the page (storage cleared or
+  evicted). The pack never reopens on its own.
+- All version 2 only.
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no
