@@ -170,7 +170,12 @@
     "./renderer": {
       "types": "./dist/renderer/index.d.ts",
       "import": "./dist/renderer/index.js"
-    }
+    },
+    "./routing": {
+      "types": "./dist/routing/index.d.ts",
+      "import": "./dist/routing/index.js"
+    },
+    "./contract/routes.schema.json": "./contract/routes.schema.json"
   },
   "bin": {
     "limen": "./bin/limen.js",
@@ -181,6 +186,7 @@
     "!dist/main.*",
     "bin",
     "runtimes",
+    "contract/routes.schema.json",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",

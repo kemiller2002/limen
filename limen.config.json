@@ -3,6 +3,7 @@
   "boundary": {
     "engine": [
       "src/engine",
+      "src/routing",
       "libraries",
       "site/fsharp/Limen.Site.Engine",
       "site/fsharp/federation/Limen.Federation.Source.Engine",

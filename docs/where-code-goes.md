@@ -205,6 +205,7 @@ in two.
 | `host-adapter` | `src/hosts/**` | optional group `hosts-renderers` |
 | `renderer` | `src/renderer/**` | optional group `hosts-renderers` |
 | `tooling` | `src/tooling/**` | optional group `tooling-conformance` |
+| `engine-library` | `src/routing/**` | optional group `engine-libraries` (pure engine-side code, imports nothing else) |
 
 Core is exactly the files the manifest lists. A new file in a Core directory
 fails the check; Core imports only Core; an optional layer imports only the

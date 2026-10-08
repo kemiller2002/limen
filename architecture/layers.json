@@ -48,6 +48,16 @@
       ]
     },
     {
+      "name": "engine-library",
+      "doc": "Engine libraries shipped in the npm package (src/routing: @echelon-foundry/limen/routing). Application meaning as pure functions an engine calls; no browser mechanism, and no import of Core, the kernel, a pack or another layer. Engine authority is limited by architecture/boundary-rules.json, like libraries/**.",
+      "paths": [
+        "src/routing/**"
+      ],
+      "mayImport": [
+        "engine-library"
+      ]
+    },
+    {
       "name": "package-facade",
       "doc": "The npm package's root entrypoint. Capability packs, federation and the reference engine are exported from their own subpaths, never from here.",
       "paths": [

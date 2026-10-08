@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kemiller2002/limen/blob/main/contract/routes.schema.json",
+  "title": "echelon.routes/v1 — a Limen application's route inventory",
+  "description": "The URL space of an application, as .echelon/routes.json (LCP-107, LCP-108). Rendered by the Limen routing libraries (TypeScript renderRouteInventory, F# Inventory.render), byte-identical between them: keys sorted by UTF-16 code unit, two-space indentation, a final newline. Praxis (praxis foundations verify) and Conditor validate it without running the application. Changes within v1 are additive only. Validators accept unknown properties, so a document from a later v1 library still validates under an earlier v1 schema.",
+  "type": "object",
+  "required": [
+    "schema",
+    "mode",
+    "home",
+    "signIn",
+    "notFound",
+    "routes",
+    "legacy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "echelon.routes/v1"
+    },
+    "mode": {
+      "description": "Where the routed location lives: the fragment (#/path?query, the default for static hosts) or the document path and query.",
+      "enum": [
+        "hash",
+        "path"
+      ]
+    },
+    "home": {
+      "$ref": "#/$defs/routeName",
+      "description": "The home route: where a refused return target and the way home lead."
+    },
+    "signIn": {
+      "$ref": "#/$defs/optionalRouteName",
+      "description": "The sign-in route, which carries the return target as its returnTo query parameter."
+    },
+    "notFound": {
+      "$ref": "#/$defs/optionalRouteName",
+      "description": "The route whose match is the NotFound outcome, usually a top-level {*rest}."
+    },
+    "routes": {
+      "description": "Every destination that is not a redirect, in table order.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/route"
+      }
+    },
+    "legacy": {
+      "description": "Every redirect: legacy entries (legacy-1, legacy-2, …) and redirect routes of the table. Never produced when building a location.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/redirect"
+      }
+    }
+  },
+  "$defs": {
+    "routeName": {
+      "description": "A destination's full name: its chain's names joined by '.'.",
+      "type": "string",
+      "minLength": 1
+    },
+    "optionalRouteName": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/routeName"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "pattern": {
+      "description": "'/' followed by the chain's segments: literals, {name:type} parameters and a final {*name} wildcard.",
+      "type": "string",
+      "pattern": "^/"
+    },
+    "parameter": {
+      "type": "object",
+      "required": [
+        "name",
+        "in",
+        "type",
+        "required",
+        "default",
+        "values"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "in": {
+          "enum": [
+            "path",
+            "query"
+          ]
+        },
+        "type": {
+          "enum": [
+            "string",
+            "int",
+            "bool",
+            "date",
+            "month",
+            "enum",
+            "set"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {
+          "description": "The value reported when the key is absent and omitted from the canonical form, as JSON (a date YYYY-MM-DD and a month YYYY-MM as text, a set as a sorted array), or null.",
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "values": {
+          "description": "The values of an enum or set; null otherwise, and for a set that allows any non-empty member.",
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": [
+        "name",
+        "pattern",
+        "params",
+        "guards",
+        "requires",
+        "returnTarget"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/routeName"
+        },
+        "pattern": {
+          "$ref": "#/$defs/pattern"
+        },
+        "params": {
+          "description": "Path parameters, then query parameters, parent first, in declaration order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        },
+        "guards": {
+          "description": "The guard names along the chain, outermost first. A guard decides the interface, never access.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires": {
+          "description": "Resource keys the engine loads before rendering, the union along the chain.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "returnTarget": {
+          "description": "Whether a sign-in may return here (never the sign-in or not-found route).",
+          "type": "boolean"
+        }
+      }
+    },
+    "redirect": {
+      "type": "object",
+      "required": [
+        "name",
+        "pattern",
+        "to",
+        "params"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/routeName"
+        },
+        "pattern": {
+          "$ref": "#/$defs/pattern"
+        },
+        "to": {
+          "$ref": "#/$defs/routeName"
+        },
+        "params": {
+          "description": "The target's parameters: '{source}' copies a parameter of the pattern; anything else is literal.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
