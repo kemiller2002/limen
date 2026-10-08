@@ -16,6 +16,40 @@ exhaustive lists.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-10-08
+
+Durable structured storage for F# engines: the IndexedDB store pack gains
+`limen.store` version 2 (namespaces, size limits, compound keys, `count`,
+`deleteRange`, durability evidence), and three F# packages ship as attested
+release assets, installed through Conditor. Existing consumers are unchanged:
+`storeCapability()` without options still offers version 1 with 0.7.x's
+fingerprint (see Compatibility).
+
+### Manual iPad Safari checklist (OQ-LIMEN-IDB-006)
+
+CI runs every store page in Playwright WebKit on Linux, which is WebKit's
+IndexedDB engine but not iOS storage policy. Before announcing a release, run
+this on an iPad with current Safari against a page that registers
+`storeCapability({ namespace })` (for example a consumer's GitHub Pages
+build), and record the iPadOS and Safari versions with the result:
+
+1. **Open.** First load opens the database: `Opened { created: true }`, and
+   `availability` is `Available`.
+2. **Write.** A `put` commits, and a `query` returns it.
+3. **Reload.** After a full reload the record is still there, and the open
+   answers `created: false`.
+4. **Two tabs.** With the page in two tabs, an upgrade in one makes the other
+   hear `VersionChanged`, and a stale `putIf` in either aborts as `conflict`.
+5. **Private mode.** In a private tab, `availability` answers a class
+   (`Available` or `Refused`), never an exception, and the page says what it
+   will and will not keep.
+6. **Persistence.** `persisted` and `estimate` answer a value or
+   `Unsupported`; nothing prompts at first load.
+
+iOS's eviction of script-writable storage after seven days without use is
+not testable on demand; it is detected (`Opened { created }` against the
+engine's own evidence, `ConnectionLost`), not tested.
+
 ### Added — store pack version 2: application namespaces and size limits (WI-0157, LCP-048, LCP-050)
 
 - `storeCapability({ namespace, limits? })` registers the IndexedDB store pack
@@ -132,7 +166,7 @@ exhaustive lists.
   1 MB snapshot save. The query budget rises to 52 ms, because WebKit's p95
   is 26 ms, above the provisional 25 ms.
 - The F# store package adds 94,570 bytes brotli to a full-trimmed
-  WebAssembly publish and raises no trim warning.
+  WebAssembly publish and raises no trim warning beyond the declared IL2040.
 
 ### Compatibility
 
@@ -146,6 +180,18 @@ exhaustive lists.
 
 ### Documentation
 
+- **What to store, and what sign-out clears (WI-0166, LCP-068..071).** docs/41
+  says never to store a token or other secret, that a namespace is not a
+  security boundary, and that nothing is encrypted at rest. It sets out what
+  sign-out clears under `sharedDevicePolicy` `ask` and `discardOnSignOut`: an
+  account's read cache is kept only when, under `ask`, the person keeps their
+  unsent changes (OQ-LIMEN-IDB-002). It also says that the offline-start read
+  cache is Arca's, that a second tab takes over rather than forwarding
+  (OQ-LIMEN-IDB-001), and to ask for persistence after the first offline
+  write (OQ-LIMEN-IDB-004).
+- **Installing the F# packages through Conditor (WI-0166, LCP-080).** The
+  packages are the `limen-fsharp` system in echelon-registry: declare it in
+  `conditor.json` and run `conditor upgrade --current`.
 - **Requirements for durable IndexedDB storage from F# engines (WI-0156, LCP-018).**
   [docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
   states LCP-043..087, extending the store pack. The requirements cover:
@@ -155,8 +201,8 @@ exhaustive lists.
   - Arca's IndexedDB queue and read-cache adapters.
 
   DF-LIMEN-2026-0005 records where the adapters live, the fallback policy and
-  that encryption is out of scope. WI-0157..WI-0166 slice the build. Nothing
-  is implemented yet.
+  that encryption is out of scope. WI-0157..WI-0166 slice the build, and this
+  release implements it; Arca's adapters follow in Arca.
 
 ## [0.7.1] — 2026-10-06
 
@@ -1189,7 +1235,8 @@ Pre-release development, beginning at `0.2.1`: the protocol, the browser kernel,
 the reference engine, the six original examples, the documentation set, and the
 architecture and documentation checks. See the repository history.
 
-[Unreleased]: https://github.com/kemiller2002/limen/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/kemiller2002/limen/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/kemiller2002/limen/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/kemiller2002/limen/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/kemiller2002/limen/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/kemiller2002/limen/compare/v0.5.1...HEAD

@@ -631,8 +631,9 @@ already-published version and an existing release are each left alone. On the
 dispatch path, npm's provenance names the `main` commit the workflow ran from;
 the tag names the released commit.
 
-**F# packages.** The same run packs `EchelonFoundry.Limen.Contract` and
-`EchelonFoundry.Limen.Guest` at the npm version (lockstep), proves them in a
+**F# packages.** The same run packs `EchelonFoundry.Limen.Contract`,
+`EchelonFoundry.Limen.Guest` and `EchelonFoundry.Limen.Store` at the npm
+version (lockstep), proves them in a
 clean room (`npm run pack:nuget`, `npm run check:nuget`), attests them with
 Sigstore build provenance, and attaches them, with `checksums.txt`, to the
 GitHub release. It then downloads them back and verifies each checksum and
@@ -645,7 +646,13 @@ for f in *.nupkg checksums.txt; do gh attestation verify "$f" --repo kemiller200
 ```
 
 Consumers install them through Conditor's NuGet release-asset feed, never a
-public feed.
+public feed: declare the `limen-fsharp` component in `conditor.json` and run
+`conditor upgrade --current`
+([docs/41](https://github.com/kemiller2002/limen/blob/main/docs/41-indexeddb.md#installing-them-through-conditor-lcp-080)).
+
+**iPad Safari.** CI runs the store pack in Playwright WebKit, which is not iOS
+storage policy. Each release's notes carry a manual iPad Safari checklist;
+run it on a device before announcing the release.
 
 Changes by version: [CHANGELOG.md](https://github.com/kemiller2002/limen/blob/main/CHANGELOG.md).
 

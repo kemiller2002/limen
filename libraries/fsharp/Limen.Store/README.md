@@ -28,3 +28,13 @@ The only effect is the `StoreExecutor` you supply (`StoreRequest ->
 Async<StoreResult>`): the engine's Limen request loop in the browser, or an
 in-memory fake in tests. Depends on `EchelonFoundry.Limen.Contract` of the
 same version, FSharp.Core and the BCL.
+
+The store is readable by any script on the origin and is not encrypted at
+rest: never store a token or other secret in it. `FakeStore` is the
+in-memory `limen.store` for tests and passes the same conformance vectors as
+the browser pack.
+
+Install through Conditor's NuGet release-asset feed, never a public feed:
+declare the `limen-fsharp` component in `conditor.json` and run
+`conditor upgrade --current`. See
+[docs/41](https://github.com/kemiller2002/limen/blob/main/docs/41-indexeddb.md#installing-them-through-conditor-lcp-080).

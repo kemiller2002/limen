@@ -46,6 +46,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "LCP-078: replace the provisional budgets with WI-0165's measured ones"
+    EXE-20261008T180641411Z-780614cf:
+      operations: [modified]
+      at: 2026-10-08T18:15:16.422Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "LCP-080: record how the NuGet artifacts reach Conditor's feed (the limen-fsharp registry system)"
 ---
 
 # Durable IndexedDB storage for F# engines, and the Arca offline-queue adapter
@@ -1382,6 +1392,17 @@ Each release MUST be recorded in echelon-registry
 digests, and selected in `echelon-current`. Consumers (Arca, Chrona) MUST
 obtain the F# packages through Conditor's NuGet release-asset feed
 (`vendor/nuget`, a `limen.lock`), never from a public feed.
+
+### Resolution (WI-0166, 0.8.0)
+Conditor's feed installs only a release whose distribution class is
+`nuget-library`, and Limen's record is a `web-package` (npm). As with Summa's
+contracts (`summa-contracts`), the NuGet artifacts are therefore recorded as a
+second registry system, **`limen-fsharp`**: the same repository, tag and
+version, in `releases/limen-fsharp/<version>.release.json`, with every
+`.nupkg`'s digest. `releases/limen/<version>.release.json` keeps the npm
+package. Both are selected in `echelon-current`, `limen-fsharp` as an optional
+project binding. The consumer's lock is `vendor/nuget/limen-fsharp.lock`,
+named after the system. No Conditor change was needed.
 
 ### Rationale
 This is the same supply chain Arca's packages already use in Chrona
