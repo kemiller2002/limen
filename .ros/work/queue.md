@@ -169,9 +169,9 @@
 | WI-0164 | IndexedDB 8: F# in-memory store fake with the same contract, and the F# conformance runner over the shared vectors (LCP-074, LCP-075) | complete | limen, indexeddb, lcp-018 | medium |
 | WI-0165 | IndexedDB 9: store performance baseline and budgets in Chromium and WebKit (LCP-078) | complete | limen, indexeddb, lcp-018 | medium |
 | WI-0166 | IndexedDB 10: release Limen 0.8.0 with the F# store packages, echelon-registry entry and Conditor consumption proof; consumer and privacy guidance in docs/41 (LCP-068, LCP-070, LCP-071, LCP-079, LCP-080) | complete | limen, indexeddb, lcp-018 | medium |
-| WI-0167 | URL state 0: requirements, decision record and backlog for navigable state in the URL (routing / URL-state module, Limen 0.9.0) | active |  | high |
-| WI-0168 | URL state 1: routing semantics v2 and the F# library (typed definitions, view parameter types, defaults and canonical form, refine, outcomes, typed codec, legacy entries, reserved names, return targets, locations, links, inventory) | captured |  | high |
-| WI-0169 | URL state 2: the TypeScript routing library @echelon-foundry/limen/routing and the route inventory schema | captured |  | high |
-| WI-0170 | URL state 3: browser proof on a GitHub-Pages-like static server in Chromium and WebKit; examples/08-routing on the module | captured |  | high |
-| WI-0171 | URL state 4: EchelonFoundry.Limen.Routing as an attested F# package; docs/31 guidance (privacy, hash mode, outcomes, sign-in) | captured |  | high |
-| WI-0172 | URL state 5: release Limen 0.9.0 with the routing module, the echelon-registry entry and verification | captured |  | high |
+| WI-0167 | URL state 0: requirements, decision record and backlog for navigable state in the URL (routing / URL-state module, Limen 0.9.0) | complete | limen, routing, requirements, lcp-005 | high |
+| WI-0168 | URL state 1: routing semantics v2 and the F# library (typed definitions, view parameter types, defaults and canonical form, refine, outcomes, typed codec, legacy entries, reserved names, return targets, locations, links, inventory) | captured | limen, routing, url-state, lcp-005 | high |
+| WI-0169 | URL state 2: the TypeScript routing library @echelon-foundry/limen/routing and the route inventory schema | captured | limen, routing, url-state, lcp-005 | high |
+| WI-0170 | URL state 3: browser proof on a GitHub-Pages-like static server in Chromium and WebKit; examples/08-routing on the module | captured | limen, routing, url-state, lcp-005 | high |
+| WI-0171 | URL state 4: EchelonFoundry.Limen.Routing as an attested F# package; docs/31 guidance (privacy, hash mode, outcomes, sign-in) | captured | limen, routing, url-state, lcp-005 | high |
+| WI-0172 | URL state 5: release Limen 0.9.0 with the routing module, the echelon-registry entry and verification | captured | limen, routing, url-state, lcp-005 | high |

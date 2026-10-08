@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T19:04:45.000Z",
+  "updatedAt": "2026-10-08T19:12:39.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3991,10 +3991,23 @@
     {
       "id": "WI-0167",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-08T19:04:45.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md"
+        },
+        {
+          "type": "implementation",
+          "path": "research/decisions/DF-LIMEN-2026-0006--url-state-hash-routing-and-route-inventory.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-10-08T19:12:39.000Z",
       "telemetryExecutionIds": [
         "EXE-20261008T190446218Z-5a37c83e"
       ],
@@ -4017,7 +4030,9 @@
           "status": "verified",
           "mechanism": "git-remote-observation"
         }
-      }
+      },
+      "completedAt": "2026-10-08T19:12:39.000Z",
+      "conclusion": "Requirements-only item (started as a task): the deliverables are the requirements document and decision record, verified by npm run check:docs; no source changed."
     }
   ]
 }
