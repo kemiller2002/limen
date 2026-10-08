@@ -16,4 +16,6 @@ pack, including the IndexedDB store (`Limen.Contract.Store`).
   ships the matching browser packs.
 
 Install through Conditor's NuGet release-asset feed, never a public feed:
-see [docs/41](https://github.com/kemiller2002/limen/blob/main/docs/41-indexeddb.md).
+declare the `limen-fsharp` component in `conditor.json` and run
+`conditor upgrade --current`. See
+[docs/41](https://github.com/kemiller2002/limen/blob/main/docs/41-indexeddb.md#installing-them-through-conditor-lcp-080).

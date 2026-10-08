@@ -86,13 +86,13 @@ and the sizes, and the database is not touched. `Opened { limits }` reports
 the limits in force, so the engine can plan without guessing. The browser's
 own quota failure stays `Aborted { reason: quota }`, with nothing applied.
 
-**What comes next.** The requirements for making this store durable and
-consumable from F# engines are in
-[the IndexedDB durable-storage requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
-(LCP-043..087, being built in WI-0157..WI-0166; namespaces and size limits are in). They cover application namespaces, compound key
-paths, size limits, persistence and eviction evidence, a functional F# API
-with an in-memory fake, WebKit runs, and Arca's IndexedDB adapters for its
-offline queue and read cache. The decisions are in
+**Where this came from.** The store's durable-storage requirements are
+[LCP-043..087](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md),
+built in WI-0157..WI-0166 and released in 0.8.0: application namespaces,
+compound key paths, size limits, persistence and eviction evidence, a
+functional F# API with an in-memory fake, WebKit runs and measured budgets.
+Arca's IndexedDB adapters for its offline queue and read cache build on them
+and ship from Arca. The decisions are in
 [DF-LIMEN-2026-0005](https://github.com/kemiller2002/limen/blob/main/research/decisions/DF-LIMEN-2026-0005--indexeddb-adapter-placement-fallback-and-encryption-scope.md).
 
 ## The engine declares the schema; the pack enforces only what is declared
@@ -237,6 +237,73 @@ What to do then is the engine's decision: merge, ask the user, or retry. A
 revision field inside the record makes this cheap, but the pack does not
 require one.
 
+## What to store, and what sign-out clears (LCP-068..071)
+
+The store is durable, readable by any script on the origin, and not
+encrypted. Plan for all three.
+
+**Never store a secret (LCP-068).** No access token, refresh token, password,
+API key or session cookie goes in the store. Fides keeps tokens in memory or
+per tab; Arca's queue holds no credential. A value in IndexedDB outlives the
+tab, the sign-out (unless cleared) and the browser restart, and any script on
+the origin can read it. The pack's errors and diagnostics, and the F#
+library's `StoreError` and `StoreDiagnostics`, carry names, counts and sizes,
+never a stored value.
+
+**A namespace is not a boundary (LCP-069).** See
+[Application namespaces](#application-namespaces-lcp-048): applications that
+must not see each other's data need different origins.
+
+**Nothing is encrypted at rest (LCP-071).** Limen does not encrypt stored
+values and no API name suggests it does. A key usable after a reload would
+itself be stored on the same origin, which protects nothing against
+same-origin script, or derived from a memory-only session, which makes
+offline data unreadable after a reload. Disk encryption is the operating
+system's job. Values are opaque JSON to the pack, so an encrypting codec can
+be added later in the F# layer without a contract change.
+
+**Sign-out (LCP-070).** The application declares a `sharedDevicePolicy`,
+`ask` (the default) or `discardOnSignOut`, and passes it to the adapter; the
+adapter never chooses one. When unsent changes exist at sign-out, the
+application says how many and offers:
+
+| Option | `ask` | `discardOnSignOut` |
+| --- | --- | --- |
+| Send them now, when the provider is reachable | offered | offered |
+| Keep them on this device for that account | offered | not offered |
+| Discard them, after a confirmation that names how many | offered | offered |
+
+- Unsent changes belong to the account that made them, and are never sent
+  with another account's credential.
+- The account's read cache and other rebuildable data are cleared at
+  sign-out, with one exception: under `ask`, when the person keeps their
+  unsent changes, that account's cache is kept with them, so the account can
+  open offline and see its changes in context (OQ-LIMEN-IDB-002). Under
+  `discardOnSignOut` the cache is always cleared.
+- Non-secret device preferences are kept under both policies.
+- Discarding uses `deleteRange` and is recorded in diagnostics. Nothing is
+  discarded silently, and nothing is left behind without the person knowing.
+- "Clear this device" deletes every database in the application's namespace.
+  Its answer is typed: `Blocked` while another tab holds a connection, never
+  a silent partial clear.
+
+**The offline-start read cache is Arca's (LCP-082..087).** Limen stays
+generic and knows nothing of caches, tokens or records. Arca's read-cache
+port and its `EchelonFoundry.Arca.Limen` adapter, which follow this release,
+keep each entry with the account and partition it was read for and the change
+token it reflects, and clear one account at sign-out with a single
+`deleteRange` over `[account, …]`, a compound-key prefix. A cached value is
+never the basis of a write decision. The freshness rules are Arca's
+(DF-LIMEN-2026-0005, section 4).
+
+**One tab owns the unsent changes.** A second tab of the same application is
+told that another tab holds this device's unsent changes. It can take over,
+which fences the first tab, and it writes directly while online. There is no
+forwarding between tabs in this version (OQ-LIMEN-IDB-001).
+
+**Ask for persistence after the first offline write**, never at first load
+(OQ-LIMEN-IDB-004; see [Durability](#durability-and-availability-evidence-lcp-061064-version-2)).
+
 ## The functional F# API (LCP-045, `EchelonFoundry.Limen.Store`)
 
 [`libraries/fsharp/Limen.Store`](https://github.com/kemiller2002/limen/blob/main/libraries/fsharp/Limen.Store/Store.fs)
@@ -319,7 +386,7 @@ the npm package's version (lockstep, OQ-LIMEN-IDB-005):
 | `EchelonFoundry.Limen.Guest` | The engine's half of the handshake (`Limen.Guest.Handshake.answer`). |
 | `EchelonFoundry.Limen.Store` | The functional store API and the in-memory fake above. |
 
-Both target `net8.0`, are trimmable and reflection-free, and depend on
+All three target `net8.0`, are trimmable and reflection-free, and depend on
 nothing beyond FSharp.Core (9.0.100 or later) and the BCL. An engine selects
 `limen.store` by putting `Limen.Contract.Store.Contract`'s identity in its
 required capabilities. A kernel offering a different fingerprint is refused
@@ -327,12 +394,44 @@ at the handshake, never at the first request.
 
 They ship as **Sigstore-attested GitHub release assets** on the Limen release,
 with `checksums.txt`, the interim channel Arca and Fides use until nuget.org
-Trusted Publishing exists. Consumers install them through Conditor's NuGet
-release-asset feed. `npm run pack:nuget` and `npm run check:nuget` (CI's "F#
-packages" job, and the publish workflow before it attests) pack them, refuse a
-missing or mis-versioned one, and build a consumer from the files alone. That
-consumer selects `limen.store` with the TypeScript pack's fingerprint, has a
-mismatched fingerprint refused, and round-trips a request.
+Trusted Publishing exists. `npm run pack:nuget` and `npm run check:nuget` (CI's
+"F# packages" job, and the publish workflow before it attests) pack them,
+refuse a missing or mis-versioned one, and build a consumer from the files
+alone. That consumer selects `limen.store` with the TypeScript pack's
+fingerprint, has a mismatched fingerprint refused, and round-trips a request.
+
+### Installing them through Conditor (LCP-080)
+
+Consumers (Arca, Chrona) install the packages through Conditor's NuGet
+release-asset feed, never from a public feed. In echelon-registry the npm
+package is the `limen` system (a web package), and the F# packages are the
+`limen-fsharp` system (a NuGet library): the same repository, tag and version,
+recorded with each `.nupkg`'s SHA-256. `echelon-current` selects it as an
+optional project binding, so only a repository that declares it installs it.
+
+1. Declare it in the repository's `conditor.json` at the version the channel
+   selects:
+
+   ```json
+   { "id": "limen-fsharp", "version": "0.8.0", "required": true }
+   ```
+
+2. Run `conditor upgrade --current` (or `conditor init` in a new repository).
+   Conditor downloads each package, refuses any whose SHA-256 differs from the
+   registry's, and writes:
+   - `vendor/nuget/EchelonFoundry.Limen.{Contract,Guest,Store}.0.8.0.nupkg`;
+   - `vendor/nuget/limen-fsharp.lock`, the release, tag and per-package digests;
+   - `NuGet.config`, mapping each `EchelonFoundry.Limen.*` package id to the
+     `echelon-vendor` source only.
+3. Reference the packages by exact version:
+
+   ```xml
+   <PackageReference Include="EchelonFoundry.Limen.Store" Version="0.8.0" />
+   ```
+
+`conditor verify` proves the lock, the package bytes and the mapping. A later
+Limen release moves every exact pin of these package ids with
+`conditor upgrade --current`.
 
 ## Conformance vectors and real tabs (LCP-075, LCP-077)
 
