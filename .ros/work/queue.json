@@ -2298,10 +2298,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-08T07:18:13.319Z",
-      "updatedAt": "2026-10-08T07:18:13.602Z",
+      "updatedAt": "2026-10-08T07:26:15.185Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
