@@ -1,12 +1,11 @@
 {
   "unit": "limen.store",
   "role": "capability",
-  "version": 2,
-  "doc": "Durable structured browser storage over IndexedDB (LCP-018; version 2 adds LCP-043..064). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged. Version 2 is offered by a pack registered with an application namespace (every database name resolves inside it) and serialized-size limits; a pack registered without options still offers version 1, unchanged.",
+  "version": 1,
+  "doc": "Durable structured browser storage over IndexedDB (LCP-018). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged.",
   "types": [
     { "name": "IndexSchema", "kind": "record", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "unique", "type": "bool" }, { "name": "multiEntry", "type": "bool" } ] },
     { "name": "StoreSchema", "kind": "record", "doc": "keyPath names the field that holds each record's key (a dotted path for a nested field).", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "indexes", "type": { "list": "IndexSchema" } } ] },
-    { "name": "StoreLimits", "kind": "record", "doc": "The serialized-size limits this pack enforces, in bytes of UTF-8 JSON: one stored value, and all of one transaction's operations together. A request over either is InvalidRequest before the database is touched.", "fields": [ { "name": "maxValueBytes", "type": "int" }, { "name": "maxTransactionBytes", "type": "int" } ] },
     { "name": "TransactionMode", "kind": "enum", "values": ["readonly", "readwrite"] },
     { "name": "KeyRange", "kind": "record", "doc": "A key is a string, a finite number, or a list of keys. Omitted bounds are open-ended.", "fields": [ { "name": "lower", "type": "json", "optional": true }, { "name": "upper", "type": "json", "optional": true }, { "name": "lowerOpen", "type": "bool" }, { "name": "upperOpen", "type": "bool" } ] },
     {
@@ -51,7 +50,7 @@
       "tag": "kind",
       "doc": "Every outcome the engine must handle; the pack retries nothing.",
       "variants": [
-        { "name": "Opened", "fields": [ { "name": "version", "type": "int" }, { "name": "upgradedFrom", "type": "int", "doc": "The version before this open; equal to version when nothing was upgraded, 0 for a new database." }, { "name": "limits", "type": "StoreLimits", "optional": true, "doc": "The size limits in force. Present whenever the pack was registered with options (version 2)." } ] },
+        { "name": "Opened", "fields": [ { "name": "version", "type": "int" }, { "name": "upgradedFrom", "type": "int", "doc": "The version before this open; equal to version when nothing was upgraded, 0 for a new database." } ] },
         { "name": "VersionConflict", "doc": "The stored database is newer than the version asked for: this page is out of date.", "fields": [ { "name": "stored", "type": "int" } ] },
         { "name": "SchemaMismatch", "doc": "At the stored version, the declared schema and the stored one differ; the connection is not kept. Each problem names a store or index.", "fields": [ { "name": "problems", "type": { "list": "string" } } ] },
         { "name": "Blocked", "doc": "Another page holds an older version open and did not close it; nothing was upgraded. The pack abandons the attempt.", "fields": [] },
@@ -60,7 +59,7 @@
         { "name": "NotOpen", "doc": "transact or close on a database this page has not opened, or whose connection was closed by a version change.", "fields": [] },
         { "name": "Closed", "fields": [] },
         { "name": "DatabaseDeleted", "fields": [] },
-        { "name": "InvalidRequest", "doc": "A malformed schema, key, range or limit, a database name outside the rules of the pack's namespace, or a value or transaction over its size limit, found before touching the database.", "fields": [ { "name": "problem", "type": "string" } ] },
+        { "name": "InvalidRequest", "doc": "A malformed schema, key, range or limit, found before touching the database.", "fields": [ { "name": "problem", "type": "string" } ] },
         { "name": "Unavailable", "doc": "This browser or context has no usable IndexedDB (for example some private modes). The exception's name only.", "fields": [ { "name": "reason", "type": "string" } ] },
         { "name": "Cancelled", "doc": "The engine cancelled the request. A transaction cancelled while running is aborted, so nothing in it was applied.", "fields": [] }
       ]

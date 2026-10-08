@@ -11,16 +11,29 @@
 //
 // Optional: nothing in Core imports this module, and Core's Storage effects
 // (localStorage) are unchanged.
+//
+// Two contract versions (LCP-043). storeCapability(options) registers the
+// pack inside an application namespace with serialized-size limits and offers
+// limen.store version 2. storeCapability() with no options offers version 1
+// with 0.7.x's fingerprint and behaviour, so engines built against 0.7.x keep
+// negotiating. Version 2 is additive: every version 1 request means the same.
 
 import { defineCapability, type CapabilityHost, type CapabilityProvider, type CapabilityRequestContext } from "../../kernel/capabilities.js";
-import { CAPABILITY_OFFER, type AbortReason, type KeyRange, type Operation, type OperationResult, type StoreFact, type StoreRequest, type StoreResult, type StoreSchema } from "./generated/store.js";
+import { CAPABILITY_OFFER, type AbortReason, type KeyRange, type Operation, type OperationResult, type StoreFact, type StoreLimits, type StoreRequest, type StoreResult, type StoreSchema } from "./generated/store.js";
 import { decodeStoreRequest } from "./generated/store.codec.js";
 import { abortReason, atKeyPath, isKey, jsonEqual, requestProblem, schemaProblems, storesOf, type StoredSchema } from "./schema.js";
+import { databaseNameProblem, limitsOf, physicalName, sizeProblem, storeOptionsProblem, type StoreOptions } from "./options.js";
+import { STORE_CAPABILITY_V1 } from "./v1.js";
 
-export { CAPABILITY_OFFER as STORE_CAPABILITY } from "./generated/store.js";
-export type { AbortReason, IndexSchema, KeyRange, Operation, OperationResult, StoreFact, StoreRequest, StoreResult, StoreSchema, TransactionMode } from "./generated/store.js";
+// STORE_CAPABILITY is version 1, what 0.7.x engines select; an engine that
+// uses version 2 selects STORE_CAPABILITY_V2 and its host registers the pack
+// with options.
+export { STORE_CAPABILITY_V1 as STORE_CAPABILITY, STORE_CAPABILITY_V1 } from "./v1.js";
+export { CAPABILITY_OFFER as STORE_CAPABILITY_V2 } from "./generated/store.js";
+export type { AbortReason, IndexSchema, KeyRange, Operation, OperationResult, StoreFact, StoreLimits, StoreRequest, StoreResult, StoreSchema, TransactionMode } from "./generated/store.js";
 export { decodeStoreFact, decodeStoreRequest, decodeStoreResult } from "./generated/store.codec.js";
 export { MAX_QUERY_LIMIT, isKey, jsonEqual, requestProblem, schemaProblems } from "./schema.js";
+export { DEFAULT_LIMITS, MAX_LIMITS, NAMESPACE_SEPARATOR, serializedBytes, storeOptionsProblem, type StoreOptions } from "./options.js";
 
 // The document's own window, with its constructors (indexedDB, IDBKeyRange).
 type View = Window & typeof globalThis;
@@ -84,7 +97,34 @@ const keyRange = (view: View, range: KeyRange | undefined): IDBKeyRange | undefi
 
 type Failure = { readonly reason: AbortReason; readonly operation?: number; readonly current?: unknown };
 
-export const storeCapability = (): CapabilityProvider => {
+// What one registration of the pack is: its contract version, and for
+// version 2 the namespace and limits.
+type Registration =
+  | { readonly kind: "v1" }
+  | { readonly kind: "v2"; readonly namespace: string; readonly limits: StoreLimits }
+  | { readonly kind: "invalid"; readonly problem: string };
+
+const registrationOf = (options: StoreOptions | undefined): Registration => {
+  if (options === undefined) return { kind: "v1" };
+  const problem = storeOptionsProblem(options);
+  return problem === undefined ? { kind: "v2", namespace: options.namespace, limits: limitsOf(options) } : { kind: "invalid", problem };
+};
+
+// Version 2 checks, before the database is touched: names inside the
+// namespace, and the size limits.
+const registrationProblem = (registration: Registration, request: StoreRequest): string | undefined => {
+  switch (registration.kind) {
+    case "v1": return undefined;
+    case "invalid": return `the host registered the store pack with invalid options: ${registration.problem}`;
+    case "v2": return databaseNameProblem(request.database) ?? sizeProblem(request, registration.limits);
+  }
+};
+
+export const storeCapability = (options?: StoreOptions): CapabilityProvider => {
+  const registration = registrationOf(options);
+  // The engine's database name, as the browser stores it.
+  const physical = (name: string): string => (registration.kind === "v2" ? physicalName(registration.namespace, name) : name);
+  const limits = registration.kind === "v2" ? { limits: registration.limits } : {};
   // Owned by this provider instance: its open connections, by database name.
   const connections = new Map<string, IDBDatabase>();
   const wiring: { host?: CapabilityHost<StoreFact> } = {};
@@ -105,7 +145,7 @@ export const storeCapability = (): CapabilityProvider => {
 
   // The stored version of a database that refused an older one.
   const storedVersion = (view: View, name: string): Promise<number> => once((settle) => {
-    const request = view.indexedDB.open(name);
+    const request = view.indexedDB.open(physical(name));
     request.onsuccess = () => { settle(request.result.version); request.result.close(); };
     request.onerror = () => settle(0);
   });
@@ -114,7 +154,7 @@ export const storeCapability = (): CapabilityProvider => {
     forget(request.database);
     return once<StoreResult>((settle) => {
       const state = { from: request.version, abandoned: false, problems: [] as readonly string[] };
-      const opening = view.indexedDB.open(request.database, request.version);
+      const opening = view.indexedDB.open(physical(request.database), request.version);
       opening.onupgradeneeded = (event) => {
         const transaction = opening.transaction;
         if (transaction === null) return;
@@ -138,7 +178,7 @@ export const storeCapability = (): CapabilityProvider => {
           return;
         }
         keep(request.database, database);
-        settle({ kind: "Opened", version: database.version, upgradedFrom: state.from });
+        settle({ kind: "Opened", version: database.version, upgradedFrom: state.from, ...limits });
       };
       opening.onerror = (event) => {
         event.preventDefault();
@@ -240,7 +280,7 @@ export const storeCapability = (): CapabilityProvider => {
   const deleteDatabase = (view: View, name: string): Promise<StoreResult> => {
     forget(name);
     return once((settle) => {
-      const deleting = view.indexedDB.deleteDatabase(name);
+      const deleting = view.indexedDB.deleteDatabase(physical(name));
       deleting.onsuccess = () => settle({ kind: "DatabaseDeleted" });
       deleting.onblocked = () => settle({ kind: "Blocked" });
       deleting.onerror = () => settle({ kind: "Unavailable", reason: nameOf(deleting.error) });
@@ -248,7 +288,7 @@ export const storeCapability = (): CapabilityProvider => {
   };
 
   const perform = async (request: StoreRequest, view: View, signal: AbortSignal): Promise<StoreResult> => {
-    const problem = requestProblem(request);
+    const problem = requestProblem(request) ?? registrationProblem(registration, request);
     if (problem !== undefined) return { kind: "InvalidRequest", problem };
     if (typeof view.indexedDB !== "object" || view.indexedDB === null) return { kind: "Unavailable", reason: "unsupported" };
     try {
@@ -276,7 +316,7 @@ export const storeCapability = (): CapabilityProvider => {
   };
 
   return defineCapability<StoreRequest, StoreResult, StoreFact>({
-    offer: CAPABILITY_OFFER,
+    offer: registration.kind === "v1" ? STORE_CAPABILITY_V1 : CAPABILITY_OFFER,
     decodeRequest: decodeStoreRequest,
     execute,
     activate: (host) => { wiring.host = host; },

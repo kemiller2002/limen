@@ -16,20 +16,83 @@ for a few small values. The store pack is for data sets:
 ```ts
 import { storeCapability } from "@echelon-foundry/limen/capabilities/store";
 
-await new BrowserKernel(transport, document, diagnostics, { capabilities: [storeCapability()] }).start();
+await new BrowserKernel(transport, document, diagnostics, {
+  capabilities: [storeCapability({ namespace: "chrona" })],
+}).start();
 ```
 
-The contract is [`contract/store.contract.json`](../contract/store.contract.json),
+The contract is [`contract/store.contract.json`](https://github.com/kemiller2002/limen/blob/main/contract/store.contract.json),
 with bindings for TypeScript, F#, C# and Rust.
+
+## Two contract versions
+
+| Registration | Offer | Behaviour |
+| --- | --- | --- |
+| `storeCapability({ namespace, limits? })` | `limen.store` **version 2** (`STORE_CAPABILITY_V2`) | Database names resolve inside the namespace; values and transactions are bounded by size; `Opened` reports the limits. Later additions (compound keys, `count`, `deleteRange`, durability evidence) are version 2 only. |
+| `storeCapability()` | `limen.store` **version 1** (`STORE_CAPABILITY`, `STORE_CAPABILITY_V1`) | Exactly 0.7.x: the same fingerprint (`sha256:0ba8d199…`), names used as given, no size limits. |
+
+The handshake accepts a capability only with an identical id, version and
+fingerprint. Keeping version 1 for a pack registered without options means an
+engine built against 0.7.x is never refused after Limen is upgraded. Its
+fingerprint is recomputed in the tests from the frozen 0.7.1 contract,
+[`contract/frozen/store.v1.contract.json`](https://github.com/kemiller2002/limen/blob/main/contract/frozen/store.v1.contract.json).
+Version 2 is additive: every version 1 request means the same thing. To move
+an engine to version 2, select `STORE_CAPABILITY_V2` in its handshake and
+register the pack with options in the same release of the host.
+
+## Application namespaces (LCP-048)
+
+Every application on an origin shares one IndexedDB name space, and GitHub
+Pages project sites (`<owner>.github.io/<repo>`) are all one origin. A
+version 2 host therefore registers the pack with its **application
+namespace**:
+
+- every database name the engine gives is stored as `<namespace>/<name>`;
+- the engine never sees or names that physical name: facts such as
+  `VersionChanged` carry the engine's own name;
+- a name that is empty or contains `/` is `InvalidRequest` before anything is
+  touched, so no request can open, transact on, close or delete a database
+  outside the namespace;
+- a namespace is 1 to 64 letters, digits, `.`, `_` or `-`, starting with a
+  letter or digit. A host that registers an invalid one gets `InvalidRequest`
+  for every request, naming the problem, never a silent default.
+
+**A namespace is not a security boundary (LCP-069).** It keeps well-behaved
+applications apart. Any script on the origin can open every namespace's
+databases directly. Applications that must not see each other's local data
+must be served from different origins. For example, two applications
+published as GitHub Pages project sites of one account share
+`<owner>.github.io` and can read each other's IndexedDB; give one of them a
+custom domain to separate them.
+
+## Size limits (LCP-050)
+
+Quota differs by browser and cannot be produced on demand in Chromium, so the
+pack bounds every request by its serialized size, measured in bytes of UTF-8
+JSON:
+
+| Limit | Default | Hard maximum |
+| --- | --- | --- |
+| one stored value (`put`, `putIf`) | 1 MiB (1,048,576) | 16 MiB |
+| one transaction (all its operations' JSON) | 8 MiB (8,388,608) | 64 MiB |
+
+```ts
+storeCapability({ namespace: "arca", limits: { maxValueBytes: 2 * 1024 * 1024 } })
+```
+
+A request over a limit is `InvalidRequest { problem }`, naming the operation
+and the sizes, and the database is not touched. `Opened { limits }` reports
+the limits in force, so the engine can plan without guessing. The browser's
+own quota failure stays `Aborted { reason: quota }`, with nothing applied.
 
 **What comes next.** The requirements for making this store durable and
 consumable from F# engines are in
-[the IndexedDB durable-storage requirements](requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
-(LCP-043..087, not yet built). They cover application namespaces, compound key
+[the IndexedDB durable-storage requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md)
+(LCP-043..087, being built in WI-0157..WI-0166; namespaces and size limits are in). They cover application namespaces, compound key
 paths, size limits, persistence and eviction evidence, a functional F# API
 with an in-memory fake, WebKit runs, and Arca's IndexedDB adapters for its
 offline queue and read cache. The decisions are in
-[DF-LIMEN-2026-0005](../research/decisions/DF-LIMEN-2026-0005--indexeddb-adapter-placement-fallback-and-encryption-scope.md).
+[DF-LIMEN-2026-0005](https://github.com/kemiller2002/limen/blob/main/research/decisions/DF-LIMEN-2026-0005--indexeddb-adapter-placement-fallback-and-encryption-scope.md).
 
 ## The engine declares the schema; the pack enforces only what is declared
 
@@ -128,6 +191,8 @@ loads none of it.
 | Evidence | Where |
 | --- | --- |
 | Keys, JSON equality, request validation, schema differences; Unavailable; quota (commit-level abort, no operation) and cancellation mid-transaction through a scripted IndexedDB; unknown store; NotOpen; conformance suite | [`test/store.test.ts`](../test/store.test.ts) |
+| Version 2 options; the version 1 offer and its fingerprint recomputed from the frozen 0.7.1 contract; two namespaces on one origin (isolation, a delete that leaves the other intact, the physical name never shown); a separator in a name refused; values at limit−1, limit and limit+1; an over-limit transaction; default limits; invalid options — against an in-memory IndexedDB | [`test/store-namespaces.test.ts`](https://github.com/kemiller2002/limen/blob/main/test/store-namespaces.test.ts) |
+| Version 2 negotiated through the kernel; namespaces `a` and `b` isolated, physical names, a delete confined to its namespace; a value at the limit and one byte over; a second tab's upgrade reported under the engine's own name — in Chromium | [`test/browser/packs/store-namespaces/`](https://github.com/kemiller2002/limen/blob/main/test/browser/packs/store-namespaces/) |
 | Creation; a committed batch with typed results; atomic rollback; upgrade; a unique constraint; schema mismatch; version conflict; a refused `keyPath` change leaving the version unchanged; a stale write from a second tab rejected as conflict; insert-if-absent; another tab's upgrade with `VersionChanged`; a holdout connection making an upgrade `Blocked`; persistence across a real reload; delete — in Chromium under a strict CSP with Trusted Types | [`test/browser/packs/store/`](../test/browser/packs/store/), `npm run smoke:packs` |
 
 The smoke runner records policy violations per page load. Violations from
