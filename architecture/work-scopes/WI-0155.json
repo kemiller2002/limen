@@ -1,0 +1,12 @@
+{
+  "workItem": "WI-0155",
+  "reference": "owner request: Ordo 1.5.0 sweep (echelon-registry #42, merge 7f7a688): move Limen from the echelon-current 1.1.0 resolved set to 1.2.0 with `conditor upgrade --current`; governance tooling only, no release",
+  "placement": "Governance tooling only. `conditor upgrade --current` runs `ordo upgrade` (the .sde/ payload 1.4.2 -> 1.5.0, .echelon/sde.json and the ordo pin in .echelon/toolchain.json), then replaces the Registry authority (.conditor/authority/resolved-release-set.json) and regenerates .conditor/lock.json and conditor.json. No source, contract, test, workflow or guardrail-owned path changes.",
+  "guardrail": false,
+  "paths": [
+    ".echelon/**",
+    ".sde/**",
+    "conditor.json",
+    ".conditor/**"
+  ]
+}
