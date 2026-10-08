@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T16:09:32.000Z",
+  "updatedAt": "2026-10-08T16:17:32.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3598,13 +3598,47 @@
     {
       "id": "WI-0158",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-08T16:09:32.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/capabilities/store/schema.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/store-compound.test.ts"
+        },
+        {
+          "type": "tests",
+          "path": "test/browser/packs/store-compound/main.js"
+        }
+      ],
+      "updatedAt": "2026-10-08T16:17:32.000Z",
       "telemetryExecutionIds": [
         "EXE-20261008T160933043Z-d8df6111"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "b2fd2a625e595f22fab355a3",
+        "recordedAt": "2026-10-08T16:17:30.000Z",
+        "executionId": "EXE-20261008T160933043Z-d8df6111",
+        "repository": "limen",
+        "branch": "indexeddb/wi-0158-compound-count-range",
+        "commit": "57a5fbf11067eaee63d621df40faef494e3b38c6",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "indexeddb/wi-0158-compound-count-range",
+        "remoteCommit": "57a5fbf11067eaee63d621df40faef494e3b38c6",
+        "summary": "Compound key paths, count and deleteRange implemented and tested (node and Chromium); version 1 refuses them",
+        "nextAction": "Complete WI-0158; open its PR after #89 merges; then WI-0159 durability and availability",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T16:17:32.000Z"
     }
   ]
 }
