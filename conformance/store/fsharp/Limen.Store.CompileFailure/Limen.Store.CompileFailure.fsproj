@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A fixture that must NOT compile (LCP-052): a write built into a
+       readonly transaction. Limen.Store.Tests builds it and requires the
+       build to fail with FS0001 naming ReadOnly and ReadWrite. Never part of
+       a solution or a test run of its own. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="WriteInReadOnly.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../libraries/fsharp/Limen.Store/Limen.Store.fsproj" />
+  </ItemGroup>
+</Project>

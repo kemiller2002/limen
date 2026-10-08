@@ -1,0 +1,17 @@
+{
+  "workItem": "WI-0163",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-045, LCP-049, LCP-052, LCP-053, LCP-055, LCP-056, LCP-057, LCP-072, LCP-073",
+  "placement": "Engine Library: libraries/fsharp/Limen.Store, released as EchelonFoundry.Limen.Store in lockstep. A pure functional API over the generated limen.store binding: immutable schema, key and range values with total builders; transactions whose mode is a type, so a write cannot be built into a readonly transaction; explicit JSON codecs that round-trip and fail as Undecodable naming store, key and field path; one closed outcome union per request kind; structured StoreError with stable codes and no stored values; a connection state machine that refuses writes locally after Outdated, VersionChanged or ConnectionLost; a forward-only migration planner; diagnostics as values. The only effect is the StoreExecutor the host supplies. Tests and a compile-failure fixture live under conformance/store/fsharp/ and run in npm run test:libraries; the clean-room consumer gains the Store package.",
+  "guardrail": false,
+  "paths": [
+    "libraries/fsharp/Limen.Store/**",
+    "conformance/store/fsharp/**",
+    "conformance/store/README.md",
+    "scripts/nuget-packages.ts",
+    "package.json",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
