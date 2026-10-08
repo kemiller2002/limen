@@ -110,6 +110,18 @@ exhaustive lists.
 - Released as the third F# package in lockstep. The clean room builds the
   same request through it.
 
+### Added — an F# in-memory fake that passes the same vectors (WI-0164, LCP-074, LCP-075)
+
+- `FakeStore` in `EchelonFoundry.Limen.Store`: an in-memory `limen.store`
+  version 2 whose core is a pure, total transition (`FakeStore.step`).
+  - It models tabs sharing an origin, namespaces and limits, version changes
+    and blocking, compound keys, indexes, ranges, `count` and `deleteRange`.
+  - It can inject quota, failing or missing opens, and storage cleared.
+  - Its executors are the only stateful part.
+- It passes all 32 shared vectors through the pure transition. Through the
+  executors it passes 31, with 1 unsupported (`holdOpen`). It is total over
+  3,000 generated requests (`npm run test:libraries`).
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no

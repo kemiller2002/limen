@@ -10,7 +10,11 @@ it can run passes. Two implementations run them today:
   under node over an in-memory IndexedDB with every fault injected
   (`test/store-conformance.test.ts`), and in real Chromium and WebKit (the
   `store-conformance` page of `npm run smoke:packs`);
-- the F# in-memory fake, through its own runner over the same file.
+- the F# in-memory fake (`FakeStore` in `EchelonFoundry.Limen.Store`),
+  through its own runner over the same file
+  ([`conformance/store/fsharp/Limen.Store.Conformance`](https://github.com/kemiller2002/limen/blob/main/conformance/store/fsharp/Limen.Store.Conformance/Program.fs),
+  `npm run test:libraries`): through its pure transition and through its
+  executors.
 
 Every `StoreResult` and `StoreFact` variant is expected by at least one
 vector, and a test fails if one is not.
@@ -55,17 +59,24 @@ value of that kind; it is used only where the browser decides the value
 
 ## Requirements, and unsupported vectors
 
-| Requirement | What the runner must do | node | Chromium | WebKit |
-| --- | --- | --- | --- | --- |
-| `holdOpen` | hold a raw connection that ignores version changes | yes | yes | yes |
-| `inject:quota` | fail the tab's next transaction at commit with `QuotaExceededError`, after its operations ran | yes | no: not producible on demand (docs/41) | no |
-| `inject:openFails` | fail the tab's next `indexedDB.open` with a named error | yes | no | no |
-| `inject:storageCleared` | clear the origin's IndexedDB under open connections, as clearing site data or eviction does | yes | yes: DevTools `Storage.clearDataForOrigin` | no: no DevTools protocol in Playwright WebKit |
-| `inject:missing` | run the tab with no `indexedDB` | yes | no | no |
-| `storage:present` | the browser has `navigator.storage` persist, persisted and estimate | scripted | yes | no: absent in Playwright WebKit on Linux (measured) |
-| `storage:absent` | the browser has no `navigator.storage` | yes | no | no |
+| Requirement | What the runner must do | node | Chromium | WebKit | F# fake |
+| --- | --- | --- | --- | --- | --- |
+| `holdOpen` | hold a raw connection that ignores version changes | yes | yes | yes | yes (pure transition; not through an executor) |
+| `inject:quota` | fail the tab's next transaction at commit with `QuotaExceededError`, after its operations ran | yes | no: not producible on demand (docs/41) | no | yes |
+| `inject:openFails` | fail the tab's next `indexedDB.open` with a named error | yes | no | no | yes |
+| `inject:storageCleared` | clear the origin's IndexedDB under open connections, as clearing site data or eviction does | yes | yes: DevTools `Storage.clearDataForOrigin` | no: no DevTools protocol in Playwright WebKit | yes |
+| `inject:missing` | run the tab with no `indexedDB` | yes | no | no | yes |
+| `storage:present` | the browser has `navigator.storage` persist, persisted and estimate | scripted | yes | no: absent in Playwright WebKit on Linux (measured) | scripted |
+| `storage:absent` | the browser has no `navigator.storage` | yes | no | no | yes |
 
 A runner that cannot meet a vector's requirement reports the vector
 **unsupported, never passed**, and every run reports its passed, failed and
-unsupported counts separately. Today: node 32 passed; Chromium 27 passed and
-5 unsupported; WebKit 25 passed and 7 unsupported; none failed.
+unsupported counts separately. Today:
+
+| Runner | Passed | Unsupported | Failed |
+| --- | ---: | ---: | ---: |
+| TypeScript pack, node | 32 | 0 | 0 |
+| TypeScript pack, Chromium | 27 | 5 | 0 |
+| TypeScript pack, WebKit | 25 | 7 | 0 |
+| F# fake, pure transition | 32 | 0 | 0 |
+| F# fake, executors | 31 | 1 (`holdOpen`) | 0 |

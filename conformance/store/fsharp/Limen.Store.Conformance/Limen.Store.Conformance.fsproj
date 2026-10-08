@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Runs conformance/store/store.vectors.json against the F# in-memory
+       fake (Limen.Store's FakeStore), through its pure transition and
+       through its executors (LCP-074, LCP-075). A test harness, not a
+       library: it reads the vectors from disk, which libraries/** may not. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+    <OtherFlags>$(OtherFlags) --warnon:1182 --warnaserror:25</OtherFlags>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../libraries/fsharp/Limen.Store/Limen.Store.fsproj" />
+  </ItemGroup>
+</Project>
