@@ -278,6 +278,36 @@ The library renders JSON by hand, without a serializer or options object, so
 nothing in it needs reflection in a trimmed WebAssembly publish. Its tests
 are `conformance/store/fsharp/Limen.Store.Tests` (`npm run test:libraries`).
 
+## An in-memory fake for F# tests (LCP-074)
+
+`EchelonFoundry.Limen.Store` ships `FakeStore`, an in-memory `limen.store`
+version 2 for engine and consumer tests (Arca's, Chrona's). Its core is a
+pure, total transition:
+
+```fsharp
+FakeStore.step : FakeState -> StoreRequest -> FakeState * StoreResult
+FakeStore.stepAs : tab: string -> FakeState -> StoreRequest -> FakeState * StoreResult
+```
+
+It models the following:
+
+- several tabs sharing one origin, each a registration with its own
+  namespace, limits and connections;
+- `versionchange` (the other tabs hear `VersionChanged`) and `Blocked` by a
+  raw connection (`FakeStore.holdOpen`);
+- the size limits;
+- compound keys, unique and multiEntry indexes, ranges, `count` and
+  `deleteRange`;
+- on demand (`FakeStore.inject`): quota at commit, a failing open, no
+  `indexedDB`, and storage cleared under open connections (`ConnectionLost`).
+
+It answers in the browser pack's own words, validation messages included,
+and passes all 32 shared vectors. `FakeStore.executor` and
+`FakeStore.origin` wrap it as `StoreExecutor`s, one per tab. These wrappers
+are the only stateful part: each closes over one cell and exposes nothing
+else. 3,000 generated requests from three tabs, with faults injected, never
+throw.
+
 ## F# packages (LCP-044, LCP-079)
 
 F# engines consume the store through NuGet packages released with Limen, at
@@ -287,7 +317,7 @@ the npm package's version (lockstep, OQ-LIMEN-IDB-005):
 | --- | --- |
 | `EchelonFoundry.Limen.Contract` | The generated bindings for Core and every pack, including `Limen.Contract.Store`, each with its contract fingerprint (`Contract.Fingerprint`). |
 | `EchelonFoundry.Limen.Guest` | The engine's half of the handshake (`Limen.Guest.Handshake.answer`). |
-| `EchelonFoundry.Limen.Store` | The functional store API above. |
+| `EchelonFoundry.Limen.Store` | The functional store API and the in-memory fake above. |
 
 Both target `net8.0`, are trimmable and reflection-free, and depend on
 nothing beyond FSharp.Core (9.0.100 or later) and the BCL. An engine selects

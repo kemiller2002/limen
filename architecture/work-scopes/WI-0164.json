@@ -1,0 +1,16 @@
+{
+  "workItem": "WI-0164",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-074, LCP-075",
+  "placement": "Tooling / Conformance, shipped in the engine library: libraries/fsharp/Limen.Store gains FakeStore, an in-memory limen.store version 2 whose core is a pure, total transition (FakeStore.step : FakeState -> StoreRequest -> FakeState * StoreResult). It models several tabs sharing one origin, application namespaces and size limits, versionchange and blocked, compound keys, unique and multiEntry indexes, ranges, count and deleteRange, and injected quota, open failures, a missing indexedDB, storage cleared under open connections, and both storage environments. The executor wrapper is the only stateful part and is not exposed beyond construction. An F# runner (conformance/store/fsharp/Limen.Store.Conformance) runs conformance/store/store.vectors.json against the fake, reporting passed, failed and unsupported separately; npm run test:libraries runs it. No contract, pack or Core change.",
+  "guardrail": false,
+  "paths": [
+    "libraries/fsharp/Limen.Store/**",
+    "conformance/store/fsharp/**",
+    "conformance/store/README.md",
+    "package.json",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
