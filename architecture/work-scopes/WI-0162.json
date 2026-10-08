@@ -1,0 +1,23 @@
+{
+  "workItem": "WI-0162",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-044, LCP-079; OQ-LIMEN-IDB-005 (accepted: lockstep versions)",
+  "placement": "Guardrail / release tooling. The generated F# contract bindings (guests/fsharp/Limen.Contract) and the engine's half of the handshake (guests/fsharp/Limen.Guest) become NuGet packages, EchelonFoundry.Limen.Contract and EchelonFoundry.Limen.Guest, versioned in lockstep with package.json, net8.0, trimmable and reflection-free, depending on nothing beyond FSharp.Core and the BCL. scripts/nuget-packages.ts packs them with checksums and proves them in a clean room: a consumer built from the .nupkg files alone selects limen.store through the handshake with the package's fingerprint, the fingerprint equals the TypeScript pack's, and a mismatched one is refused at the handshake. CI runs it; the publish workflow packs, attests (Sigstore build provenance) and attaches them to the GitHub release, then verifies the published assets by checksum and attestation. No contract, pack or Core change.",
+  "guardrail": true,
+  "paths": [
+    "guests/fsharp/Limen.Contract/Limen.Contract.fsproj",
+    "guests/fsharp/Limen.Guest/Limen.Guest.fsproj",
+    "guests/fsharp/Limen.Contract/README.md",
+    "guests/fsharp/Limen.Guest/README.md",
+    "scripts/nuget-packages.ts",
+    "test/nuget-packages.test.ts",
+    ".github/workflows/ci.yml",
+    ".github/workflows/publish.yml",
+    "architecture/guardrails.json",
+    "package.json",
+    ".gitignore",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

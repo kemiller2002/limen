@@ -164,7 +164,7 @@
 | WI-0159 | IndexedDB 3: store pack durability and availability evidence - persist, estimate, connection loss, creation evidence, availability classification (LCP-061..LCP-064) | complete | limen, indexeddb, lcp-018 | high |
 | WI-0160 | IndexedDB 4: language-neutral store conformance vectors; the TypeScript pack passes them, with multi-tab, quota and interruption scenarios in Chromium (LCP-051..LCP-053, LCP-057, LCP-058, LCP-075, LCP-077) | complete | limen, indexeddb, lcp-018 | high |
 | WI-0161 | IndexedDB 5: store pack real-browser runs in WebKit as well as Chromium (LCP-076) | complete | limen, indexeddb, lcp-018 | high |
-| WI-0162 | IndexedDB 6: publish Limen's F# contract bindings as a consumable package, released as Sigstore-attested NuGet release assets (LCP-044, LCP-079) | captured | limen, indexeddb, lcp-018 | high |
+| WI-0162 | IndexedDB 6: publish Limen's F# contract bindings as a consumable package, released as Sigstore-attested NuGet release assets (LCP-044, LCP-079) | ready | limen, indexeddb, lcp-018 | high |
 | WI-0163 | IndexedDB 7: functional F# store API (Limen.Store engine library): schema values, codecs, Result outcomes, migration planner, structured errors and diagnostics (LCP-045, LCP-049, LCP-053, LCP-055..LCP-057, LCP-072, LCP-073) | captured | limen, indexeddb, lcp-018 | high |
 | WI-0164 | IndexedDB 8: F# in-memory store fake with the same contract, and the F# conformance runner over the shared vectors (LCP-074, LCP-075) | captured | limen, indexeddb, lcp-018 | medium |
 | WI-0165 | IndexedDB 9: store performance baseline and budgets in Chromium and WebKit (LCP-078) | captured | limen, indexeddb, lcp-018 | medium |
