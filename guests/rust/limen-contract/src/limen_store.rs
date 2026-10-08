@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/store.contract.json
 // unit: limen.store@2
-// contract-fingerprint: sha256:067cd126cdbf5a5aaa86bfcc4260c23b79c8c5b9b381d37ea0ad945c797d4f9e
+// contract-fingerprint: sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:bf8ed4585aca248fb3f8f4c758c9ddd33e98382241b9744ba1d2ab8fe075126d
+// content-hash: sha256:01c311f251ad29a2b984e64978e12816c20d195b05941a6c669488a6eb406e92
 // </auto-generated>
 //! Durable structured browser storage over IndexedDB (LCP-018; version 2 adds LCP-043..064). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged. Version 2 is offered by a pack registered with an application namespace (every database name resolves inside it) and serialized-size limits; a pack registered without options still offers version 1, unchanged.
 
@@ -17,23 +17,26 @@ use crate::runtime::{wire, DecodeError, RawJson};
 pub mod contract {
     pub const UNIT: &str = "limen.store";
     pub const VERSION: i64 = 2;
-    pub const FINGERPRINT: &str = "sha256:067cd126cdbf5a5aaa86bfcc4260c23b79c8c5b9b381d37ea0ad945c797d4f9e";
+    pub const FINGERPRINT: &str = "sha256:7ebb7b70aad262936d17bea9bfeeeb64ca2fd5eb86cb4d7ac5e4e01e61f1f254";
 }
 
+/// keyPath is one dotted path. A compound index (version 2) gives keyPaths, two or more dotted paths, with keyPath empty; its key is the list of their values, compared element by element. A compound index cannot be multiEntry.
 #[derive(Debug, Clone, PartialEq)]
 pub struct IndexSchema {
     pub name: String,
     pub key_path: String,
     pub unique: bool,
     pub multi_entry: bool,
+    pub key_paths: Option<Vec<String>>,
 }
 
-/// keyPath names the field that holds each record's key (a dotted path for a nested field).
+/// keyPath names the field that holds each record's key (a dotted path for a nested field). A compound key (version 2) gives keyPaths, two or more dotted paths, with keyPath empty: the record's key is the list of their values, so records sort by the first, then the second, and so on.
 #[derive(Debug, Clone, PartialEq)]
 pub struct StoreSchema {
     pub name: String,
     pub key_path: String,
     pub indexes: Vec<IndexSchema>,
+    pub key_paths: Option<Vec<String>>,
 }
 
 /// The serialized-size limits this pack enforces, in bytes of UTF-8 JSON: one stored value, and all of one transaction's operations together. A request over either is InvalidRequest before the database is touched.
@@ -97,6 +100,17 @@ pub enum Operation {
         limit: i64,
         reverse: bool,
     },
+    /// Version 2. How many records are in the range (of the index, when given); all of them when range is absent. Agrees with a query of the same range.
+    Count {
+        store: String,
+        index: Option<String>,
+        range: Option<KeyRange>,
+    },
+    /// Version 2. Delete every record whose key is in the range; an absent range clears the store. A write: refused in a readonly transaction, and undone with the rest of an aborted one.
+    DeleteRange {
+        store: String,
+        range: Option<KeyRange>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -112,6 +126,10 @@ pub enum OperationResult {
     Queried {
         values: Vec<RawJson>,
     },
+    Counted {
+        count: i64,
+    },
+    RangeDeleted,
 }
 
 /// conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.
@@ -217,20 +235,22 @@ pub enum StoreFact {
 }
 
 pub fn decode_index_schema(value: &Value, path: &str) -> Result<IndexSchema, DecodeError> {
-    let props = wire::closed(wire::properties(value, path)?, path, &["name", "keyPath", "unique", "multiEntry"])?;
+    let props = wire::closed(wire::properties(value, path)?, path, &["name", "keyPath", "unique", "multiEntry", "keyPaths"])?;
     let f_name = wire::required(props, path, "name", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_key_path = wire::required(props, path, "keyPath", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_unique = wire::required(props, path, "unique", |v0: &Value, p0: &str| wire::boolean(v0, p0))?;
     let f_multi_entry = wire::required(props, path, "multiEntry", |v0: &Value, p0: &str| wire::boolean(v0, p0))?;
-    Ok(IndexSchema { name: f_name, key_path: f_key_path, unique: f_unique, multi_entry: f_multi_entry })
+    let f_key_paths = wire::optional(props, path, "keyPaths", |v0: &Value, p0: &str| wire::list(v0, p0, |v1: &Value, p1: &str| wire::string(v1, p1)))?;
+    Ok(IndexSchema { name: f_name, key_path: f_key_path, unique: f_unique, multi_entry: f_multi_entry, key_paths: f_key_paths })
 }
 
 pub fn decode_store_schema(value: &Value, path: &str) -> Result<StoreSchema, DecodeError> {
-    let props = wire::closed(wire::properties(value, path)?, path, &["name", "keyPath", "indexes"])?;
+    let props = wire::closed(wire::properties(value, path)?, path, &["name", "keyPath", "indexes", "keyPaths"])?;
     let f_name = wire::required(props, path, "name", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_key_path = wire::required(props, path, "keyPath", |v0: &Value, p0: &str| wire::string(v0, p0))?;
     let f_indexes = wire::required(props, path, "indexes", |v0: &Value, p0: &str| wire::list(v0, p0, |v1: &Value, p1: &str| decode_index_schema(v1, p1)))?;
-    Ok(StoreSchema { name: f_name, key_path: f_key_path, indexes: f_indexes })
+    let f_key_paths = wire::optional(props, path, "keyPaths", |v0: &Value, p0: &str| wire::list(v0, p0, |v1: &Value, p1: &str| wire::string(v1, p1)))?;
+    Ok(StoreSchema { name: f_name, key_path: f_key_path, indexes: f_indexes, key_paths: f_key_paths })
 }
 
 pub fn decode_store_limits(value: &Value, path: &str) -> Result<StoreLimits, DecodeError> {
@@ -294,6 +314,21 @@ pub fn decode_operation(value: &Value, path: &str) -> Result<Operation, DecodeEr
             let f_reverse = wire::required(props, path, "reverse", |v0: &Value, p0: &str| wire::boolean(v0, p0))?;
             Ok(Operation::Query { store: f_store, index: f_index, range: f_range, limit: f_limit, reverse: f_reverse })
         }
+        "count" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["op", "store", "index", "range"])?;
+            wire::required(props, path, "op", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "count"))?;
+            let f_store = wire::required(props, path, "store", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+            let f_index = wire::optional(props, path, "index", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+            let f_range = wire::optional(props, path, "range", |v0: &Value, p0: &str| decode_key_range(v0, p0))?;
+            Ok(Operation::Count { store: f_store, index: f_index, range: f_range })
+        }
+        "deleteRange" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["op", "store", "range"])?;
+            wire::required(props, path, "op", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "deleteRange"))?;
+            let f_store = wire::required(props, path, "store", |v0: &Value, p0: &str| wire::string(v0, p0))?;
+            let f_range = wire::optional(props, path, "range", |v0: &Value, p0: &str| decode_key_range(v0, p0))?;
+            Ok(Operation::DeleteRange { store: f_store, range: f_range })
+        }
         other => Err(wire::unknown_variant(&format!("{}.op", path), other)),
     }
 }
@@ -327,6 +362,17 @@ pub fn decode_operation_result(value: &Value, path: &str) -> Result<OperationRes
             wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Queried"))?;
             let f_values = wire::required(props, path, "values", |v0: &Value, p0: &str| wire::list(v0, p0, |v1: &Value, p1: &str| wire::json(v1, p1)))?;
             Ok(OperationResult::Queried { values: f_values })
+        }
+        "Counted" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind", "count"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Counted"))?;
+            let f_count = wire::required(props, path, "count", |v0: &Value, p0: &str| wire::int(v0, p0))?;
+            Ok(OperationResult::Counted { count: f_count })
+        }
+        "RangeDeleted" => {
+            let props = wire::closed(wire::properties(value, path)?, path, &["kind"])?;
+            wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "RangeDeleted"))?;
+            Ok(OperationResult::RangeDeleted)
         }
         other => Err(wire::unknown_variant(&format!("{}.kind", path), other)),
     }
@@ -462,11 +508,11 @@ pub fn decode_store_fact(value: &Value, path: &str) -> Result<StoreFact, DecodeE
 }
 
 pub fn encode_index_schema(value: &IndexSchema) -> Value {
-    wire::of_object(vec![Some(("name", wire::of_string(&value.name))), Some(("keyPath", wire::of_string(&value.key_path))), Some(("unique", wire::of_bool(*&value.unique))), Some(("multiEntry", wire::of_bool(*&value.multi_entry)))])
+    wire::of_object(vec![Some(("name", wire::of_string(&value.name))), Some(("keyPath", wire::of_string(&value.key_path))), Some(("unique", wire::of_bool(*&value.unique))), Some(("multiEntry", wire::of_bool(*&value.multi_entry))), (&value.key_paths).as_ref().map(|x0| ("keyPaths", wire::of_list(x0, |x1| wire::of_string(x1))))])
 }
 
 pub fn encode_store_schema(value: &StoreSchema) -> Value {
-    wire::of_object(vec![Some(("name", wire::of_string(&value.name))), Some(("keyPath", wire::of_string(&value.key_path))), Some(("indexes", wire::of_list(&value.indexes, |x0| encode_index_schema(x0))))])
+    wire::of_object(vec![Some(("name", wire::of_string(&value.name))), Some(("keyPath", wire::of_string(&value.key_path))), Some(("indexes", wire::of_list(&value.indexes, |x0| encode_index_schema(x0)))), (&value.key_paths).as_ref().map(|x0| ("keyPaths", wire::of_list(x0, |x1| wire::of_string(x1))))])
 }
 
 pub fn encode_store_limits(value: &StoreLimits) -> Value {
@@ -491,6 +537,8 @@ pub fn encode_operation(value: &Operation) -> Value {
         Operation::PutIf { store: f_store, value: f_value, expected: f_expected } => wire::of_object(vec![Some(("op", wire::of_string("putIf"))), Some(("store", wire::of_string(f_store))), Some(("value", wire::of_json(f_value))), Some(("expected", wire::of_json(f_expected)))]),
         Operation::Delete { store: f_store, key: f_key } => wire::of_object(vec![Some(("op", wire::of_string("delete"))), Some(("store", wire::of_string(f_store))), Some(("key", wire::of_json(f_key)))]),
         Operation::Query { store: f_store, index: f_index, range: f_range, limit: f_limit, reverse: f_reverse } => wire::of_object(vec![Some(("op", wire::of_string("query"))), Some(("store", wire::of_string(f_store))), (f_index).as_ref().map(|x0| ("index", wire::of_string(x0))), (f_range).as_ref().map(|x0| ("range", encode_key_range(x0))), Some(("limit", wire::of_int(*f_limit))), Some(("reverse", wire::of_bool(*f_reverse)))]),
+        Operation::Count { store: f_store, index: f_index, range: f_range } => wire::of_object(vec![Some(("op", wire::of_string("count"))), Some(("store", wire::of_string(f_store))), (f_index).as_ref().map(|x0| ("index", wire::of_string(x0))), (f_range).as_ref().map(|x0| ("range", encode_key_range(x0)))]),
+        Operation::DeleteRange { store: f_store, range: f_range } => wire::of_object(vec![Some(("op", wire::of_string("deleteRange"))), Some(("store", wire::of_string(f_store))), (f_range).as_ref().map(|x0| ("range", encode_key_range(x0)))]),
     }
 }
 
@@ -501,6 +549,8 @@ pub fn encode_operation_result(value: &OperationResult) -> Value {
         OperationResult::Put { key: f_key } => wire::of_object(vec![Some(("kind", wire::of_string("Put"))), Some(("key", wire::of_json(f_key)))]),
         OperationResult::Deleted => wire::of_object(vec![Some(("kind", wire::of_string("Deleted")))]),
         OperationResult::Queried { values: f_values } => wire::of_object(vec![Some(("kind", wire::of_string("Queried"))), Some(("values", wire::of_list(f_values, |x0| wire::of_json(x0))))]),
+        OperationResult::Counted { count: f_count } => wire::of_object(vec![Some(("kind", wire::of_string("Counted"))), Some(("count", wire::of_int(*f_count)))]),
+        OperationResult::RangeDeleted => wire::of_object(vec![Some(("kind", wire::of_string("RangeDeleted")))]),
     }
 }
 

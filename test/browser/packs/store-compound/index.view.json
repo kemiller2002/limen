@@ -1,0 +1,7 @@
+{
+  "doc": "The store pack's compound-key, count and deleteRange page (scripts/smoke-packs.ts, LCP-047, LCP-054). Its engine is main.js; nothing is bound.",
+  "view": {},
+  "events": {
+    "poke": {}
+  }
+}

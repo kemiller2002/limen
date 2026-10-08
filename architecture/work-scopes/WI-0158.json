@@ -1,0 +1,22 @@
+{
+  "workItem": "WI-0158",
+  "reference": "kemiller2002/limen#28 (LCP-018); docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md LCP-043, LCP-047, LCP-054",
+  "placement": "Capability Pack: src/capabilities/store/ and its contract unit (limen.store version 2, additive). Stores and indexes may declare a compound key path (keyPaths, a list of dotted paths); schema comparison treats a change between a single and a compound key path as a keyPath change (SchemaMismatch). Transactions gain count { store, index?, range? } -> Counted { count } and deleteRange { store, range? } -> RangeDeleted (an omitted range clears the store), with the same atomicity. A version 1 registration refuses the new fields and operations as malformed, exactly as 0.7.x's decoder did. Bindings regenerated (TypeScript, F#, C#, Rust). Core, the kernel, contract/targets.json and every guardrail path are unchanged.",
+  "guardrail": false,
+  "paths": [
+    "contract/store.contract.json",
+    "src/capabilities/store/**",
+    "guests/fsharp/Limen.Contract/Generated/Store.fs",
+    "guests/csharp/Limen.Contract/Generated/Store.cs",
+    "guests/rust/limen-contract/src/limen_store.rs",
+    "test/store.test.ts",
+    "test/store-namespaces.test.ts",
+    "test/store-compound.test.ts",
+    "test/browser/packs/store-compound/**",
+    "bench/budgets.json",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

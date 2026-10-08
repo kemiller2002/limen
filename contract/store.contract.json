@@ -4,8 +4,8 @@
   "version": 2,
   "doc": "Durable structured browser storage over IndexedDB (LCP-018; version 2 adds LCP-043..064). The engine declares each database's version, stores and indexes; the pack creates what is declared, drops only what the engine names, and reports anything else as a typed outcome. A transaction is one atomic batch of operations, answered Committed with every result or Aborted with the operation that failed — never partly applied. What the data means, and how it migrates between versions, stays in the engine. localStorage (Core Storage effects) is unchanged. Version 2 is offered by a pack registered with an application namespace (every database name resolves inside it) and serialized-size limits; a pack registered without options still offers version 1, unchanged.",
   "types": [
-    { "name": "IndexSchema", "kind": "record", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "unique", "type": "bool" }, { "name": "multiEntry", "type": "bool" } ] },
-    { "name": "StoreSchema", "kind": "record", "doc": "keyPath names the field that holds each record's key (a dotted path for a nested field).", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "indexes", "type": { "list": "IndexSchema" } } ] },
+    { "name": "IndexSchema", "kind": "record", "doc": "keyPath is one dotted path. A compound index (version 2) gives keyPaths, two or more dotted paths, with keyPath empty; its key is the list of their values, compared element by element. A compound index cannot be multiEntry.", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "unique", "type": "bool" }, { "name": "multiEntry", "type": "bool" }, { "name": "keyPaths", "type": { "list": "string" }, "optional": true } ] },
+    { "name": "StoreSchema", "kind": "record", "doc": "keyPath names the field that holds each record's key (a dotted path for a nested field). A compound key (version 2) gives keyPaths, two or more dotted paths, with keyPath empty: the record's key is the list of their values, so records sort by the first, then the second, and so on.", "fields": [ { "name": "name", "type": "string" }, { "name": "keyPath", "type": "string" }, { "name": "indexes", "type": { "list": "IndexSchema" } }, { "name": "keyPaths", "type": { "list": "string" }, "optional": true } ] },
     { "name": "StoreLimits", "kind": "record", "doc": "The serialized-size limits this pack enforces, in bytes of UTF-8 JSON: one stored value, and all of one transaction's operations together. A request over either is InvalidRequest before the database is touched.", "fields": [ { "name": "maxValueBytes", "type": "int" }, { "name": "maxTransactionBytes", "type": "int" } ] },
     { "name": "TransactionMode", "kind": "enum", "values": ["readonly", "readwrite"] },
     { "name": "KeyRange", "kind": "record", "doc": "A key is a string, a finite number, or a list of keys. Omitted bounds are open-ended.", "fields": [ { "name": "lower", "type": "json", "optional": true }, { "name": "upper", "type": "json", "optional": true }, { "name": "lowerOpen", "type": "bool" }, { "name": "upperOpen", "type": "bool" } ] },
@@ -18,7 +18,9 @@
         { "name": "put", "doc": "Insert or replace the record whose key is at the store's keyPath in value.", "fields": [ { "name": "store", "type": "string" }, { "name": "value", "type": "json" } ] },
         { "name": "putIf", "doc": "Compare-and-put: write value only if the record stored under its key is exactly expected (JSON-equal), or absent when expected is null. Otherwise the whole transaction aborts as a conflict, reporting what is stored — the stale-write guard.", "fields": [ { "name": "store", "type": "string" }, { "name": "value", "type": "json" }, { "name": "expected", "type": "json" } ] },
         { "name": "delete", "fields": [ { "name": "store", "type": "string" }, { "name": "key", "type": "json" } ] },
-        { "name": "query", "doc": "Records in key order (of the index, when given), at most limit (1 to 1000).", "fields": [ { "name": "store", "type": "string" }, { "name": "index", "type": "string", "optional": true }, { "name": "range", "type": "KeyRange", "optional": true }, { "name": "limit", "type": "int" }, { "name": "reverse", "type": "bool" } ] }
+        { "name": "query", "doc": "Records in key order (of the index, when given), at most limit (1 to 1000).", "fields": [ { "name": "store", "type": "string" }, { "name": "index", "type": "string", "optional": true }, { "name": "range", "type": "KeyRange", "optional": true }, { "name": "limit", "type": "int" }, { "name": "reverse", "type": "bool" } ] },
+        { "name": "count", "doc": "Version 2. How many records are in the range (of the index, when given); all of them when range is absent. Agrees with a query of the same range.", "fields": [ { "name": "store", "type": "string" }, { "name": "index", "type": "string", "optional": true }, { "name": "range", "type": "KeyRange", "optional": true } ] },
+        { "name": "deleteRange", "doc": "Version 2. Delete every record whose key is in the range; an absent range clears the store. A write: refused in a readonly transaction, and undone with the rest of an aborted one.", "fields": [ { "name": "store", "type": "string" }, { "name": "range", "type": "KeyRange", "optional": true } ] }
       ]
     },
     {
@@ -30,7 +32,9 @@
         { "name": "Missing", "fields": [] },
         { "name": "Put", "fields": [ { "name": "key", "type": "json" } ] },
         { "name": "Deleted", "fields": [] },
-        { "name": "Queried", "fields": [ { "name": "values", "type": { "list": "json" } } ] }
+        { "name": "Queried", "fields": [ { "name": "values", "type": { "list": "json" } } ] },
+        { "name": "Counted", "fields": [ { "name": "count", "type": "int" } ] },
+        { "name": "RangeDeleted", "fields": [] }
       ]
     },
     { "name": "AbortReason", "kind": "enum", "doc": "conflict: a putIf found something else. constraint: a unique index was violated. invalidKey: a value has no valid key at the keyPath, or a key is not a valid key. quota: the browser's storage quota was exceeded. unknownStore: the store is not in the open database. other: the browser aborted for another reason.", "values": ["conflict", "constraint", "invalidKey", "quota", "unknownStore", "other"] },

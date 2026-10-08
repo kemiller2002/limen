@@ -32,6 +32,18 @@ exhaustive lists.
 - `fake-indexeddb` 6.2.5 is a **dev dependency** for the node tests; the
   package still has no runtime dependency.
 
+### Added — compound key paths, `count` and `deleteRange` (WI-0158, LCP-047, LCP-054)
+
+- A store or index may declare `keyPaths`, two or more dotted paths, for a
+  compound key such as `[namespace, sequence]`. Records sort by the tuple,
+  element by element, and a range over a tuple prefix selects one group.
+- `count { store, index?, range? }` answers `Counted { count }` without
+  reading records; `deleteRange { store, range? }` answers `RangeDeleted`, and
+  clears the store when the range is absent. Both are atomic with the rest of
+  their transaction.
+- All three are version 2 only. A version 1 registration refuses them as a
+  malformed request, as 0.7.x did.
+
 ### Compatibility
 
 - **Nothing changes for existing consumers.** `storeCapability()` with no
