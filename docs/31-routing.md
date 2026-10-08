@@ -69,6 +69,14 @@ refuses any browser, interop, network, filesystem or process authority in it.
 against it. It ships as the NuGet package `EchelonFoundry.Limen.Routing`, a
 Sigstore-attested asset of each GitHub release, at the npm version. Its
 [README](../libraries/fsharp/Limen.Routing/README.md) shows the typed codec.
+Install it like the other F# packages, through Conditor's NuGet release-asset
+feed (the `limen-fsharp` component,
+[docs/41](41-indexeddb.md#installing-them-through-conditor-lcp-080)). Then
+reference it by exact version:
+
+```xml
+<PackageReference Include="EchelonFoundry.Limen.Routing" Version="0.9.0" />
+```
 
 ```fsharp
 open Limen.Routing

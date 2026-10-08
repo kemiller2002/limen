@@ -413,20 +413,21 @@ optional project binding, so only a repository that declares it installs it.
    selects:
 
    ```json
-   { "id": "limen-fsharp", "version": "0.8.0", "required": true }
+   { "id": "limen-fsharp", "version": "0.9.0", "required": true }
    ```
 
 2. Run `conditor upgrade --current` (or `conditor init` in a new repository).
    Conditor downloads each package, refuses any whose SHA-256 differs from the
    registry's, and writes:
-   - `vendor/nuget/EchelonFoundry.Limen.{Contract,Guest,Store}.0.8.0.nupkg`;
+   - `vendor/nuget/EchelonFoundry.Limen.{Contract,Guest,Store,Routing}.0.9.0.nupkg`
+     (Routing from 0.9.0);
    - `vendor/nuget/limen-fsharp.lock`, the release, tag and per-package digests;
    - `NuGet.config`, mapping each `EchelonFoundry.Limen.*` package id to the
      `echelon-vendor` source only.
 3. Reference the packages by exact version:
 
    ```xml
-   <PackageReference Include="EchelonFoundry.Limen.Store" Version="0.8.0" />
+   <PackageReference Include="EchelonFoundry.Limen.Store" Version="0.9.0" />
    ```
 
 `conditor verify` proves the lock, the package bytes and the mapping. A later

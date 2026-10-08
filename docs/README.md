@@ -128,7 +128,7 @@ Then, for depth:
 | [Lifecycle conversion report](https://github.com/kemiller2002/limen/blob/main/docs/22-lifecycle-conversion-report.md) | What adding the CLI changed, and what was proven about it |
 | [Usage (legacy)](https://github.com/kemiller2002/limen/blob/main/docs/USAGE.md) | The original consumer walkthrough, kept for continuity |
 | [IndexedDB durable-storage requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md) | LCP-043..087: what the store pack, the F# store API and Arca's IndexedDB adapters (offline queue and read cache) must do, and the ordered work items. Built and released in 0.8.0 |
-| [URL-state requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md) | LCP-088..112: navigable state in the URL. A typed canonical route codec in F# and TypeScript, push and replace, not-found and not-permitted outcomes, sign-in return targets, hash routing on static hosts, legacy redirects, copy link, the route inventory and no secrets in URLs, with the ordered work items for 0.9.0. Requirements only; not yet built |
+| [URL-state requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md) | LCP-088..112: navigable state in the URL. A typed canonical route codec in F# and TypeScript, push and replace, not-found and not-permitted outcomes, sign-in return targets, hash routing on static hosts, legacy redirects, copy link, the route inventory and no secrets in URLs, with the ordered work items. Built and released in 0.9.0 ([guide](https://github.com/kemiller2002/limen/blob/main/docs/31-routing.md#url-state-the-guide)) |
 
 ## The website
 
