@@ -16,6 +16,17 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Documentation
+
+- **Requirements for navigable state in the URL (WI-0167, LCP-005).**
+  [LCP-088..112](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md)
+  extend routing so that a copied URL opens the same view: typed view
+  parameters, one canonical form, a typed codec in F# and TypeScript, push
+  and replace, route outcomes, sign-in return targets, hash routing on static
+  hosts, legacy redirects, copy link, a route inventory and no secrets in
+  URLs. DF-LIMEN-2026-0006 records the decisions; WI-0168..WI-0172 slice the
+  build for 0.9.0. Nothing is implemented yet.
+
 ## [0.8.0] — 2026-10-08
 
 Durable structured storage for F# engines: the IndexedDB store pack gains

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 167,
+  "nextSeq": 173,
   "items": [
     {
       "id": "WI-0001",
@@ -2588,6 +2588,162 @@
       },
       "source": "manual",
       "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0167",
+      "title": "URL state 0: requirements, decision record and backlog for navigable state in the URL (routing / URL-state module, Limen 0.9.0)",
+      "description": "Portfolio requirement (coordinator 2026-10-08): every web app puts its navigable state in the URL (route, entity IDs, view parameters such as date or period, filters, sort, tab and page) so a copied URL opens the same view. Write LCP-088..112 extending LCP-005 (kemiller2002/limen#20), reserve them on kemiller2002/limen#15, record DF-LIMEN-2026-0006 (hash routing on static hosting, typed codec placement, return-to safety, inventory schema), and slice the build into ordered work items for Limen 0.9.0 (F# and npm at a shared version).",
+      "tags": [
+        "limen",
+        "routing",
+        "requirements",
+        "lcp-005"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-10-08T19:04:37.000Z",
+      "updatedAt": "2026-10-08T19:12:39.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0168",
+      "title": "URL state 1: routing semantics v2 and the F# library (typed definitions, view parameter types, defaults and canonical form, refine, outcomes, typed codec, legacy entries, reserved names, return targets, locations, links, inventory)",
+      "description": "Order 1 of 5. LCP-088, 090..096, 098..102, 105..107, 109. Extend conformance/routing (README and vectors) and libraries/fsharp/Limen.Routing: definitions validated as values; string, int, bool, date, month, enum and set parameters; defaults reported and omitted from the canonical form; navigate (push), refine (replace), adopt (never push); closed outcomes; RouteCodec parse/format; legacy entries; credential-name refusal; ReturnTo capture/resume; Location.ofBrowser/href for hash and path modes; Link.share; Inventory.render (echelon.routes/v1). F# property tests (round trip, canonical idempotence, totality). Every existing vector keeps passing.",
+      "tags": [
+        "limen",
+        "routing",
+        "url-state",
+        "lcp-005"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T19:07:31.000Z",
+      "updatedAt": "2026-10-08T19:11:53.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0169",
+      "title": "URL state 2: the TypeScript routing library @echelon-foundry/limen/routing and the route inventory schema",
+      "description": "Order 2 of 5. LCP-089, 093, 094, 107, 108. src/routing as a pure engine library under the same vectors as F#, exported at ./routing; property tests; contract/routes.schema.json (JSON Schema 2020-12) shipped in the package, with every inventory vector validated against it and byte-identical F# and TypeScript inventories.",
+      "tags": [
+        "limen",
+        "routing",
+        "url-state",
+        "lcp-005"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T19:07:31.000Z",
+      "updatedAt": "2026-10-08T19:11:53.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0170",
+      "title": "URL state 3: browser proof on a GitHub-Pages-like static server in Chromium and WebKit; examples/08-routing on the module",
+      "description": "Order 3 of 5. LCP-097, 103, 104, 106, 111. A test/browser/packs/url-state page served under a sub-path by a server that 404s every other path: deep link, reload, navigate with Back and Forward, refine without a history entry, not-found and not-permitted from deep links, sign-in return, copy link reopened in a new page, real relative links. examples/08-routing moves to the TypeScript library in hash mode.",
+      "tags": [
+        "limen",
+        "routing",
+        "url-state",
+        "lcp-005"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T19:07:32.000Z",
+      "updatedAt": "2026-10-08T19:11:53.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0171",
+      "title": "URL state 4: EchelonFoundry.Limen.Routing as an attested F# package; docs/31 guidance (privacy, hash mode, outcomes, sign-in)",
+      "description": "Order 4 of 5. LCP-099, 109, 110. Package the F# routing library in lockstep through scripts/nuget-packages.ts (clean-room consumer parses and formats a typed route and renders the inventory); docs/31 gains hash routing on static hosts, push versus replace, outcomes, return targets, copy link, the inventory and the no-secrets-in-URLs guidance.",
+      "tags": [
+        "limen",
+        "routing",
+        "url-state",
+        "lcp-005"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T19:07:32.000Z",
+      "updatedAt": "2026-10-08T19:11:54.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0172",
+      "title": "URL state 5: release Limen 0.9.0 with the routing module, the echelon-registry entry and verification",
+      "description": "Order 5 of 5. LCP-110. Version bump, dated CHANGELOG, publish.yml dispatch on request, npm provenance and four attested .nupkg assets verified by checksum and attestation from an empty directory, and an echelon-registry PR recording limen and limen-fsharp 0.9.0 in echelon-current.",
+      "tags": [
+        "limen",
+        "routing",
+        "url-state",
+        "lcp-005"
+      ],
+      "priority": "high",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-08T19:07:33.000Z",
+      "updatedAt": "2026-10-08T19:11:54.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }

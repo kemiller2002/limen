@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T18:45:09.000Z",
+  "updatedAt": "2026-10-08T19:12:39.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -3987,6 +3987,52 @@
         }
       },
       "completedAt": "2026-10-08T18:45:09.000Z"
+    },
+    {
+      "id": "WI-0167",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md"
+        },
+        {
+          "type": "implementation",
+          "path": "research/decisions/DF-LIMEN-2026-0006--url-state-hash-routing-and-route-inventory.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-10-08T19:12:39.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261008T190446218Z-5a37c83e"
+      ],
+      "latestCheckpoint": {
+        "id": "4cf4c1ad814bf5f3894f2057",
+        "recordedAt": "2026-10-08T19:11:09.000Z",
+        "executionId": "EXE-20261008T190446218Z-5a37c83e",
+        "repository": "limen",
+        "branch": "urlstate/wi-0167-requirements",
+        "commit": "8ff03ef61a27ccf1d17bf7264ea0c7e2b0365a62",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "urlstate/wi-0167-requirements",
+        "remoteCommit": "8ff03ef61a27ccf1d17bf7264ea0c7e2b0365a62",
+        "summary": "LCP-088..112 requirements, DF-LIMEN-2026-0006 (hash routing, typed canonical codec, return-target safety, inventory schema), backlog WI-0168..WI-0172, issue #15 reservation row and comment.",
+        "nextAction": "Merge, then start WI-0168 (semantics v2 and the F# library).",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-08T19:12:39.000Z",
+      "conclusion": "Requirements-only item (started as a task): the deliverables are the requirements document and decision record, verified by npm run check:docs; no source changed."
     }
   ]
 }

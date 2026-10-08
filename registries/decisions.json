@@ -204,5 +204,64 @@
     "work_items": [
       "WI-0156"
     ]
+  },
+  {
+    "author_agent": "claude-code",
+    "created": "2026-10-08",
+    "external_references": [
+      "kemiller2002/limen#20",
+      "kemiller2002/limen#15"
+    ],
+    "id": "DF-LIMEN-2026-0006",
+    "path": "research/decisions/DF-LIMEN-2026-0006--url-state-hash-routing-and-route-inventory.md",
+    "provenance": {
+      "contributions": {
+        "EXE-20261008T190446218Z-5a37c83e": {
+          "actor": {
+            "id": "anthropic/claude-code",
+            "kind": "agent",
+            "model": "unknown",
+            "provider": "anthropic",
+            "runtime": "claude-code"
+          },
+          "at": "2026-10-08T19:07:17.821Z",
+          "operations": [
+            "created"
+          ],
+          "reason": "Hash routing on static hosting, the typed canonical codec, return-target safety and the route inventory schema for LCP-088..112"
+        }
+      }
+    },
+    "related_documents": [
+      "docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md",
+      "docs/31-routing.md",
+      "conformance/routing/README.md"
+    ],
+    "related_projects": [
+      "limen",
+      "praxis",
+      "conditor",
+      "chrona",
+      "summa",
+      "signal",
+      "arca"
+    ],
+    "status": "accepted",
+    "superseded_by": [],
+    "supersedes": [],
+    "tags": [
+      "routing",
+      "url-state",
+      "navigation",
+      "github-pages",
+      "lcp-005"
+    ],
+    "title": "Navigable state lives in a hash-routed, canonical URL built by engine libraries; the route inventory is a published schema",
+    "type": "decision-record",
+    "updated": "2026-10-08",
+    "version": "1.0.0",
+    "work_items": [
+      "WI-0167"
+    ]
   }
 ]
