@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 167,
+  "nextSeq": 168,
   "items": [
     {
       "id": "WI-0001",
@@ -2588,6 +2588,27 @@
       },
       "source": "manual",
       "sourceReference": "docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md"
+    },
+    {
+      "id": "WI-0167",
+      "title": "URL state 0: requirements, decision record and backlog for navigable state in the URL (routing / URL-state module, Limen 0.9.0)",
+      "description": "Portfolio requirement (coordinator 2026-10-08): every web app puts its navigable state in the URL (route, entity IDs, view parameters such as date or period, filters, sort, tab and page) so a copied URL opens the same view. Write LCP-088..112 extending LCP-005 (kemiller2002/limen#20), reserve them on kemiller2002/limen#15, record DF-LIMEN-2026-0006 (hash routing on static hosting, typed codec placement, return-to safety, inventory schema), and slice the build into ordered work items for Limen 0.9.0 (F# and npm at a shared version).",
+      "tags": [],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-08T19:04:37.000Z",
+      "updatedAt": "2026-10-08T19:04:45.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }

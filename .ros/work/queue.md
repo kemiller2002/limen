@@ -169,3 +169,4 @@
 | WI-0164 | IndexedDB 8: F# in-memory store fake with the same contract, and the F# conformance runner over the shared vectors (LCP-074, LCP-075) | complete | limen, indexeddb, lcp-018 | medium |
 | WI-0165 | IndexedDB 9: store performance baseline and budgets in Chromium and WebKit (LCP-078) | complete | limen, indexeddb, lcp-018 | medium |
 | WI-0166 | IndexedDB 10: release Limen 0.8.0 with the F# store packages, echelon-registry entry and Conditor consumption proof; consumer and privacy guidance in docs/41 (LCP-068, LCP-070, LCP-071, LCP-079, LCP-080) | complete | limen, indexeddb, lcp-018 | medium |
+| WI-0167 | URL state 0: requirements, decision record and backlog for navigable state in the URL (routing / URL-state module, Limen 0.9.0) | ready |  | high |

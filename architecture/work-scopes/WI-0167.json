@@ -1,0 +1,9 @@
+{
+  "workItem": "WI-0167",
+  "reference": "kemiller2002/limen#20 (LCP-005) and kemiller2002/limen#15: requirements and backlog for navigable state in the URL (portfolio requirement, coordinator 2026-10-08), released as Limen 0.9.0",
+  "placement": "Requirements, decision record and backlog only. A requirements document under docs/requirements, a Decision Record under research/decisions, index links in docs/README.md and docs/31-routing.md, and the Praxis registry and queue. No source, contract, test, workflow or guardrail-owned path changes.",
+  "guardrail": false,
+  "paths": ["docs/**", "research/**", "registries/**", "CHANGELOG.md"],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
