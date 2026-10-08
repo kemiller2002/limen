@@ -157,3 +157,4 @@
 | WI-0152 | Move limen to Praxis 3.7.1 (ROS -> Praxis rename) and Ordo 1.4.0 | complete | praxis, ordo, toolchain | medium |
 | WI-0153 | Move limen to Ordo 1.4.1 | complete | ordo, toolchain | medium |
 | WI-0154 | Move limen to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | complete | praxis, ordo, toolchain | medium |
+| WI-0155 | Move limen to Ordo 1.5.0 via echelon-current 1.2.0 (conditor upgrade --current) | ready |  | medium |
