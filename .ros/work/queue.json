@@ -2652,10 +2652,10 @@
         "lcp-005"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-08T19:07:31.000Z",
-      "updatedAt": "2026-10-08T19:47:20.000Z",
+      "updatedAt": "2026-10-08T19:55:58.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
