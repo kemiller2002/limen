@@ -2349,10 +2349,10 @@
         "lcp-018"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-08T15:06:27Z",
-      "updatedAt": "2026-10-08T15:57:32.000Z",
+      "updatedAt": "2026-10-08T16:08:38.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
