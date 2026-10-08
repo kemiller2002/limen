@@ -1,0 +1,17 @@
+{
+  "workItem": "WI-0172",
+  "reference": "kemiller2002/limen#20 (LCP-005); docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md LCP-110",
+  "placement": "Release and documentation. Limen 0.9.0: the package version (package.json, package-lock.json, and Limen's own installation record through the CLI's upgrade), a dated CHANGELOG entry for the routing module, and documentation that points at the released module and at installing EchelonFoundry.Limen.Routing through Conditor (the limen-fsharp registry system). Publishing is the existing publish.yml, dispatched on request; the echelon-registry entry is a separate pull request in that repository. No library, contract, pack, Core or workflow change.",
+  "guardrail": false,
+  "paths": [
+    "package.json",
+    "package-lock.json",
+    ".echelon/limen.json",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/**",
+    "libraries/fsharp/Limen.Routing/README.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

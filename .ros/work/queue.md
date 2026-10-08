@@ -174,4 +174,4 @@
 | WI-0169 | URL state 2: the TypeScript routing library @echelon-foundry/limen/routing and the route inventory schema | complete | limen, routing, url-state, lcp-005 | high |
 | WI-0170 | URL state 3: browser proof on a GitHub-Pages-like static server in Chromium and WebKit; examples/08-routing on the module | complete | limen, routing, url-state, lcp-005 | high |
 | WI-0171 | URL state 4: EchelonFoundry.Limen.Routing as an attested F# package; docs/31 guidance (privacy, hash mode, outcomes, sign-in) | complete | limen, routing, url-state, lcp-005 | high |
-| WI-0172 | URL state 5: release Limen 0.9.0 with the routing module, the echelon-registry entry and verification | captured | limen, routing, url-state, lcp-005 | high |
+| WI-0172 | URL state 5: release Limen 0.9.0 with the routing module, the echelon-registry entry and verification | ready | limen, routing, url-state, lcp-005 | high |
