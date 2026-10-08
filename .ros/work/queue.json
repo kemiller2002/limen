@@ -2730,10 +2730,10 @@
         "lcp-005"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-08T19:07:33.000Z",
-      "updatedAt": "2026-10-08T20:28:23.000Z",
+      "updatedAt": "2026-10-08T21:20:15.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
