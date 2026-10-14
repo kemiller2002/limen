@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 173,
+  "nextSeq": 175,
   "items": [
     {
       "id": "WI-0001",
@@ -2734,6 +2734,48 @@
       "attachments": [],
       "createdAt": "2026-10-08T19:07:33.000Z",
       "updatedAt": "2026-10-08T21:20:15.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0173",
+      "title": "UI conformance: audit the Limen product site against UI-LAYOUT-INTERACTION@1.0.0, fix site defects at source, add the test/ui-conformance suite and evidence (GH-107)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-14T08:34:05.184Z",
+      "updatedAt": "2026-10-14T08:34:17.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0174",
+      "title": "Wire the ui:conformance suite into CI as a blocking job in pages.yml (guardrail; GH-107)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-14T08:34:09.177Z",
+      "updatedAt": "2026-10-14T08:34:09.177Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

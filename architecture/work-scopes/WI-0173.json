@@ -1,0 +1,15 @@
+{
+  "workItem": "WI-0173",
+  "reference": "kemiller2002/limen#107; kemiller2002/visual-engineering#47 (UI-LAYOUT-INTERACTION@1.0.0 at visual-engineering 8da8fbc)",
+  "placement": "Product site and its conformance evidence. Site defects found by the audit are fixed at source in the site's own templates, pages and stylesheet (site/**). The conformance suite is a self-contained test package under test/ui-conformance/** (Playwright, the vendored @echelon-foundry/forma-conformance 0.1.0 helpers, the evidence schema copied verbatim) with a root `ui:conformance` script; baseline and final evidence are recorded under docs/ui-conformance/. No library, contract, Core, kernel, engine or workflow change: wiring the suite into CI is the separate guardrail item WI-0174.",
+  "guardrail": false,
+  "paths": [
+    "site/**",
+    "test/ui-conformance/**",
+    "package.json",
+    ".gitignore",
+    "docs/ui-conformance/**"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
