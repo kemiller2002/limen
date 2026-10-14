@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-08T21:20:15.000Z",
+  "updatedAt": "2026-10-14T09:12:40.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4254,6 +4254,96 @@
         }
       },
       "completedAt": "2026-10-08T21:20:15.000Z"
+    },
+    {
+      "id": "WI-0173",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "site/app/main.ts"
+        },
+        {
+          "type": "implementation",
+          "path": "site/assets/css/limen.css"
+        },
+        {
+          "type": "tests",
+          "path": "test/ui-conformance/site.spec.mjs"
+        },
+        {
+          "type": "tests",
+          "path": "docs/ui-conformance/evidence.json"
+        }
+      ],
+      "updatedAt": "2026-10-14T09:12:02.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261014T083419148Z-11d6cf49"
+      ],
+      "latestCheckpoint": {
+        "id": "f496a0f6e4a2994aa72e92af",
+        "recordedAt": "2026-10-14T09:11:59.000Z",
+        "executionId": "EXE-20261014T083419148Z-11d6cf49",
+        "repository": "limen",
+        "branch": "feat/ui-conformance-2026-10",
+        "commit": "7b6c7dc1bf0090485fa4d8ed3d0dec6bc4866374",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "feat/ui-conformance-2026-10",
+        "remoteCommit": "7b6c7dc1bf0090485fa4d8ed3d0dec6bc4866374",
+        "summary": "Site fixes (engine-gated inert demos, legal-pick projection, named demo regions, em breakpoints), test/ui-conformance suite 159/159, baseline and final evidence",
+        "nextAction": "Complete WI-0173; WI-0174 wires the suite into pages.yml",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-14T09:12:02.000Z"
+    },
+    {
+      "id": "WI-0174",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".github/workflows/pages.yml"
+        },
+        {
+          "type": "tests",
+          "path": "test/ui-conformance/site.spec.mjs"
+        }
+      ],
+      "updatedAt": "2026-10-14T09:12:40.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261014T091222829Z-9ac011b7"
+      ],
+      "latestCheckpoint": {
+        "id": "c36f0377237045aa147a6313",
+        "recordedAt": "2026-10-14T09:12:37.000Z",
+        "executionId": "EXE-20261014T091222829Z-9ac011b7",
+        "repository": "limen",
+        "branch": "feat/ui-conformance-2026-10",
+        "commit": "492e142c5ef3e98d74ce232a54a0f214b4f08ed1",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "feat/ui-conformance-2026-10",
+        "remoteCommit": "492e142c5ef3e98d74ce232a54a0f214b4f08ed1",
+        "summary": "pages.yml build job runs npm run ui:conformance as a blocking step and uploads evidence",
+        "nextAction": "Complete WI-0174; open PR",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-14T09:12:40.000Z"
     }
   ]
 }

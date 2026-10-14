@@ -16,12 +16,13 @@
         <p class="section-note">Evidence → capability → approval → effect → reconciliation.</p>
       </div>
 
-      <div class="demo">
+      <div class="demo" role="region" aria-labelledby="release-title" aria-busy="true" data-requires-engine inert>
         <div class="demo-head">
-          <h3>Can this release legally move?</h3>
+          <h3 id="release-title">Can this release legally move?</h3>
           <span class="status" data-bind-data-tone="deploymentTone" data-text="deploymentStatus">Not started</span>
         </div>
         <div class="demo-body">
+          <p class="engine-status" role="status" data-engine-status>This demonstration runs on the Limen runtime and the F# WebAssembly engine; its controls become available once both have started.</p>
           <div class="state-grid">
             <div><span class="label">Tests</span><span class="status" data-bind-data-tone="testsTone" data-text="testsStatus">Unverified</span></div>
             <div><span class="label">Security</span><span class="status" data-bind-data-tone="securityTone" data-text="securityStatus">Unverified</span></div>
@@ -86,12 +87,13 @@
         <p class="section-note">A race condition without timers, so you can control the order yourself.</p>
       </div>
 
-      <div class="demo">
+      <div class="demo" role="region" aria-labelledby="policy-title" aria-busy="true" data-requires-engine inert>
         <div class="demo-head">
-          <h3>Overlapping policy checks</h3>
+          <h3 id="policy-title">Overlapping policy checks</h3>
           <span class="note"><span data-text="policyDiscarded">0</span> stale discarded</span>
         </div>
         <div class="demo-body">
+          <p class="engine-status" role="status" data-engine-status>This demonstration runs on the Limen runtime and the F# WebAssembly engine; its controls become available once both have started.</p>
           <p class="lead" data-text="policyStateText"></p>
           <p class="note" data-text="policyExplanation"></p>
 
@@ -122,20 +124,21 @@
 
     <section>
       <div class="section-heading">
-        <div><p class="eyebrow">Challenge 03</p><h2>Where does this decision belong?</h2></div>
+        <div><p class="eyebrow">Challenge 03</p><h2 id="placement-title">Where does this decision belong?</h2></div>
         <p class="section-note">Twelve cases chosen to be ambiguous if the boundary is not understood.</p>
       </div>
 
-      <div class="demo">
+      <div class="demo" role="region" aria-labelledby="placement-title" aria-busy="true" data-requires-engine inert>
         <div class="demo-head">
           <h3>Task <span data-text="taskNumber">1</span> of <span data-text="taskTotal">12</span></h3>
           <span class="note" data-text="scoreText">0 of 0 so far</span>
         </div>
         <div class="demo-body">
+          <p class="engine-status" role="status" data-engine-status>This demonstration runs on the Limen runtime and the F# WebAssembly engine; its controls become available once both have started.</p>
           <p class="lead" data-text="taskPrompt"></p>
           <div class="choices">
             <template data-each="choices" data-key="id">
-              <button class="button" data-event="pick" data-text="label" data-bind-aria-pressed="pressed"></button>
+              <button class="button" data-event="pick" data-text="label" data-bind-aria-pressed="pressed" data-bind-disabled="disabled"></button>
             </template>
           </div>
 
@@ -163,13 +166,14 @@
         <p class="section-note">Newest first. This is projected application state, not a hidden kernel log.</p>
       </div>
 
-      <div class="demo">
+      <div class="demo" role="region" aria-labelledby="trace-title" aria-busy="true" data-requires-engine inert>
         <div class="demo-head">
-          <h3>Cross-boundary decisions</h3>
+          <h3 id="trace-title">Cross-boundary decisions</h3>
           <span class="note"><span data-text="traceCount">0</span> recorded</span>
         </div>
         <div class="demo-body">
-          <button class="button ghost small" data-event="clearTrace">Clear trace</button>
+          <p class="engine-status" role="status" data-engine-status>This demonstration runs on the Limen runtime and the F# WebAssembly engine; its controls become available once both have started.</p>
+          <button class="button ghost small" data-event="clearTrace" data-bind-disabled="traceEmpty">Clear trace</button>
           <template data-if="traceEmpty">
             <p class="trace-empty">Use any challenge above. Legal state changes appear here.</p>
           </template>

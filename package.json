@@ -258,6 +258,7 @@
     "build:site:wasm": "dotnet workload restore site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj && dotnet publish site/fsharp/Limen.Site.Wasm/Limen.Site.Wasm.csproj -c Release -o site/fsharp/publish && dotnet publish site/fsharp/federation/Limen.Federation.Source.Wasm/Limen.Federation.Source.Wasm.csproj -c Release -o site/fsharp/federation/Limen.Federation.Source.Wasm/publish && dotnet publish site/fsharp/federation/Limen.Federation.Target.Wasm/Limen.Federation.Target.Wasm.csproj -c Release -o site/fsharp/federation/Limen.Federation.Target.Wasm/publish",
     "test:site:fsharp": "dotnet run --project site/fsharp/tests/Limen.Site.Engine.Tests/Limen.Site.Engine.Tests.fsproj -c Release && dotnet run --project site/fsharp/federation/tests/Limen.Federation.Proof.Tests/Limen.Federation.Proof.Tests.fsproj -c Release",
     "smoke:site:wasm": "bash scripts/smoke-site-wasm.sh",
+    "ui:conformance": "playwright test --config test/ui-conformance/playwright.config.mjs && node test/ui-conformance/validate-evidence.mjs",
     "contract:generate": "node --experimental-strip-types tools/contract-gen/main.ts generate",
     "contract:check": "node --experimental-strip-types tools/contract-gen/main.ts check",
     "test:guests": "npm run test:guests:fsharp && npm run test:guests:csharp && npm run test:guests:rust && npm run test:guests:sessions && npm run test:libraries && npm run test:guests:pressure",

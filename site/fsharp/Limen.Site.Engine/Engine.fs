@@ -554,7 +554,11 @@ module Engine =
                 Map.ofList
                     [ "id", ViewPrimitive.Text(placementId placement)
                       "label", ViewPrimitive.Text(placementLabel placement)
-                      "pressed", ViewPrimitive.Flag(state.Picked = Some placement) ])
+                      "pressed", ViewPrimitive.Flag(state.Picked = Some placement)
+                      // Once a task is answered, Pick is not a legal command
+                      // until NextTask: the choices say so instead of
+                      // silently ignoring a click.
+                      "disabled", ViewPrimitive.Flag revealed ])
 
         let verdict =
             if not revealed then

@@ -1,0 +1,11 @@
+{
+  "workItem": "WI-0174",
+  "reference": "kemiller2002/limen#107; visual-engineering UI-LAYOUT-INTERACTION@1.0.0 (8da8fbc)",
+  "placement": "CI wiring only. The Pages workflow's build job, which already builds and smoke-tests the site, additionally runs `npm run ui:conformance` (test/ui-conformance, added by WI-0173) as a blocking step after the existing checks, installs Playwright without saving it exactly as ci.yml does, and uploads the evidence. Nothing is disabled or loosened; deploy still needs build.",
+  "guardrail": true,
+  "paths": [
+    ".github/workflows/pages.yml"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
