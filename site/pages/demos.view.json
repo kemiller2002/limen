@@ -39,7 +39,8 @@
       "list": {
         "id": "string",
         "label": "string",
-        "pressed": "boolean"
+        "pressed": "boolean",
+        "disabled": "boolean"
       }
     },
     "revealed": "boolean",

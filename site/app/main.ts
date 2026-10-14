@@ -13,6 +13,38 @@ const diagnostics: DiagnosticsSink = {
   },
 };
 
+// Demonstrations ship inert: until the kernel and the F# engine have started
+// there is nothing to answer a click, so their controls must not look usable
+// (ULI-A01, ULI-A07). This is runtime readiness, not application state.
+const demos = (): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>("[data-requires-engine]"));
+
+const markReady = (): void => {
+  for (const demo of demos()) {
+    demo.removeAttribute("inert");
+    demo.setAttribute("aria-busy", "false");
+    demo.querySelector<HTMLElement>("[data-engine-status]")?.setAttribute("hidden", "");
+  }
+};
+
+const markUnavailable = (): void => {
+  for (const demo of demos()) {
+    demo.setAttribute("aria-busy", "false");
+    const status = demo.querySelector<HTMLElement>("[data-engine-status]");
+    if (status !== null) {
+      status.dataset.state = "error";
+      status.textContent = "The F# engine could not start, so this demonstration is unavailable. Reload the page to try again.";
+    }
+  }
+};
+
 // The F# engine answers the contract-fingerprint handshake, so an engine built
 // from a different contract is refused before anything reaches the page.
-await new BrowserKernel(new WasmSiteTransport(), document, diagnostics, { requireHandshake: true }).start();
+// start() never rejects: a transport that cannot start, or an incompatible
+// engine, leaves the kernel in a non-running status instead.
+const kernel = new BrowserKernel(new WasmSiteTransport(), document, diagnostics, { requireHandshake: true });
+await kernel.start();
+if (kernel.status === "running") {
+  markReady();
+} else {
+  markUnavailable();
+}

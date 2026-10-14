@@ -110,12 +110,13 @@
         <p class="section-note">Resolve evidence, obtain authority, then test what happens when deployment evidence becomes uncertain.</p>
       </div>
 
-      <div class="demo">
+      <div class="demo" role="region" aria-labelledby="home-release-title" aria-busy="true" data-requires-engine inert>
         <div class="demo-head">
-          <h3>Release gate</h3>
+          <h3 id="home-release-title">Release gate</h3>
           <span class="status" data-bind-data-tone="deploymentTone" data-text="deploymentStatus">Not started</span>
         </div>
         <div class="demo-body">
+          <p class="engine-status" role="status" data-engine-status>This demonstration runs on the Limen runtime and the F# WebAssembly engine; its controls become available once both have started.</p>
           <div class="state-grid">
             <div><span class="label">Tests</span><span class="status" data-bind-data-tone="testsTone" data-text="testsStatus">Unverified</span></div>
             <div><span class="label">Security</span><span class="status" data-bind-data-tone="securityTone" data-text="securityStatus">Unverified</span></div>
