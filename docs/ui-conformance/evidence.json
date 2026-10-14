@@ -1,0 +1,1225 @@
+{
+  "standardVersion": "1.0.0",
+  "repository": "kemiller2002/limen",
+  "revision": "31068222149dfff53baa45b997240b2ec72020da",
+  "classification": "site-ui",
+  "surfaces": [
+    {
+      "id": "chrome",
+      "path": "/* (shared header and footer on every page)",
+      "kind": "marketing",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [
+        {
+          "id": "primary-nav",
+          "relation": "centerline",
+          "toleranceCssPx": 1,
+          "targets": [
+            {
+              "role": "link",
+              "name": "Overview"
+            },
+            {
+              "role": "link",
+              "name": "Why Limen"
+            },
+            {
+              "role": "link",
+              "name": "Architecture"
+            },
+            {
+              "role": "link",
+              "name": "Demos"
+            },
+            {
+              "role": "link",
+              "name": "Federation"
+            },
+            {
+              "role": "link",
+              "name": "Evidence"
+            },
+            {
+              "role": "link",
+              "name": "For agents"
+            },
+            {
+              "role": "link",
+              "name": "Docs"
+            },
+            {
+              "role": "link",
+              "name": "GitHub"
+            }
+          ],
+          "rationale": "ULI-L10: Primary destinations share one row beside the brand above 70em (declared at 1280px)",
+          "evidence": [
+            "status: pass",
+            "passed: chromium > site.spec.mjs > chrome: primary-nav aligns at 1280px (test/ui-conformance/site.spec.mjs:382)"
+          ]
+        },
+        {
+          "id": "footer-actions",
+          "relation": "centerline",
+          "toleranceCssPx": 1,
+          "targets": [
+            {
+              "role": "link",
+              "name": "Source"
+            },
+            {
+              "role": "link",
+              "name": "npm"
+            },
+            {
+              "role": "link",
+              "name": "Documentation"
+            }
+          ],
+          "rationale": "ULI-L10: Footer actions share one row (declared at 390, 768, 1280px)",
+          "evidence": [
+            "status: pass",
+            "passed: chromium > site.spec.mjs > chrome: footer-actions aligns at 390px (test/ui-conformance/site.spec.mjs:382)",
+            "passed: chromium > site.spec.mjs > chrome: footer-actions aligns at 768px (test/ui-conformance/site.spec.mjs:382)",
+            "passed: chromium > site.spec.mjs > chrome: footer-actions aligns at 1280px (test/ui-conformance/site.spec.mjs:382)"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "skip-link",
+          "control": {
+            "role": "link",
+            "name": "Skip to main content"
+          },
+          "intent": "Move keyboard focus past the header to the page content",
+          "expectedOutcome": "The link appears on keyboard focus; activating it changes the hash to #main-content and the main region is in view",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > skip link moves to the main content (test/ui-conformance/site.spec.mjs:158)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > skip link moves to the main content (test/ui-conformance/site.spec.mjs:158)",
+            "passed: chromium > site.spec.mjs > chrome/skip-link destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "brand-home",
+          "control": {
+            "role": "link",
+            "name": "Limen"
+          },
+          "intent": "Navigate to /index.html",
+          "expectedOutcome": "URL becomes /index.html and the destination's heading \"Make the browser a mechanism, not a second application.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: brand-home reaches /index.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: brand-home reaches /index.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/brand-home destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-index",
+          "control": {
+            "role": "link",
+            "name": "Overview"
+          },
+          "intent": "Navigate to /index.html",
+          "expectedOutcome": "URL becomes /index.html and the destination's heading \"Make the browser a mechanism, not a second application.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-index reaches /index.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-index reaches /index.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-index destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-why-limen",
+          "control": {
+            "role": "link",
+            "name": "Why Limen"
+          },
+          "intent": "Navigate to /why-limen.html",
+          "expectedOutcome": "URL becomes /why-limen.html and the destination's heading \"Make fewer architectures legal.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-why-limen reaches /why-limen.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-why-limen reaches /why-limen.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-why-limen destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-architecture",
+          "control": {
+            "role": "link",
+            "name": "Architecture"
+          },
+          "intent": "Navigate to /architecture.html",
+          "expectedOutcome": "URL becomes /architecture.html and the destination's heading \"The application is WebAssembly. The browser boundary is Limen.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-architecture reaches /architecture.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-architecture reaches /architecture.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-architecture destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-demos",
+          "control": {
+            "role": "link",
+            "name": "Demos"
+          },
+          "intent": "Navigate to /demos.html",
+          "expectedOutcome": "URL becomes /demos.html and the destination's heading \"Problems that are hard for the right reasons.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-demos reaches /demos.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-demos reaches /demos.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-demos destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-federation",
+          "control": {
+            "role": "link",
+            "name": "Federation"
+          },
+          "intent": "Navigate to /federation.html",
+          "expectedOutcome": "URL becomes /federation.html and the destination's heading \"Two F# WebAssembly modules. Two state owners. One typed exchange.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-federation reaches /federation.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-federation reaches /federation.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-federation destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-evidence",
+          "control": {
+            "role": "link",
+            "name": "Evidence"
+          },
+          "intent": "Navigate to /evidence.html",
+          "expectedOutcome": "URL becomes /evidence.html and the destination's heading \"What the repository proves, and what it does not.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-evidence reaches /evidence.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-evidence reaches /evidence.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-evidence destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-agents",
+          "control": {
+            "role": "link",
+            "name": "For agents"
+          },
+          "intent": "Navigate to /agents.html",
+          "expectedOutcome": "URL becomes /agents.html and the destination's heading \"Where the change goes.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-agents reaches /agents.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-agents reaches /agents.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-agents destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-docs",
+          "control": {
+            "role": "link",
+            "name": "Docs"
+          },
+          "intent": "Navigate to /docs.html",
+          "expectedOutcome": "URL becomes /docs.html and the destination's heading \"One source, several doors.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: nav-docs reaches /docs.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: nav-docs reaches /docs.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/nav-docs destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "nav-github",
+          "control": {
+            "role": "link",
+            "name": "GitHub"
+          },
+          "intent": "Open https://github.com/kemiller2002/limen",
+          "expectedOutcome": "href is https://github.com/kemiller2002/limen (an https destination; the external service's availability is not claimed)",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > chrome: nav-github points at https://github.com/kemiller2002/limen (test/ui-conformance/site.spec.mjs:177)",
+            "passed: chromium > site.spec.mjs > chrome/nav-github destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "footer-echelon",
+          "control": {
+            "role": "link",
+            "name": "Echelon Foundry"
+          },
+          "intent": "Open https://echelonfoundry.com",
+          "expectedOutcome": "href is https://echelonfoundry.com (an https destination; the external service's availability is not claimed)",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > chrome: footer-echelon points at https://echelonfoundry.com (test/ui-conformance/site.spec.mjs:177)",
+            "passed: chromium > site.spec.mjs > chrome/footer-echelon destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "footer-source",
+          "control": {
+            "role": "link",
+            "name": "Source"
+          },
+          "intent": "Open https://github.com/kemiller2002/limen",
+          "expectedOutcome": "href is https://github.com/kemiller2002/limen (an https destination; the external service's availability is not claimed)",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > chrome: footer-source points at https://github.com/kemiller2002/limen (test/ui-conformance/site.spec.mjs:177)",
+            "passed: chromium > site.spec.mjs > chrome/footer-source destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "footer-npm",
+          "control": {
+            "role": "link",
+            "name": "npm"
+          },
+          "intent": "Open https://www.npmjs.com/package/@echelon-foundry/limen",
+          "expectedOutcome": "href is https://www.npmjs.com/package/@echelon-foundry/limen (an https destination; the external service's availability is not claimed)",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > chrome: footer-npm points at https://www.npmjs.com/package/@echelon-foundry/limen (test/ui-conformance/site.spec.mjs:177)",
+            "passed: chromium > site.spec.mjs > chrome/footer-npm destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "footer-docs",
+          "control": {
+            "role": "link",
+            "name": "Documentation"
+          },
+          "intent": "Navigate to /docs.html",
+          "expectedOutcome": "URL becomes /docs.html and the destination's heading \"One source, several doors.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > chrome: footer-docs reaches /docs.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > chrome: footer-docs reaches /docs.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > chrome/footer-docs destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        }
+      ],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > every chrome action is reachable by keyboard (test/ui-conformance/site.spec.mjs:397)",
+        "passed: chromium > site.spec.mjs > an unknown page is reported as not found (test/ui-conformance/site.spec.mjs:436)"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "agents",
+      "path": "/agents.html",
+      "kind": "marketing",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [],
+      "actions": [],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /agents.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /agents.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /agents.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /agents.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /agents.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /agents.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /agents.html content links resolve (test/ui-conformance/site.spec.mjs:100)",
+        "alignment: not-applicable beyond the shared chrome; the page declares no side-by-side peer controls"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "architecture",
+      "path": "/architecture.html",
+      "kind": "marketing",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [],
+      "actions": [],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /architecture.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /architecture.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /architecture.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /architecture.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /architecture.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /architecture.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /architecture.html content links resolve (test/ui-conformance/site.spec.mjs:100)",
+        "alignment: not-applicable beyond the shared chrome; the page declares no side-by-side peer controls"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "demos",
+      "path": "/demos.html",
+      "kind": "demo",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [
+        {
+          "id": "release-evidence-controls",
+          "relation": "centerline",
+          "toleranceCssPx": 1,
+          "targets": [
+            {
+              "role": "button",
+              "name": "Pass tests"
+            },
+            {
+              "role": "button",
+              "name": "Fail tests"
+            },
+            {
+              "role": "button",
+              "name": "Clear security"
+            },
+            {
+              "role": "button",
+              "name": "Block security"
+            },
+            {
+              "role": "button",
+              "name": "Approve release"
+            }
+          ],
+          "rationale": "ULI-L10: Evidence and approval controls share one control row (declared at 1280px)",
+          "evidence": [
+            "status: pass",
+            "passed: chromium > site.spec.mjs > demos: release-evidence-controls aligns at 1280px (test/ui-conformance/site.spec.mjs:382)"
+          ]
+        },
+        {
+          "id": "policy-controls",
+          "relation": "centerline",
+          "toleranceCssPx": 1,
+          "targets": [
+            {
+              "role": "button",
+              "name": "1. Start policy A"
+            },
+            {
+              "role": "button",
+              "name": "2. Start newer policy B"
+            },
+            {
+              "role": "button",
+              "name": "3. Deliver A first"
+            },
+            {
+              "role": "button",
+              "name": "4. Deliver B"
+            },
+            {
+              "role": "button",
+              "name": "Reset"
+            }
+          ],
+          "rationale": "ULI-L10: Policy controls share one control row in their numbered order (declared at 1280px)",
+          "evidence": [
+            "status: pass",
+            "passed: chromium > site.spec.mjs > demos: policy-controls aligns at 1280px (test/ui-conformance/site.spec.mjs:382)"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "tests-pass",
+          "control": {
+            "role": "button",
+            "name": "Pass tests"
+          },
+          "intent": "Record passing test evidence",
+          "expectedOutcome": "Tests reads Passed (was Unverified); a trace step is recorded",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "tests-fail",
+          "control": {
+            "role": "button",
+            "name": "Fail tests"
+          },
+          "intent": "Record failing test evidence",
+          "expectedOutcome": "Tests reads Failed and the obligation remains; approval stays disabled",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > failing evidence blocks approval and reset restores the scenario (test/ui-conformance/site.spec.mjs:237)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "security-clear",
+          "control": {
+            "role": "button",
+            "name": "Clear security"
+          },
+          "intent": "Record a security clearance",
+          "expectedOutcome": "Security reads Passed (was Unverified)",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "security-block",
+          "control": {
+            "role": "button",
+            "name": "Block security"
+          },
+          "intent": "Record a security block",
+          "expectedOutcome": "Security reads Failed; approval stays disabled",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > failing evidence blocks approval and reset restores the scenario (test/ui-conformance/site.spec.mjs:237)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "approve",
+          "control": {
+            "role": "button",
+            "name": "Approve release"
+          },
+          "intent": "Approve a release whose evidence is complete",
+          "expectedOutcome": "Disabled until tests and security pass; then Approval reads Approved and deploy controls are enabled",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "deploy-success",
+          "control": {
+            "role": "button",
+            "name": "Deploy: success"
+          },
+          "intent": "Deploy through a real Limen Http effect that succeeds",
+          "expectedOutcome": "Deployment reads Deployed and the verdict says the deployment is authoritative",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "deploy-unknown",
+          "control": {
+            "role": "button",
+            "name": "Evidence: timeout after dispatch"
+          },
+          "intent": "Inject an OutcomeUnknown deployment result",
+          "expectedOutcome": "Deployment reads Outcome unknown; deploy controls disable and reconciliation controls appear",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > an unknown outcome requires reconciliation; applied is authoritative (test/ui-conformance/site.spec.mjs:250)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "deploy-network-failure",
+          "control": {
+            "role": "button",
+            "name": "Deploy: network failure"
+          },
+          "intent": "Deploy through a real Http effect that fails in transport",
+          "expectedOutcome": "Deployment reads Failed and the verdict says a retry may be allowed; never Deployed",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > a transport failure is reported as a failure, never as deployed (test/ui-conformance/site.spec.mjs:272)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "reconcile-applied",
+          "control": {
+            "role": "button",
+            "name": "Reconcile: applied"
+          },
+          "intent": "Reconcile an unknown outcome as applied",
+          "expectedOutcome": "Deployment reads Deployed; reconciliation controls disappear",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > an unknown outcome requires reconciliation; applied is authoritative (test/ui-conformance/site.spec.mjs:250)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "reconcile-not-applied",
+          "control": {
+            "role": "button",
+            "name": "Reconcile: not applied"
+          },
+          "intent": "Reconcile an unknown outcome as not applied",
+          "expectedOutcome": "Deployment returns to Not started and deploy controls are enabled again",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > an unknown outcome reconciled as not applied re-enables deployment (test/ui-conformance/site.spec.mjs:262)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "reset",
+          "control": {
+            "role": "button",
+            "name": "Reset"
+          },
+          "intent": "Reset the release scenario",
+          "expectedOutcome": "Tests, Security, Approval and Deployment return to Unverified, Unverified, Not approved and Not started",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html release demonstration > failing evidence blocks approval and reset restores the scenario (test/ui-conformance/site.spec.mjs:237)"
+          ],
+          "resetStrategy": "Idempotent: the scenario returns to its initial state"
+        },
+        {
+          "id": "policy-start-a",
+          "control": {
+            "role": "button",
+            "name": "1. Start policy A"
+          },
+          "intent": "Request policy A",
+          "expectedOutcome": "Latest request reads policy-a (was none); Start policy A disables",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > stale policy evidence is discarded and the current result accepted (test/ui-conformance/site.spec.mjs:285)"
+          ],
+          "resetStrategy": "Activate the policy scenario's Reset control (or reload the page)."
+        },
+        {
+          "id": "policy-start-b",
+          "control": {
+            "role": "button",
+            "name": "2. Start newer policy B"
+          },
+          "intent": "Request a newer policy B",
+          "expectedOutcome": "Latest request reads policy-b",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > stale policy evidence is discarded and the current result accepted (test/ui-conformance/site.spec.mjs:285)"
+          ],
+          "resetStrategy": "Activate the policy scenario's Reset control (or reload the page)."
+        },
+        {
+          "id": "policy-deliver-a",
+          "control": {
+            "role": "button",
+            "name": "3. Deliver A first"
+          },
+          "intent": "Deliver the stale response A after B started",
+          "expectedOutcome": "Stale discarded reads 1 and Accepted result stays none",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > stale policy evidence is discarded and the current result accepted (test/ui-conformance/site.spec.mjs:285)"
+          ],
+          "resetStrategy": "Activate the policy scenario's Reset control (or reload the page)."
+        },
+        {
+          "id": "policy-deliver-b",
+          "control": {
+            "role": "button",
+            "name": "4. Deliver B"
+          },
+          "intent": "Deliver the current response B",
+          "expectedOutcome": "Accepted result reads policy-b → Review required",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > stale policy evidence is discarded and the current result accepted (test/ui-conformance/site.spec.mjs:285)"
+          ],
+          "resetStrategy": "Activate the policy scenario's Reset control (or reload the page)."
+        },
+        {
+          "id": "policy-reset",
+          "control": {
+            "role": "button",
+            "name": "Reset"
+          },
+          "intent": "Reset the policy scenario",
+          "expectedOutcome": "Latest request and accepted result read none; Start policy A is enabled",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > stale policy evidence is discarded and the current result accepted (test/ui-conformance/site.spec.mjs:285)"
+          ],
+          "resetStrategy": "Idempotent"
+        },
+        {
+          "id": "placement-pick",
+          "control": {
+            "role": "button",
+            "name": "/^(HTML|CSS|Limen kernel|F# engine|Effect request|Protocol change)$/"
+          },
+          "intent": "Answer where the decision belongs",
+          "expectedOutcome": "The chosen answer is pressed, a verdict explains the answer, the score counts it and the other choices can no longer be picked for this task",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > a placement answer is judged once, then the next task is offered (test/ui-conformance/site.spec.mjs:306)"
+          ],
+          "resetStrategy": "Next challenge moves to the next task; reload restarts at task 1"
+        },
+        {
+          "id": "placement-next",
+          "control": {
+            "role": "button",
+            "name": "Next challenge"
+          },
+          "intent": "Move to the next placement task",
+          "expectedOutcome": "Task number advances and the verdict is hidden until the next answer",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > a placement answer is judged once, then the next task is offered (test/ui-conformance/site.spec.mjs:306)"
+          ],
+          "resetStrategy": "Tasks cycle; reload restarts at task 1"
+        },
+        {
+          "id": "trace-clear",
+          "control": {
+            "role": "button",
+            "name": "Clear trace"
+          },
+          "intent": "Clear the transition trace",
+          "expectedOutcome": "Disabled while the trace is empty; after transitions, clearing sets the recorded count to 0 and shows the empty hint",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /demos.html other demonstrations > the trace records transitions and clears only when it has entries (test/ui-conformance/site.spec.mjs:330)"
+          ],
+          "resetStrategy": "Any demo action records new steps"
+        }
+      ],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /demos.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /demos.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /demos.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /demos.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /demos.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /demos.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "passed: chromium > site.spec.mjs > /demos.html says when the F# engine cannot start and offers no dead controls (test/ui-conformance/site.spec.mjs:347)",
+        "passed: chromium > site.spec.mjs > the release demonstration is operable by keyboard (test/ui-conformance/site.spec.mjs:407)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /demos.html content links resolve (test/ui-conformance/site.spec.mjs:100)"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "docs",
+      "path": "/docs.html",
+      "kind": "marketing",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [],
+      "actions": [],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /docs.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /docs.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /docs.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /docs.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /docs.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /docs.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /docs.html content links resolve (test/ui-conformance/site.spec.mjs:100)",
+        "alignment: not-applicable beyond the shared chrome; the page declares no side-by-side peer controls"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "evidence",
+      "path": "/evidence.html",
+      "kind": "marketing",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [],
+      "actions": [],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /evidence.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /evidence.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /evidence.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /evidence.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /evidence.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /evidence.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /evidence.html content links resolve (test/ui-conformance/site.spec.mjs:100)",
+        "alignment: not-applicable beyond the shared chrome; the page declares no side-by-side peer controls"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "federation",
+      "path": "/federation.html",
+      "kind": "demo",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [],
+      "actions": [],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /federation.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /federation.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /federation.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /federation.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /federation.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /federation.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "passed: chromium > site.spec.mjs > /federation.html reports a runtime that cannot load as a failure (test/ui-conformance/site.spec.mjs:369)",
+        "passed: chromium > site.spec.mjs > /federation.html proves the two-module exchange (test/ui-conformance/site.spec.mjs:362)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /federation.html content links resolve (test/ui-conformance/site.spec.mjs:100)",
+        "alignment: not-applicable beyond the shared chrome; the page declares no side-by-side peer controls"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "index",
+      "path": "/index.html",
+      "kind": "marketing",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [
+        {
+          "id": "hero-actions",
+          "relation": "centerline",
+          "toleranceCssPx": 1,
+          "targets": [
+            {
+              "role": "link",
+              "name": "Why Limen"
+            },
+            {
+              "role": "link",
+              "name": "Challenge the boundary"
+            },
+            {
+              "role": "link",
+              "name": "See the architecture"
+            }
+          ],
+          "rationale": "ULI-L10: Hero calls to action share one row (declared at 1280px)",
+          "evidence": [
+            "status: pass",
+            "passed: chromium > site.spec.mjs > index: hero-actions aligns at 1280px (test/ui-conformance/site.spec.mjs:382)"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "cta-why-limen",
+          "control": {
+            "role": "link",
+            "name": "Why Limen"
+          },
+          "intent": "Navigate to /why-limen.html",
+          "expectedOutcome": "URL becomes /why-limen.html and the destination's heading \"Make fewer architectures legal.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > index: cta-why-limen reaches /why-limen.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > index: cta-why-limen reaches /why-limen.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > index/cta-why-limen destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "cta-challenge-the-boundary",
+          "control": {
+            "role": "link",
+            "name": "Challenge the boundary"
+          },
+          "intent": "Navigate to /demos.html",
+          "expectedOutcome": "URL becomes /demos.html and the destination's heading \"Problems that are hard for the right reasons.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > index: cta-challenge-the-boundary reaches /demos.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > index: cta-challenge-the-boundary reaches /demos.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > index/cta-challenge-the-boundary destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "cta-see-the-architecture",
+          "control": {
+            "role": "link",
+            "name": "See the architecture"
+          },
+          "intent": "Navigate to /architecture.html",
+          "expectedOutcome": "URL becomes /architecture.html and the destination's heading \"The application is WebAssembly. The browser boundary is Limen.\" is shown",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > navigation outcomes at 390px > index: cta-see-the-architecture reaches /architecture.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > navigation outcomes at 1280px > index: cta-see-the-architecture reaches /architecture.html (test/ui-conformance/site.spec.mjs:146)",
+            "passed: chromium > site.spec.mjs > index/cta-see-the-architecture destination is valid (test/ui-conformance/site.spec.mjs:127)"
+          ],
+          "resetStrategy": "Stateless navigation: reload the source page"
+        },
+        {
+          "id": "home-tests-pass",
+          "control": {
+            "role": "button",
+            "name": "Pass tests"
+          },
+          "intent": "Record passing test evidence",
+          "expectedOutcome": "Tests reads Passed (was Unverified); a trace step is recorded",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-tests-fail",
+          "control": {
+            "role": "button",
+            "name": "Fail tests"
+          },
+          "intent": "Record failing test evidence",
+          "expectedOutcome": "Tests reads Failed and the obligation remains; approval stays disabled",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > failing evidence blocks approval and reset restores the scenario (test/ui-conformance/site.spec.mjs:237)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-security-clear",
+          "control": {
+            "role": "button",
+            "name": "Clear security"
+          },
+          "intent": "Record a security clearance",
+          "expectedOutcome": "Security reads Passed (was Unverified)",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-security-block",
+          "control": {
+            "role": "button",
+            "name": "Block security"
+          },
+          "intent": "Record a security block",
+          "expectedOutcome": "Security reads Failed; approval stays disabled",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > failing evidence blocks approval and reset restores the scenario (test/ui-conformance/site.spec.mjs:237)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-approve",
+          "control": {
+            "role": "button",
+            "name": "Approve release"
+          },
+          "intent": "Approve a release whose evidence is complete",
+          "expectedOutcome": "Disabled until tests and security pass; then Approval reads Approved and deploy controls are enabled",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-deploy-success",
+          "control": {
+            "role": "button",
+            "name": "Deploy: success"
+          },
+          "intent": "Deploy through a real Limen Http effect that succeeds",
+          "expectedOutcome": "Deployment reads Deployed and the verdict says the deployment is authoritative",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > evidence, approval and a successful deployment (test/ui-conformance/site.spec.mjs:227)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-deploy-unknown",
+          "control": {
+            "role": "button",
+            "name": "Evidence: timeout after dispatch"
+          },
+          "intent": "Inject an OutcomeUnknown deployment result",
+          "expectedOutcome": "Deployment reads Outcome unknown; deploy controls disable and reconciliation controls appear",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > an unknown outcome requires reconciliation; applied is authoritative (test/ui-conformance/site.spec.mjs:250)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-deploy-network-failure",
+          "control": {
+            "role": "button",
+            "name": "Deploy: network failure"
+          },
+          "intent": "Deploy through a real Http effect that fails in transport",
+          "expectedOutcome": "Deployment reads Failed and the verdict says a retry may be allowed; never Deployed",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > a transport failure is reported as a failure, never as deployed (test/ui-conformance/site.spec.mjs:272)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-reconcile-applied",
+          "control": {
+            "role": "button",
+            "name": "Authoritative check: applied"
+          },
+          "intent": "Reconcile an unknown outcome as applied",
+          "expectedOutcome": "Deployment reads Deployed; reconciliation controls disappear",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > an unknown outcome requires reconciliation; applied is authoritative (test/ui-conformance/site.spec.mjs:250)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-reconcile-not-applied",
+          "control": {
+            "role": "button",
+            "name": "Authoritative check: not applied"
+          },
+          "intent": "Reconcile an unknown outcome as not applied",
+          "expectedOutcome": "Deployment returns to Not started and deploy controls are enabled again",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > an unknown outcome reconciled as not applied re-enables deployment (test/ui-conformance/site.spec.mjs:262)"
+          ],
+          "resetStrategy": "Activate the scenario's Reset control (or reload the page); the engine returns the release to its initial state."
+        },
+        {
+          "id": "home-reset",
+          "control": {
+            "role": "button",
+            "name": "Reset scenario"
+          },
+          "intent": "Reset the release scenario",
+          "expectedOutcome": "Tests, Security, Approval and Deployment return to Unverified, Unverified, Not approved and Not started",
+          "status": "pass",
+          "evidence": [
+            "passed: chromium > site.spec.mjs > /index.html release demonstration > failing evidence blocks approval and reset restores the scenario (test/ui-conformance/site.spec.mjs:237)"
+          ],
+          "resetStrategy": "Idempotent: the scenario returns to its initial state"
+        }
+      ],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /index.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /index.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /index.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /index.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /index.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /index.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "passed: chromium > site.spec.mjs > /index.html says when the F# engine cannot start and offers no dead controls (test/ui-conformance/site.spec.mjs:347)",
+        "passed: chromium > site.spec.mjs > reduced motion removes smooth scrolling and transitions (test/ui-conformance/site.spec.mjs:419)",
+        "passed: chromium > site.spec.mjs > forced colors keep filled controls bounded and navigation visible (test/ui-conformance/site.spec.mjs:427)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /index.html content links resolve (test/ui-conformance/site.spec.mjs:100)"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    },
+    {
+      "id": "why-limen",
+      "path": "/why-limen.html",
+      "kind": "marketing",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [],
+      "actions": [],
+      "evidence": [
+        "passed: chromium > site.spec.mjs > at 320px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 320px with 200% text > /why-limen.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 390px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 390px with 200% text > /why-limen.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 768px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 768px with 200% text > /why-limen.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > at 1280px > /why-limen.html renders without overflow, with intact navigation labels (test/ui-conformance/site.spec.mjs:39)",
+        "passed: chromium > site.spec.mjs > at 1280px with 200% text > /why-limen.html reflows without overflow (test/ui-conformance/site.spec.mjs:55)",
+        "passed: chromium > site.spec.mjs > /why-limen.html renders only declared actions (test/ui-conformance/site.spec.mjs:75)",
+        "content links (every rendered link in <main>, destination verified): passed: chromium > site.spec.mjs > /why-limen.html content links resolve (test/ui-conformance/site.spec.mjs:100)",
+        "alignment: not-applicable beyond the shared chrome; the page declares no side-by-side peer controls"
+      ],
+      "unknownScope": [
+        "Translated and right-to-left text are not exercised (the site ships English only).",
+        "Long labels beyond the shipped content are not injected.",
+        "Browser page zoom is approximated by the contract widths plus a 200% default text size; WebKit and Firefox are not exercised.",
+        "Availability of external destinations (GitHub, npm, echelonfoundry.com) is not verified; only that each is an https URL.",
+        "Google Fonts are loaded from the network when reachable; with fonts blocked the fallback stack is measured instead.",
+        "Demonstrations run the published F# WebAssembly engine in Chromium only; WebKit/Firefox WASM hosting is not exercised here (smoke:packs:webkit covers packs, not this site)."
+      ]
+    }
+  ],
+  "exceptions": [],
+  "notes": "Contract visual-engineering/UI-LAYOUT-INTERACTION@1.0.0 (kemiller2002/visual-engineering@8da8fbc). Surface: the Limen product site built by npm run build:site (site/ pages, the F# WebAssembly site engine and the two-module federation proof) and deployed to GitHub Pages (limen.echelonfoundry.com) by .github/workflows/pages.yml. Helpers: @echelon-foundry/forma-conformance 0.1.0 vendored from kemiller2002/forma@769fa13 (Forma PR #158). Generated by npm run ui:conformance; statuses derive only from executed Playwright tests."
+}
