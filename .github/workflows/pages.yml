@@ -54,6 +54,28 @@ jobs:
       - name: Smoke-test the F# WebAssembly site in real Chrome
         run: npm run smoke:site:wasm
 
+      # visual-engineering/UI-LAYOUT-INTERACTION@1.0.0 conformance of the built
+      # site (issue #107). Blocking: a failing test, schema-invalid evidence or
+      # a failing surface/action fails the build, and deploy needs build.
+      # Playwright is installed without saving it, as ci.yml does.
+      - name: Install Playwright's Chromium (not a package dependency)
+        run: npm install --no-save @playwright/test@1.56.1 ajv@8.17.1 && npx playwright install --with-deps chromium
+
+      - name: UI conformance
+        run: npm run ui:conformance
+        env:
+          UI_CONFORMANCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+          UI_CONFORMANCE_WORKERS: "4"
+
+      - name: Upload UI conformance evidence, results and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-conformance
+          path: test/ui-conformance/test-results/
+          if-no-files-found: warn
+          retention-days: 30
+
       # Only main produces a deployable artifact. A pull request has proven the
       # site builds and passes its checks, which is all it is entitled to do.
       - name: Configure Pages
