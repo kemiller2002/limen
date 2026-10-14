@@ -2751,10 +2751,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-14T08:34:05.184Z",
-      "updatedAt": "2026-10-14T08:34:17.000Z",
+      "updatedAt": "2026-10-14T09:12:02.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
