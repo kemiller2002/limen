@@ -63,7 +63,7 @@ const problemsOf = (id: string, nuspec: string): readonly string[] => {
     ...(version === VERSION ? [] : [`${id}: version ${String(version)}, not package.json's ${VERSION}`]),
     ...dependencies.filter((dependency) => !ALLOWED_DEPENDENCIES.has(dependency.id)).map((dependency) => `${id}: depends on ${dependency.id}, outside FSharp.Core and Limen's packages`),
     ...dependencies.filter((dependency) => dependency.id.startsWith("EchelonFoundry.Limen.") && dependency.version !== VERSION).map((dependency) => `${id}: depends on ${dependency.id} ${dependency.version}, not ${VERSION} (lockstep)`),
-    ...(/<license type="expression">MIT<\/license>/.test(nuspec) ? [] : [`${id}: no MIT license expression`]),
+    ...(/<license type="expression">PolyForm-Noncommercial-1\.0\.0<\/license>/.test(nuspec) ? [] : [`${id}: no PolyForm Noncommercial license expression`]),
     ...dependencies.filter((dependency) => dependency.id === "FSharp.Core" && dependency.version !== FSHARP_CORE).map((dependency) => `${id}: depends on FSharp.Core ${dependency.version}, not the pinned ${FSHARP_CORE}`),
   ];
 };

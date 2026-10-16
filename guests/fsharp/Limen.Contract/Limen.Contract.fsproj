@@ -17,7 +17,7 @@
     <Version>0.0.0</Version>
     <Authors>Echelon Foundry</Authors>
     <Description>Generated F# bindings for the Limen browser/engine contract and every capability pack (including limen.store), with each unit's contract fingerprint for the handshake. Pure: no browser, interop or I/O.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/kemiller2002/limen</PackageProjectUrl>
     <RepositoryUrl>https://github.com/kemiller2002/limen</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>

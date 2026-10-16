@@ -15,7 +15,7 @@
     <Version>0.0.0</Version>
     <Authors>Echelon Foundry</Authors>
     <Description>The engine's half of the Limen handshake for F# engines: answer the host's offer, selecting the capabilities the engine requires (for example limen.store with its fingerprint). Pure.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/kemiller2002/limen</PackageProjectUrl>
     <RepositoryUrl>https://github.com/kemiller2002/limen</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>

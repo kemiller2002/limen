@@ -17,7 +17,7 @@
     <Version>0.0.0</Version>
     <Authors>Echelon Foundry</Authors>
     <Description>A pure functional F# API for Limen's IndexedDB store capability (limen.store): schemas, keys and transactions as immutable values, mode-typed transactions, explicit JSON codecs, closed Result outcomes, structured errors, a connection state machine, a migration planner and diagnostics. The only effect is the StoreExecutor the host supplies.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/kemiller2002/limen</PackageProjectUrl>
     <RepositoryUrl>https://github.com/kemiller2002/limen</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>

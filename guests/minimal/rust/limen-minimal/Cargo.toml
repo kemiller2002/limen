@@ -3,7 +3,7 @@ name = "limen-minimal"
 version = "0.1.0"
 edition = "2021"
 description = "The minimal engine (conformance/sessions/minimal-engine.md) in Rust. Application meaning only; the WASM ABI lives in limen-minimal-wasm."
-license = "MIT"
+license = "PolyForm-Noncommercial-1.0.0"
 publish = false
 
 [dependencies]

@@ -659,8 +659,6 @@ Changes by version: [CHANGELOG.md](https://github.com/kemiller2002/limen/blob/ma
 
 ## License
 
-MIT — see [LICENSE](https://github.com/kemiller2002/limen/blob/main/LICENSE).
+Source available under PolyForm Noncommercial 1.0.0 for permitted noncommercial uses. Commercial use requires a separate license from Echelon Foundry. Previously distributed versions remain subject to the licenses under which they were released.
 
----
-
-**Limen** — an [Echelon Foundry](https://echelonfoundry.com) engineering project.
+Commercial licensing information is forthcoming.
