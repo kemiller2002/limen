@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 174,
+  "nextSeq": 175,
   "items": [
     {
       "id": "WI-0001",
@@ -2755,6 +2755,27 @@
       "attachments": [],
       "createdAt": "2026-10-21T08:16:39.163Z",
       "updatedAt": "2026-10-21T14:02:23.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "openai/codex",
+        "provider": "openai",
+        "model": "unknown",
+        "runtime": "codex"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0174",
+      "title": "Correct Limen runtime verification for unloaded capability-only pages",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-21T14:07:11.682Z",
+      "updatedAt": "2026-10-21T14:07:34.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

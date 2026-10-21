@@ -176,3 +176,4 @@
 | WI-0171 | URL state 4: EchelonFoundry.Limen.Routing as an attested F# package; docs/31 guidance (privacy, hash mode, outcomes, sign-in) | complete | limen, routing, url-state, lcp-005 | high |
 | WI-0172 | URL state 5: release Limen 0.9.0 with the routing module, the echelon-registry entry and verification | complete | limen, routing, url-state, lcp-005 | high |
 | WI-0173 | Implement Limen runtime version registry and diagnostics | complete |  | medium |
+| WI-0174 | Correct Limen runtime verification for unloaded capability-only pages | ready |  | medium |
