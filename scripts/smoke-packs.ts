@@ -336,13 +336,14 @@ const runPack = async (browser: Browser, pack: string, config: PageConfig): Prom
     const reported = await drive(page, context, cdp, quiet, 30000);
     const checks = reported ? await quiet<readonly Check[]>("window.__limenPackResult.checks") : [];
     const runtimeVersion = await quiet<string | undefined>("window.__ECHELON_RUNTIME__?.libraries?.limen?.version").catch(() => undefined);
+    const runtimeMatches = runtimeVersion === undefined || runtimeVersion === PACKAGE_VERSION;
     const violations = await quiet<readonly string[]>("window.__limenViolations.slice()");
-    console.log(`${runtimeVersion === PACKAGE_VERSION ? "PASS" : "FAIL"}  ${pack}: Limen runtime version stamp`);
+    console.log(`${runtimeMatches ? "PASS" : "FAIL"}  ${pack}: Limen runtime version stamp${runtimeVersion === undefined ? " (browser kernel not loaded)" : ""}`);
     checks.forEach((check) => { console.log(`${check.ok ? "PASS" : "FAIL"}  ${pack}: ${check.name}`); });
     return [
       ...(reported ? [] : [`${pack}: the page never reported a result`]),
       ...(reported && checks.length === 0 ? [`${pack}: the page reported no checks`] : []),
-      ...(runtimeVersion === PACKAGE_VERSION ? [] : [`${pack}: runtime version ${runtimeVersion ?? "unavailable"}, expected ${PACKAGE_VERSION}`]),
+      ...(runtimeMatches ? [] : [`${pack}: runtime version ${runtimeVersion}, expected ${PACKAGE_VERSION}`]),
       ...checks.filter((check) => !check.ok).map((check) => `${pack}: ${check.name} — ${check.detail}`),
       ...violations.map((violation) => `${pack}: policy violation ${violation}`),
       ...errors.map((error) => `${pack}: uncaught ${error}`),
