@@ -1,0 +1,21 @@
+{
+  "workItem": "WI-0173",
+  "reference": "RQ-LIMEN-2026-A007; Echelon Runtime schemaVersion 1 shared registry contract",
+  "placement": "Build tooling stamps the npm package version into emitted browser entry points after TypeScript compilation. Runtime metadata is diagnostic browser mechanism only: it creates no application state, crosses no engine boundary, and does not alter the WASM host architecture. Existing browser smoke infrastructure verifies the production artifacts in Chromium and WebKit. The minimal example documents and exercises the observable registry. No protocol, Core source, capability, dependency, renderer, or guardrail changes.",
+  "guardrail": false,
+  "paths": [
+    ".praxis/**",
+    "architecture/work-scopes/WI-0173.json",
+    "research/requirements/**",
+    "package.json",
+    "package-lock.json",
+    "scripts/stamp-runtime.ts",
+    "scripts/browser-smoke.ts",
+    "examples/minimal/**",
+    "test/runtime-version.test.ts",
+    "docs/**",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
