@@ -11,11 +11,17 @@
     "package-lock.json",
     "scripts/stamp-runtime.ts",
     "scripts/browser-smoke.ts",
+    "scripts/smoke-packs.ts",
     "examples/minimal/**",
     "test/runtime-version.test.ts",
     "docs/**",
     "CHANGELOG.md"
   ],
-  "expansions": [],
+  "expansions": [
+    {
+      "paths": ["scripts/smoke-packs.ts"],
+      "reason": "Verify the production-stamped Limen registry in both existing Playwright engines without creating a new browser harness."
+    }
+  ],
   "recordedAfterCompletion": false
 }
