@@ -64,6 +64,7 @@ type Check = { readonly name: string; readonly ok: boolean; readonly detail: str
 const ROOT = process.cwd();
 const PORT = 4194;
 const PACKS = "test/browser/packs";
+const PACKAGE_VERSION = (JSON.parse(await readFile(join(ROOT, "package.json"), "utf8")) as { readonly version: string }).version;
 
 const POLICY = [
   "default-src 'none'", "script-src 'self'", "connect-src 'self'", "img-src 'self'", "style-src 'self'",
@@ -334,11 +335,14 @@ const runPack = async (browser: Browser, pack: string, config: PageConfig): Prom
     await page.goto(`http://${config.host ?? "127.0.0.1"}:${PORT}/${config.url ?? `${PACKS}/${pack}/index.html`}`);
     const reported = await drive(page, context, cdp, quiet, 30000);
     const checks = reported ? await quiet<readonly Check[]>("window.__limenPackResult.checks") : [];
+    const runtimeVersion = await quiet<string | undefined>("window.__ECHELON_RUNTIME__?.libraries?.limen?.version").catch(() => undefined);
     const violations = await quiet<readonly string[]>("window.__limenViolations.slice()");
+    console.log(`${runtimeVersion === PACKAGE_VERSION ? "PASS" : "FAIL"}  ${pack}: Limen runtime version stamp`);
     checks.forEach((check) => { console.log(`${check.ok ? "PASS" : "FAIL"}  ${pack}: ${check.name}`); });
     return [
       ...(reported ? [] : [`${pack}: the page never reported a result`]),
       ...(reported && checks.length === 0 ? [`${pack}: the page reported no checks`] : []),
+      ...(runtimeVersion === PACKAGE_VERSION ? [] : [`${pack}: runtime version ${runtimeVersion ?? "unavailable"}, expected ${PACKAGE_VERSION}`]),
       ...checks.filter((check) => !check.ok).map((check) => `${pack}: ${check.name} — ${check.detail}`),
       ...violations.map((violation) => `${pack}: policy violation ${violation}`),
       ...errors.map((error) => `${pack}: uncaught ${error}`),
