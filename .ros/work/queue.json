@@ -2772,10 +2772,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-21T14:07:11.682Z",
-      "updatedAt": "2026-10-21T14:07:34.000Z",
+      "updatedAt": "2026-10-21T14:09:38.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

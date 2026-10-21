@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-21T14:07:34.000Z",
+  "updatedAt": "2026-10-21T14:09:38.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4305,13 +4305,44 @@
     {
       "id": "WI-0174",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-21T14:07:34.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "scripts/smoke-packs.ts"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/smoke-packs.ts"
+        }
+      ],
+      "updatedAt": "2026-10-21T14:09:38.000Z",
       "telemetryExecutionIds": [
         "EXE-20261021T140737235Z-d746b851"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "9ebf9ed72c8d6854cbe5d671",
+        "recordedAt": "2026-10-21T14:09:21.000Z",
+        "executionId": "EXE-20261021T140737235Z-d746b851",
+        "repository": "limen",
+        "branch": "feat/runtime-version-stamp",
+        "commit": "a49f2bb2fcb1f190ad7d90878be5b8fff23d5f9d",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "feat/runtime-version-stamp",
+        "remoteCommit": "a49f2bb2fcb1f190ad7d90878be5b8fff23d5f9d",
+        "summary": "Corrected runtime smoke verification so unloaded capability-only pages remain absent; full WebKit capability packs pass",
+        "nextAction": "Await exact-head CI on PR #110",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-21T14:09:38.000Z",
+      "conclusion": "Runtime verification now accepts an absent Limen entry only when the browser kernel was not loaded; exact loaded versions remain enforced and the complete WebKit pack suite passes."
     }
   ]
 }
