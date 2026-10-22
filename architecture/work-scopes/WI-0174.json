@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0174",
+  "reference": "Follow-up verification correction for RQ-LIMEN-2026-A007 and PR #110",
+  "placement": "The capability-pack runner verifies the Limen version only on pages that actually loaded the stamped browser kernel. Pure optional-subpath pages remain valid evidence that an unloaded Limen browser runtime does not appear in the registry. No runtime, protocol, Core, WASM host, dependency, or capability implementation changes.",
+  "guardrail": false,
+  "paths": [
+    ".ros/**",
+    "architecture/work-scopes/WI-0174.json",
+    "scripts/smoke-packs.ts"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

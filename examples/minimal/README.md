@@ -30,6 +30,11 @@ python3 -m http.server 4173
 Then open <http://localhost:4173/>. Click **Add one**; the number changes and
 **Reset** becomes available.
 
+The browser console also reports `Echelon Runtime · Limen v…`. The exact
+loaded package version is available to tools at
+`window.__ECHELON_RUNTIME__.libraries.limen.version`; the registry contains
+diagnostic metadata only and is not application state.
+
 It must be *served*, not opened as a `file://` URL — ES modules and import maps
 both require an origin.
 

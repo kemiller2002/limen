@@ -18,13 +18,14 @@
 // Without it, this script says so and exits 0 — `npm run check` does not depend
 // on it. `test/kernel.test.ts` and `test/examples.test.ts` remain the gate.
 import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const PORT = 4179;
 const BASE = `http://127.0.0.1:${PORT}`;
+const PACKAGE_VERSION = (JSON.parse(await readFile(join(ROOT, "package.json"), "utf8")) as { readonly version: string }).version;
 
 const TYPES: Readonly<Record<string, string>> = {
   ".html": "text/html; charset=utf-8",
@@ -110,6 +111,8 @@ try {
 
   // --- 01 counter: the binding mechanism itself ----------------------------
   await page.goto(`${BASE}/examples/01-counter/`);
+  const runtime = await page.evaluate(() => Reflect.get(window, "__ECHELON_RUNTIME__"));
+  check("Limen runtime registry matches the built artifact", JSON.stringify(runtime) === JSON.stringify({ schemaVersion: 1, libraries: { limen: { version: PACKAGE_VERSION } } }));
   await page.click("button[data-event='increment']");
   check("01 counter increments", await trimmed(page, "[data-text='count']") === "1");
   check("01 counter enables Reset", !(await page.isDisabled("button[data-event='reset']")));

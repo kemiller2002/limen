@@ -129,6 +129,7 @@ Then, for depth:
 | [Usage (legacy)](https://github.com/kemiller2002/limen/blob/main/docs/USAGE.md) | The original consumer walkthrough, kept for continuity |
 | [IndexedDB durable-storage requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-INDEXEDDB-REQUIREMENTS.md) | LCP-043..087: what the store pack, the F# store API and Arca's IndexedDB adapters (offline queue and read cache) must do, and the ordered work items. Built and released in 0.8.0 |
 | [URL-state requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-URL-STATE-REQUIREMENTS.md) | LCP-088..112: navigable state in the URL. A typed canonical route codec in F# and TypeScript, push and replace, not-found and not-permitted outcomes, sign-in return targets, hash routing on static hosts, legacy redirects, copy link, the route inventory and no secrets in URLs, with the ordered work items. Built and released in 0.9.0 ([guide](https://github.com/kemiller2002/limen/blob/main/docs/31-routing.md#url-state-the-guide)) |
+| [Runtime-version requirements](https://github.com/kemiller2002/limen/blob/main/docs/requirements/LIMEN-RUNTIME-VERSION-REPORTING.md) | `RQ-LIMEN-2026-A007`: build-stamped `ECHELON-RUNTIME-1` metadata at the emitted browser-kernel boundary, verified in production artifacts and real browsers without changing Core source or WASM execution. |
 
 ## The website
 

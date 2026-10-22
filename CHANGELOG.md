@@ -16,6 +16,14 @@ exhaustive lists.
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-10-21
+
+- Stamp the npm package version into the emitted browser-kernel artifact and
+  register it through the shared `window.__ECHELON_RUNTIME__` schemaVersion 1
+  contract in production builds.
+- Verify the exact built version in Node, Chromium, and WebKit without changing
+  Core source, the protocol, WASM transports, or application state ownership.
+
 ## [0.9.0] — 2026-10-08
 
 Navigable state in the URL (LCP-088..112), so that a copied URL opens the same

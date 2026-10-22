@@ -1,6 +1,6 @@
 {
   "name": "@echelon-foundry/limen",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Limen: an explicit boundary that keeps browser capabilities separate from application authority. A dependency-free browser kernel — HTTP, storage, clipboard and history as typed effects, with application state, transitions and decisions kept out of the browser entirely — plus a repository lifecycle CLI that initializes, verifies, diagnoses and upgrades that boundary.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
@@ -201,7 +201,9 @@
     "examples/minimal",
     "docs/23-wasm-federation.md"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/kernel/browser-kernel.js"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kemiller2002/limen.git"
@@ -236,7 +238,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node --experimental-strip-types scripts/stamp-runtime.ts",
     "build:examples": "tsc -p tsconfig.examples.json",
     "build:site": "npm run build:site:wasm && npm run test:site:fsharp && tsc -p tsconfig.site.json && node --experimental-strip-types scripts/build-site.ts",
     "dev": "node --experimental-strip-types scripts/dev-server.ts",
