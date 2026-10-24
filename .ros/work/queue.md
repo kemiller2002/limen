@@ -178,4 +178,4 @@
 | WI-0173 | Implement Limen runtime version registry and diagnostics | complete |  | medium |
 | WI-0174 | Correct Limen runtime verification for unloaded capability-only pages | complete |  | medium |
 | WI-0175 | Explicit HTTP cache mode on the Core Http effect (DC-005 stale GitHub reads) | blocked |  | medium |
-| WI-0176 | Propose Core Admission CA-0004: emitted Core gzip growth for the Http cache mode (WI-0175) | ready |  | medium |
+| WI-0176 | Propose Core Admission CA-0004: emitted Core gzip growth for the Http cache mode (WI-0175) | complete |  | medium |

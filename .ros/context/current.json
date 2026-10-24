@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-24T13:49:39.000Z",
+  "updatedAt": "2026-10-24T13:50:44.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4379,13 +4379,43 @@
     {
       "id": "WI-0176",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-24T13:49:39.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "architecture/core-admissions/CA-0004.json"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-core-budget.ts"
+        }
+      ],
+      "updatedAt": "2026-10-24T13:50:44.000Z",
       "telemetryExecutionIds": [
         "EXE-20261024T134939825Z-4ee6a3f8"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "795aca4c7d6842623860ce26",
+        "recordedAt": "2026-10-24T13:50:42.000Z",
+        "executionId": "EXE-20261024T134939825Z-4ee6a3f8",
+        "repository": "limen",
+        "branch": "claude/http-cache-mode",
+        "commit": "471a7208a7185253db92e6542ad5e690945fb5a1",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "claude/http-cache-mode",
+        "remoteCommit": "471a7208a7185253db92e6542ad5e690945fb5a1",
+        "summary": "CA-0004 proposed as a pending Core Admission record with measured evidence; check:core-budget validates it and reports only the existing review trigger.",
+        "nextAction": "Owner records a decision on CA-0004; if approved, a guardrail work item re-approves architecture/core-baseline.json and re-baselines bench payload profiles.",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-24T13:50:44.000Z"
     }
   ]
 }
