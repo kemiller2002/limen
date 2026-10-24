@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-24T13:31:42.000Z",
+  "updatedAt": "2026-10-24T13:49:26.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4347,13 +4347,34 @@
     {
       "id": "WI-0175",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
+      "state": "blocked",
+      "semanticState": "blocked",
       "evidence": [],
-      "updatedAt": "2026-10-24T13:31:42.000Z",
+      "updatedAt": "2026-10-24T13:49:26.000Z",
       "telemetryExecutionIds": [
         "EXE-20261024T133142995Z-6331f1da"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "4778a431be3dd80d32bf0bed",
+        "recordedAt": "2026-10-24T13:49:16.000Z",
+        "executionId": "EXE-20261024T133142995Z-6331f1da",
+        "repository": "limen",
+        "branch": "claude/http-cache-mode",
+        "commit": "967cb97d08659e83815812caa518783a66b3145c",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "claude/http-cache-mode",
+        "remoteCommit": "967cb97d08659e83815812caa518783a66b3145c",
+        "summary": "Http cache mode implemented (contract HttpCacheMode, protocol 1.5, regenerated bindings, kernel passes fetch cache init); tests, vectors, typed F# round trip, Chromium proof and docs committed and pushed. npm run check stops at check:core-budget: emitted Core gzip +10.4% over the approved baseline (main is at +10.0%), and bench kernel-with-store is 32 bytes over budget.",
+        "nextAction": "Owner decides Core Admission CA-0004 (proposed under WI-0176); on approval a guardrail work item raises architecture/core-baseline.json and re-baselines bench payload profiles, then WI-0175 resumes and completes.",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "blockReason": "Implementation complete and pushed, but npm run check fails the Core budget review gate (emitted Core gzip 25999 vs approved 23540, +10.4%; main is 25885, +10.0%) and bench kernel-with-store (35872 > 35840 gzip). Raising either needs the owner's Core Admission decision (CA-0004, proposed under WI-0176) and a guardrail work item."
     }
   ]
 }

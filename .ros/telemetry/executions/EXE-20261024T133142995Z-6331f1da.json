@@ -499,14 +499,30 @@
     },
     {
       "metricId": "agent.interruptions",
-      "status": "unknown",
-      "reason": "runtime capability not reported or mapped",
-      "discoveredAt": "2026-10-24T13:31:42.995Z",
+      "status": "derived",
+      "reason": "normalized measurement recorded",
+      "discoveredAt": "2026-10-24T13:49:26.000Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "calculated",
+        "name": "ros-work-protocol",
+        "mechanism": "blocked-transition"
+      },
+      "lastAssessedAt": "2026-10-24T13:49:26.000Z",
+      "recordedAt": "2026-10-24T13:49:26.000Z",
+      "history": [
+        {
+          "status": "unknown",
+          "reason": "runtime capability not reported or mapped",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-24T13:31:42.995Z",
+          "lastAssessedAt": "2026-10-24T13:31:42.995Z",
+          "recordedAt": "2026-10-24T13:31:42.995Z"
+        }
+      ]
     },
     {
       "metricId": "agent.resumes",
@@ -1348,6 +1364,26 @@
       },
       "collectedAt": "2026-10-24T13:31:42.995Z",
       "schemaVersion": "1.0.0"
+    },
+    {
+      "measurementId": "MEAS-36cb4a34cd59f38e71c6eebd",
+      "id": "agent.interruptions",
+      "value": 1,
+      "unit": "count",
+      "currency": null,
+      "quality": "derived",
+      "confidence": null,
+      "scope": "execution",
+      "aggregation": "sum",
+      "dimensions": {},
+      "pricing": null,
+      "source": {
+        "type": "calculated",
+        "name": "ros-work-protocol",
+        "mechanism": "blocked-transition"
+      },
+      "collectedAt": "2026-10-24T13:49:26.000Z",
+      "schemaVersion": "1.0.0"
     }
   ],
   "rawTelemetry": [],
@@ -1360,6 +1396,17 @@
         "name": "ros",
         "mechanism": "work-lifecycle"
       }
+    },
+    {
+      "type": "work.blocked",
+      "occurredAt": "2026-10-24T13:49:26.000Z",
+      "reason": "Implementation complete and pushed, but npm run check fails the Core budget review gate (emitted Core gzip 25999 vs approved 23540, +10.4%; main is 25885, +10.0%) and bench kernel-with-store (35872 > 35840 gzip). Raising either needs the owner's Core Admission decision (CA-0004, proposed under WI-0176) and a guardrail work item.",
+      "source": {
+        "type": "ros-clock",
+        "name": "ros",
+        "mechanism": "work-lifecycle"
+      },
+      "eventId": "TEVT-b99a5a05a5486de0a6504a21"
     }
   ],
   "repository": {

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 176,
+  "nextSeq": 177,
   "items": [
     {
       "id": "WI-0001",
@@ -2797,6 +2797,27 @@
       "attachments": [],
       "createdAt": "2026-10-24T13:31:33.119Z",
       "updatedAt": "2026-10-24T13:31:41.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0176",
+      "title": "Propose Core Admission CA-0004: emitted Core gzip growth for the Http cache mode (WI-0175)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-24T13:42:18.012Z",
+      "updatedAt": "2026-10-24T13:42:18.012Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
