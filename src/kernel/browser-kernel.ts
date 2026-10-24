@@ -775,8 +775,8 @@ export class BrowserKernel {
   // fires, so the kernel cannot claim the effect did not occur.
   //
   // Protocol 1.3 options (response representation, response headers,
-  // credentials, XSRF binding) are all explicit on the request; absent, the
-  // request is exactly the JSON request of 1.0.
+  // credentials, XSRF binding) and the 1.5 cache mode are all explicit on the
+  // request; absent, the request is exactly the JSON request of 1.0.
   async #runHttp(effect: HttpEffectRequest, controller: AbortController): Promise<EffectOutcome> {
     const representation = effect.response ?? "json";
     // navigator.onLine false proves the browser has no network, so a request
@@ -792,6 +792,7 @@ export class BrowserKernel {
           ...effect.headers,
         },
         ...(effect.credentials !== undefined ? { credentials: effect.credentials } : {}),
+        ...(effect.cache !== undefined ? { cache: effect.cache } : {}),
         ...(effect.body !== undefined ? { body: effect.body } : {}),
       });
       const headers = returnedHeaders(response, effect.responseHeaders);

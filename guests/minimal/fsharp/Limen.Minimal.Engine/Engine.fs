@@ -40,7 +40,7 @@ let project state : ViewState =
               "log", ViewValue.Items(log |> List.map (fun entry -> Map.ofList [ "id", ViewPrimitive.Text(string entry.Id); "text", ViewPrimitive.Text entry.Text ])) ]
 
 let private request (label: string) (correlationId: CorrelationId) : EffectRequest option =
-    let http url = Some(EffectRequest.Http { CorrelationId = correlationId; Method = HttpMethod.Get; Url = url; Headers = None; Body = None; TimeoutMs = 5000L; Response = None; ResponseHeaders = None; Credentials = None; Xsrf = None })
+    let http url = Some(EffectRequest.Http { CorrelationId = correlationId; Method = HttpMethod.Get; Url = url; Headers = None; Body = None; TimeoutMs = 5000L; Response = None; ResponseHeaders = None; Credentials = None; Cache = None; Xsrf = None })
     match label with
     | "http-ok" -> http "/ok.json"
     | "http-missing" -> http "/missing.json"

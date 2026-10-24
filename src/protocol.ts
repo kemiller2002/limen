@@ -50,6 +50,7 @@ export type {
   EngineToBrowserMessage,
   HandshakeRejection,
   HostHandshake,
+  HttpCacheMode,
   HttpCredentials,
   HttpEffectRequest,
   HttpFailureReason,

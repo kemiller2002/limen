@@ -2,7 +2,7 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
+// contract-fingerprint: sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2
 // generator: limen-contract-gen/1 (typescript-codec)
 // content-hash: sha256:8d3f499c8ca939cf37ed4095e5e18e4518fd3550e2ded222a27d31bd19791721
 // </auto-generated>

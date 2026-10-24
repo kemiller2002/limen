@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
+// contract-fingerprint: sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2
 // generator: limen-contract-gen/1 (rust-unit)
-// content-hash: sha256:ccdf3271530d4bf59111edf934275bb42d84ca81bc965deff1d9857135bf088f
+// content-hash: sha256:f6ccdc21f7dd03852607b13d456bb6298f9405d9e3fb0cd50a1cada190d4da89
 // </auto-generated>
 //! The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.
 
@@ -18,9 +18,9 @@ use crate::runtime::{wire, DecodeError, RawJson};
 pub mod contract {
     pub const UNIT: &str = "limen.core";
     pub const VERSION: i64 = 1;
-    pub const FINGERPRINT: &str = "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c";
+    pub const FINGERPRINT: &str = "sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2";
     pub const PROTOCOL_VERSION: i64 = 1;
-    pub const PROTOCOL_MINOR: i64 = 4;
+    pub const PROTOCOL_MINOR: i64 = 5;
     pub const MAX_HTTP_TEXT_BYTES: i64 = 8388608;
 }
 
@@ -465,6 +465,27 @@ impl HttpCredentials {
     }
 }
 
+/// Protocol 1.5. fetch's cache mode: how the request meets the browser HTTP cache. Absent means the browser default (default). no-store neither reads nor writes the cache, and is what a read of a mutable resource sets; no-cache revalidates a stored response with the server before using it; reload fetches from the server and stores the answer. force-cache and only-if-cached are deliberately absent: the first serves stale responses by design, the second needs a request mode the contract does not model.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum HttpCacheMode {
+    Default,
+    NoStore,
+    NoCache,
+    Reload,
+}
+
+impl HttpCacheMode {
+    /// The wire text of this value.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            HttpCacheMode::Default => "default",
+            HttpCacheMode::NoStore => "no-store",
+            HttpCacheMode::NoCache => "no-cache",
+            HttpCacheMode::Reload => "reload",
+        }
+    }
+}
+
 /// Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.
 #[derive(Debug, Clone, PartialEq)]
 pub struct XsrfBinding {
@@ -488,6 +509,8 @@ pub struct HttpEffectRequest {
     pub response_headers: Option<Vec<String>>,
     /// Protocol 1.3.
     pub credentials: Option<HttpCredentials>,
+    /// Protocol 1.5. Passed to fetch unchanged; the kernel never chooses one.
+    pub cache: Option<HttpCacheMode>,
     /// Protocol 1.3.
     pub xsrf: Option<XsrfBinding>,
 }
@@ -943,6 +966,10 @@ pub fn decode_http_credentials(value: &Value, path: &str) -> Result<HttpCredenti
     wire::enumeration(value, path, &[("omit", HttpCredentials::Omit), ("same-origin", HttpCredentials::SameOrigin), ("include", HttpCredentials::Include)])
 }
 
+pub fn decode_http_cache_mode(value: &Value, path: &str) -> Result<HttpCacheMode, DecodeError> {
+    wire::enumeration(value, path, &[("default", HttpCacheMode::Default), ("no-store", HttpCacheMode::NoStore), ("no-cache", HttpCacheMode::NoCache), ("reload", HttpCacheMode::Reload)])
+}
+
 pub fn decode_xsrf_binding(value: &Value, path: &str) -> Result<XsrfBinding, DecodeError> {
     let props = wire::closed(wire::properties(value, path)?, path, &["cookie", "header"])?;
     let f_cookie = wire::required(props, path, "cookie", |v0: &Value, p0: &str| wire::string(v0, p0))?;
@@ -951,7 +978,7 @@ pub fn decode_xsrf_binding(value: &Value, path: &str) -> Result<XsrfBinding, Dec
 }
 
 pub fn decode_http_effect_request(value: &Value, path: &str) -> Result<HttpEffectRequest, DecodeError> {
-    let props = wire::closed(wire::properties(value, path)?, path, &["kind", "correlationId", "method", "url", "headers", "body", "timeoutMs", "response", "responseHeaders", "credentials", "xsrf"])?;
+    let props = wire::closed(wire::properties(value, path)?, path, &["kind", "correlationId", "method", "url", "headers", "body", "timeoutMs", "response", "responseHeaders", "credentials", "cache", "xsrf"])?;
     wire::required(props, path, "kind", |v0: &Value, p0: &str| wire::literal_string(v0, p0, "Http"))?;
     let f_correlation_id = wire::required(props, path, "correlationId", |v0: &Value, p0: &str| decode_correlation_id(v0, p0))?;
     let f_method = wire::required(props, path, "method", |v0: &Value, p0: &str| decode_http_method(v0, p0))?;
@@ -962,8 +989,9 @@ pub fn decode_http_effect_request(value: &Value, path: &str) -> Result<HttpEffec
     let f_response = wire::optional(props, path, "response", |v0: &Value, p0: &str| decode_http_response_kind(v0, p0))?;
     let f_response_headers = wire::optional(props, path, "responseHeaders", |v0: &Value, p0: &str| wire::list(v0, p0, |v1: &Value, p1: &str| wire::string(v1, p1)))?;
     let f_credentials = wire::optional(props, path, "credentials", |v0: &Value, p0: &str| decode_http_credentials(v0, p0))?;
+    let f_cache = wire::optional(props, path, "cache", |v0: &Value, p0: &str| decode_http_cache_mode(v0, p0))?;
     let f_xsrf = wire::optional(props, path, "xsrf", |v0: &Value, p0: &str| decode_xsrf_binding(v0, p0))?;
-    Ok(HttpEffectRequest { correlation_id: f_correlation_id, method: f_method, url: f_url, headers: f_headers, body: f_body, timeout_ms: f_timeout_ms, response: f_response, response_headers: f_response_headers, credentials: f_credentials, xsrf: f_xsrf })
+    Ok(HttpEffectRequest { correlation_id: f_correlation_id, method: f_method, url: f_url, headers: f_headers, body: f_body, timeout_ms: f_timeout_ms, response: f_response, response_headers: f_response_headers, credentials: f_credentials, cache: f_cache, xsrf: f_xsrf })
 }
 
 pub fn decode_storage_effect_request(value: &Value, path: &str) -> Result<StorageEffectRequest, DecodeError> {
@@ -1293,12 +1321,21 @@ pub fn encode_http_credentials(value: &HttpCredentials) -> Value {
     }
 }
 
+pub fn encode_http_cache_mode(value: &HttpCacheMode) -> Value {
+    match value {
+        HttpCacheMode::Default => wire::of_string("default"),
+        HttpCacheMode::NoStore => wire::of_string("no-store"),
+        HttpCacheMode::NoCache => wire::of_string("no-cache"),
+        HttpCacheMode::Reload => wire::of_string("reload"),
+    }
+}
+
 pub fn encode_xsrf_binding(value: &XsrfBinding) -> Value {
     wire::of_object(vec![Some(("cookie", wire::of_string(&value.cookie))), Some(("header", wire::of_string(&value.header)))])
 }
 
 pub fn encode_http_effect_request(value: &HttpEffectRequest) -> Value {
-    wire::of_object(vec![Some(("kind", wire::of_string("Http"))), Some(("correlationId", encode_correlation_id(&value.correlation_id))), Some(("method", encode_http_method(&value.method))), Some(("url", wire::of_string(&value.url))), (&value.headers).as_ref().map(|x0| ("headers", wire::of_map(x0, |x1| wire::of_string(x1)))), (&value.body).as_ref().map(|x0| ("body", wire::of_string(x0))), Some(("timeoutMs", wire::of_int(*&value.timeout_ms))), (&value.response).as_ref().map(|x0| ("response", encode_http_response_kind(x0))), (&value.response_headers).as_ref().map(|x0| ("responseHeaders", wire::of_list(x0, |x1| wire::of_string(x1)))), (&value.credentials).as_ref().map(|x0| ("credentials", encode_http_credentials(x0))), (&value.xsrf).as_ref().map(|x0| ("xsrf", encode_xsrf_binding(x0)))])
+    wire::of_object(vec![Some(("kind", wire::of_string("Http"))), Some(("correlationId", encode_correlation_id(&value.correlation_id))), Some(("method", encode_http_method(&value.method))), Some(("url", wire::of_string(&value.url))), (&value.headers).as_ref().map(|x0| ("headers", wire::of_map(x0, |x1| wire::of_string(x1)))), (&value.body).as_ref().map(|x0| ("body", wire::of_string(x0))), Some(("timeoutMs", wire::of_int(*&value.timeout_ms))), (&value.response).as_ref().map(|x0| ("response", encode_http_response_kind(x0))), (&value.response_headers).as_ref().map(|x0| ("responseHeaders", wire::of_list(x0, |x1| wire::of_string(x1)))), (&value.credentials).as_ref().map(|x0| ("credentials", encode_http_credentials(x0))), (&value.cache).as_ref().map(|x0| ("cache", encode_http_cache_mode(x0))), (&value.xsrf).as_ref().map(|x0| ("xsrf", encode_xsrf_binding(x0)))])
 }
 
 pub fn encode_storage_effect_request(value: &StorageEffectRequest) -> Value {
@@ -1660,6 +1697,16 @@ pub fn serialize_http_credentials(value: &HttpCredentials) -> String {
     encode_http_credentials(value).to_string()
 }
 
+/// Parses untrusted JSON text into a HttpCacheMode, or says where and why it is not one.
+pub fn parse_http_cache_mode(json: &str) -> Result<HttpCacheMode, DecodeError> {
+    wire::parse(json, decode_http_cache_mode)
+}
+
+/// Serializes a HttpCacheMode to wire JSON text.
+pub fn serialize_http_cache_mode(value: &HttpCacheMode) -> String {
+    encode_http_cache_mode(value).to_string()
+}
+
 /// Parses untrusted JSON text into a XsrfBinding, or says where and why it is not one.
 pub fn parse_xsrf_binding(json: &str) -> Result<XsrfBinding, DecodeError> {
     wire::parse(json, decode_xsrf_binding)
@@ -1775,6 +1822,7 @@ pub fn conformance_round_trip(type_name: &str, value: &Value) -> Option<Result<V
         "HttpMethod" => Some(decode_http_method(value, "$").map(|decoded| encode_http_method(&decoded))),
         "HttpResponseKind" => Some(decode_http_response_kind(value, "$").map(|decoded| encode_http_response_kind(&decoded))),
         "HttpCredentials" => Some(decode_http_credentials(value, "$").map(|decoded| encode_http_credentials(&decoded))),
+        "HttpCacheMode" => Some(decode_http_cache_mode(value, "$").map(|decoded| encode_http_cache_mode(&decoded))),
         "XsrfBinding" => Some(decode_xsrf_binding(value, "$").map(|decoded| encode_xsrf_binding(&decoded))),
         "HttpEffectRequest" => Some(decode_http_effect_request(value, "$").map(|decoded| encode_http_effect_request(&decoded))),
         "StorageEffectRequest" => Some(decode_storage_effect_request(value, "$").map(|decoded| encode_storage_effect_request(&decoded))),

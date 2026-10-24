@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
+// contract-fingerprint: sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2
 // generator: limen-contract-gen/1 (csharp-unit)
-// content-hash: sha256:a65eb10aa9ab6de68b9f6dfd2f0080256a0f0e73ca0705fa027ebdc61d8472bd
+// content-hash: sha256:7058901a707c26cd37d3313fd189986610127878c05a59aa88835b1e3831c48c
 // </auto-generated>
 #nullable enable
 
@@ -17,9 +17,9 @@ public static class Contract
 {
     public const string Unit = "limen.core";
     public const long Version = 1;
-    public const string Fingerprint = "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c";
+    public const string Fingerprint = "sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2";
     public const long ProtocolVersion = 1;
-    public const long ProtocolMinor = 4;
+    public const long ProtocolMinor = 5;
     public const long MaxHttpTextBytes = 8388608;
 }
 
@@ -532,10 +532,36 @@ public static class HttpCredentialsMatch
     public static string ToWire(this HttpCredentials value) => value.Match(() => "omit", () => "same-origin", () => "include");
 }
 
+/// <summary>Protocol 1.5. fetch's cache mode: how the request meets the browser HTTP cache. Absent means the browser default (default). no-store neither reads nor writes the cache, and is what a read of a mutable resource sets; no-cache revalidates a stored response with the server before using it; reload fetches from the server and stores the answer. force-cache and only-if-cached are deliberately absent: the first serves stale responses by design, the second needs a request mode the contract does not model.</summary>
+[global::Limen.Contract.ClosedUnion]
+public enum HttpCacheMode
+{
+    Default,
+    NoStore,
+    NoCache,
+    Reload,
+}
+
+/// <summary>Exhaustive handling of HttpCacheMode: one handler per value, so a new value is a compile error at every call site.</summary>
+public static class HttpCacheModeMatch
+{
+    public static TResult Match<TResult>(this HttpCacheMode value, global::System.Func<TResult> @default, global::System.Func<TResult> noStore, global::System.Func<TResult> noCache, global::System.Func<TResult> reload) => value switch
+    {
+        HttpCacheMode.Default => @default(),
+        HttpCacheMode.NoStore => noStore(),
+        HttpCacheMode.NoCache => noCache(),
+        HttpCacheMode.Reload => reload(),
+        _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpCacheMode value."),
+    };
+
+    /// <summary>The wire text of a HttpCacheMode value.</summary>
+    public static string ToWire(this HttpCacheMode value) => value.Match(() => "default", () => "no-store", () => "no-cache", () => "reload");
+}
+
 /// <summary>Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.</summary>
 public sealed record XsrfBinding(string Cookie, string Header);
 
-public sealed record HttpEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, global::Limen.Contract.Core.HttpMethod Method, string Url, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers, string? Body, long TimeoutMs, global::Limen.Contract.Core.HttpResponseKind? Response, global::System.Collections.Generic.IReadOnlyList<string>? ResponseHeaders, global::Limen.Contract.Core.HttpCredentials? Credentials, global::Limen.Contract.Core.XsrfBinding? Xsrf);
+public sealed record HttpEffectRequest(global::Limen.Contract.Core.CorrelationId CorrelationId, global::Limen.Contract.Core.HttpMethod Method, string Url, global::System.Collections.Generic.IReadOnlyDictionary<string, string>? Headers, string? Body, long TimeoutMs, global::Limen.Contract.Core.HttpResponseKind? Response, global::System.Collections.Generic.IReadOnlyList<string>? ResponseHeaders, global::Limen.Contract.Core.HttpCredentials? Credentials, global::Limen.Contract.Core.HttpCacheMode? Cache, global::Limen.Contract.Core.XsrfBinding? Xsrf);
 
 [global::Limen.Contract.ClosedUnion]
 public abstract record StorageEffectRequest
@@ -739,6 +765,10 @@ public static class Codec
     public static Decoded<global::Limen.Contract.Core.HttpCredentials> DecodeHttpCredentials(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadHttpCredentials(element, path));
     public static Decoded<global::Limen.Contract.Core.HttpCredentials> ParseHttpCredentials(string json) => Wire.Parse(json, ReadHttpCredentials);
     public static string SerializeHttpCredentials(global::Limen.Contract.Core.HttpCredentials value) => Wire.Serialize(EncodeHttpCredentials(value));
+
+    public static Decoded<global::Limen.Contract.Core.HttpCacheMode> DecodeHttpCacheMode(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadHttpCacheMode(element, path));
+    public static Decoded<global::Limen.Contract.Core.HttpCacheMode> ParseHttpCacheMode(string json) => Wire.Parse(json, ReadHttpCacheMode);
+    public static string SerializeHttpCacheMode(global::Limen.Contract.Core.HttpCacheMode value) => Wire.Serialize(EncodeHttpCacheMode(value));
 
     public static Decoded<global::Limen.Contract.Core.XsrfBinding> DecodeXsrfBinding(global::System.Text.Json.JsonElement element, string path = "$") => Wire.Run(() => ReadXsrfBinding(element, path));
     public static Decoded<global::Limen.Contract.Core.XsrfBinding> ParseXsrfBinding(string json) => Wire.Parse(json, ReadXsrfBinding);
@@ -1200,6 +1230,9 @@ public static class Codec
     internal static global::Limen.Contract.Core.HttpCredentials ReadHttpCredentials(global::System.Text.Json.JsonElement element, string path) =>
         Wire.Enumeration(element, path, ("omit", global::Limen.Contract.Core.HttpCredentials.Omit), ("same-origin", global::Limen.Contract.Core.HttpCredentials.SameOrigin), ("include", global::Limen.Contract.Core.HttpCredentials.Include));
 
+    internal static global::Limen.Contract.Core.HttpCacheMode ReadHttpCacheMode(global::System.Text.Json.JsonElement element, string path) =>
+        Wire.Enumeration(element, path, ("default", global::Limen.Contract.Core.HttpCacheMode.Default), ("no-store", global::Limen.Contract.Core.HttpCacheMode.NoStore), ("no-cache", global::Limen.Contract.Core.HttpCacheMode.NoCache), ("reload", global::Limen.Contract.Core.HttpCacheMode.Reload));
+
     internal static global::Limen.Contract.Core.XsrfBinding ReadXsrfBinding(global::System.Text.Json.JsonElement element, string path)
     {
         var props = Wire.Closed(Wire.Properties(element, path), path, "cookie", "header");
@@ -1210,7 +1243,7 @@ public static class Codec
 
     internal static global::Limen.Contract.Core.HttpEffectRequest ReadHttpEffectRequest(global::System.Text.Json.JsonElement element, string path)
     {
-        var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "correlationId", "method", "url", "headers", "body", "timeoutMs", "response", "responseHeaders", "credentials", "xsrf");
+        var props = Wire.Closed(Wire.Properties(element, path), path, "kind", "correlationId", "method", "url", "headers", "body", "timeoutMs", "response", "responseHeaders", "credentials", "cache", "xsrf");
         Wire.Required(props, path, "kind", (e0, p0) => Wire.LiteralString(e0, p0, "Http"));
         var f_correlationId = Wire.Required(props, path, "correlationId", (e0, p0) => ReadCorrelationId(e0, p0));
         var f_method = Wire.Required(props, path, "method", (e0, p0) => ReadHttpMethod(e0, p0));
@@ -1221,8 +1254,9 @@ public static class Codec
         var f_response = Wire.OptionalValue<global::Limen.Contract.Core.HttpResponseKind>(props, path, "response", (e0, p0) => ReadHttpResponseKind(e0, p0));
         var f_responseHeaders = Wire.OptionalReference<global::System.Collections.Generic.IReadOnlyList<string>>(props, path, "responseHeaders", (e0, p0) => Wire.List(e0, p0, (e1, p1) => Wire.String(e1, p1)));
         var f_credentials = Wire.OptionalValue<global::Limen.Contract.Core.HttpCredentials>(props, path, "credentials", (e0, p0) => ReadHttpCredentials(e0, p0));
+        var f_cache = Wire.OptionalValue<global::Limen.Contract.Core.HttpCacheMode>(props, path, "cache", (e0, p0) => ReadHttpCacheMode(e0, p0));
         var f_xsrf = Wire.OptionalReference<global::Limen.Contract.Core.XsrfBinding>(props, path, "xsrf", (e0, p0) => ReadXsrfBinding(e0, p0));
-        return new global::Limen.Contract.Core.HttpEffectRequest(f_correlationId, f_method, f_url, f_headers, f_body, f_timeoutMs, f_response, f_responseHeaders, f_credentials, f_xsrf);
+        return new global::Limen.Contract.Core.HttpEffectRequest(f_correlationId, f_method, f_url, f_headers, f_body, f_timeoutMs, f_response, f_responseHeaders, f_credentials, f_cache, f_xsrf);
     }
 
     internal static global::Limen.Contract.Core.StorageEffectRequest ReadStorageEffectRequest(global::System.Text.Json.JsonElement element, string path)
@@ -1555,11 +1589,21 @@ public static class Codec
             _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpCredentials value."),
         };
 
+    public static global::System.Text.Json.Nodes.JsonNode? EncodeHttpCacheMode(global::Limen.Contract.Core.HttpCacheMode value) =>
+        value switch
+        {
+            global::Limen.Contract.Core.HttpCacheMode.Default => Wire.OfString("default"),
+            global::Limen.Contract.Core.HttpCacheMode.NoStore => Wire.OfString("no-store"),
+            global::Limen.Contract.Core.HttpCacheMode.NoCache => Wire.OfString("no-cache"),
+            global::Limen.Contract.Core.HttpCacheMode.Reload => Wire.OfString("reload"),
+            _ => throw new global::System.ArgumentOutOfRangeException(nameof(value), "Not a HttpCacheMode value."),
+        };
+
     public static global::System.Text.Json.Nodes.JsonNode? EncodeXsrfBinding(global::Limen.Contract.Core.XsrfBinding value) =>
         Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("cookie", Wire.OfString(value.Cookie)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("header", Wire.OfString(value.Header)));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeHttpEffectRequest(global::Limen.Contract.Core.HttpEffectRequest value) =>
-        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Http")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("correlationId", EncodeCorrelationId(value.CorrelationId)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("method", EncodeHttpMethod(value.Method)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("url", Wire.OfString(value.Url)), (value.Headers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("headers", Wire.OfMap(value.Headers, x0 => Wire.OfString(x0)))), (value.Body is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("body", Wire.OfString(value.Body))), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("timeoutMs", Wire.OfInt(value.TimeoutMs)), (value.Response.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("response", EncodeHttpResponseKind(value.Response.Value)) : null), (value.ResponseHeaders is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("responseHeaders", Wire.OfList(value.ResponseHeaders, x0 => Wire.OfString(x0)))), (value.Credentials.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("credentials", EncodeHttpCredentials(value.Credentials.Value)) : null), (value.Xsrf is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("xsrf", EncodeXsrfBinding(value.Xsrf))));
+        Wire.OfObject(((string, global::System.Text.Json.Nodes.JsonNode?)?)("kind", Wire.OfString("Http")), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("correlationId", EncodeCorrelationId(value.CorrelationId)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("method", EncodeHttpMethod(value.Method)), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("url", Wire.OfString(value.Url)), (value.Headers is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("headers", Wire.OfMap(value.Headers, x0 => Wire.OfString(x0)))), (value.Body is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("body", Wire.OfString(value.Body))), ((string, global::System.Text.Json.Nodes.JsonNode?)?)("timeoutMs", Wire.OfInt(value.TimeoutMs)), (value.Response.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("response", EncodeHttpResponseKind(value.Response.Value)) : null), (value.ResponseHeaders is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("responseHeaders", Wire.OfList(value.ResponseHeaders, x0 => Wire.OfString(x0)))), (value.Credentials.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("credentials", EncodeHttpCredentials(value.Credentials.Value)) : null), (value.Cache.HasValue ? ((string, global::System.Text.Json.Nodes.JsonNode?)?)("cache", EncodeHttpCacheMode(value.Cache.Value)) : null), (value.Xsrf is null ? null : ((string, global::System.Text.Json.Nodes.JsonNode?)?)("xsrf", EncodeXsrfBinding(value.Xsrf))));
 
     public static global::System.Text.Json.Nodes.JsonNode? EncodeStorageEffectRequest(global::Limen.Contract.Core.StorageEffectRequest value) =>
         value.Match(
@@ -1631,6 +1675,7 @@ public static class Conformance
             ["HttpMethod"] = element => Wire.Run(() => Codec.EncodeHttpMethod(Codec.ReadHttpMethod(element, "$"))),
             ["HttpResponseKind"] = element => Wire.Run(() => Codec.EncodeHttpResponseKind(Codec.ReadHttpResponseKind(element, "$"))),
             ["HttpCredentials"] = element => Wire.Run(() => Codec.EncodeHttpCredentials(Codec.ReadHttpCredentials(element, "$"))),
+            ["HttpCacheMode"] = element => Wire.Run(() => Codec.EncodeHttpCacheMode(Codec.ReadHttpCacheMode(element, "$"))),
             ["XsrfBinding"] = element => Wire.Run(() => Codec.EncodeXsrfBinding(Codec.ReadXsrfBinding(element, "$"))),
             ["HttpEffectRequest"] = element => Wire.Run(() => Codec.EncodeHttpEffectRequest(Codec.ReadHttpEffectRequest(element, "$"))),
             ["StorageEffectRequest"] = element => Wire.Run(() => Codec.EncodeStorageEffectRequest(Codec.ReadStorageEffectRequest(element, "$"))),

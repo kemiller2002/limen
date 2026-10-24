@@ -2,23 +2,23 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
+// contract-fingerprint: sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2
 // generator: limen-contract-gen/1 (typescript-types)
-// content-hash: sha256:b06ff59b5e3fd2c496ec5d3a99583b0804cb28de150bfd8807d202abdc7c4c6c
+// content-hash: sha256:e70377400a9717fc652169ed3574f9741535fccd12ad34d54d36aca4bee8d0b5
 // </auto-generated>
 /** The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand. */
 
 /** The wire envelope major version. Revision 1.1 added the handshake and the generic capability envelope, both additive. */
 export const PROTOCOL_VERSION = 1 as const;
 
-/** Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding; 1.4 added OutcomeUnknown{connection-lost}. */
-export const PROTOCOL_MINOR = 4 as const;
+/** Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding; 1.4 added OutcomeUnknown{connection-lost}; 1.5 added the Http cache mode. */
+export const PROTOCOL_MINOR = 5 as const;
 
 /** Protocol 1.3. The largest text or base64 response body, in bytes; a larger one is Failure too-large. Larger transfers belong to the transfer profile pack. */
 export const MAX_HTTP_TEXT_BYTES = 8388608 as const;
 
 /** The identity of this generated contract unit, exchanged in the handshake. */
-export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c" } as const;
+export const CONTRACT_IDENTITY = { unit: "limen.core", version: 1, fingerprint: "sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2" } as const;
 
 /** Identifies one requested effect so its result can be matched to the question it answers, and a stale answer rejected. */
 export type CorrelationId = string & { readonly __correlationId: unique symbol };
@@ -133,10 +133,13 @@ export type HttpResponseKind = "json" | "text" | "base64" | "none";
 /** Protocol 1.3. fetch's credentials mode: whether cookies and HTTP authentication go with the request. Absent means the browser default, same-origin. */
 export type HttpCredentials = "omit" | "same-origin" | "include";
 
+/** Protocol 1.5. fetch's cache mode: how the request meets the browser HTTP cache. Absent means the browser default (default). no-store neither reads nor writes the cache, and is what a read of a mutable resource sets; no-cache revalidates a stored response with the server before using it; reload fetches from the server and stores the answer. force-cache and only-if-cached are deliberately absent: the first serves stale responses by design, the second needs a request mode the contract does not model. */
+export type HttpCacheMode = "default" | "no-store" | "no-cache" | "reload";
+
 /** Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added. */
 export type XsrfBinding = { readonly cookie: string; readonly header: string };
 
-export type HttpEffectRequest = { readonly kind: "Http"; readonly correlationId: CorrelationId; readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"; readonly url: string; readonly headers?: Readonly<Record<string, string>>; readonly body?: string; readonly timeoutMs: number; readonly response?: "json" | "text" | "base64" | "none"; readonly responseHeaders?: readonly string[]; readonly credentials?: "omit" | "same-origin" | "include"; readonly xsrf?: XsrfBinding };
+export type HttpEffectRequest = { readonly kind: "Http"; readonly correlationId: CorrelationId; readonly method: "GET" | "PUT" | "POST" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"; readonly url: string; readonly headers?: Readonly<Record<string, string>>; readonly body?: string; readonly timeoutMs: number; readonly response?: "json" | "text" | "base64" | "none"; readonly responseHeaders?: readonly string[]; readonly credentials?: "omit" | "same-origin" | "include"; readonly cache?: "default" | "no-store" | "no-cache" | "reload"; readonly xsrf?: XsrfBinding };
 
 export type StorageEffectRequest =
   | { readonly kind: "Storage"; readonly operation: "get"; readonly correlationId: CorrelationId; readonly key: string }

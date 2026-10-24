@@ -2,9 +2,9 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
+// contract-fingerprint: sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2
 // generator: limen-contract-gen/1 (fsharp-unit)
-// content-hash: sha256:ad00b345cfc1583fc7979a5b7b0980bc36b5be4a3e5bf17955dfbd779cb0ea2f
+// content-hash: sha256:6be5b11d5f37e7252e73ae5af0ba65606d00c427fd7e636882a9f8787981c2c7
 // </auto-generated>
 namespace Limen.Contract.Core
 
@@ -207,6 +207,13 @@ module Types =
         | SameOrigin
         | Include
 
+    /// Protocol 1.5. fetch's cache mode: how the request meets the browser HTTP cache. Absent means the browser default (default). no-store neither reads nor writes the cache, and is what a read of a mutable resource sets; no-cache revalidates a stored response with the server before using it; reload fetches from the server and stores the answer. force-cache and only-if-cached are deliberately absent: the first serves stale responses by design, the second needs a request mode the contract does not model.
+    and [<RequireQualifiedAccess>] HttpCacheMode =
+        | Default
+        | NoStore
+        | NoCache
+        | Reload
+
     /// Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.
     and XsrfBinding =
         {
@@ -230,6 +237,8 @@ module Types =
             ResponseHeaders: string list option
             /// Protocol 1.3.
             Credentials: HttpCredentials option
+            /// Protocol 1.5. Passed to fetch unchanged; the kernel never chooses one.
+            Cache: HttpCacheMode option
             /// Protocol 1.3.
             Xsrf: XsrfBinding option
         }
@@ -289,9 +298,9 @@ module Types =
 module Contract =
     let [<Literal>] Unit = "limen.core"
     let [<Literal>] Version = 1L
-    let [<Literal>] Fingerprint = "sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c"
+    let [<Literal>] Fingerprint = "sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2"
     let [<Literal>] ProtocolVersion = 1L
-    let [<Literal>] ProtocolMinor = 4L
+    let [<Literal>] ProtocolMinor = 5L
     let [<Literal>] MaxHttpTextBytes = 8388608L
 
 /// Strict decoders (untrusted JSON → contract values) and encoders.
@@ -679,6 +688,9 @@ module Codec =
     and decodeHttpCredentials (path: string) (element: JsonElement) : Result<HttpCredentials, DecodeError> =
         Wire.enumeration [ "omit", HttpCredentials.Omit; "same-origin", HttpCredentials.SameOrigin; "include", HttpCredentials.Include ] path element
 
+    and decodeHttpCacheMode (path: string) (element: JsonElement) : Result<HttpCacheMode, DecodeError> =
+        Wire.enumeration [ "default", HttpCacheMode.Default; "no-store", HttpCacheMode.NoStore; "no-cache", HttpCacheMode.NoCache; "reload", HttpCacheMode.Reload ] path element
+
     and decodeXsrfBinding (path: string) (element: JsonElement) : Result<XsrfBinding, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
@@ -691,7 +703,7 @@ module Codec =
     and decodeHttpEffectRequest (path: string) (element: JsonElement) : Result<HttpEffectRequest, DecodeError> =
         Wire.decode {
             let! props = Wire.properties path element
-            let! props = Wire.closed [ "kind"; "correlationId"; "method"; "url"; "headers"; "body"; "timeoutMs"; "response"; "responseHeaders"; "credentials"; "xsrf" ] path props
+            let! props = Wire.closed [ "kind"; "correlationId"; "method"; "url"; "headers"; "body"; "timeoutMs"; "response"; "responseHeaders"; "credentials"; "cache"; "xsrf" ] path props
             let! () = Wire.required "kind" (Wire.literalString "Http") path props
             let! f_correlationId = Wire.required "correlationId" decodeCorrelationId path props
             let! f_method = Wire.required "method" decodeHttpMethod path props
@@ -702,8 +714,9 @@ module Codec =
             let! f_response = Wire.optional "response" decodeHttpResponseKind path props
             let! f_responseHeaders = Wire.optional "responseHeaders" (Wire.list Wire.string) path props
             let! f_credentials = Wire.optional "credentials" decodeHttpCredentials path props
+            let! f_cache = Wire.optional "cache" decodeHttpCacheMode path props
             let! f_xsrf = Wire.optional "xsrf" decodeXsrfBinding path props
-            return { CorrelationId = f_correlationId; Method = f_method; Url = f_url; Headers = f_headers; Body = f_body; TimeoutMs = f_timeoutMs; Response = f_response; ResponseHeaders = f_responseHeaders; Credentials = f_credentials; Xsrf = f_xsrf }
+            return { CorrelationId = f_correlationId; Method = f_method; Url = f_url; Headers = f_headers; Body = f_body; TimeoutMs = f_timeoutMs; Response = f_response; ResponseHeaders = f_responseHeaders; Credentials = f_credentials; Cache = f_cache; Xsrf = f_xsrf }
         }
 
     and decodeStorageEffectRequest (path: string) (element: JsonElement) : Result<StorageEffectRequest, DecodeError> =
@@ -1000,11 +1013,18 @@ module Codec =
         | HttpCredentials.SameOrigin -> Wire.ofString "same-origin"
         | HttpCredentials.Include -> Wire.ofString "include"
 
+    and encodeHttpCacheMode (value: HttpCacheMode) : JsonNode =
+        match value with
+        | HttpCacheMode.Default -> Wire.ofString "default"
+        | HttpCacheMode.NoStore -> Wire.ofString "no-store"
+        | HttpCacheMode.NoCache -> Wire.ofString "no-cache"
+        | HttpCacheMode.Reload -> Wire.ofString "reload"
+
     and encodeXsrfBinding (value: XsrfBinding) : JsonNode =
         Wire.ofObject [ Some("cookie", Wire.ofString value.Cookie); Some("header", Wire.ofString value.Header) ]
 
     and encodeHttpEffectRequest (value: HttpEffectRequest) : JsonNode =
-        Wire.ofObject [ Some("kind", Wire.ofString "Http"); Some("correlationId", encodeCorrelationId value.CorrelationId); Some("method", encodeHttpMethod value.Method); Some("url", Wire.ofString value.Url); value.Headers |> Option.map (fun value -> "headers", (Wire.ofMap Wire.ofString) value); value.Body |> Option.map (fun value -> "body", Wire.ofString value); Some("timeoutMs", Wire.ofInt value.TimeoutMs); value.Response |> Option.map (fun value -> "response", encodeHttpResponseKind value); value.ResponseHeaders |> Option.map (fun value -> "responseHeaders", (Wire.ofList Wire.ofString) value); value.Credentials |> Option.map (fun value -> "credentials", encodeHttpCredentials value); value.Xsrf |> Option.map (fun value -> "xsrf", encodeXsrfBinding value) ]
+        Wire.ofObject [ Some("kind", Wire.ofString "Http"); Some("correlationId", encodeCorrelationId value.CorrelationId); Some("method", encodeHttpMethod value.Method); Some("url", Wire.ofString value.Url); value.Headers |> Option.map (fun value -> "headers", (Wire.ofMap Wire.ofString) value); value.Body |> Option.map (fun value -> "body", Wire.ofString value); Some("timeoutMs", Wire.ofInt value.TimeoutMs); value.Response |> Option.map (fun value -> "response", encodeHttpResponseKind value); value.ResponseHeaders |> Option.map (fun value -> "responseHeaders", (Wire.ofList Wire.ofString) value); value.Credentials |> Option.map (fun value -> "credentials", encodeHttpCredentials value); value.Cache |> Option.map (fun value -> "cache", encodeHttpCacheMode value); value.Xsrf |> Option.map (fun value -> "xsrf", encodeXsrfBinding value) ]
 
     and encodeStorageEffectRequest (value: StorageEffectRequest) : JsonNode =
         match value with
@@ -1114,6 +1134,14 @@ module Codec =
         | HttpCredentials.SameOrigin -> "same-origin"
         | HttpCredentials.Include -> "include"
 
+    /// The wire text of a HttpCacheMode value.
+    let wireHttpCacheMode (value: HttpCacheMode) : string =
+        match value with
+        | HttpCacheMode.Default -> "default"
+        | HttpCacheMode.NoStore -> "no-store"
+        | HttpCacheMode.NoCache -> "no-cache"
+        | HttpCacheMode.Reload -> "reload"
+
     let parseCorrelationId (json: string) = Wire.parse decodeCorrelationId json
     let serializeCorrelationId (value: CorrelationId) = (encodeCorrelationId value).ToJsonString()
     let parseCapability (json: string) = Wire.parse decodeCapability json
@@ -1178,6 +1206,8 @@ module Codec =
     let serializeHttpResponseKind (value: HttpResponseKind) = (encodeHttpResponseKind value).ToJsonString()
     let parseHttpCredentials (json: string) = Wire.parse decodeHttpCredentials json
     let serializeHttpCredentials (value: HttpCredentials) = (encodeHttpCredentials value).ToJsonString()
+    let parseHttpCacheMode (json: string) = Wire.parse decodeHttpCacheMode json
+    let serializeHttpCacheMode (value: HttpCacheMode) = (encodeHttpCacheMode value).ToJsonString()
     let parseXsrfBinding (json: string) = Wire.parse decodeXsrfBinding json
     let serializeXsrfBinding (value: XsrfBinding) = (encodeXsrfBinding value).ToJsonString()
     let parseHttpEffectRequest (json: string) = Wire.parse decodeHttpEffectRequest json
@@ -1232,6 +1262,7 @@ module Conformance =
             "HttpMethod", (fun path element -> Codec.decodeHttpMethod path element |> Result.map Codec.encodeHttpMethod)
             "HttpResponseKind", (fun path element -> Codec.decodeHttpResponseKind path element |> Result.map Codec.encodeHttpResponseKind)
             "HttpCredentials", (fun path element -> Codec.decodeHttpCredentials path element |> Result.map Codec.encodeHttpCredentials)
+            "HttpCacheMode", (fun path element -> Codec.decodeHttpCacheMode path element |> Result.map Codec.encodeHttpCacheMode)
             "XsrfBinding", (fun path element -> Codec.decodeXsrfBinding path element |> Result.map Codec.encodeXsrfBinding)
             "HttpEffectRequest", (fun path element -> Codec.decodeHttpEffectRequest path element |> Result.map Codec.encodeHttpEffectRequest)
             "StorageEffectRequest", (fun path element -> Codec.decodeStorageEffectRequest path element |> Result.map Codec.encodeStorageEffectRequest)

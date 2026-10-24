@@ -255,6 +255,7 @@ module Engine =
               Response = None
               ResponseHeaders = None
               Credentials = None
+              Cache = None
               Xsrf = None }
 
     let private deploymentEffect scenario correlationId =
