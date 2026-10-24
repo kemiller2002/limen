@@ -131,6 +131,8 @@ type HttpEffectRequest = {
   responseHeaders?: readonly string[];
   credentials?: "omit" | "same-origin" | "include";
   xsrf?: { cookie: string; header: string };
+  // Protocol 1.5, optional; absent, the browser's default HTTP cache behaviour.
+  cache?: "default" | "no-store" | "no-cache" | "reload";
 };
 ```
 
@@ -147,6 +149,13 @@ type HttpEffectRequest = {
   (`credentials`), and a same-origin XSRF cookie-to-header binding (`xsrf`).
   Each is explicit, and each is absent by default. See
   [43-http-profiles.md](43-http-profiles.md).
+- **`cache`** (protocol 1.5) — how the request meets the browser HTTP cache,
+  passed to `fetch` unchanged. **A read of a mutable resource sets
+  `cache: "no-store"`**: otherwise a response the server marked cacheable
+  (`max-age=60`) can answer it after the truth changed — a revoked token, a new
+  commit. A correlation id does not protect you here: it rejects a stale
+  *result*, not a stale *response*. See
+  [43-http-profiles.md](43-http-profiles.md#cache-mutable-reads-refuse-the-http-cache-protocol-15).
 
 ```ts
 const effect: EffectRequest = {

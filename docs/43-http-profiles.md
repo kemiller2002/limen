@@ -111,13 +111,68 @@ idempotency key, then ask the server; the offline outbox
 ([conformance/outbox](../conformance/outbox/README.md)) is one way to structure
 that. See P-4 in [DOCUMENTATION-AUDIT.md](DOCUMENTATION-AUDIT.md).
 
+### `cache`: mutable reads refuse the HTTP cache (protocol 1.5)
+
+`default`, `no-store`, `no-cache` or `reload`, passed to `fetch`'s `cache`
+init exactly. Absent means the browser default, so a request without it is
+the request of 1.4. The kernel never picks a mode: whether a read may be
+answered from a stored response is the engine's policy.
+
+| Value | What the browser does |
+| --- | --- |
+| `default` (or absent) | uses a fresh stored response; revalidates a stale one |
+| `no-store` | neither reads nor writes the HTTP cache: the server answers every time |
+| `no-cache` | revalidates any stored response with the server before using it |
+| `reload` | asks the server, and stores the answer for later default reads |
+
+**The invariant: a read of a mutable resource sets `cache: "no-store"`.**
+Mutable means the answer can change with server state or with the
+credentials sent: a branch head, a permission check, "who am I". Servers mark
+such responses cacheable all the time. GitHub's `commits/main` answers with
+`cache-control: private, max-age=60`. In the indy-init rehearsals that let a
+cached `200` answer the read made after the user replaced their token, which
+hid the `401` the server would have returned (defect class DC-005,
+[RQ-LIMEN-2026-A008](requirements/LIMEN-HTTP-CACHE-MODE.md)). Before 1.5 the
+only workaround was a cache-busting query (`?fresh=<nonce>`) in every mutable
+URL. With `no-store`, the URL stays the URL.
+
+```ts
+{ kind: "Http", correlationId, method: "GET", timeoutMs: 5000,
+  url: "https://api.github.com/repos/o/r/commits/main",
+  headers: { authorization: `Bearer ${token}` },
+  cache: "no-store" }
+```
+
+```fsharp
+EffectRequest.Http
+    { request with Cache = Some HttpCacheMode.NoStore }
+```
+
+**Correlation ids are a separate concern.** A correlation id matches an answer
+to its question, so the engine can drop a *stale result*: one that arrives
+after the engine stopped waiting. The kernel already refuses a second
+in-flight request with the same id. Neither stops the browser from answering
+a fresh question with a *stale response*. Only the cache mode does.
+
+`force-cache` and `only-if-cached` are not in the contract. The first serves
+stale responses by design. The second needs `mode: "same-origin"`, which the
+contract does not model.
+
+**Negotiate first.** An older kernel's WebAssembly transport decodes engine
+messages with a closed decoder, which refuses a field it does not know. Send
+`cache` only to a kernel that negotiated protocol 1.5 or later. The Chromium
+smoke (`test/browser/packs/core-http`) proves the difference against a
+`max-age=60` endpoint. Without a mode, the second read never reaches the
+server. With `no-store`, every read does. `reload` reaches the server and
+refreshes the stored response.
+
 ### Deliberately not in Core
 
-`redirect`, `cache`, `mode`, `integrity` and `referrerPolicy` are not in the
+`redirect`, `mode`, `integrity` and `referrerPolicy` are not in the
 contract. No reference consumer needs them yet, and each is a new way for a
 request to behave differently from what the engine reasons about. Each would
-arrive the way the 1.3 options did: optional, explicit, and with the current
-behaviour as the default.
+arrive the way the 1.3 options and the 1.5 `cache` mode did: optional,
+explicit, and with the current behaviour as the default.
 
 ## The transfer profile pack
 

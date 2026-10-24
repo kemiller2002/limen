@@ -456,13 +456,17 @@ type HttpEffectRequest = {
   readonly responseHeaders?: readonly string[];                 // 1.3
   readonly credentials?: "omit" | "same-origin" | "include";    // 1.3; absent = browser default
   readonly xsrf?: { readonly cookie: string; readonly header: string }; // 1.3; same-origin only
+  readonly cache?: "default" | "no-store" | "no-cache" | "reload"; // 1.5; absent = browser default
 };
 ```
 
 Headers merge over the kernel's `accept: application/json` (sent only for the
 `json` representation); yours win. Headers, body, cookies and returned header
-values are **never** included in diagnostics. The 1.3 options are in
+values are **never** included in diagnostics. The 1.3 options and the 1.5
+`cache` mode are in
 [43-http-profiles.md](https://github.com/kemiller2002/limen/blob/main/docs/43-http-profiles.md).
+A read of a mutable resource sets `cache: "no-store"`; send `cache` only to a
+kernel that negotiated protocol 1.5 or later.
 
 ### `StorageEffectRequest`
 
