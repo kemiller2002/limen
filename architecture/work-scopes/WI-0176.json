@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0176",
+  "reference": "Core Admission proposal CA-0004 for RQ-LIMEN-2026-A008 / WI-0175 (the Http cache mode, protocol 1.5)",
+  "placement": "Governance only: a pending Core Admission record putting the emitted Core gzip growth of WI-0175 to the owner, with its evidence. It changes no code, no baseline, no manifest and no check; a pending record changes nothing by itself (docs/core-admission.md).",
+  "guardrail": true,
+  "paths": [
+    ".ros/**",
+    "architecture/work-scopes/WI-0176.json",
+    "architecture/core-admissions/CA-0004.json"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

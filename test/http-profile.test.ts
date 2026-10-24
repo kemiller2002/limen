@@ -46,8 +46,8 @@ const sequentially = <T, R>(items: readonly T[], each: (item: T) => Promise<R>):
 const headersOf = (seen: readonly Seen[]): Record<string, string> => Object.fromEntries(Object.entries((seen[0]?.init?.headers ?? {}) as Record<string, string>));
 const GET = { method: "GET", url: "/api", timeoutMs: 1000 } as const;
 
-test("protocol 1.4 is what the kernel offers (1.3 added this profile; 1.4, connection-lost)", () => {
-  assert.equal(PROTOCOL_MINOR, 4);
+test("protocol 1.5 is what the kernel offers (1.3 added this profile; 1.4, connection-lost; 1.5, the cache mode)", () => {
+  assert.equal(PROTOCOL_MINOR, 5);
 });
 
 test("JSON stays the smallest default path: no new field, the same request and the same outcome as before", async () => {
@@ -55,6 +55,7 @@ test("JSON stays the smallest default path: no new field, the same request and t
   assert.deepEqual(outcome, { kind: "Success", status: 200, body: { available: true } });
   assert.deepEqual(headersOf(seen), { accept: "application/json" });
   assert.equal(seen[0]?.init !== undefined && "credentials" in seen[0].init, false, "no credentials mode unless asked");
+  assert.equal(seen[0]?.init !== undefined && "cache" in seen[0].init, false, "no cache mode unless asked: the browser's default HTTP cache behaviour");
 });
 
 test("a text response is a string, not a fake invalid-response failure", async () => {
@@ -108,6 +109,17 @@ test("response headers: exactly the named ones, by lower-case name, and only whe
 test("credentials: passed to fetch exactly as asked", async () => {
   const modes = await sequentially(["omit", "same-origin", "include"] as const, async (credentials) => (await run({ ...GET, credentials }, () => Response.json({}))).seen[0]?.init?.credentials);
   assert.deepEqual(modes, ["omit", "same-origin", "include"]);
+});
+
+test("cache: passed to fetch exactly as asked, so a mutable read can refuse the HTTP cache (DC-005)", async () => {
+  const modes = await sequentially(["default", "no-store", "no-cache", "reload"] as const, async (cache) => (await run({ ...GET, cache }, () => Response.json({}))).seen[0]?.init?.cache);
+  assert.deepEqual(modes, ["default", "no-store", "no-cache", "reload"]);
+});
+
+test("cache: the mode changes only how the request meets the HTTP cache, never the outcome or its classification", async () => {
+  const unauthorized = await run({ ...GET, cache: "no-store" }, () => Response.json({ message: "Bad credentials" }, { status: 401 }));
+  assert.deepEqual(unauthorized.outcome, { kind: "Success", status: 401, body: { message: "Bad credentials" } });
+  assert.equal(unauthorized.seen[0]?.url, "/api", "the URL is untouched: no cache-busting query is added for the engine");
 });
 
 test("XSRF: one named cookie into one named header, same-origin only, and the value never reaches diagnostics or the engine", async () => {

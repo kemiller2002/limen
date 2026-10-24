@@ -12,6 +12,10 @@ const cookiesOf = (request: IncomingMessage): Readonly<Record<string, string>> =
 // How many requests /__limen/http/reset received before dropping them.
 const dropped = { count: 0 };
 
+// How many requests reached /__limen/http/mutable: a fresh read sees a new
+// count, one the HTTP cache answered sees an old one.
+const served = { count: 0 };
+
 export const serveHttp = (request: IncomingMessage, response: ServerResponse): boolean => {
   const url = new URL(request.url ?? "/", "http://localhost");
   switch (url.pathname) {
@@ -31,6 +35,12 @@ export const serveHttp = (request: IncomingMessage, response: ServerResponse): b
       response.writeHead(200, { "Content-Type": "text/plain" });
       Array.from({ length: 9 }).forEach(() => response.write(Buffer.alloc(1024 * 1024, 65)));
       response.end();
+      return true;
+    case "/__limen/http/mutable":
+      // A mutable resource that still invites caching, as GitHub's
+      // commits/main does (cache-control: private, max-age=60), DC-005.
+      served.count += 1;
+      response.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "private, max-age=60" }).end(JSON.stringify({ served: served.count }));
       return true;
     case "/__limen/http/login":
       response.writeHead(200, { "Set-Cookie": ["session=abc; Path=/; SameSite=Strict", "XSRF-TOKEN=tok-789; Path=/; SameSite=Strict"], "Content-Type": "application/json" }).end("{}");

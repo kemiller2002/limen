@@ -16,6 +16,23 @@ exhaustive lists.
 
 ## [Unreleased]
 
+### Added
+
+- **An explicit cache mode on the Http effect (protocol 1.5, RQ-LIMEN-2026-A008).**
+  - `HttpEffectRequest.cache?: "default" | "no-store" | "no-cache" | "reload"`
+    (contract enum `HttpCacheMode`), passed to `fetch`'s `cache` init exactly.
+    Absent, the request is unchanged.
+  - A read of a mutable resource should set `cache: "no-store"`. Before, a
+    response marked `max-age` could answer it from the browser HTTP cache: a
+    cached `200` hid a `401` after a token change (defect class DC-005).
+    Proven in Chromium against a `max-age=60` endpoint.
+  - An undeclared value is refused at `$.cache` by every generated decoder.
+  - Send `cache` only to a kernel that negotiated 1.5: an older WebAssembly
+    transport's closed decoder refuses the field.
+  - The contract fingerprint changes. F# record and C# positional constructions
+    of `HttpEffectRequest` must name the new field (`Cache = None`); Rust
+    struct literals too (`cache: None`).
+
 ## [0.9.1] — 2026-10-21
 
 - Stamp the npm package version into the emitted browser-kernel artifact and

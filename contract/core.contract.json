@@ -5,7 +5,7 @@
   "doc": "The Limen browser/engine wire contract. Plain JSON-serializable data only. This file is the single source of truth: every language binding is generated from it by tools/contract-gen and must never be edited by hand.",
   "constants": [
     { "name": "PROTOCOL_VERSION", "type": "int", "value": 1, "doc": "The wire envelope major version. Revision 1.1 added the handshake and the generic capability envelope, both additive." },
-    { "name": "PROTOCOL_MINOR", "type": "int", "value": 4, "doc": "Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding; 1.4 added OutcomeUnknown{connection-lost}." },
+    { "name": "PROTOCOL_MINOR", "type": "int", "value": 5, "doc": "Additive revision within PROTOCOL_VERSION. An engine that understands only 1.0 ignores the handshake and is treated as a legacy engine. 1.2 added form-control state to SemanticEvent; 1.3 added the Http response representation, response headers, credentials and the XSRF binding; 1.4 added OutcomeUnknown{connection-lost}; 1.5 added the Http cache mode." },
     { "name": "MAX_HTTP_TEXT_BYTES", "type": "int", "value": 8388608, "doc": "Protocol 1.3. The largest text or base64 response body, in bytes; a larger one is Failure too-large. Larger transfers belong to the transfer profile pack." }
   ],
   "types": [
@@ -321,6 +321,12 @@
       "values": ["omit", "same-origin", "include"]
     },
     {
+      "name": "HttpCacheMode",
+      "kind": "enum",
+      "doc": "Protocol 1.5. fetch's cache mode: how the request meets the browser HTTP cache. Absent means the browser default (default). no-store neither reads nor writes the cache, and is what a read of a mutable resource sets; no-cache revalidates a stored response with the server before using it; reload fetches from the server and stores the answer. force-cache and only-if-cached are deliberately absent: the first serves stale responses by design, the second needs a request mode the contract does not model.",
+      "values": ["default", "no-store", "no-cache", "reload"]
+    },
+    {
       "name": "XsrfBinding",
       "kind": "record",
       "doc": "Protocol 1.3. Copy the value of one named cookie into one named request header — the cookie-to-header XSRF pattern — for a same-origin URL only. The engine never reads document.cookie; the cookie's value never crosses the boundary and is never logged. For a cross-origin URL, or when the cookie is absent, no header is added.",
@@ -342,6 +348,7 @@
         { "name": "response", "type": "HttpResponseKind", "optional": true, "doc": "Protocol 1.3. Absent means json." },
         { "name": "responseHeaders", "type": { "list": "string" }, "optional": true, "doc": "Protocol 1.3. Response header names to return in Success.headers. Cross-origin, a browser exposes only CORS-safelisted headers and those the server lists in Access-Control-Expose-Headers." },
         { "name": "credentials", "type": "HttpCredentials", "optional": true, "doc": "Protocol 1.3." },
+        { "name": "cache", "type": "HttpCacheMode", "optional": true, "doc": "Protocol 1.5. Passed to fetch unchanged; the kernel never chooses one." },
         { "name": "xsrf", "type": "XsrfBinding", "optional": true, "doc": "Protocol 1.3." }
       ]
     },

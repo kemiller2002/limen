@@ -89,9 +89,38 @@ let vectors =
     let file = readJson "conformance/vectors/core.vectors.json"
     file["vectors"].AsArray()
 
+// Typed, not only wire-to-wire: a mutable read that refuses the HTTP cache
+// (protocol 1.5, DC-005) encodes its mode as the wire string and decodes back
+// to the same value; absent stays absent.
+let cacheModeChecks : string list =
+    let read cache =
+        EffectRequest.Http
+            { CorrelationId = CorrelationId "h1"; Method = HttpMethod.Get; Url = "/repos/o/r/commits/main"
+              Headers = None; Body = None; TimeoutMs = 5000L; Response = None; ResponseHeaders = None
+              Credentials = None; Cache = cache; Xsrf = None }
+    let roundTrip (cache: HttpCacheMode option) (expected: string option) =
+        let json = Codec.serializeEffectRequest (read cache)
+        let wire = JsonNode.Parse(json)["cache"]
+        [ match wire, expected with
+          | null, None -> ()
+          | null, Some text -> yield $"cache {text}: not encoded in {json}"
+          | node, Some text when node.GetValue<string>() = text -> ()
+          | node, _ -> yield $"cache {cache}: encoded as {node.ToJsonString()}"
+          match Codec.parseEffectRequest json with
+          | Ok decoded when decoded = read cache -> ()
+          | Ok decoded -> yield $"cache {cache}: decoded as {decoded}"
+          | Error error -> yield $"cache {cache}: rejected at {error.Path}" ]
+    [ None, None
+      Some HttpCacheMode.Default, Some "default"
+      Some HttpCacheMode.NoStore, Some "no-store"
+      Some HttpCacheMode.NoCache, Some "no-cache"
+      Some HttpCacheMode.Reload, Some "reload" ]
+    |> List.collect (fun (cache, expected) -> roundTrip cache expected)
+
 let failures =
     [ if Contract.Fingerprint <> fingerprint then
           yield $"fingerprint: binding carries {Contract.Fingerprint}, contract computes to {fingerprint}"
+      yield! cacheModeChecks
       yield! vectors |> Seq.choose check ]
 
 let count = vectors.Count

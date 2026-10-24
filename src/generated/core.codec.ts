@@ -2,11 +2,11 @@
 // GENERATED FILE — DO NOT EDIT. Change the contract and run `npm run contract:generate`.
 // source: contract/core.contract.json
 // unit: limen.core@1
-// contract-fingerprint: sha256:2d5e16b7111fc78a319706b9927e4523cfcc519b7a2c9352ca8283ba32d6b71c
+// contract-fingerprint: sha256:7d824d47d3081b1147ce29e89d3ec4a687872e1aeaad232944775b672b1998d2
 // generator: limen-contract-gen/1 (typescript-codec)
-// content-hash: sha256:d5ecc12a5be69d7f40d52760233455b608ea52eb5b78c0b116c9f2a510d62909
+// content-hash: sha256:559fca40b85acf831d9c209634427ee2941f19b3a2c25cbb0946b20f524ebc13
 // </auto-generated>
-import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, OutcomeUnknownReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, HostHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
+import type { CorrelationId, Capability, SemanticEvent, BrowserLocation, HttpFailureReason, OutcomeUnknownReason, EffectOutcome, StorageFailureReason, StorageOutcome, ClipboardFailureReason, ClipboardOutcome, NavigationFailureReason, NavigationOutcome, CapabilityUnsupportedReason, CapabilityRejectedReason, CapabilityOutcome, EffectResult, HostHandshake, BrowserToEngineMessage, ViewPrimitive, ViewItem, ViewValue, ViewState, HttpMethod, HttpResponseKind, HttpCredentials, HttpCacheMode, XsrfBinding, HttpEffectRequest, StorageEffectRequest, ClipboardEffectRequest, NavigationEffectRequest, CapabilityEffectRequest, EffectRequest, EngineToBrowserMessage } from "./core.js";
 
 import { codecRuntime, decodeCapabilityId, decodeProtocolRevision, decodeContractIdentity, decodeCapabilityOffer, decodeHandshakeRejection, decodeEngineHandshake } from "./core.handshake.codec.js";
 import type { DecodeError, Decoded, Path } from "./core.handshake.codec.js";
@@ -460,6 +460,8 @@ export const decodeHttpResponseKind = (value: unknown, path: Path = "$"): Decode
 
 export const decodeHttpCredentials = (value: unknown, path: Path = "$"): Decoded<HttpCredentials> => enumValue(value, path, ["omit","same-origin","include"] as const);
 
+export const decodeHttpCacheMode = (value: unknown, path: Path = "$"): Decoded<HttpCacheMode> => enumValue(value, path, ["default","no-store","no-cache","reload"] as const);
+
 export const decodeXsrfBinding = (value: unknown, path: Path = "$"): Decoded<XsrfBinding> => {
   const object = objectValue(value, path, ["cookie","header"]);
   if (!object.ok) return object;
@@ -471,7 +473,7 @@ export const decodeXsrfBinding = (value: unknown, path: Path = "$"): Decoded<Xsr
 };
 
 export const decodeHttpEffectRequest = (value: unknown, path: Path = "$"): Decoded<HttpEffectRequest> => {
-  const object = objectValue(value, path, ["kind","correlationId","method","url","headers","body","timeoutMs","response","responseHeaders","credentials","xsrf"]);
+  const object = objectValue(value, path, ["kind","correlationId","method","url","headers","body","timeoutMs","response","responseHeaders","credentials","cache","xsrf"]);
   if (!object.ok) return object;
   const kindTag = literalValue(object.value["kind"], at(path, ".kind"), "Http");
   if (!kindTag.ok) return kindTag;
@@ -493,9 +495,11 @@ export const decodeHttpEffectRequest = (value: unknown, path: Path = "$"): Decod
   if (!field_responseHeaders.ok) return field_responseHeaders;
   const field_credentials = object.value["credentials"] === undefined ? ok(undefined) : decodeHttpCredentials(object.value["credentials"], at(path, ".credentials"));
   if (!field_credentials.ok) return field_credentials;
+  const field_cache = object.value["cache"] === undefined ? ok(undefined) : decodeHttpCacheMode(object.value["cache"], at(path, ".cache"));
+  if (!field_cache.ok) return field_cache;
   const field_xsrf = object.value["xsrf"] === undefined ? ok(undefined) : decodeXsrfBinding(object.value["xsrf"], at(path, ".xsrf"));
   if (!field_xsrf.ok) return field_xsrf;
-  return ok<HttpEffectRequest>({ kind: "Http", correlationId: field_correlationId.value, method: field_method.value, url: field_url.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}), ...(field_body.value !== undefined ? { body: field_body.value } : {}), timeoutMs: field_timeoutMs.value, ...(field_response.value !== undefined ? { response: field_response.value } : {}), ...(field_responseHeaders.value !== undefined ? { responseHeaders: field_responseHeaders.value } : {}), ...(field_credentials.value !== undefined ? { credentials: field_credentials.value } : {}), ...(field_xsrf.value !== undefined ? { xsrf: field_xsrf.value } : {}) });
+  return ok<HttpEffectRequest>({ kind: "Http", correlationId: field_correlationId.value, method: field_method.value, url: field_url.value, ...(field_headers.value !== undefined ? { headers: field_headers.value } : {}), ...(field_body.value !== undefined ? { body: field_body.value } : {}), timeoutMs: field_timeoutMs.value, ...(field_response.value !== undefined ? { response: field_response.value } : {}), ...(field_responseHeaders.value !== undefined ? { responseHeaders: field_responseHeaders.value } : {}), ...(field_credentials.value !== undefined ? { credentials: field_credentials.value } : {}), ...(field_cache.value !== undefined ? { cache: field_cache.value } : {}), ...(field_xsrf.value !== undefined ? { xsrf: field_xsrf.value } : {}) });
 };
 
 export const decodeStorageEffectRequest = (value: unknown, path: Path = "$"): Decoded<StorageEffectRequest> => {

@@ -1,4 +1,4 @@
-// The Core HTTP profile (protocol 1.3) in Chromium: real fetch, real bytes,
+// The Core HTTP profile (protocol 1.3, and the 1.5 cache mode) in Chromium: real fetch, real bytes,
 // real response headers, real cookies. The engine is a scripted stand-in
 // that sends one Http effect per click and collects the outcome.
 import { BrowserKernel } from "../../../../dist/kernel/browser-kernel.js";
@@ -9,7 +9,7 @@ const engine = {
   start: async () => {},
   dispatch: async (message) => {
     if (message.kind === "Initialize") {
-      return { view: {}, effects: [], cancellations: [], handshake: { kind: "Accepted", protocol: { major: 1, minor: 4 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] } };
+      return { view: {}, effects: [], cancellations: [], handshake: { kind: "Accepted", protocol: { major: 1, minor: 5 }, contract: { ...CORE_CONTRACT_IDENTITY }, capabilities: [] } };
     }
     if (message.kind === "EffectResult") {
       const resolve = state.waiting;
@@ -66,6 +66,20 @@ expect("credentials: the default and same-origin send the session cookie; omit d
 const noXsrf = await http({ url: "/__limen/http/whoami", method: "POST", body: "{}" });
 const withXsrf = await http({ url: "/__limen/http/whoami", method: "POST", body: "{}", xsrf: { cookie: "XSRF-TOKEN", header: "X-XSRF-TOKEN" } });
 expect("the XSRF binding copies the cookie into the header, and only when asked; the token never reaches the engine", noXsrf.body.xsrfSent === false && withXsrf.body.xsrfMatches === true && !JSON.stringify(withXsrf).includes("tok-789"), { noXsrf, withXsrf });
+
+// --- Cache mode (protocol 1.5, DC-005) ----------------------------------------
+// The server says max-age=60. With no mode, the browser HTTP cache answers the
+// second read, so a change on the server (a revoked token, a new commit) is
+// invisible. A no-store read always reaches the server.
+const cachedFirst = await http({ url: "/__limen/http/mutable" });
+const cachedSecond = await http({ url: "/__limen/http/mutable" });
+expect("with no cache mode, the browser HTTP cache answers a max-age read: the second read never reaches the server", cachedFirst.kind === "Success" && cachedSecond.kind === "Success" && cachedSecond.body.served === cachedFirst.body.served, { cachedFirst, cachedSecond });
+const fresh = await http({ url: "/__limen/http/mutable", cache: "no-store" });
+const freshAgain = await http({ url: "/__limen/http/mutable", cache: "no-store" });
+expect("cache no-store: every read reaches the server, on the same URL, with no cache-busting query", fresh.kind === "Success" && freshAgain.kind === "Success" && fresh.body.served > cachedFirst.body.served && freshAgain.body.served > fresh.body.served, { fresh, freshAgain });
+const reloaded = await http({ url: "/__limen/http/mutable", cache: "reload" });
+const afterReload = await http({ url: "/__limen/http/mutable" });
+expect("cache reload reaches the server and refreshes the stored response that a default read then uses", reloaded.kind === "Success" && reloaded.body.served > freshAgain.body.served && afterReload.kind === "Success" && afterReload.body.served === reloaded.body.served, { reloaded, afterReload });
 
 // --- OutcomeUnknown ------------------------------------------------------------
 const slow = await http({ url: "/__limen/http/slow", method: "POST", body: "{}", timeoutMs: 100, response: "text" });
