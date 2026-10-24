@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-24T13:49:26.000Z",
+  "updatedAt": "2026-10-24T13:49:39.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4375,6 +4375,17 @@
         }
       },
       "blockReason": "Implementation complete and pushed, but npm run check fails the Core budget review gate (emitted Core gzip 25999 vs approved 23540, +10.4%; main is 25885, +10.0%) and bench kernel-with-store (35872 > 35840 gzip). Raising either needs the owner's Core Admission decision (CA-0004, proposed under WI-0176) and a guardrail work item."
+    },
+    {
+      "id": "WI-0176",
+      "type": "task",
+      "state": "active",
+      "semanticState": "active",
+      "evidence": [],
+      "updatedAt": "2026-10-24T13:49:39.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261024T134939825Z-4ee6a3f8"
+      ]
     }
   ]
 }

@@ -2814,10 +2814,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "captured",
+      "status": "ready",
       "attachments": [],
       "createdAt": "2026-10-24T13:42:18.012Z",
-      "updatedAt": "2026-10-24T13:42:18.012Z",
+      "updatedAt": "2026-10-24T13:49:38.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
