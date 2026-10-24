@@ -816,6 +816,66 @@
       }
     },
     {
+      "name": "http request that refuses the HTTP cache (protocol 1.5)",
+      "type": "EffectRequest",
+      "valid": true,
+      "json": {
+        "kind": "Http",
+        "correlationId": "h3",
+        "method": "GET",
+        "url": "/repos/o/r/commits/main",
+        "headers": {
+          "authorization": "Bearer t"
+        },
+        "timeoutMs": 5000,
+        "credentials": "omit",
+        "cache": "no-store"
+      }
+    },
+    {
+      "name": "http request with every cache mode",
+      "type": "EngineToBrowserMessage",
+      "valid": true,
+      "json": {
+        "view": {},
+        "effects": [
+          {
+            "kind": "Http",
+            "correlationId": "c1",
+            "method": "GET",
+            "url": "/a",
+            "timeoutMs": 1,
+            "cache": "default"
+          },
+          {
+            "kind": "Http",
+            "correlationId": "c2",
+            "method": "GET",
+            "url": "/a",
+            "timeoutMs": 1,
+            "cache": "no-store"
+          },
+          {
+            "kind": "Http",
+            "correlationId": "c3",
+            "method": "GET",
+            "url": "/a",
+            "timeoutMs": 1,
+            "cache": "no-cache"
+          },
+          {
+            "kind": "Http",
+            "correlationId": "c4",
+            "method": "GET",
+            "url": "/a",
+            "timeoutMs": 1,
+            "cache": "reload"
+          }
+        ],
+        "cancellations": []
+      }
+    },
+    {
       "name": "unknown http method",
       "type": "EffectRequest",
       "valid": false,
@@ -826,6 +886,20 @@
         "method": "TRACE",
         "url": "/",
         "timeoutMs": 1
+      }
+    },
+    {
+      "name": "http request with an undeclared cache mode",
+      "type": "EffectRequest",
+      "valid": false,
+      "errorPath": "$.cache",
+      "json": {
+        "kind": "Http",
+        "correlationId": "h",
+        "method": "GET",
+        "url": "/",
+        "timeoutMs": 1,
+        "cache": "force-cache"
       }
     },
     {
