@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 175,
+  "nextSeq": 176,
   "items": [
     {
       "id": "WI-0001",
@@ -2783,6 +2783,27 @@
         "provider": "openai",
         "model": "unknown",
         "runtime": "codex"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0175",
+      "title": "Explicit HTTP cache mode on the Core Http effect (DC-005 stale GitHub reads)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-24T13:31:33.119Z",
+      "updatedAt": "2026-10-24T13:31:41.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
       },
       "source": "manual",
       "sourceReference": null
