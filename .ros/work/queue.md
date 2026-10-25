@@ -178,3 +178,4 @@
 | WI-0173 | Implement Limen runtime version registry and diagnostics | complete |  | medium |
 | WI-0174 | Correct Limen runtime verification for unloaded capability-only pages | complete |  | medium |
 | WI-0175 | Record LIM-HTTP-001 intake: explicit cache mode on the Http effect (Praxis source input) | complete |  | medium |
+| WI-0176 | Restore browser CI compatibility with a supported Ubuntu runner | ready |  | high |

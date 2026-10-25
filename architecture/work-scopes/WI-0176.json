@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0176",
+  "reference": "P0 agent task: investigate and resolve recurring GitHub Actions failures on main; runs 39773234096 through 40151009523 establish that ubuntu-latest moved to unsupported Ubuntu 26.04 for Playwright 1.56.1",
+  "placement": "Tooling / CI guardrail only. Pin the two Playwright browser jobs to Ubuntu 24.04, the supported runner image used by the last successful CI run. No runtime, protocol, Core, kernel, engine, WASM host, package, dependency or capability change.",
+  "guardrail": true,
+  "paths": [
+    ".ros/**",
+    ".github/workflows/ci.yml",
+    "architecture/work-scopes/WI-0176.json"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

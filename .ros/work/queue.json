@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 176,
+  "nextSeq": 177,
   "items": [
     {
       "id": "WI-0001",
@@ -2804,6 +2804,27 @@
         "provider": "anthropic",
         "model": "unknown",
         "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0176",
+      "title": "Restore browser CI compatibility with a supported Ubuntu runner",
+      "description": null,
+      "tags": [],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-25T06:00:11.871Z",
+      "updatedAt": "2026-10-25T06:00:22.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "openai/codex",
+        "provider": "openai",
+        "model": "unknown",
+        "runtime": "codex"
       },
       "source": "manual",
       "sourceReference": null
