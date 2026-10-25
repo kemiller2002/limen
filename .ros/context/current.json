@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-25T01:23:56.117Z",
+  "updatedAt": "2026-10-25T01:24:07.159Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4347,13 +4347,20 @@
     {
       "id": "WI-0175",
       "type": "research",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-25T01:23:56.117Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "research-record",
+          "path": ".praxis/inbox/documents/2026-10-24-LIM-HTTP-001-http-cache-mode.md"
+        }
+      ],
+      "updatedAt": "2026-10-25T01:24:07.159Z",
       "telemetryExecutionIds": [
         "EXE-20261025T012356720Z-e44af614"
-      ]
+      ],
+      "completedAt": "2026-10-25T01:24:07.159Z",
+      "conclusion": "Intake recorded as Praxis source input; nothing implemented."
     }
   ]
 }

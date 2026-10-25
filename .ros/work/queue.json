@@ -2793,10 +2793,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-25T01:23:54.514Z",
-      "updatedAt": "2026-10-25T01:23:54.823Z",
+      "updatedAt": "2026-10-25T01:24:07.159Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
