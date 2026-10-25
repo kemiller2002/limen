@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-25T06:00:27.000Z",
+  "updatedAt": "2026-10-25T06:10:47.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4365,13 +4365,45 @@
     {
       "id": "WI-0176",
       "type": "engineering",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-25T06:00:27.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "type": "tests",
+          "path": ".github/workflows/ci.yml"
+        }
+      ],
+      "updatedAt": "2026-10-25T06:10:47.000Z",
       "telemetryExecutionIds": [
         "EXE-20261025T060029576Z-f3fe9ab4"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "0e11967641ecd7cf59e2e030",
+        "recordedAt": "2026-10-25T06:07:21.000Z",
+        "executionId": "EXE-20261025T060029576Z-f3fe9ab4",
+        "stepId": "STEP-20261025T060056000Z-8c8345a6",
+        "repository": "limen",
+        "branch": "main",
+        "commit": "c1792fd7a21404a3310b904fd75d85098b853e2c",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "main",
+        "remoteCommit": "c1792fd7a21404a3310b904fd75d85098b853e2c",
+        "summary": "Pinned the Chromium and WebKit Playwright CI jobs to Ubuntu 24.04 at c1792fd; local guardrail, architecture and package checks pass; corrected GitHub CI run 40167802060 has passed both browser installations and WebKit tests.",
+        "nextAction": "Wait for CI run 40167802060 to complete, then finalize WI-0176 with the successful run as verification evidence.",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-25T06:10:47.000Z",
+      "conclusion": "Pinned only Playwright browser jobs to Ubuntu 24.04 after GitHub moved ubuntu-latest to unsupported Ubuntu 26.04; CI run 40167802060 and Pages run 40167801863 succeeded at c1792fd7a21404a3310b904fd75d85098b853e2c."
     }
   ]
 }
