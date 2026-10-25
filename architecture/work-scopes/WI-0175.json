@@ -1,0 +1,13 @@
+{
+  "workItem": "WI-0175",
+  "reference": "LIM-HTTP-001 Praxis source input from the 2026-10-24 engineering consolidation (kemiller2002/cohort-based-engineering research/consolidation/2026-10-24/engineering-improvement-priorities.md item 4)",
+  "placement": "Records an unprocessed Praxis source input only. No runtime, protocol, Core, kernel, engine, WASM host, dependency or capability change.",
+  "guardrail": false,
+  "paths": [
+    ".ros/**",
+    ".praxis/inbox/documents/2026-10-24-LIM-HTTP-001-http-cache-mode.md",
+    "architecture/work-scopes/WI-0175.json"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
