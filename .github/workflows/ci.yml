@@ -137,7 +137,7 @@ jobs:
   # driving every built-in capability through the same kernel in real Chromium.
   guest-engines-browser:
     name: Guest engines in a real browser (F#, C#, Rust WASM)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -195,7 +195,7 @@ jobs:
   # Safari checklist (docs/41).
   store-webkit:
     name: Store pack in WebKit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
