@@ -1,0 +1,19 @@
+{
+  "workItem": "WI-0177",
+  "reference": "EII-A Echelon Engineering Improvement Initiative, Workstream A (WebAssembly compatibility); source input .praxis/inbox/documents/2026-10-28-EII-A-interpreter-frame-check.md",
+  "placement": "Lifecycle CLI only: a read-only F# static check (`limen wasm-check`) over a guest's built .NET assemblies that estimates the Mono WebAssembly interpreter's tier-0 frame per method (System.Reflection.Metadata, in the shared framework; no new dependency). Pure core in cli/Limen.Core (metadata facts -> findings), thin reading shell, argument parsing and rendering in cli/Limen.Cli. F# controlled-example fixtures under cli/tests. No protocol, Core, kernel, engine, WASM host, guest package, capability, dependency or guardrail change.",
+  "guardrail": false,
+  "paths": [
+    ".ros/**",
+    ".praxis/**",
+    "architecture/work-scopes/WI-0177.json",
+    "cli/**",
+    "docs/**",
+    "research/evidence/**",
+    "test/cli.test.ts",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
