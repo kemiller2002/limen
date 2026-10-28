@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-28T01:39:35.000Z",
+  "updatedAt": "2026-10-28T06:32:38Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4454,6 +4454,27 @@
       },
       "completedAt": "2026-10-28T01:39:35.000Z",
       "conclusion": "limen wasm-check ships; controlled examples and R5 commits classified exactly as the Mono WebAssembly interpreter decided (0 false positives, 0 false negatives)"
+    },
+    {
+      "id": "WI-0178",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/57-wasm-interpreter-frame-check.md"
+        },
+        {
+          "type": "tests",
+          "path": "cli/tests/Limen.Core.Tests/InterpreterFrameTests.fs"
+        }
+      ],
+      "updatedAt": "2026-10-28T06:32:38Z",
+      "telemetryExecutionIds": [
+        "EXE-20261028T063153738Z-c71d7820"
+      ],
+      "completedAt": "2026-10-28T06:32:38Z"
     }
   ]
 }

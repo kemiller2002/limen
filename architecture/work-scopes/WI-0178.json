@@ -1,0 +1,14 @@
+{
+  "workItem": "WI-0178",
+  "reference": "Echelon development speed optimization, Priority Five (WebAssembly preflight); source input .praxis/inbox/documents/2026-10-28-ESO-P5-wasm-preflight-ordering.md",
+  "placement": "Documentation only: state where `limen wasm-check` runs in a consuming application's workflow (after the Release build, before any browser or Playwright job) in docs/57-wasm-interpreter-frame-check.md. The six controlled examples required by Priority Five already exist (WI-0177); no code, test, CLI, protocol, Core, kernel, engine, dependency or guardrail change.",
+  "guardrail": false,
+  "paths": [
+    ".ros/**",
+    ".praxis/**",
+    "architecture/work-scopes/WI-0178.json",
+    "docs/57-wasm-interpreter-frame-check.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

@@ -192,6 +192,31 @@ e02d000 is the useful case. It started, but it was at 88% of the limit, so `LIME
 - **In CI.** Run it after the guest's `dotnet build -c Release`, pinned to the Limen version the repository records, like `verify`. It needs no browser and no WebAssembly workload.
 - **Adopting it in a rehearsal or consumer.** A repository adopts the check by moving its pinned Limen version to a release that includes `wasm-check`. Nothing changes for repositories that do not run it. An active rehearsal keeps the Limen version it pinned; the next rehearsal adopts the check through its own pin.
 
+### Run it before the browser tests
+
+The check takes under half a second. A browser run takes minutes, and a page that does not start fails it without naming the method. So the order in a consuming application's pipeline is:
+
+1. `dotnet build -c Release` of the guest engine.
+2. `limen wasm-check` on that build's `.dll` output. Exit code `3` stops the pipeline here.
+3. Only then: publish the WebAssembly build, and run the browser start smoke and the Playwright suite.
+
+In GitHub Actions, put the check in the job that builds the guest, before any browser step, or in its own job that the browser job `needs:`. For example:
+
+```yaml
+- name: Build the guest engine (Release)
+  run: dotnet build src/app/App.fsproj -c Release
+- name: WebAssembly interpreter frame preflight
+  run: npx --yes @echelon-foundry/limen@<pinned version> wasm-check src/app/bin/Release/net10.0/
+- name: Install Playwright's Chromium
+  run: npx playwright install --with-deps chromium
+- name: Browser start smoke and integration tests
+  run: npx playwright test
+```
+
+Use the version the repository pins in `.echelon/limen.json` (`installedVersion`). Locally and for agents, the order is the same: run `wasm-check` after each Release build of the guest and before starting a browser.
+
+The check does not replace the start smoke. It catches this one limit before the browser runs; the start smoke remains the behavioural confirmation. Do not substitute a source-size limit: source size did not predict the failure (see "Why F# hits it").
+
 ## Why there is no runtime probe in Limen
 
 The only way to make the interpreter compile a method is to call it. `RuntimeHelpers.PrepareMethod` does not trigger the interpreter's transform: on the failing Causa build, all 1,237 methods prepared without error, and then the first call failed.
