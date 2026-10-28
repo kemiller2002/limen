@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 178,
+  "nextSeq": 179,
   "items": [
     {
       "id": "WI-0001",
@@ -2849,6 +2849,27 @@
       ],
       "createdAt": "2026-10-28T01:03:28.909Z",
       "updatedAt": "2026-10-28T01:39:35.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0178",
+      "title": "Priority Five: document running limen wasm-check before browser integration tests (Echelon development speed optimization)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-28T06:31:34.059Z",
+      "updatedAt": "2026-10-28T06:31:47Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
