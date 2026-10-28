@@ -71,6 +71,7 @@ Then, for depth:
 | 15 | [Recipes](https://github.com/kemiller2002/limen/blob/main/docs/15-recipes.md) | How do I do one specific task? |
 | 16 | [Troubleshooting](16-troubleshooting.md) | Why isn't it working? |
 | 20 | [Lifecycle CLI](https://github.com/kemiller2002/limen/blob/main/docs/20-lifecycle-cli.md) | `init`, `status`, `verify`, `upgrade`, `doctor` — commands, flags, exit codes, JSON |
+| 57 | [WebAssembly interpreter frame check](https://github.com/kemiller2002/limen/blob/main/docs/57-wasm-interpreter-frame-check.md) | Will this .NET guest's methods run on the browser's WebAssembly interpreter, or fail with "locals size too big"? |
 | 21 | [Installation and upgrade](https://github.com/kemiller2002/limen/blob/main/docs/21-installation-and-upgrade.md) | What `init` does, who owns which file, what an upgrade may change |
 | 23 | [WASM federation](23-wasm-federation.md) | How do multiple independently loaded engines exchange typed transitions without sharing state? |
 | 26 | [Fake host, traces and replay](https://github.com/kemiller2002/limen/blob/main/docs/26-fake-host-trace-replay.md) | How do I test an engine deterministically without a browser, and see or replay what crossed the boundary? |

@@ -30,6 +30,7 @@ let ``every documented command parses`` (name: string) =
 [<InlineData("verify")>]
 [<InlineData("upgrade")>]
 [<InlineData("doctor")>]
+[<InlineData("wasm-check")>]
 let ``every command has its own help page`` (name: string) =
     // Help is public documentation; a command without it is an undocumented
     // part of the public interface.
@@ -43,6 +44,39 @@ let ``every command has its own help page`` (name: string) =
 let ``help for every command names the command`` () =
     for topic in Help.topics do
         Assert.Contains("limen " + topic, Help.forTopic (Some topic))
+
+[<Fact>]
+let ``wasm-check takes inputs, repeatable references and a size for its list`` () =
+    match Args.parse [ "wasm-check"; "bin/Release/net10.0"; "--reference"; "refs"; "App.dll"; "--reference"; "more"; "--top"; "3"; "--json" ] with
+    | Ok (Args.WasmCheck options) ->
+        Assert.Equal<string list>([ "bin/Release/net10.0"; "App.dll" ], options.Inputs)
+        Assert.Equal<string list>([ "refs"; "more" ], options.References)
+        Assert.Equal(3, options.Top)
+        Assert.True(options.Global.Json)
+    | other -> failwithf "expected wasm-check, got %A" other
+
+[<Fact>]
+let ``wasm-check without an input is an error, not a check of nothing`` () =
+    match Args.parse [ "wasm-check" ] with
+    | Error (Args.MissingInput "wasm-check") -> ()
+    | other -> failwithf "expected MissingInput, got %A" other
+
+[<Theory>]
+[<InlineData("--top", "many")>]
+[<InlineData("--top", "-1")>]
+let ``wasm-check rejects a bad --top`` (flag: string) (value: string) =
+    match Args.parse [ "wasm-check"; "App.dll"; flag; value ] with
+    | Error (Args.InvalidValue (f, v)) ->
+        Assert.Equal(flag, f)
+        Assert.Equal(value, v)
+    | Error (Args.UnknownFlag ("wasm-check", _)) when value.StartsWith "-" -> ()
+    | other -> failwithf "expected InvalidValue, got %A" other
+
+[<Fact>]
+let ``wasm-check rejects an unknown option rather than reading it as an input`` () =
+    match Args.parse [ "wasm-check"; "App.dll"; "--strict" ] with
+    | Error (Args.UnknownFlag ("wasm-check", "--strict")) -> ()
+    | other -> failwithf "expected UnknownFlag, got %A" other
 
 [<Fact>]
 let ``an unknown command is an error, not a default`` () =

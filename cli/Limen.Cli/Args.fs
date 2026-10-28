@@ -35,12 +35,26 @@ type UpgradeOptions =
 
 type DoctorOptions = { Global: GlobalOptions }
 
+/// `wasm-check`: the guest assemblies (or output directories) to check, and
+/// directories read only for value-type definitions.
+type WasmCheckOptions =
+    { Global: GlobalOptions
+      Inputs: string list
+      References: string list
+      /// How many of the largest methods to list.
+      Top: int }
+
+/// Methods listed by `wasm-check` when `--top` is not given.
+[<Literal>]
+let defaultTop = 10
+
 type Command =
     | Init of InitOptions
     | Status of StatusOptions
     | Verify of VerifyOptions
     | Upgrade of UpgradeOptions
     | Doctor of DoctorOptions
+    | WasmCheck of WasmCheckOptions
     | Help of topic: string option
     | Version
 
@@ -48,6 +62,8 @@ type ParseError =
     | UnknownCommand of string
     | UnknownFlag of command: string * flag: string
     | MissingValue of flag: string
+    | InvalidValue of flag: string * value: string
+    | MissingInput of command: string
 
 let private emptyGlobal = { Json = false; Verbose = false; Root = None }
 
@@ -78,6 +94,34 @@ let private parseFlags (commandName: string) (accepted: (string * (bool ref)) li
             | None -> Error(UnknownFlag(commandName, flag))
 
     loop arguments
+
+/// `wasm-check` takes positional inputs and two valued options, so it does not
+/// fit `parseFlags`. Unknown options are still rejected.
+let private parseWasmCheck (globals: GlobalOptions) (arguments: string list) =
+    let rec loop remaining inputs references top =
+        match remaining with
+        | [] ->
+            if List.isEmpty inputs then
+                Error(MissingInput "wasm-check")
+            else
+                Ok(
+                    WasmCheck
+                        { Global = globals
+                          Inputs = List.rev inputs
+                          References = List.rev references
+                          Top = top }
+                )
+        | "--reference" :: value :: tail -> loop tail inputs (value :: references) top
+        | [ "--reference" ] -> Error(MissingValue "--reference")
+        | "--top" :: value :: tail ->
+            (match System.Int32.TryParse value with
+             | true, parsed when parsed >= 0 -> loop tail inputs references parsed
+             | _ -> Error(InvalidValue("--top", value)))
+        | [ "--top" ] -> Error(MissingValue "--top")
+        | flag :: _ when flag.StartsWith "-" -> Error(UnknownFlag("wasm-check", flag))
+        | input :: tail -> loop tail (input :: inputs) references top
+
+    loop arguments [] [] defaultTop
 
 let parse (argv: string list) : Result<Command, ParseError> =
     match argv with
@@ -139,6 +183,8 @@ let parse (argv: string list) : Result<Command, ParseError> =
                         parseFlags "doctor" [] tail
                         |> Result.map (fun () -> Doctor { Global = globals })
 
+                    | "wasm-check" -> parseWasmCheck globals tail
+
                     | "help" -> Ok(Help(List.tryHead tail))
                     | "version" -> Ok Version
                     | other -> Error(UnknownCommand other)
@@ -148,3 +194,5 @@ let describeError error =
     | UnknownCommand name -> sprintf "unknown command '%s'" name
     | UnknownFlag (command, flag) -> sprintf "unknown option '%s' for command '%s'" flag command
     | MissingValue flag -> sprintf "option '%s' requires a value" flag
+    | InvalidValue (flag, value) -> sprintf "option '%s' does not accept '%s'" flag value
+    | MissingInput command -> sprintf "command '%s' needs at least one assembly or directory" command

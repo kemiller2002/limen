@@ -12,6 +12,7 @@ npx @echelon-foundry/limen status
 npx @echelon-foundry/limen verify
 npx @echelon-foundry/limen upgrade
 npx @echelon-foundry/limen doctor
+npx @echelon-foundry/limen wasm-check <build-output>   # .NET guests
 ```
 
 Every command in this document was executed against the packed npm archive, not
@@ -210,6 +211,27 @@ Findings are classified:
 Exits `3` if there is at least one error, `0` otherwise — warnings and
 information alone do not fail it.
 
+### `wasm-check`
+
+Checks a .NET guest's built assemblies against the Mono WebAssembly
+interpreter's per-method frame limit. **Read-only.** It reads build output,
+not the repository, so `--root` does not apply.
+
+```sh
+limen wasm-check <ASSEMBLY.dll | DIRECTORY>... [--reference DIRECTORY]... [--top N] [--json]
+```
+
+```text
+error       LIMEN030  A method exceeds the .NET WebAssembly interpreter's locals limit
+      Causa.App.View::project in Causa.App.dll: estimated tier-0 interpreter frame 70,720 bytes ...
+      fix: Split the method per area into separate top-level functions ... [<MethodImpl(MethodImplOptions.NoInlining)>] ...
+```
+
+Exits `3` when a method reaches the 65,535-byte limit or nothing could be
+checked, `0` otherwise. The limit, the estimate, its measured accuracy and its
+false-positive and false-negative risks are in
+[docs/57-wasm-interpreter-frame-check.md](https://github.com/kemiller2002/limen/blob/main/docs/57-wasm-interpreter-frame-check.md).
+
 ## Options
 
 | Option | Applies to | Meaning |
@@ -220,6 +242,8 @@ information alone do not fail it.
 | `--dry-run` | `init`, `upgrade` | calculate and report the plan; change nothing |
 | `--check` | `init`, `upgrade` | as `--dry-run`, but exit `3` if anything would change |
 | `--strict` | `verify` | see above |
+| `--reference DIR` | `wasm-check` | also read `DIR`'s assemblies for value-type definitions (repeatable) |
+| `--top N` | `wasm-check` | list the `N` largest methods (default 10) |
 | `--help` | all | per-command help |
 | `--version` | — | the version of the tool |
 
@@ -334,6 +358,11 @@ Every document carries `schemaVersion` (currently `1`) and `command`.
 | `LIMEN012` | error | the boundary checks nothing (no engine path, or no engine source) |
 | `LIMEN020` | information | not a git repository |
 | `LIMEN021` | error | the repository is not writable |
+| `LIMEN030` | error | `wasm-check`: a method's interpreter frame reaches the 65,535-byte limit |
+| `LIMEN031` | warning | `wasm-check`: a method's interpreter frame is past half the limit |
+| `LIMEN032` | information | `wasm-check`: some value-type sizes were not resolved; frames are lower bounds |
+| `LIMEN033` | warning | `wasm-check`: an input was skipped (Webcil `.wasm`, or not a .NET assembly) |
+| `LIMEN034` | error | `wasm-check`: an input is missing, or nothing could be checked |
 
 ## Using it in CI
 

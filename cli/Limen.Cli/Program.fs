@@ -97,6 +97,25 @@ let private runDoctor (options: Args.DoctorOptions) =
     else
         ExitCodes.success
 
+/// `wasm-check` reads build output, not the repository, so `--root` does not
+/// apply; relative inputs resolve against the current directory.
+let private runWasmCheck (options: Args.WasmCheckOptions) =
+    let full (path: string) = IO.Path.GetFullPath path
+
+    let references =
+        (options.References |> List.map full)
+        @ GuestAssemblies.defaultRuntimePack ()
+
+    let report =
+        Operations.checkGuestAssemblies (options.Inputs |> List.map full) references options.Top
+
+    emit options.Global.Json (Render.wasmCheckToJson report) (Render.wasmCheckToText report)
+
+    if InterpreterFrame.hasErrors report then
+        ExitCodes.verificationFailed
+    else
+        ExitCodes.success
+
 /// Exit code for `init` and `upgrade`.
 ///
 /// `--check` turns "something would change" into a failure, which is what makes
@@ -180,6 +199,7 @@ let run (argv: string list) =
         | Args.Status options -> runStatus options
         | Args.Verify options -> runVerify options
         | Args.Doctor options -> runDoctor options
+        | Args.WasmCheck options -> runWasmCheck options
         | Args.Init options -> runInit options
         | Args.Upgrade options -> runUpgrade options
 

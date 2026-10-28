@@ -446,6 +446,11 @@ npx @echelon-foundry/limen upgrade   # move to this version, safely.
 npx @echelon-foundry/limen doctor    # explain what is wrong, and how to fix it.
 ```
 
+For a .NET guest engine, `npx @echelon-foundry/limen wasm-check <build-output>`
+checks the built assemblies against the WebAssembly interpreter's per-method
+frame limit before the browser finds it
+([docs/57](https://github.com/kemiller2002/limen/blob/main/docs/57-wasm-interpreter-frame-check.md)).
+
 Once installed, the executable is simply `limen`.
 
 `init` creates three things: `limen.config.json` (yours — it names which

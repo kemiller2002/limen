@@ -34,6 +34,8 @@
     <Compile Include="Planning.fs" />
     <Compile Include="Execute.fs" />
     <Compile Include="Diagnose.fs" />
+    <Compile Include="InterpreterFrame.fs" />
+    <Compile Include="GuestAssemblies.fs" />
     <Compile Include="Operations.fs" />
   </ItemGroup>
 

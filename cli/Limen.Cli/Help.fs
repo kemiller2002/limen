@@ -23,6 +23,8 @@ COMMANDS
   verify     Check that the boundary and installation are valid. Read-only.
   upgrade    Move an existing installation to this version of the tool.
   doctor     Explain what is wrong and how to fix it. Read-only.
+  wasm-check Check built .NET guest assemblies against the WebAssembly
+             interpreter's per-method frame limit. Read-only.
 
 OPTIONS
   --json     Emit machine-readable JSON on stdout and nothing else.
@@ -192,6 +194,52 @@ EXAMPLES
   npx @echelon-foundry/limen doctor --json
 """
 
+let wasmCheck =
+    """limen wasm-check — check .NET guest assemblies against the WebAssembly interpreter
+
+USAGE
+  limen wasm-check <ASSEMBLY.dll | DIRECTORY>... [--reference DIRECTORY]...
+                   [--top N] [--json]
+
+WHAT IT CHECKS
+  The Mono interpreter that runs a .NET guest in the browser refuses a method
+  whose interpreter frame reaches 65,535 bytes: the first call throws
+  InvalidProgramException "locals size too big" (dotnet/runtime
+  src/mono/mono/mini/interp/transform.c). CoreCLR, where unit tests run, has
+  no such limit. For every method body this estimates the first-call frame:
+  each argument and IL local takes 8 bytes, or its value type's wasm32 size
+  rounded up to 8; the total is aligned to 16.
+
+  error    65,535 bytes or more: the method will not run unless the
+           interpreter's single optimized retry happens to fit it
+  warning  32,768 bytes or more: half of the limit
+
+INPUTS
+  The guest's built .dll files, or its build output directory
+  (bin/Release/<tfm>/). A directory's System.* and Microsoft.* assemblies are
+  read for value-type definitions only, not checked. Webcil .wasm files under
+  _framework cannot be read; point at the .dll build output instead.
+
+OPTIONS
+  --reference DIR  Also read DIR's assemblies for value-type definitions.
+                   The newest browser-wasm runtime pack in the NuGet cache is
+                   read this way by default when it is present.
+  --top N          List the N largest methods (default 10).
+
+SIDE EFFECTS
+  None. wasm-check never writes anything.
+
+EXIT CODES
+  0  no method reaches the limit — warnings may still be reported
+  3  a method reaches the limit, or no assembly could be checked
+  2  invalid arguments
+
+EXAMPLES
+  dotnet build -c Release src/app/App.fsproj
+  npx @echelon-foundry/limen wasm-check src/app/bin/Release/net10.0/
+  npx @echelon-foundry/limen wasm-check src/app/bin/Release/net10.0/App.dll --json
+"""
+
 /// Help for one topic, or the general help when the topic is unknown.
 let forTopic (topic: string option) =
     match topic with
@@ -200,10 +248,11 @@ let forTopic (topic: string option) =
     | Some "verify" -> verify
     | Some "upgrade" -> upgrade
     | Some "doctor" -> doctor
+    | Some "wasm-check" -> wasmCheck
     | _ -> general
 
 /// Every command name that has its own help page. Used by the tests to prove
 /// the parser and the documentation cover the same set.
-let topics = [ "init"; "status"; "verify"; "upgrade"; "doctor" ]
+let topics = [ "init"; "status"; "verify"; "upgrade"; "doctor"; "wasm-check" ]
 
 let versionLine (version: string) = sprintf "%s %s" Paths.toolName version

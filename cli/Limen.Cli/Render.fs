@@ -390,3 +390,70 @@ let lifecycleToText (command: string) (dryRun: bool) (verbose: bool) (result: Op
              :: (applied |> List.map (fun change -> "  " + PlannedChange.describe change))
              @ failure
              @ verification)
+
+// -------------------------------------------------------------- wasm-check --
+
+let private estimateToJson (estimate: InterpreterFrame.FrameEstimate) =
+    JObject
+        [ "assembly", JString estimate.Method.Assembly
+          "method", JString(InterpreterFrame.qualifiedName estimate.Method)
+          "frameBytes", JInt estimate.FrameBytes
+          "lowerBound", JBool(not (List.isEmpty estimate.Unresolved))
+          "arguments", JInt(List.length estimate.Method.Arguments)
+          "locals", JInt(List.length estimate.Method.Locals)
+          "wideLocals", JInt estimate.WideLocals
+          "ilBytes", JInt estimate.Method.ILBytes
+          "unresolved", estimate.Unresolved |> List.map JString |> JArray ]
+
+let wasmCheckToJson (report: InterpreterFrame.FrameReport) =
+    let count severity =
+        report.Findings |> List.filter (fun f -> f.Severity = severity) |> List.length
+
+    JObject
+        [ "schemaVersion", JInt outputSchemaVersion
+          "command", JString "wasm-check"
+          "ok", JBool(not (InterpreterFrame.hasErrors report))
+          "limitBytes", JInt InterpreterFrame.LocalsSizeLimitBytes
+          "warningBytes", JInt InterpreterFrame.WarningThresholdBytes
+          "slotBytes", JInt InterpreterFrame.StackSlotBytes
+          "assemblies", report.Assemblies |> List.map JString |> JArray
+          "references", report.References |> List.map JString |> JArray
+          "methodsScanned", JInt report.MethodsScanned
+          "errors", JInt(count Severity.Error)
+          "warnings", JInt(count Severity.Warning)
+          "largest", report.Largest |> List.map estimateToJson |> JArray
+          "findings", report.Findings |> List.map findingToJson |> JArray ]
+
+let wasmCheckToText (report: InterpreterFrame.FrameReport) =
+    let percent bytes =
+        float bytes * 100.0 / float InterpreterFrame.LocalsSizeLimitBytes
+
+    let header =
+        sprintf
+            "Checked %d method(s) in %d assembly(ies) against the .NET WebAssembly interpreter's %d-byte frame limit."
+            report.MethodsScanned
+            (List.length report.Assemblies)
+            InterpreterFrame.LocalsSizeLimitBytes
+
+    let largest =
+        match report.Largest with
+        | [] -> []
+        | estimates ->
+            [ ""
+              "Largest estimated first-call frames:"
+              sprintf "  %10s  %5s  %7s  %s" "bytes" "limit" "locals" "method"
+              for estimate in estimates do
+                  sprintf
+                      "  %10s  %4.0f%%  %7d  %s (%s)"
+                      ((if List.isEmpty estimate.Unresolved then "" else ">=") + string estimate.FrameBytes)
+                      (percent estimate.FrameBytes)
+                      (List.length estimate.Method.Locals)
+                      (InterpreterFrame.qualifiedName estimate.Method)
+                      estimate.Method.Assembly ]
+
+    let findings =
+        match report.Findings with
+        | [] -> [ ""; "No method is near the limit." ]
+        | findings -> [ ""; doctorToText findings ]
+
+    header :: largest @ findings |> String.concat "\n"
