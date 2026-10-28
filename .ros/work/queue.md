@@ -180,4 +180,4 @@
 | WI-0175 | Record LIM-HTTP-001 intake: explicit cache mode on the Http effect (Praxis source input) | complete |  | medium |
 | WI-0176 | Restore browser CI compatibility with a supported Ubuntu runner | complete |  | high |
 | WI-0177 | EII-A: .NET WebAssembly interpreter frame-size compatibility check for guest assemblies (.praxis/inbox/documents/2026-10-28-EII-A-interpreter-frame-check.md) | complete |  | high |
-| WI-0178 | Priority Five: document running limen wasm-check before browser integration tests (Echelon development speed optimization) | ready |  | medium |
+| WI-0178 | Priority Five: document running limen wasm-check before browser integration tests (Echelon development speed optimization) | complete |  | medium |

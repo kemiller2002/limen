@@ -2866,10 +2866,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-28T06:31:34.059Z",
-      "updatedAt": "2026-10-28T06:31:47Z",
+      "updatedAt": "2026-10-28T06:32:38Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

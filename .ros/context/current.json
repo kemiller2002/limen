@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-28T06:31:53Z",
+  "updatedAt": "2026-10-28T06:32:38Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4458,13 +4458,23 @@
     {
       "id": "WI-0178",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-28T06:31:53Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/57-wasm-interpreter-frame-check.md"
+        },
+        {
+          "type": "tests",
+          "path": "cli/tests/Limen.Core.Tests/InterpreterFrameTests.fs"
+        }
+      ],
+      "updatedAt": "2026-10-28T06:32:38Z",
       "telemetryExecutionIds": [
         "EXE-20261028T063153738Z-c71d7820"
-      ]
+      ],
+      "completedAt": "2026-10-28T06:32:38Z"
     }
   ]
 }
