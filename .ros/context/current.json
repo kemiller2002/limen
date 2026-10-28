@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-10-28T01:03:37.000Z",
+  "updatedAt": "2026-10-28T01:39:35.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4408,13 +4408,52 @@
     {
       "id": "WI-0177",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-28T01:03:37.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "cli/Limen.Core/InterpreterFrame.fs"
+        },
+        {
+          "type": "implementation",
+          "path": "cli/Limen.Core/GuestAssemblies.fs"
+        },
+        {
+          "type": "tests",
+          "path": "cli/tests/Limen.Core.Tests/InterpreterFrameTests.fs"
+        },
+        {
+          "type": "documentation",
+          "path": "docs/57-wasm-interpreter-frame-check.md"
+        }
+      ],
+      "updatedAt": "2026-10-28T01:39:35.000Z",
       "telemetryExecutionIds": [
         "EXE-20261028T010338620Z-01df77ba"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "c0b7084ff686e7fd0a4bee70",
+        "recordedAt": "2026-10-28T01:39:27.000Z",
+        "executionId": "EXE-20261028T010338620Z-01df77ba",
+        "repository": "limen",
+        "branch": "claude/eii-a-interpreter-frame-check",
+        "commit": "8b2e84daea1c8306c696a0aaa18d783502cc7d00",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen.git"
+        },
+        "remoteBranch": "claude/eii-a-interpreter-frame-check",
+        "remoteCommit": "8b2e84daea1c8306c696a0aaa18d783502cc7d00",
+        "summary": "limen wasm-check implemented (pure InterpreterFrame core, SRM GuestAssemblies shell, CLI), controlled examples measured on the Mono WASM interpreter (0 FP / 0 FN), R5 commits validated, docs/57 written; 166/166 CLI tests on SDK 10 and SDK 8",
+        "nextAction": "Complete WI-0177, rebuild registry, validate, commit and push Praxis state",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-28T01:39:35.000Z",
+      "conclusion": "limen wasm-check ships; controlled examples and R5 commits classified exactly as the Mono WebAssembly interpreter decided (0 false positives, 0 false negatives)"
     }
   ]
 }
