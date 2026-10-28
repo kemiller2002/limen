@@ -16,6 +16,15 @@ exhaustive lists.
 
 ## [Unreleased]
 
+- `limen wasm-check` (EII-A, WI-0177): a read-only static check of a .NET
+  guest's built assemblies against the Mono WebAssembly interpreter's
+  per-method frame limit (65,535 bytes, dotnet/runtime `transform.c`), whose
+  overflow throws `InvalidProgramException: locals size too big` on the first
+  call in the browser while CoreCLR unit tests pass. It sizes value types from
+  their fields, reports `LIMEN030` (error) and `LIMEN031` (warning, half the
+  limit) with the remedy, and adds no dependency. See
+  [docs/57-wasm-interpreter-frame-check.md](docs/57-wasm-interpreter-frame-check.md).
+
 ## [0.9.1] — 2026-10-21
 
 - Stamp the npm package version into the emitted browser-kernel artifact and

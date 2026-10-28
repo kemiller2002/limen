@@ -12,7 +12,7 @@ Initiative: Echelon Engineering Improvement Initiative, Workstream A ("WebAssemb
   `System.InvalidProgramException: Unable to run method 'Causa.App.View:project (Causa.App.Shell/Model)': locals size too big.`
   - The first failing commit is ec6407b (about 21:30Z). The fix is a0e7d4a (23:00Z, "split View.project into nine per-area functions").
   - Nothing caught it: the .NET unit tests run on CoreCLR, which has no such limit, and no startup smoke ran on the WebAssembly build.
-- **The limit is in the runtime source.** dotnet/runtime release/10.0 `src/mono/mono/mini/interp/transform.c`, `generate()`, line 9807: `if (td->total_locals_size >= G_MAXUINT16)`.
+- **The limit is in the runtime source.** dotnet/runtime release/10.0 src/mono/mono/mini/interp/transform.c, `generate()`, line 9807: `if (td->total_locals_size >= G_MAXUINT16)`.
   - On the first overflow, the method is compiled once more with optimization on and inlining off.
   - If it still overflows, the runtime throws `InvalidProgramException` ("locals size too big").
 - **The unit is bytes of interpreter variable slots.** At the first call (tier 0), every argument and every IL local gets its own slot: 8 bytes (`sizeof(stackval)`) for a reference or primitive, more for a value type. The total is aligned to 16.

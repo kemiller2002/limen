@@ -95,3 +95,9 @@ let initialize (root: string) (cliVersion: string) (dryRun: bool) =
 
 let performUpgrade (root: string) (cliVersion: string) (dryRun: bool) =
     runLifecycle Planning.Upgrade root cliVersion dryRun
+
+/// `wasm-check`: estimate the .NET WebAssembly interpreter frame of every
+/// method in a guest's built assemblies. Read-only. `inputs` are assemblies or
+/// output directories; `references` add value-type definitions only.
+let checkGuestAssemblies (inputs: string list) (references: string list) (top: int) =
+    GuestAssemblies.read inputs references |> InterpreterFrame.check top
