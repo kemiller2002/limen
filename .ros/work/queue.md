@@ -182,3 +182,4 @@
 | WI-0177 | EII-A: .NET WebAssembly interpreter frame-size compatibility check for guest assemblies (.praxis/inbox/documents/2026-10-28-EII-A-interpreter-frame-check.md) | complete |  | high |
 | WI-0178 | Priority Five: document running limen wasm-check before browser integration tests (Echelon development speed optimization) | complete |  | medium |
 | WI-0179 | Upgrade to echelon-current 1.42.0 (praxis 3.7.2 -> 3.25.0, ordo 1.5.0 -> 1.20.0) | complete |  | medium |
+| WI-0180 | Shipped minimal example depends on @echelon-foundry/limen ^0.9.1, not ^0.7.0 | ready |  | medium |
