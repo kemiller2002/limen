@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 179,
+  "nextSeq": 180,
   "items": [
     {
       "id": "WI-0001",
@@ -12,10 +12,10 @@
         "release"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-02T19:59:10.250Z",
-      "updatedAt": "2026-09-02T19:59:40.757Z",
+      "updatedAt": "2026-09-02T19:59:27.806Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -30,10 +30,10 @@
         "ci"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-14T15:44:49.380Z",
-      "updatedAt": "2026-09-14T15:44:56.052Z",
+      "updatedAt": "2026-09-14T15:45:01.256Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -48,10 +48,10 @@
         "docs"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-14T16:28:35.797Z",
-      "updatedAt": "2026-09-14T16:28:44.052Z",
+      "updatedAt": "2026-09-14T16:32:25.770Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -66,10 +66,10 @@
         "evidence"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-14T17:01:02.944Z",
-      "updatedAt": "2026-09-14T17:01:03.052Z",
+      "updatedAt": "2026-09-14T17:08:21.982Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -84,10 +84,10 @@
         "pages"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-14T17:27:29.600Z",
-      "updatedAt": "2026-09-14T17:27:29.694Z",
+      "updatedAt": "2026-09-14T17:58:59.735Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -100,10 +100,10 @@
         "tooling"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-15T15:38:36.583Z",
-      "updatedAt": "2026-09-15T15:38:40.388Z",
+      "updatedAt": "2026-09-15T16:08:08.097Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -116,10 +116,10 @@
         "documentation"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-15T16:11:45.217Z",
-      "updatedAt": "2026-09-15T16:11:48.624Z",
+      "updatedAt": "2026-09-15T16:11:48.782Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -132,10 +132,10 @@
         "tooling"
       ],
       "priority": "low",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-15T16:14:33.902Z",
-      "updatedAt": "2026-09-15T16:14:33.982Z",
+      "updatedAt": "2026-09-15T16:14:34.248Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -148,10 +148,10 @@
         "documentation"
       ],
       "priority": "low",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-15T16:19:00.953Z",
-      "updatedAt": "2026-09-15T16:19:01.031Z",
+      "updatedAt": "2026-09-15T16:19:49.136Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -164,10 +164,10 @@
         "release"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-16T12:18:01.903Z",
-      "updatedAt": "2026-09-16T12:18:02.044Z",
+      "updatedAt": "2026-09-16T12:19:12.703Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -180,10 +180,10 @@
         "documentation"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-16T12:49:31.493Z",
-      "updatedAt": "2026-09-16T12:49:31.561Z",
+      "updatedAt": "2026-09-16T12:50:04.660Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -196,10 +196,10 @@
         "tooling"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-16T13:19:21.889Z",
-      "updatedAt": "2026-09-16T13:19:21.952Z",
+      "updatedAt": "2026-09-16T13:22:01.887Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -212,10 +212,10 @@
         "release"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-16T13:31:33.636Z",
-      "updatedAt": "2026-09-16T13:31:33.721Z",
+      "updatedAt": "2026-09-16T13:33:56.030Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -229,10 +229,10 @@
         "protocol"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T06:09:16.438Z",
-      "updatedAt": "2026-09-18T06:09:22.625Z",
+      "updatedAt": "2026-09-18T06:16:15.404Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -246,10 +246,10 @@
         "documentation"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T06:16:22.820Z",
-      "updatedAt": "2026-09-18T06:16:27.215Z",
+      "updatedAt": "2026-09-18T07:05:28.900Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -262,10 +262,10 @@
         "documentation"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T06:36:27.660Z",
-      "updatedAt": "2026-09-18T06:36:27.714Z",
+      "updatedAt": "2026-09-18T07:05:28.980Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -278,10 +278,10 @@
         "packaging"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T06:42:52.672Z",
-      "updatedAt": "2026-09-18T06:42:52.726Z",
+      "updatedAt": "2026-09-18T07:05:29.046Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -295,10 +295,10 @@
         "site"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T06:45:38.193Z",
-      "updatedAt": "2026-09-18T06:45:38.249Z",
+      "updatedAt": "2026-09-18T07:05:29.115Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -312,10 +312,10 @@
         "protocol"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T06:52:51.061Z",
-      "updatedAt": "2026-09-18T06:52:51.118Z",
+      "updatedAt": "2026-09-18T07:05:29.186Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -328,10 +328,10 @@
         "documentation"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T10:32:32.041Z",
-      "updatedAt": "2026-09-18T10:32:42.208Z",
+      "updatedAt": "2026-09-18T10:33:05.588Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -344,10 +344,10 @@
         "release"
       ],
       "priority": "medium",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T10:40:15.438Z",
-      "updatedAt": "2026-09-18T10:40:23.690Z",
+      "updatedAt": "2026-09-18T10:41:52.035Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -363,10 +363,10 @@
         "documentation"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-20T18:34:50.749Z",
-      "updatedAt": "2026-09-20T18:34:50.835Z",
+      "updatedAt": "2026-09-20T23:10:31.915Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -401,7 +401,7 @@
       "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-23T12:04:00.000Z",
-      "updatedAt": "2026-09-23T12:04:00.000Z",
+      "updatedAt": "2026-09-23T12:26:03.698802Z",
       "createdBy": "agent:chatgpt",
       "source": "agent-discovery",
       "sourceReference": "multi-wasm-federation-2026-09-23"
@@ -2870,6 +2870,27 @@
       "attachments": [],
       "createdAt": "2026-10-28T06:31:34.059Z",
       "updatedAt": "2026-10-28T06:32:38Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0179",
+      "title": "Upgrade to echelon-current 1.42.0 (praxis 3.7.2 -> 3.25.0, ordo 1.5.0 -> 1.20.0)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-11-25T18:28:47.891Z",
+      "updatedAt": "2026-11-25T18:40:06.852Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

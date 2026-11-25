@@ -1,24 +1,24 @@
 {
   "schemaVersion": 4,
   "project": "limen",
-  "manifestSha256": "0539ee57687d65cbaf4b345aec732da712658e225a62c55701f191765d7be955",
+  "manifestSha256": "971c73ab58e6d1b1a9a17cde8bf7bdab64997fe36f5f8b4419e2dbd424497a6a",
   "manifest": {
     "schemaVersion": 1,
     "name": "limen",
     "registryAuthority": {
       "kind": "resolved-release-set",
       "path": ".conditor/authority/resolved-release-set.json",
-      "sha256": "ea1b39a003d3f2f41c4fb6e979694ec82fd03964854e5dd268e38df51cd22931"
+      "sha256": "6be3bc97fbdd314abc4c712c2b1b47c1a18487995d9e1b9db445b4d141a8ee8a"
     },
     "components": [
       {
         "id": "ordo",
-        "version": "1.5.0",
+        "version": "1.20.0",
         "required": true
       },
       {
         "id": "praxis",
-        "version": "3.7.2",
+        "version": "3.25.0",
         "required": true
       },
       {
@@ -35,21 +35,21 @@
   "components": [
     {
       "id": "ordo",
-      "version": "1.5.0",
+      "version": "1.20.0",
       "distribution": "host-tool",
       "package": "ordo",
-      "descriptorSha256": "cac222af525161218391dade23d2a583c29315e8df255ffb9f11f0f2bb4eaf3a",
+      "descriptorSha256": "e0c49f0c717fd5afdd14699c77add4a12f68eded63231b80206cbe6a3cb374e5",
       "authority": "embedded-component-descriptor",
-      "sourceReference": "host:ordo@1.5.0"
+      "sourceReference": "host:ordo@1.20.0"
     },
     {
       "id": "praxis",
-      "version": "3.7.2",
+      "version": "3.25.0",
       "distribution": "host-tool",
       "package": "praxis",
-      "descriptorSha256": "476164cdd93d38e8b7960f37253334f1636204b6950c82e9f993605b269f0d45",
+      "descriptorSha256": "a6a854d426d865133e7d1440e2ca80245dbf425aecdf1aafdb7ffddf5bd4487a",
       "authority": "embedded-component-descriptor",
-      "sourceReference": "host:praxis@3.7.2"
+      "sourceReference": "host:praxis@3.25.0"
     },
     {
       "id": "visual-engineering",
@@ -102,6 +102,13 @@
       "component": "ordo",
       "code": "SDE-STRUCT-001",
       "band": "strong-review",
+      "path": "libraries/fsharp/Limen.Routing/Routing.fs",
+      "lineCount": 1084
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "strong-review",
       "path": "src/kernel/browser-kernel.ts",
       "lineCount": 1010
     },
@@ -123,8 +130,36 @@
       "component": "ordo",
       "code": "SDE-STRUCT-001",
       "band": "review",
+      "path": "libraries/fsharp/Limen.Store/Store.fs",
+      "lineCount": 944
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "review",
       "path": "src/federation.ts",
       "lineCount": 937
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "review",
+      "path": "guests/rust/limen-contract/src/limen_store.rs",
+      "lineCount": 873
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "review",
+      "path": "guests/csharp/Limen.Contract/Generated/Store.cs",
+      "lineCount": 848
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "review",
+      "path": "test/examples.test.ts",
+      "lineCount": 813
     },
     {
       "component": "ordo",
@@ -137,8 +172,8 @@
       "component": "ordo",
       "code": "SDE-STRUCT-001",
       "band": "review",
-      "path": "test/examples.test.ts",
-      "lineCount": 792
+      "path": "src/routing/routing.ts",
+      "lineCount": 762
     },
     {
       "component": "ordo",
@@ -186,8 +221,22 @@
       "component": "ordo",
       "code": "SDE-STRUCT-001",
       "band": "review",
+      "path": "src/capabilities/store/generated/store.codec.ts",
+      "lineCount": 683
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "review",
       "path": "src/generated/core.codec.ts",
       "lineCount": 678
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "review",
+      "path": "guests/fsharp/Limen.Contract/Generated/Store.fs",
+      "lineCount": 661
     },
     {
       "component": "ordo",
@@ -200,22 +249,8 @@
       "component": "ordo",
       "code": "SDE-STRUCT-001",
       "band": "review",
-      "path": "guests/rust/limen-contract/src/limen_store.rs",
-      "lineCount": 644
-    },
-    {
-      "component": "ordo",
-      "code": "SDE-STRUCT-001",
-      "band": "review",
       "path": "guests/csharp/Limen.Contract/Generated/Environment.cs",
       "lineCount": 632
-    },
-    {
-      "component": "ordo",
-      "code": "SDE-STRUCT-001",
-      "band": "review",
-      "path": "guests/csharp/Limen.Contract/Generated/Store.cs",
-      "lineCount": 629
     },
     {
       "component": "ordo",
@@ -270,6 +305,13 @@
       "component": "ordo",
       "code": "SDE-STRUCT-001",
       "band": "review",
+      "path": "libraries/fsharp/Limen.Store/Fake.fs",
+      "lineCount": 534
+    },
+    {
+      "component": "ordo",
+      "code": "SDE-STRUCT-001",
+      "band": "review",
       "path": "libraries/fsharp/Limen.Forms/Forms.fs",
       "lineCount": 526
     },
@@ -284,8 +326,8 @@
       "component": "ordo",
       "code": "SDE-STRUCT-001",
       "band": "review",
-      "path": "src/capabilities/store/generated/store.codec.ts",
-      "lineCount": 511
+      "path": "test/routing.test.ts",
+      "lineCount": 514
     },
     {
       "component": "ordo",

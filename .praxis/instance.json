@@ -1,0 +1,12 @@
+{
+  "schema": "praxis.instance/1",
+  "instanceId": "pxi-2de612cd841948bab446feadd59272a0",
+  "createdAt": "2026-11-25T18:29:26.830Z",
+  "createdWith": "3.25.0",
+  "repository": {
+    "provider": "github",
+    "repositoryId": null,
+    "repository": "kemiller2002/limen"
+  },
+  "predecessors": []
+}
