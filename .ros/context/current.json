@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-11-25T18:40:06.852Z",
+  "updatedAt": "2026-11-25T20:51:55Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4516,6 +4516,47 @@
         }
       },
       "completedAt": "2026-11-25T18:40:06.852Z"
+    },
+    {
+      "id": "WI-0180",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "examples/minimal/package.json"
+        },
+        {
+          "type": "tests",
+          "path": "test/minimal-example.test.ts"
+        }
+      ],
+      "updatedAt": "2026-11-25T20:51:55Z",
+      "telemetryExecutionIds": [
+        "EXE-20261125T204608008Z-bbb25b97"
+      ],
+      "latestCheckpoint": {
+        "id": "6b9aeffe4f08661bda7b0d0e",
+        "recordedAt": "2026-11-25T20:51:55Z",
+        "executionId": "EXE-20261125T204608008Z-bbb25b97",
+        "repository": "limen",
+        "branch": "claude/vigila-implementation-jdeps1",
+        "commit": "a0d6d1016fe72b9dc969d0f6e1b1a672ae74d754",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "claude/vigila-implementation-jdeps1",
+        "remoteCommit": "a0d6d1016fe72b9dc969d0f6e1b1a672ae74d754",
+        "summary": "Minimal example range ^0.9.1 with regression test and changelog; npm run check 907/907, clean-room, scope and core-budget reference pass",
+        "nextAction": "Complete WI-0180 and open the draft PR",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-11-25T20:51:55Z"
     }
   ]
 }

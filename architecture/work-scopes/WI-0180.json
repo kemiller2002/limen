@@ -1,0 +1,15 @@
+{
+  "workItem": "WI-0180",
+  "reference": "owner request (2026-11-25): house cleaning; examples/minimal/package.json, shipped inside the npm package, declares @echelon-foundry/limen ^0.7.0, a 0.x caret range (>=0.7.0 <0.8.0) that excludes the current release 0.9.1",
+  "placement": "Shipped example manifest only, with a test that keeps its range admitting the package version and a changelog entry. No source, protocol, Core, kernel, engine, CLI, dependency or guardrail change.",
+  "guardrail": false,
+  "paths": [
+    ".ros/**",
+    "architecture/work-scopes/WI-0180.json",
+    "examples/minimal/package.json",
+    "test/minimal-example.test.ts",
+    "CHANGELOG.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

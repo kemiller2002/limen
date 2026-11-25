@@ -24,6 +24,11 @@ exhaustive lists.
   their fields, reports `LIMEN030` (error) and `LIMEN031` (warning, half the
   limit) with the remedy, and adds no dependency. See
   [docs/57-wasm-interpreter-frame-check.md](https://github.com/kemiller2002/limen/blob/main/docs/57-wasm-interpreter-frame-check.md).
+- The shipped minimal example (`examples/minimal/package.json`) depends on
+  `@echelon-foundry/limen` `^0.9.1` (WI-0180). Its `^0.7.0` range admitted
+  only 0.7.x, so a consumer who copied it installed 0.7 rather than the release
+  it shipped with. A test now fails when the range stops admitting the package
+  version.
 
 ## [0.9.1] — 2026-10-21
 
