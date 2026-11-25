@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "limen",
-  "nextSeq": 179,
+  "nextSeq": 180,
   "items": [
     {
       "id": "WI-0001",
@@ -2870,6 +2870,27 @@
       "attachments": [],
       "createdAt": "2026-10-28T06:31:34.059Z",
       "updatedAt": "2026-10-28T06:32:38Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0179",
+      "title": "Upgrade to echelon-current 1.42.0 (praxis 3.7.2 -> 3.25.0, ordo 1.5.0 -> 1.20.0)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-11-25T18:28:47.891Z",
+      "updatedAt": "2026-11-25T18:29:04.332Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",
