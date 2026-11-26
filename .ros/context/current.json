@@ -4,7 +4,7 @@
   "repository": "limen",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-08-21T21:37:39.495Z",
-  "updatedAt": "2026-11-26T03:21:25Z",
+  "updatedAt": "2026-11-26T03:26:34Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -4602,13 +4602,43 @@
     {
       "id": "WI-0182",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-11-26T03:21:25Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "AGENTS.md"
+        },
+        {
+          "type": "tests",
+          "path": "scripts/check-docs.ts"
+        }
+      ],
+      "updatedAt": "2026-11-26T03:26:34Z",
       "telemetryExecutionIds": [
         "EXE-20261126T032127627Z-cff5953e"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "2a4217d0b9d1490e03d23806",
+        "recordedAt": "2026-11-26T03:26:32Z",
+        "executionId": "EXE-20261126T032127627Z-cff5953e",
+        "repository": "limen",
+        "branch": "claude/vigila-implementation-jdeps1",
+        "commit": "c944375c5654e0ce36c82582b2c3beff1eb45d7b",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/limen"
+        },
+        "remoteBranch": "claude/vigila-implementation-jdeps1",
+        "remoteCommit": "c944375c5654e0ce36c82582b2c3beff1eb45d7b",
+        "summary": "agent docs updated to Praxis 3.25+ work command forms; npm run check passed (907 tests); pushed",
+        "nextAction": "complete WI-0182, open draft PR",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-11-26T03:26:34Z"
     }
   ]
 }
