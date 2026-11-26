@@ -183,3 +183,4 @@
 | WI-0178 | Priority Five: document running limen wasm-check before browser integration tests (Echelon development speed optimization) | complete |  | medium |
 | WI-0179 | Upgrade to echelon-current 1.42.0 (praxis 3.7.2 -> 3.25.0, ordo 1.5.0 -> 1.20.0) | complete |  | medium |
 | WI-0180 | Shipped minimal example depends on @echelon-foundry/limen ^0.9.1, not ^0.7.0 | complete |  | medium |
+| WI-0181 | Upgrade to echelon-current 1.43.0 (Praxis 3.26.0) | complete |  | medium |

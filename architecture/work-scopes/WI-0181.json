@@ -1,0 +1,24 @@
+{
+  "workItem": "WI-0181",
+  "reference": "owner request (2026-11-26): update all systems to the current release; move Limen from the echelon-current 1.42.0 resolved set to 1.43.0 (sha256 4851c24d...) with `conditor upgrade --current` (Conditor 0.10.30): Praxis 3.25.0 -> 3.26.0; governance tooling only, no release",
+  "placement": "Governance tooling only: Conditor authority and lock, the Echelon toolchain pins and the files Praxis and Ordo manage. No source, test, CLI, protocol, Core, kernel, engine, dependency or guardrail change.",
+  "guardrail": false,
+  "paths": [
+    ".ros/**",
+    ".praxis/**",
+    "architecture/work-scopes/WI-0181.json",
+    ".echelon/**",
+    ".sde/**",
+    "conditor.json",
+    ".conditor/**",
+    "docs/agent-provenance.md",
+    "docs/development-telemetry.md",
+    "docs/fallback-reconciliation.md",
+    "docs/remote-agent-contract.md",
+    "docs/remote-protocol.md",
+    "docs/work-protocol.md",
+    "schemas/**"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}
