@@ -21,12 +21,15 @@ renamed** — see
 ## Before meaningful changes: open a ROS work item
 
 CI's `validate` job rejects branches whose changes lack work-item attribution.
-Run `./ros add "…"` → `./ros work ready WI-####` → `./ros work start WI-####`
-**before** editing, commit its scope manifest
-(`architecture/work-scopes/WI-####.json`, see
+Run `./ros add "…"` → `./ros work backlog-transition --action ready --id
+WI-#### --occurred-at <now>` → `./ros work start --id WI-#### --occurred-at
+<now>` **before** editing (`<now>` is the real current UTC time, e.g.
+`$(date -u +%Y-%m-%dT%H:%M:%SZ)`; Praxis 3.25+ rejects the old positional
+`./ros work ready WI-####` / `./ros work start WI-####`), commit its scope
+manifest (`architecture/work-scopes/WI-####.json`, see
 [docs/25-guardrails.md](docs/25-guardrails.md)) as the first change, and
-complete it with `ROS_BASE_REF=origin/main ./ros work
-complete WI-#### --evidence …` afterwards. See
+complete it with `ROS_BASE_REF=origin/main ./ros work complete --id WI-####
+--occurred-at <now> --evidence …` afterwards. See
 [AGENTS.md](AGENTS.md) Part 1 for the exact sequence.
 
 ## There is no WebAssembly in this repository

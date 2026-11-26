@@ -9,7 +9,7 @@ Decision record: [DF-LIMEN-2026-0002](../research/decisions/DF-LIMEN-2026-0002--
 
 ## Before your first edit: declare scope
 
-After `./ros work start WI-####` (see [AGENTS.md](../AGENTS.md)), commit
+After `./ros work start --id WI-#### --occurred-at <now>` (see [AGENTS.md](../AGENTS.md)), commit
 `architecture/work-scopes/WI-####.json` **first**:
 
 ```json

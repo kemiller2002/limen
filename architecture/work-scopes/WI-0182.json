@@ -1,0 +1,16 @@
+{
+  "workItem": "WI-0182",
+  "reference": "owner request (2026-11-26): \"Do what you need to do to update and fix.\" AGENTS.md, CLAUDE.md, README.md and docs/25-guardrails.md tell agents to run `./ros work ready WI-####` and `./ros work start WI-####`, which Praxis 3.25+ rejects; update them to the current command forms",
+  "placement": "Agent-facing documentation only. No source, test, CLI, protocol, Core, kernel, engine, dependency or guardrail change.",
+  "guardrail": false,
+  "paths": [
+    ".ros/**",
+    "architecture/work-scopes/WI-0182.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "docs/25-guardrails.md"
+  ],
+  "expansions": [],
+  "recordedAfterCompletion": false
+}

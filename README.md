@@ -574,7 +574,7 @@ Contributing — including AI agents — starts with
 and [docs/12-design-rules.md](https://github.com/kemiller2002/limen/blob/main/docs/12-design-rules.md).
 
 This repository follows [SDE](https://github.com/kemiller2002/limen/blob/main/.sde/README.md)
-and the ROS work protocol: identify a work item and run `./ros work start WI-####`
+and the ROS work protocol: identify a work item and run `./ros work start --id WI-#### --occurred-at <now>`
 **before** meaningful changes, or CI's `validate` job will reject the branch.
 
 Installed ROS governance references are also part of the repository's documented engineering surface:

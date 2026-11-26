@@ -115,9 +115,13 @@ Do this **first**, before editing:
 
 ```sh
 ./ros add "short description of the work"   # prints a WI-#### id
-./ros work ready WI-####
-./ros work start WI-####
+now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"         # --occurred-at must be the real current time
+./ros work backlog-transition --action ready --id WI-#### --occurred-at "$now"
+./ros work start --id WI-#### --occurred-at "$now"
 ```
+
+(Praxis 3.25+ rejects the older positional forms `./ros work ready WI-####`
+and `./ros work start WI-####`; `./ros work --help` lists the current syntax.)
 
 then, **before your first edit**, commit the work item's scope manifest —
 `architecture/work-scopes/WI-####.json` (placement + allowed paths) — and name
@@ -131,7 +135,8 @@ and when the work is done and committed:
 ```sh
 # ROS_BASE_REF is load-bearing: it folds the committed base...HEAD diff into
 # the attributed paths, which is how CI sees an already-committed branch.
-ROS_BASE_REF=origin/main ./ros work complete WI-#### \
+ROS_BASE_REF=origin/main ./ros work complete --id WI-#### \
+  --occurred-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   --evidence implementation=<path> --evidence tests=<path>
 ./ros registry build
 ROS_BASE_REF=origin/main ./ros validate    # must print "validation passed"
@@ -358,7 +363,7 @@ require a fresh `dist/`; `pretest` handles that.
 
 Answer all of these before you write code, and confirm them before you finish:
 
-0. Have I opened a ROS work item? (`./ros work start WI-####`) CI rejects the
+0. Have I opened a ROS work item? (`./ros work start --id WI-#### --occurred-at <now>`) CI rejects the
    branch without one.
 1. What state changes? Which union member in which `State` type?
 2. What event causes it? Where does that event originate in the DOM?
